@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'BigLatex-Pro - ระบบบริหารจัดการรับซื้อน้ำยาง',
+  title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อน้ำยาง',
   description: 'โปรแกรมบริหารกิจการรับซื้อน้ำยาง พัฒนาด้วย Next.js และ AI',
 };
 

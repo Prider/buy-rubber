@@ -83,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div>
               <h1 className="text-xl font-bold text-primary-600">
-                BigLatex-Pro
+                Punsook Innotech
               </h1>
               <p className="text-xs text-gray-500">v1.0.0</p>
             </div>

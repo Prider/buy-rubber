@@ -1,48 +1,100 @@
 {
-  "name": "biglatex-pro",
+  "name": "punsook-innotech",
   "version": "1.0.0",
   "description": "ระบบบริหารจัดการรับซื้อน้ำยาง (Rubber Purchasing Management System)",
+  "main": "electron/main.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build": "next build",
     "start": "next start",
+    "electron": "electron .",
+    "electron:build": "next build && electron-builder",
+    "electron:build:win": "next build && electron-builder --win",
+    "electron:build:mac": "next build && electron-builder --mac",
+    "electron:build:all": "next build && electron-builder --win --mac",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@prisma/client": "^5.6.0",
     "@tanstack/react-query": "^5.8.4",
     "axios": "^1.6.2",
-    "date-fns": "^2.30.0",
-    "zod": "^3.22.4",
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^2.5.1",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",
     "recharts": "^2.10.3",
-    "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1",
-    "clsx": "^2.0.0",
-    "tailwind-merge": "^2.1.0"
+    "tailwind-merge": "^2.1.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.9.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.5",
-    "typescript": "^5.2.2",
-    "tailwindcss": "^3.3.5",
-    "postcss": "^8.4.31",
     "autoprefixer": "^10.4.16",
-    "prisma": "^5.6.0",
-    "tsx": "^4.6.2",
+    "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
     "eslint": "^8.53.0",
-    "eslint-config-next": "^14.0.0"
+    "eslint-config-next": "^14.0.0",
+    "postcss": "^8.4.31",
+    "prisma": "^5.6.0",
+    "tailwindcss": "^3.3.5",
+    "tsx": "^4.6.2",
+    "typescript": "^5.2.2",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.punsook.innotech",
+    "productName": "Punsook Innotech",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "prisma/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "prisma/dev.db",
+        "to": "prisma/dev.db"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "electron/icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "electron/icon.png",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "electron/icon.png",
+      "category": "Office"
+    }
   }
 }
-

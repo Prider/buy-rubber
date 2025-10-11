@@ -1,4 +1,4 @@
-# คู่มือการติดตั้ง BigLatex-Pro
+# คู่มือการติดตั้ง Punsook Innotech
 
 ## ข้อกำหนดระบบ
 
@@ -11,7 +11,7 @@
 ### 1. ดาวน์โหลดโปรเจค
 
 ```bash
-cd /tmp/biglatex-pro
+cd /tmp/punsook-innotech
 ```
 
 ### 2. ติดตั้ง Dependencies
@@ -34,7 +34,7 @@ cp .env.example .env
 ```
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="your-secret-key-change-this-in-production"
-NEXT_PUBLIC_APP_NAME="BigLatex-Pro"
+NEXT_PUBLIC_APP_NAME="Punsook Innotech"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
 ```
 
@@ -109,7 +109,7 @@ datasource db {
 
 2. แก้ไขไฟล์ `.env`:
 ```
-DATABASE_URL="postgresql://username:password@localhost:5432/biglatex"
+DATABASE_URL="postgresql://username:password@localhost:5432/punsook"
 ```
 
 3. รันคำสั่ง:
@@ -170,7 +170,7 @@ npm run build
 ## การติดต่อ
 
 หากพบปัญหาหรือต้องการความช่วยเหลือ:
-- Email: support@biglatex-pro.com
-- Website: https://www.biglatex-pro.com
-- GitHub Issues: https://github.com/biglatex-pro/biglatex-pro/issues
+- Email: support@punsook-innotech.com
+- Website: https://www.punsook-innotech.com
+- GitHub Issues: https://github.com/punsook-innotech/punsook-innotech/issues
 

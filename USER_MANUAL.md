@@ -1,4 +1,4 @@
-# คู่มือการใช้งาน BigLatex-Pro
+# คู่มือการใช้งาน Punsook Innotech
 
 ## สารบัญ
 
@@ -205,12 +205,12 @@
 ## การติดต่อ
 
 หากมีคำถามหรือต้องการความช่วยเหลือ:
-- Email: support@biglatex-pro.com
+- Email: support@punsook-innotech.com
 - Tel: 02-xxx-xxxx
-- Line: @biglatexpro
+- Line: @punsookinnotech
 
 ---
 
-**BigLatex-Pro v1.0.0**  
+**Punsook Innotech v1.0.0**  
 © 2025 All Rights Reserved
 

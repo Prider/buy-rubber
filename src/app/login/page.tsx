@@ -58,7 +58,7 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">BigLatex-Pro</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Punsook Innotech</h1>
             <p className="text-gray-600 mt-2">ระบบบริหารจัดการรับซื้อน้ำยาง</p>
           </div>
 
@@ -114,7 +114,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-6">
-          © 2025 BigLatex-Pro. All rights reserved.
+          © 2025 Punsook Innotech. All rights reserved.
         </p>
       </div>
     </div>
