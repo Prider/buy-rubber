@@ -1,0 +1,248 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ผู้ใช้งานระบบ
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("user") // admin, user, viewer
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+  payments  Payment[]
+  sales     Sale[]
+}
+
+// โรงรับซื้อยาง
+model Location {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  address   String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+  sales     Sale[]
+  prices    DailyPrice[]
+}
+
+// สมาชิก (เจ้าของสวน)
+model Member {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  name            String
+  idCard          String?
+  phone           String?
+  address         String?
+  bankAccount     String?
+  bankName        String?
+  ownerPercent    Float    @default(100) // เปอร์เซ็นต์เจ้าของสวน
+  tapperPercent   Float    @default(0)   // เปอร์เซ็นต์คนตัด
+  tapperId        String?  // ID คนตัด (ถ้ามี)
+  tapperName      String?  // ชื่อคนตัด
+  advanceBalance  Float    @default(0)   // ยอดเบิกเงินล่วงหน้า
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchases      Purchase[]
+  advances       Advance[]
+  payments       Payment[]
+  dividends      Dividend[]
+}
+
+// ประเภทสินค้ายาง
+model ProductType {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String   // น้ำยางสด, ยางแห้ง, เศษยาง
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchases Purchase[]
+  sales     Sale[]
+}
+
+// ราคาประกาศประจำวัน
+model DailyPrice {
+  id         String   @id @default(uuid())
+  date       DateTime
+  locationId String
+  basePrice  Float    // ราคาพื้นฐาน (บาท/กก.)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  location       Location        @relation(fields: [locationId], references: [id])
+  priceRules     PriceRule[]
+
+  @@unique([date, locationId])
+}
+
+// กฎการปรับราคาตาม %ยาง
+model PriceRule {
+  id           String   @id @default(uuid())
+  dailyPriceId String
+  minPercent   Float    // %ยางขั้นต่ำ
+  maxPercent   Float    // %ยางสูงสุด
+  adjustment   Float    // ราคาปรับเพิ่ม/ลด (บาท/กก.)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  dailyPrice DailyPrice @relation(fields: [dailyPriceId], references: [id], onDelete: Cascade)
+}
+
+// การรับซื้อ
+model Purchase {
+  id              String   @id @default(uuid())
+  purchaseNo      String   @unique
+  date            DateTime @default(now())
+  locationId      String
+  memberId        String
+  productTypeId   String
+  userId          String
+  
+  // น้ำหนัก
+  grossWeight     Float    // น้ำหนักรวมภาชนะ (กก.)
+  containerWeight Float    @default(0) // น้ำหนักภาชนะ (กก.)
+  netWeight       Float    // น้ำหนักสุทธิ (กก.)
+  
+  // สำหรับน้ำยางสด
+  rubberPercent   Float?   // %ยาง (DRC)
+  dryWeight       Float    // น้ำหนักแห้ง (กก.)
+  
+  // ราคา
+  basePrice       Float    // ราคาพื้นฐาน (บาท/กก.)
+  adjustedPrice   Float    // ราคาหลังปรับตาม %ยาง
+  bonusPrice      Float    @default(0) // ราคาบวกพิเศษ
+  finalPrice      Float    // ราคาสุดท้าย (บาท/กก.)
+  totalAmount     Float    // ยอดเงินรวม
+  
+  // การแบ่ง %
+  ownerAmount     Float    // เงินเจ้าของสวน
+  tapperAmount    Float    @default(0) // เงินคนตัด
+  
+  isPaid          Boolean  @default(false)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  location    Location    @relation(fields: [locationId], references: [id])
+  member      Member      @relation(fields: [memberId], references: [id])
+  productType ProductType @relation(fields: [productTypeId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  
+  paymentItems PaymentItem[]
+}
+
+// การเบิกเงินล่วงหน้า
+model Advance {
+  id        String   @id @default(uuid())
+  advanceNo String   @unique
+  date      DateTime @default(now())
+  memberId  String
+  amount    Float
+  remaining Float    // ยอดคงเหลือ
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id])
+}
+
+// การจ่ายชำระหนี้
+model Payment {
+  id             String   @id @default(uuid())
+  paymentNo      String   @unique
+  date           DateTime @default(now())
+  memberId       String
+  userId         String
+  totalAmount    Float    // ยอดรวมก่อนหัก
+  advanceDeduct  Float    @default(0) // หักเงินล่วงหน้า
+  netAmount      Float    // ยอดจ่ายสุทธิ
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  member  Member        @relation(fields: [memberId], references: [id])
+  user    User          @relation(fields: [userId], references: [id])
+  items   PaymentItem[]
+}
+
+// รายการรับซื้อในการจ่ายแต่ละครั้ง
+model PaymentItem {
+  id         String @id @default(uuid())
+  paymentId  String
+  purchaseId String
+
+  payment  Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+
+  @@unique([paymentId, purchaseId])
+}
+
+// การขายสินค้ายาง
+model Sale {
+  id            String   @id @default(uuid())
+  saleNo        String   @unique
+  date          DateTime @default(now())
+  locationId    String
+  productTypeId String
+  userId        String
+  customerName  String
+  weight        Float    // น้ำหนัก (กก.)
+  pricePerKg    Float    // ราคา (บาท/กก.)
+  totalAmount   Float    // ยอดเงินรวม
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  location    Location    @relation(fields: [locationId], references: [id])
+  productType ProductType @relation(fields: [productTypeId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+}
+
+// ปันผลสมาชิกประจำเดือน
+model Dividend {
+  id            String   @id @default(uuid())
+  month         Int      // 1-12
+  year          Int
+  memberId      String
+  totalWeight   Float    // น้ำหนักยางรวม (กก.)
+  dividendRate  Float    // อัตราปันผล (บาท/กก.)
+  amount        Float    // ยอดเงินปันผล
+  isPaid        Boolean  @default(false)
+  paidDate      DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([month, year, memberId])
+}
+
+// ตั้งค่าระบบ
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  updatedAt DateTime @updatedAt
+}
+
