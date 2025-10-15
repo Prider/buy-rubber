@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { DarkModeProvider } from '@/contexts/DarkModeContext';
 
 export const metadata: Metadata = {
   title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อน้ำยาง',
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body>{children}</body>
+      <body>
+        <DarkModeProvider>
+          {children}
+        </DarkModeProvider>
+      </body>
     </html>
   );
 }
