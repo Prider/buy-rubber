@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
+import ModeSwitcher from './ModeSwitcher';
 
 interface LayoutProps {
   children: ReactNode;
@@ -68,6 +69,11 @@ export default function Layout({ children }: LayoutProps) {
       name: 'ขายยาง',
       href: '/sales',
       icon: '🏪',
+    },
+    {
+      name: 'ตั้งค่า',
+      href: '/admin',
+      icon: '⚙️',
     },
   ];
 
@@ -196,6 +202,7 @@ export default function Layout({ children }: LayoutProps) {
             </button>
 
             <div className="flex items-center space-x-4">
+              <ModeSwitcher />
               <DarkModeToggle />
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 {new Date().toLocaleDateString('th-TH', {

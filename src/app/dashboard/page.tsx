@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
-import axios from 'axios';
+import { getApiClient } from '@/lib/apiClient';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
 export default function DashboardPage() {
@@ -24,8 +24,9 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const response = await axios.get('/api/dashboard');
-      setData(response.data);
+      const apiClient = getApiClient();
+      const response = await apiClient.getDashboard();
+      setData(response);
     } catch (error) {
       console.error('Load dashboard error:', error);
     } finally {

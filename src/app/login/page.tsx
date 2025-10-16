@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { getApiClient } from '@/lib/apiClient';
 import DarkModeToggle from '@/components/DarkModeToggle';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  onLogin?: () => void;
+}
+
+export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -18,20 +22,26 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', {
-        username,
-        password,
-      });
+      const apiClient = getApiClient();
+      const response = await apiClient.login(username, password);
 
-      const { token, user } = response.data;
-
+      const { token, user } = response as { token: string; user: any };
+      console.log('response', response);
+      console.log('token', token);
+      console.log('user', user);
       // เก็บ token และข้อมูลผู้ใช้
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // ไปหน้าแดชบอร์ด
-      router.push('/dashboard');
+      // Call onLogin callback if provided
+      if (onLogin) {
+        onLogin();
+      } else {
+        // ไปหน้าแดชบอร์ด
+        router.push('/dashboard');
+      }
     } catch (err: any) {
+      console.log('err', err);
       setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     } finally {
       setLoading(false);
