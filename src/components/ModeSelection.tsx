@@ -18,7 +18,17 @@ export default function ModeSelection({ onModeSelected }: ModeSelectionProps) {
   const [localIP, setLocalIP] = useState('');
 
   useEffect(() => {
-    setLocalIP(getLocalIPAddress());
+    const fetchLocalIP = async () => {
+      try {
+        const ip = await getLocalIPAddress();
+        setLocalIP(ip);
+      } catch (error) {
+        console.error('Failed to get local IP:', error);
+        setLocalIP('localhost');
+      }
+    };
+    
+    fetchLocalIP();
   }, []);
 
   const handleServerMode = async () => {
