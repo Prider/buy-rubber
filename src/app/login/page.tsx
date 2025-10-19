@@ -121,7 +121,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Info */}
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-              ข้อมูลเริ่มต้น: <strong>admin</strong> / <strong>admin123</strong>
             </p>
           </div>
         </div>
