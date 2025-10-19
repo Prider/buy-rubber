@@ -17,6 +17,26 @@ export default function AdminSettingsPage() {
   const [copySuccess, setCopySuccess] = useState('');
   const [ipLoading, setIpLoading] = useState(true);
 
+  const quickSwitchMode = () => {
+    const currentMode = isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์';
+    const targetMode = isServerMode ? 'ไคลเอนต์' : 'เซิร์ฟเวอร์';
+    
+    console.log('quickSwitchMode called:', { isServerMode, serverPort, serverUrl });
+    
+    if (confirm(`คุณต้องการสลับจากโหมด${currentMode} เป็นโหมด${targetMode} หรือไม่?`)) {
+      if (isServerMode) {
+        // Switch to client mode - use localhost as default
+        const defaultServerUrl = `http://localhost:${serverPort}`;
+        console.log('Switching to client mode with URL:', defaultServerUrl);
+        handleClientMode(defaultServerUrl, true); // Skip connection test when switching modes
+      } else {
+        // Switch to server mode
+        console.log('Switching to server mode');
+        handleServerMode();
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchLocalIP = async () => {
       try {
@@ -66,13 +86,17 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleClientMode = async () => {
-    if (!serverUrl.trim()) {
+  const handleClientMode = async (customServerUrl?: string, skipConnectionTest = false) => {
+    const urlToUse = customServerUrl || serverUrl;
+    
+    console.log('handleClientMode called with:', { customServerUrl, serverUrl, urlToUse, skipConnectionTest });
+    
+    if (!urlToUse.trim()) {
       setConnectionError('กรุณากรอก URL เซิร์ฟเวอร์');
       return;
     }
 
-    if (!validateServerUrl(serverUrl)) {
+    if (!validateServerUrl(urlToUse)) {
       setConnectionError('รูปแบบ URL เซิร์ฟเวอร์ไม่ถูกต้อง');
       return;
     }
@@ -82,23 +106,43 @@ export default function AdminSettingsPage() {
       setConnectionError('');
       setSuccessMessage('');
 
-      // Test connection first
-      const testResponse = await fetch(`${serverUrl}/api/health`);
-      if (!testResponse.ok) {
-        throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+      // Only test connection if not skipping (i.e., when manually entering URL)
+      if (!skipConnectionTest) {
+        try {
+          const testResponse = await fetch(`${urlToUse}/api/health`, {
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          if (!testResponse.ok) {
+            throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+          }
+        } catch (error) {
+          // Handle CORS and connection errors gracefully
+          if (error instanceof TypeError && error.message.includes('CORS')) {
+            throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (CORS Error) - กรุณาตรวจสอบว่าเซิร์ฟเวอร์ทำงานอยู่และรองรับ CORS');
+          }
+          throw error;
+        }
+      }
+
+      // Update serverUrl state if using custom URL
+      if (customServerUrl) {
+        setServerUrl(customServerUrl);
       }
 
       // Update config to client mode
       updateConfig({
         mode: 'client',
-        serverUrl: serverUrl,
+        serverUrl: urlToUse,
         clientPort: 3000,
       });
 
       // Update API client
       updateApiClient({
         mode: 'client',
-        serverUrl: serverUrl,
+        serverUrl: urlToUse,
         clientPort: 3000,
       });
 
@@ -135,10 +179,40 @@ export default function AdminSettingsPage() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            ตั้งค่าระบบ
-          </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              ตั้งค่าระบบ
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              จัดการโหมดการทำงานของระบบ
+            </p>
+          </div>
+          
+          {/* Quick Mode Switch */}
+          <div className="flex items-center space-x-3">
+            <div className="text-right">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                โหมดปัจจุบัน: <span className={`font-medium ${
+                  isServerMode ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
+                }`}>
+                  {isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์'}
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={quickSwitchMode}
+              disabled={isConnecting}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isServerMode
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+            >
+              {isConnecting ? 'กำลังสลับ...' : 
+               isServerMode ? 'สลับเป็นไคลเอนต์' : 'สลับเป็นเซิร์ฟเวอร์'}
+            </button>
+          </div>
         </div>
 
         {/* Current Status */}
@@ -146,19 +220,40 @@ export default function AdminSettingsPage() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             สถานะปัจจุบัน
           </h2>
-          <div className="flex items-center space-x-4">
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-              isServerMode 
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-            }`}>
-              {isServerMode ? 'โหมดเซิร์ฟเวอร์' : 'โหมดไคลเอนต์'}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                isServerMode 
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+              }`}>
+                {isServerMode ? 'โหมดเซิร์ฟเวอร์' : 'โหมดไคลเอนต์'}
+              </div>
+              {isClientMode && config.serverUrl && (
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  เชื่อมต่อกับ: {config.serverUrl}
+                </span>
+              )}
             </div>
-            {isClientMode && config.serverUrl && (
+            
+            {/* Quick Switch Button */}
+            <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                เชื่อมต่อกับ: {config.serverUrl}
+                สลับโหมด:
               </span>
-            )}
+              <button
+                onClick={quickSwitchMode}
+                disabled={isConnecting}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isServerMode
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
+                    : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
+                }`}
+              >
+                {isConnecting ? 'กำลังสลับ...' : 
+                 isServerMode ? 'สลับเป็นไคลเอนต์' : 'สลับเป็นเซิร์ฟเวอร์'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -329,13 +424,17 @@ export default function AdminSettingsPage() {
               </div>
               
               <button
-                onClick={handleClientMode}
+                onClick={() => handleClientMode()}
                 disabled={isConnecting || isClientMode || !serverUrl.trim()}
                 className="w-full btn btn-secondary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isConnecting ? 'กำลังเปลี่ยนโหมด...' : 
                  isClientMode ? 'โหมดไคลเอนต์ (ใช้งานอยู่)' : 'เปลี่ยนเป็นโหมดไคลเอนต์'}
               </button>
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                * จะทดสอบการเชื่อมต่อก่อนเปลี่ยนโหมด
+              </p>
             </div>
           </div>
         </div>
