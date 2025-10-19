@@ -319,27 +319,6 @@ export default function AdminSettingsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-700 dark:text-blue-300">
-                      IP Address:
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono text-blue-900 dark:text-blue-100">
-                        {ipLoading ? 'กำลังโหลด...' : localIP}
-                      </span>
-                      {!ipLoading && (
-                        <button
-                          onClick={() => copyToClipboard(localIP, 'IP Address')}
-                          className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
-                          title="คัดลอก IP Address"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-blue-700 dark:text-blue-300">
                       URL:
                     </span>
                     <div className="flex items-center space-x-2">
@@ -407,12 +386,6 @@ export default function AdminSettingsPage() {
               <div>
                 <label className="label">เชื่อมต่อด่วน</label>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleQuickConnect('localhost')}
-                    className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-                  >
-                    localhost
-                  </button>
                   <button
                     onClick={() => handleQuickConnect(localIP)}
                     className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
