@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,20 +14,12 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-    }
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
+    logout();
+    router.push('/');
   };
 
   const navigation = [
@@ -140,12 +133,12 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-primary-600 dark:bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  {user?.name?.charAt(0) || 'A'}
+                  {user?.username?.charAt(0) || 'A'}
                 </div>
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {user?.name || 'ผู้ใช้งาน'}
+                  {user?.username || 'ผู้ใช้งาน'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || 'User'}</p>
               </div>

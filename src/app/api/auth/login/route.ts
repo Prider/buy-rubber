@@ -1,62 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { comparePassword, generateToken } from '@/lib/auth';
+import { userStore } from '@/lib/userStore';
+import { LoginRequest, LoginResponse } from '@/types/user';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const body: LoginRequest = await request.json();
+    const { username, password } = body;
 
-    // ตรวจสอบข้อมูล
+    console.log('Login attempt:', { username, password: '***' });
+
     if (!username || !password) {
-      return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
-        { status: 400 }
-      );
+      return NextResponse.json<LoginResponse>({
+        success: false,
+        message: 'Username and password are required'
+      }, { status: 400 });
     }
 
-    // ค้นหาผู้ใช้
-    const user = await prisma.user.findUnique({
-      where: { username },
-    });
+    // Debug: Check if users exist
+    const allUsers = await userStore.getAllUsers();
+    console.log('Total users in store:', allUsers.length);
+    console.log('Users:', allUsers.map(u => ({ username: u.username, role: u.role })));
 
-    if (!user || !user.isActive) {
-      return NextResponse.json(
-        { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
-        { status: 401 }
-      );
+    const user = await userStore.authenticateUser(username, password);
+    
+    console.log('User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User details:', { id: user.id, username: user.username, role: user.role });
+    }
+    
+    if (!user) {
+      return NextResponse.json<LoginResponse>({
+        success: false,
+        message: 'Invalid username or password'
+      }, { status: 401 });
     }
 
-    // ตรวจสอบรหัสผ่าน
-    const isValid = await comparePassword(password, user.password);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
-        { status: 401 }
-      );
-    }
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
 
-    // สร้าง token
-    const token = generateToken({
-      userId: user.id,
-      username: user.username,
-      role: user.role,
+    // In a real application, you would generate a JWT token here
+    // For now, we'll use a simple session approach
+    const token = Buffer.from(JSON.stringify({ userId: user.id, role: user.role })).toString('base64');
+
+    console.log('Login successful, token generated');
+
+    return NextResponse.json<LoginResponse>({
+      success: true,
+      user: userWithoutPassword,
+      token
     });
 
-    return NextResponse.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        role: user.role,
-      },
-    });
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' },
-      { status: 500 }
-    );
+    return NextResponse.json<LoginResponse>({
+      success: false,
+      message: 'Internal server error'
+    }, { status: 500 });
   }
 }
-

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getApiClient } from '@/lib/apiClient';
+import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
 
 interface LoginPageProps {
@@ -11,6 +11,7 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,27 +23,22 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const apiClient = getApiClient();
-      const response = await apiClient.login(username, password);
-
-      const { token, user } = response as { token: string; user: any };
-      console.log('response', response);
-      console.log('token', token);
-      console.log('user', user);
-      // เก็บ token และข้อมูลผู้ใช้
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Call onLogin callback if provided
-      if (onLogin) {
-        onLogin();
+      const success = await login(username, password);
+      
+      if (success) {
+        // Call onLogin callback if provided
+        if (onLogin) {
+          onLogin();
+        } else {
+          // ไปหน้าแดชบอร์ด
+          router.push('/dashboard');
+        }
       } else {
-        // ไปหน้าแดชบอร์ด
-        router.push('/dashboard');
+        setError('Invalid username or password');
       }
     } catch (err: any) {
       console.log('err', err);
-      setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+      setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,8 @@ import { useAppMode } from '@/contexts/AppModeContext';
 import { getLocalIPAddress, validateServerUrl, formatServerUrl } from '@/lib/config';
 import { updateApiClient } from '@/lib/apiClient';
 import Layout from '@/components/Layout';
+import UserManagement from '@/components/UserManagement';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function AdminSettingsPage() {
   const { config, updateConfig, isServerMode, isClientMode } = useAppMode();
@@ -16,6 +18,7 @@ export default function AdminSettingsPage() {
   const [localIP, setLocalIP] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
   const [ipLoading, setIpLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'settings' | 'users'>('settings');
 
   const quickSwitchMode = () => {
     const currentMode = isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์';
@@ -185,7 +188,7 @@ export default function AdminSettingsPage() {
               ตั้งค่าระบบ
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              จัดการโหมดการทำงานของระบบ
+              จัดการโหมดการทำงานและผู้ใช้ของระบบ
             </p>
           </div>
           
@@ -215,7 +218,38 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Current Status */}
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'settings'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              System Settings
+            </button>
+            <ProtectedRoute requiredPermission="user.read">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'users'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                User Management
+              </button>
+            </ProtectedRoute>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'settings' && (
+          <>
+            {/* Current Status */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             สถานะปัจจุบัน
@@ -444,6 +478,14 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
+
+        {activeTab === 'users' && (
+          <ProtectedRoute requiredPermission="user.read">
+            <UserManagement />
+          </ProtectedRoute>
+        )}
       </div>
     </Layout>
   );

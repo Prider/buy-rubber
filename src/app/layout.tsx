@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อน้ำยาง',
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body>
-        <AppModeProvider>
-          <DarkModeProvider>
-            {children}
-          </DarkModeProvider>
-        </AppModeProvider>
+        <AuthProvider>
+          <AppModeProvider>
+            <DarkModeProvider>
+              {children}
+            </DarkModeProvider>
+          </AppModeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
