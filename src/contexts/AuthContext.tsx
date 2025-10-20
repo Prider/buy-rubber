@@ -80,11 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user ? roles.includes(user.role) : false;
   };
 
-  const hasPermission = (permission: Permission): boolean => {
-    if (!user) return false;
-    return ROLE_PERMISSIONS[user.role].includes(permission);
-  };
-
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,

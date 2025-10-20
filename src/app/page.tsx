@@ -2,20 +2,22 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import AppWrapper from '@/components/AppWrapper';
 
 export default function Home() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // ตรวจสอบ token
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
+    // Wait for auth to load, then redirect based on authentication status
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push('/dashboard');
+      }
+      // If not authenticated, AppWrapper will show login page
     }
-  }, [router]);
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <AppWrapper>
