@@ -177,7 +177,6 @@ export default function AdminSettingsPage() {
       setTimeout(() => setCopySuccess(''), 2000);
     }
   };
-  console.log('localIP', localIP);
   return (
     <Layout>
       <div className="space-y-6">
@@ -190,31 +189,6 @@ export default function AdminSettingsPage() {
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               จัดการโหมดการทำงานและผู้ใช้ของระบบ
             </p>
-          </div>
-          
-          {/* Quick Mode Switch */}
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                โหมดปัจจุบัน: <span className={`font-medium ${
-                  isServerMode ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
-                }`}>
-                  {isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์'}
-                </span>
-              </p>
-            </div>
-            <button
-              onClick={quickSwitchMode}
-              disabled={isConnecting}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isServerMode
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              {isConnecting ? 'กำลังสลับ...' : 
-               isServerMode ? 'สลับเป็นไคลเอนต์' : 'สลับเป็นเซิร์ฟเวอร์'}
-            </button>
           </div>
         </div>
 
@@ -249,7 +223,7 @@ export default function AdminSettingsPage() {
         {/* Tab Content */}
         {activeTab === 'settings' && (
           <>
-            {/* Current Status */}
+        {/* Current Status */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             สถานะปัจจุบัน
