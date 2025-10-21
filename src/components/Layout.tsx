@@ -22,14 +22,14 @@ export default function Layout({ children }: LayoutProps) {
     window.location.href = '/';
   };
 
-  const navigation = [
+  const allNavigation = [
     {
       name: 'แดชบอร์ด',
       href: '/dashboard',
       icon: '📊',
     },
     {
-      name: 'รับซื้อน้ำยาง',
+      name: 'รับซื้อยาง',
       href: '/purchases',
       icon: '🛒',
     },
@@ -37,11 +37,6 @@ export default function Layout({ children }: LayoutProps) {
       name: 'จ่ายเงิน',
       href: '/payments',
       icon: '💰',
-    },
-    {
-      name: 'เบิกเงินล่วงหน้า',
-      href: '/advances',
-      icon: '💵',
     },
     {
       name: 'สมาชิก',
@@ -59,16 +54,20 @@ export default function Layout({ children }: LayoutProps) {
       icon: '📈',
     },
     {
-      name: 'ขายยาง',
-      href: '/sales',
-      icon: '🏪',
-    },
-    {
       name: 'ตั้งค่า',
       href: '/admin',
       icon: '⚙️',
+      adminOnly: true, // Only show to admin users
     },
   ];
+
+  // Filter navigation based on user role
+  const navigation = allNavigation.filter(item => {
+    if (item.adminOnly) {
+      return user?.role === 'admin';
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

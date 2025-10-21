@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import { useAppMode } from '@/contexts/AppModeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ModeSwitcher() {
   const { config, isServerMode, isClientMode } = useAppMode();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  
+  const isAdmin = user?.role === 'admin';
 
   const getModeDisplay = () => {
     if (isServerMode) {
@@ -28,9 +32,14 @@ export default function ModeSwitcher() {
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-        title="สถานะโหมดการทำงาน"
+        onClick={() => isAdmin && setIsOpen(!isOpen)}
+        disabled={!isAdmin}
+        className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+          isAdmin 
+            ? 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer' 
+            : 'bg-gray-100 dark:bg-gray-700 opacity-60 cursor-not-allowed'
+        }`}
+        title={isAdmin ? "สถานะโหมดการทำงาน" : "เฉพาะผู้ดูแลระบบเท่านั้น"}
       >
         <div className={`w-2 h-2 rounded-full ${
           isServerMode ? 'bg-green-500' : isClientMode ? 'bg-blue-500' : 'bg-gray-500'
@@ -38,17 +47,19 @@ export default function ModeSwitcher() {
         <span className={getModeColor()}>
           {getModeDisplay()}
         </span>
-        <svg
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        {isAdmin && (
+          <svg
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
       </button>
 
-      {isOpen && (
+      {isOpen && isAdmin && (
         <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">

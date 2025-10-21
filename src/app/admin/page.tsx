@@ -179,15 +179,16 @@ export default function AdminSettingsPage() {
   };
   return (
     <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              ตั้งค่า
-            </h1>
+      <ProtectedRoute requiredRole="admin">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                ตั้งค่า
+              </h1>
+            </div>
           </div>
-        </div>
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700">
@@ -457,7 +458,8 @@ export default function AdminSettingsPage() {
             <UserManagement />
           </ProtectedRoute>
         )}
-      </div>
+        </div>
+      </ProtectedRoute>
     </Layout>
   );
 }
