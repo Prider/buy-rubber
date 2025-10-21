@@ -6,6 +6,7 @@ import axios from 'axios';
 import { usePriceData } from '@/hooks/usePriceData';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
 import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
+import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
 import ProductTypeFormModal from '@/components/prices/ProductTypeFormModal';
 import SetPriceFormModal from '@/components/prices/SetPriceFormModal';
 
@@ -218,6 +219,13 @@ export default function PricesPage() {
         <TodayPricesDisplay
           productTypes={productTypes}
           getPriceForDateAndType={getPriceForDateAndType}
+        />
+
+        {/* Price History Table */}
+        <PriceHistoryTable
+          productTypes={productTypes}
+          getPriceForDateAndType={getPriceForDateAndType}
+          loading={loading}
         />
       </div>
 
