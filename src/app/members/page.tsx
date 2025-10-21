@@ -42,8 +42,48 @@ export default function MembersPage() {
     }
   };
 
+  const generateMemberCode = () => {
+    // Extract all existing codes that start with 'M' followed by numbers
+    const existingCodes = members
+      .map(m => m.code)
+      .filter(code => /^M\d+$/.test(code)) // Match format M001, M002, etc.
+      .map(code => parseInt(code.substring(1))) // Extract the number part
+      .filter(num => !isNaN(num)); // Filter out invalid numbers
+
+    // Find the highest number
+    const maxNumber = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+    
+    // Generate next code with padding (M001, M002, etc.)
+    const nextNumber = maxNumber + 1;
+    return `M${String(nextNumber).padStart(3, '0')}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate name when adding new member
+    if (!editingMember) {
+      const duplicateName = members.find(
+        member => member.name.toLowerCase() === formData.name.toLowerCase()
+      );
+      
+      if (duplicateName) {
+        alert(`ชื่อ "${formData.name}" มีอยู่ในระบบแล้ว (รหัส: ${duplicateName.code})\nกรุณาใช้ชื่ออื่น`);
+        return;
+      }
+    } else {
+      // When editing, check if the new name conflicts with other members (not itself)
+      const duplicateName = members.find(
+        member => member.id !== editingMember.id && 
+                  member.name.toLowerCase() === formData.name.toLowerCase()
+      );
+      
+      if (duplicateName) {
+        alert(`ชื่อ "${formData.name}" มีอยู่ในระบบแล้ว (รหัส: ${duplicateName.code})\nกรุณาใช้ชื่ออื่น`);
+        return;
+      }
+    }
+    
     try {
       if (editingMember) {
         await axios.put(`/api/members/${editingMember.id}`, formData);
@@ -113,6 +153,9 @@ export default function MembersPage() {
             onClick={() => {
               resetForm();
               setEditingMember(null);
+              // Auto-generate code for new member
+              const newCode = generateMemberCode();
+              setFormData(prev => ({ ...prev, code: newCode }));
               setShowForm(true);
             }}
             className="btn btn-primary"
@@ -205,16 +248,17 @@ export default function MembersPage() {
                   />
                 </div>
                 <div>
-                  <label className="label">รหัสสมาชิก *</label>
+                  <label className="label">รหัสสมาชิก * {!editingMember && <span className="text-xs text-gray-500 dark:text-gray-400">(สร้างอัตโนมัติ)</span>}</label>
                   <input
                     type="text"
                     value={formData.code}
                     onChange={(e) =>
                       setFormData({ ...formData, code: e.target.value })
                     }
-                    className="input"
+                    className="input bg-gray-100 dark:bg-gray-700"
                     required
-                    disabled={!!editingMember}
+                    disabled={true}
+                    readOnly
                   />
                 </div>
               </div>
