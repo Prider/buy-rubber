@@ -19,35 +19,14 @@ async function main() {
   // ลบข้อมูลเก่าทั้งหมด (เรียงตาม foreign key dependencies)
   console.log('🗑️  ลบข้อมูลเก่าทั้งหมด...');
   
-  await prisma.sale.deleteMany({});
-  console.log('   - ลบข้อมูลการขาย');
-  
-  await prisma.payment.deleteMany({});
-  console.log('   - ลบข้อมูลการจ่ายเงิน');
-  
-  await prisma.advance.deleteMany({});
-  console.log('   - ลบข้อมูลเงินยืม');
-  
-  await prisma.purchase.deleteMany({});
-  console.log('   - ลบข้อมูลการรับซื้อ');
-  
-  await prisma.priceRule.deleteMany({});
-  console.log('   - ลบกฎการปรับราคา');
-  
-  await prisma.dailyPrice.deleteMany({});
-  console.log('   - ลบราคาประกาศประจำวัน');
+  await prisma.productPrice.deleteMany({});
+  console.log('   - ลบราคาสินค้าประจำวัน');
   
   await prisma.member.deleteMany({});
   console.log('   - ลบข้อมูลสมาชิก');
   
   await prisma.productType.deleteMany({});
   console.log('   - ลบประเภทสินค้า');
-  
-  await prisma.location.deleteMany({});
-  console.log('   - ลบโรงรับซื้อ');
-  
-  await prisma.setting.deleteMany({});
-  console.log('   - ลบการตั้งค่าระบบ');
   
   await prisma.user.deleteMany({});
   console.log('   - ลบผู้ใช้งาน');
@@ -88,17 +67,6 @@ async function main() {
   console.log('   - User:', user.username, '(Edit access)');
   console.log('   - Viewer:', viewer.username, '(Read-only)');
 
-  // สร้างโรงรับซื้อ
-  const location = await prisma.location.create({
-    data: {
-      code: 'LOC001',
-      name: 'โรงรับซื้อยางสาขาหลัก',
-      address: '123 ถนนพระราม 4 กรุงเทพฯ',
-      phone: '02-123-4567',
-    },
-  });
-  console.log('✅ สร้างโรงรับซื้อ:', location.name);
-
   // สร้างประเภทสินค้า
   const productTypes = await Promise.all([
     prisma.productType.create({
@@ -125,47 +93,30 @@ async function main() {
   ]);
   console.log('✅ สร้างประเภทสินค้า:', productTypes.length, 'ประเภท');
 
-  // สร้างราคาประกาศวันนี้
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const dailyPrice = await prisma.dailyPrice.create({
-    data: {
-      date: today,
-      locationId: location.id,
-      basePrice: 50.0, // 50 บาท/กก.
-    },
-  });
-  console.log('✅ สร้างราคาประกาศประจำวัน:', dailyPrice.basePrice, 'บาท/กก.');
-
-  // สร้างกฎการปรับราคา
-  const priceRules = await Promise.all([
-    prisma.priceRule.create({
-      data: {
-        dailyPriceId: dailyPrice.id,
-        minPercent: 0,
-        maxPercent: 29.99,
-        adjustment: -5.0, // ลด 5 บาท
-      },
-    }),
-    prisma.priceRule.create({
-      data: {
-        dailyPriceId: dailyPrice.id,
-        minPercent: 30,
-        maxPercent: 34.99,
-        adjustment: 0, // ราคาปกติ
-      },
-    }),
-    prisma.priceRule.create({
-      data: {
-        dailyPriceId: dailyPrice.id,
-        minPercent: 35,
-        maxPercent: 100,
-        adjustment: 5.0, // เพิ่ม 5 บาท
-      },
-    }),
-  ]);
-  console.log('✅ สร้างกฎการปรับราคา:', priceRules.length, 'กฎ');
+  // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด)
+  const productPrices = [];
+  for (let i = 0; i < 3; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    
+    // สร้างราคาสำหรับแต่ละประเภทสินค้า
+    for (const productType of productTypes) {
+      const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
+      const priceVariation = i * 0.5; // ราคาลดลงทุกวัน
+      
+      productPrices.push(
+        await prisma.productPrice.create({
+          data: {
+            date: date,
+            productTypeId: productType.id,
+            price: basePrice - priceVariation,
+          },
+        })
+      );
+    }
+  }
+  console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');
 
   // สร้างสมาชิกตัวอย่าง
   const members = await Promise.all([
@@ -204,22 +155,7 @@ async function main() {
   ]);
   console.log('✅ สร้างสมาชิก:', members.length, 'ราย');
 
-  // สร้างตั้งค่าระบบ
-  await prisma.setting.create({
-    data: {
-      key: 'company_name',
-      value: 'บริษัท รับซื้อยางพารา จำกัด',
-    },
-  });
-
-  await prisma.setting.create({
-    data: {
-      key: 'tax_id',
-      value: '0-1234-56789-01-2',
-    },
-  });
-
-  console.log('✅ สร้างตั้งค่าระบบเรียบร้อย');
+  console.log('✅ สร้างข้อมูลเบื้องต้นเรียบร้อย');
   console.log('');
   console.log('🎉 สร้างข้อมูลตัวอย่างเสร็จสมบูรณ์!');
   console.log('');

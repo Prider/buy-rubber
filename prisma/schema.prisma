@@ -21,23 +21,6 @@ model User {
 
   purchases Purchase[]
   payments  Payment[]
-  sales     Sale[]
-}
-
-// โรงรับซื้อยาง
-model Location {
-  id        String   @id @default(uuid())
-  code      String   @unique
-  name      String
-  address   String?
-  phone     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  purchases Purchase[]
-  sales     Sale[]
-  prices    DailyPrice[]
 }
 
 // สมาชิก (เจ้าของสวน)
@@ -60,9 +43,7 @@ model Member {
   updatedAt       DateTime @updatedAt
 
   purchases      Purchase[]
-  advances       Advance[]
   payments       Payment[]
-  dividends      Dividend[]
 }
 
 // ประเภทสินค้ายาง
@@ -75,37 +56,25 @@ model ProductType {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  purchases Purchase[]
-  sales     Sale[]
+  purchases     Purchase[]
+  productPrices ProductPrice[]
 }
 
-// ราคาประกาศประจำวัน
-model DailyPrice {
-  id         String   @id @default(uuid())
-  date       DateTime
-  locationId String
-  basePrice  Float    // ราคาพื้นฐาน (บาท/กก.)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// ราคาสินค้าตามประเภทประจำวัน
+model ProductPrice {
+  id            String      @id @default(uuid())
+  date          DateTime    // วันที่ตั้งราคา
+  productTypeId String
+  price         Float       // ราคา (บาท/กก.)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  location       Location        @relation(fields: [locationId], references: [id])
-  priceRules     PriceRule[]
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 
-  @@unique([date, locationId])
+  @@unique([date, productTypeId]) // ป้องกันการตั้งราคาซ้ำในวันเดียวกัน
+  @@index([date])
 }
 
-// กฎการปรับราคาตาม %ยาง
-model PriceRule {
-  id           String   @id @default(uuid())
-  dailyPriceId String
-  minPercent   Float    // %ยางขั้นต่ำ
-  maxPercent   Float    // %ยางสูงสุด
-  adjustment   Float    // ราคาปรับเพิ่ม/ลด (บาท/กก.)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  dailyPrice DailyPrice @relation(fields: [dailyPriceId], references: [id], onDelete: Cascade)
-}
 
 // การรับซื้อ
 model Purchase {
@@ -141,28 +110,11 @@ model Purchase {
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  location    Location    @relation(fields: [locationId], references: [id])
   member      Member      @relation(fields: [memberId], references: [id])
   productType ProductType @relation(fields: [productTypeId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
   
   paymentItems PaymentItem[]
-}
-
-// การเบิกเงินล่วงหน้า
-model Advance {
-  id        String   @id @default(uuid())
-  advanceNo String   @unique
-  date      DateTime @default(now())
-  memberId  String
-  amount    Float
-  remaining Float    // ยอดคงเหลือ
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  member Member @relation(fields: [memberId], references: [id])
 }
 
 // การจ่ายชำระหนี้
@@ -194,47 +146,6 @@ model PaymentItem {
   purchase Purchase @relation(fields: [purchaseId], references: [id])
 
   @@unique([paymentId, purchaseId])
-}
-
-// การขายสินค้ายาง
-model Sale {
-  id            String   @id @default(uuid())
-  saleNo        String   @unique
-  date          DateTime @default(now())
-  locationId    String
-  productTypeId String
-  userId        String
-  customerName  String
-  weight        Float    // น้ำหนัก (กก.)
-  pricePerKg    Float    // ราคา (บาท/กก.)
-  totalAmount   Float    // ยอดเงินรวม
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  location    Location    @relation(fields: [locationId], references: [id])
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
-}
-
-// ปันผลสมาชิกประจำเดือน
-model Dividend {
-  id            String   @id @default(uuid())
-  month         Int      // 1-12
-  year          Int
-  memberId      String
-  totalWeight   Float    // น้ำหนักยางรวม (กก.)
-  dividendRate  Float    // อัตราปันผล (บาท/กก.)
-  amount        Float    // ยอดเงินปันผล
-  isPaid        Boolean  @default(false)
-  paidDate      DateTime?
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  member Member @relation(fields: [memberId], references: [id])
-
-  @@unique([month, year, memberId])
 }
 
 // ตั้งค่าระบบ
