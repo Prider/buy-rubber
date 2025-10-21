@@ -41,14 +41,14 @@ export default function SetPriceFormModal({
   onPriceChange,
 }: SetPriceFormModalProps) {
   if (!isOpen) return null;
-
+  console.log('formData---', formData, 'productTypes---:', productTypes);
   const todayDate = new Date().toISOString().split('T')[0];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-          ตั้งราคาประกาศ
+          ตั้งราคาวันนี้
         </h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>

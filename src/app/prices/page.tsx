@@ -41,12 +41,18 @@ export default function PricesPage() {
 
   // Initialize form prices when productTypes load
   const initializeFormPrices = (types: ProductType[]) => {
+    const todayDate = new Date().toISOString().split('T')[0];
+    
     setFormData(prev => ({
       ...prev,
-      prices: types.map(pt => ({
-        productTypeId: pt.id,
-        price: 0,
-      })),
+      prices: types.map(pt => {
+        // Use current price if exists, otherwise 0
+        const currentPrice = getPriceForDateAndType(todayDate, pt.id);
+        return {
+          productTypeId: pt.id,
+          price: currentPrice || 0,
+        };
+      }),
     }));
   };
 
@@ -90,12 +96,13 @@ export default function PricesPage() {
       // Force reload data to show updated prices
       await loadData();
       
-      // Reset form with fresh product types
+      // Reset form with current prices (just loaded)
+      const todayDate = new Date().toISOString().split('T')[0];
       setFormData({
-        date: new Date().toISOString().split('T')[0],
+        date: todayDate,
         prices: productTypes.map(pt => ({
           productTypeId: pt.id,
-          price: 0,
+          price: getPriceForDateAndType(todayDate, pt.id) || 0,
         })),
       });
       
