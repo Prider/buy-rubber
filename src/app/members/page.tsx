@@ -85,6 +85,19 @@ export default function MembersPage() {
     setShowForm(true);
   };
 
+  const handleDelete = async (member: any) => {
+    if (!confirm(`คุณต้องการลบสมาชิก "${member.name}" (${member.code}) หรือไม่?\n\nการลบนี้ไม่สามารถกู้คืนได้`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/members/${member.id}`);
+      loadMembers();
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'ไม่สามารถลบสมาชิกได้');
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -142,12 +155,20 @@ export default function MembersPage() {
                         {formatCurrency(member.advanceBalance)}
                       </td>
                       <td>
-                        <button
-                          onClick={() => handleEdit(member)}
-                          className="text-primary-600 hover:text-primary-700"
-                        >
-                          แก้ไข
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => handleEdit(member)}
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                          >
+                            แก้ไข
+                          </button>
+                          <button
+                            onClick={() => handleDelete(member)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                          >
+                            ลบ
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
