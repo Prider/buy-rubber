@@ -91,8 +91,8 @@ export default function MembersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">จัดการสมาชิก</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">จัดการสมาชิก</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               ข้อมูลเจ้าของสวนและคนตัดยาง
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function MembersPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-500">ยังไม่มีสมาชิก</p>
+              <p className="text-gray-500 dark:text-gray-400">ยังไม่มีสมาชิก</p>
             </div>
           )}
         </div>
@@ -164,9 +164,9 @@ export default function MembersPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-screen overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 max-h-screen overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
               {editingMember ? 'แก้ไขสมาชิก' : 'เพิ่มสมาชิกใหม่'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
