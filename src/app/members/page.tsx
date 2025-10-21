@@ -13,8 +13,8 @@ export default function MembersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
   const [formData, setFormData] = useState({
-    code: '',
     name: '',
+    code: '',
     phone: '',
     address: '',
     ownerPercent: 100,
@@ -74,8 +74,8 @@ export default function MembersPage() {
   const handleEdit = (member: any) => {
     setEditingMember(member);
     setFormData({
-      code: member.code,
       name: member.name,
+      code: member.code,
       phone: member.phone || '',
       address: member.address || '',
       ownerPercent: member.ownerPercent,
@@ -172,6 +172,18 @@ export default function MembersPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="label">ชื่อ-นามสกุล *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="input"
+                    required
+                  />
+                </div>
+                <div>
                   <label className="label">รหัสสมาชิก *</label>
                   <input
                     type="text"
@@ -182,18 +194,6 @@ export default function MembersPage() {
                     className="input"
                     required
                     disabled={!!editingMember}
-                  />
-                </div>
-                <div>
-                  <label className="label">ชื่อ-นามสกุล *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="input"
-                    required
                   />
                 </div>
               </div>
