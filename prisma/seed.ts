@@ -93,27 +93,37 @@ async function main() {
   ]);
   console.log('✅ สร้างประเภทสินค้า:', productTypes.length, 'ประเภท');
 
-  // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด)
+  // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด รวมวันนี้)
   const productPrices = [];
+  
+  // Get today's date at noon to avoid timezone issues
+  const now = new Date();
+  console.log(`System time: ${now.toISOString()}, Local date: ${now.toLocaleDateString()}`);
+  
   for (let i = 0; i < 3; i++) {
+    // Create date at noon local time to avoid timezone conversion issues
     const date = new Date();
     date.setDate(date.getDate() - i);
-    date.setHours(0, 0, 0, 0);
+    date.setHours(12, 0, 0, 0); // Set to noon instead of midnight
+    
+    const dateStr = date.toISOString().split('T')[0];
+    console.log(`Creating prices for day ${i} (${dateStr}):`);
     
     // สร้างราคาสำหรับแต่ละประเภทสินค้า
     for (const productType of productTypes) {
       const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
       const priceVariation = i * 0.5; // ราคาลดลงทุกวัน
       
-      productPrices.push(
-        await prisma.productPrice.create({
-          data: {
-            date: date,
-            productTypeId: productType.id,
-            price: basePrice - priceVariation,
-          },
-        })
-      );
+      const priceRecord = await prisma.productPrice.create({
+        data: {
+          date: date,
+          productTypeId: productType.id,
+          price: basePrice - priceVariation,
+        },
+      });
+      
+      console.log(`  ✓ ${productType.code}: ${priceRecord.price} บาท (date: ${priceRecord.date.toISOString()})`);
+      productPrices.push(priceRecord);
     }
   }
   console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');

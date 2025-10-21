@@ -15,6 +15,12 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - (days - 1));
     startDate.setHours(0, 0, 0, 0);
 
+    console.log('[Price History API] Fetching prices for date range:', {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      days
+    });
+
     const prices = await prisma.productPrice.findMany({
       where: {
         date: {
@@ -29,6 +35,14 @@ export async function GET(request: NextRequest) {
         date: 'desc',
       },
     });
+
+    console.log('[Price History API] Found prices:', prices.length);
+    console.log('[Price History API] Sample dates:', prices.slice(0, 3).map(p => ({
+      date: p.date,
+      dateString: new Date(p.date).toISOString().split('T')[0],
+      productType: p.productType.code,
+      price: p.price
+    })));
 
     return NextResponse.json(prices);
   } catch (error) {
