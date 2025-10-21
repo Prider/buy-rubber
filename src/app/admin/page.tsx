@@ -184,11 +184,8 @@ export default function AdminSettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              ตั้งค่าระบบ
+              ตั้งค่า
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              จัดการโหมดการทำงานและผู้ใช้ของระบบ
-            </p>
           </div>
         </div>
 
@@ -203,7 +200,7 @@ export default function AdminSettingsPage() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              System Settings
+              ตั้งค่าระบบ
             </button>
             <ProtectedRoute requiredPermission="user.read">
               <button
@@ -214,7 +211,7 @@ export default function AdminSettingsPage() {
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                User Management
+                จัดการผู้ใช้งาน
               </button>
             </ProtectedRoute>
           </nav>
