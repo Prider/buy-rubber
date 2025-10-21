@@ -1,5 +1,5 @@
 // User types and interfaces
-export type UserRole = 'admin' | 'employee';
+export type UserRole = 'admin' | 'user' | 'viewer';
 
 export interface User {
   id: string;
@@ -72,10 +72,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'locations.update',
     'admin.settings'
   ],
-  employee: [
+  user: [
     'dashboard.read',
     'prices.read',
+    'prices.update',
     'locations.read',
     'locations.update'
+  ],
+  viewer: [
+    'dashboard.read',
+    'prices.read',
+    'locations.read'
   ]
 };

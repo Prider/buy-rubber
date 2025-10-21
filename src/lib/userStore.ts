@@ -1,4 +1,5 @@
-import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '@/types/user';
+import { User, CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import { prisma } from '@/lib/prisma';
 
 // Simple hash function (replace with bcrypt in production)
 function simpleHash(password: string): string {
@@ -11,141 +12,133 @@ function simpleHash(password: string): string {
   return hash.toString();
 }
 
-// In-memory user store (replace with database later)
+// Prisma-based user store
 class UserStore {
-  private users: Map<string, User> = new Map();
-  private nextId = 1;
-
-  constructor() {
-    // Initialize with default users synchronously
-    this.createDefaultUsersSync();
-    console.log('UserStore initialized with', this.users.size, 'users');
-  }
-
-  private createDefaultUsersSync() {
-    const defaultAdmin: CreateUserRequest = {
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin'
-    };
-
-    const defaultEmployee: CreateUserRequest = {
-      username: 'employee',
-      password: 'employee123',
-      role: 'employee'
-    };
-
-    this.createUserSync(defaultAdmin);
-    this.createUserSync(defaultEmployee);
-    console.log('Default users created:', Array.from(this.users.values()).map(u => u.username));
-  }
-
-  private createUserSync(userData: CreateUserRequest): User {
-    // Check if username already exists
-    for (const user of this.users.values()) {
-      if (user.username === userData.username) {
-        throw new Error('Username already exists');
-      }
-    }
-
-    const hashedPassword = simpleHash(userData.password);
-    
-    const user: User = {
-      id: this.nextId.toString(),
-      username: userData.username,
-      password: hashedPassword,
-      role: userData.role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true
-    };
-
-    this.users.set(user.id, user);
-    this.nextId++;
-    
-    console.log('Created user:', { username: user.username, role: user.role, passwordHash: user.password });
-    return user;
-  }
-
   async createUser(userData: CreateUserRequest): Promise<User> {
+    console.log('Creating user in Prisma:', userData.username);
+    
     // Check if username already exists
-    for (const user of this.users.values()) {
-      if (user.username === userData.username) {
-        throw new Error('Username already exists');
-      }
+    const existingUser = await prisma.user.findUnique({
+      where: { username: userData.username }
+    });
+
+    if (existingUser) {
+      throw new Error('Username already exists');
     }
 
     const hashedPassword = simpleHash(userData.password);
     
-    const user: User = {
-      id: this.nextId.toString(),
-      username: userData.username,
-      password: hashedPassword,
-      role: userData.role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true
-    };
+    const user = await prisma.user.create({
+      data: {
+        username: userData.username,
+        password: hashedPassword,
+        role: userData.role,
+        isActive: true
+      }
+    });
 
-    this.users.set(user.id, user);
-    this.nextId++;
+    console.log('User created in Prisma:', user.id, user.username);
     
-    return user;
+    return user as User;
   }
 
   async getUserById(id: string): Promise<User | null> {
-    return this.users.get(id) || null;
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+    return user as User | null;
   }
 
   async getUserByUsername(username: string): Promise<User | null> {
-    for (const user of this.users.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return null;
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
+    return user as User | null;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return users as User[];
   }
 
   async updateUser(id: string, updates: UpdateUserRequest): Promise<User | null> {
-    const user = this.users.get(id);
-    if (!user) {
+    console.log('Updating user in Prisma:', id, updates);
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!existingUser) {
+      console.log('User not found:', id);
       return null;
     }
 
     // Check if username is being changed and already exists
-    if (updates.username && updates.username !== user.username) {
-      for (const existingUser of this.users.values()) {
-        if (existingUser.username === updates.username && existingUser.id !== id) {
-          throw new Error('Username already exists');
-        }
+    if (updates.username && updates.username !== existingUser.username) {
+      const userWithSameUsername = await prisma.user.findUnique({
+        where: { username: updates.username }
+      });
+      
+      if (userWithSameUsername && userWithSameUsername.id !== id) {
+        throw new Error('Username already exists');
       }
     }
 
-    const updatedUser: User = {
-      ...user,
-      ...updates,
-      password: updates.password ? simpleHash(updates.password) : user.password,
-      updatedAt: new Date()
-    };
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (updates.username !== undefined) {
+      updateData.username = updates.username;
+    }
+    
+    if (updates.password) {
+      updateData.password = simpleHash(updates.password);
+    }
+    
+    if (updates.role !== undefined) {
+      updateData.role = updates.role;
+    }
+    
+    if (updates.isActive !== undefined) {
+      updateData.isActive = updates.isActive;
+    }
 
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData
+    });
+
+    console.log('User updated in Prisma:', user.id, user.username);
+    return user as User;
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    return this.users.delete(id);
+    console.log('Deleting user from Prisma:', id);
+    
+    try {
+      await prisma.user.delete({
+        where: { id }
+      });
+      console.log('User deleted from Prisma:', id);
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
   }
 
   async authenticateUser(username: string, password: string): Promise<User | null> {
-    console.log('Authenticating user:', username);
-    const user = await this.getUserByUsername(username);
+    console.log('Authenticating user from Prisma:', username);
+    
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
     
     if (!user) {
-      console.log('User not found:', username);
+      console.log('User not found in Prisma:', username);
       return null;
     }
     
@@ -164,11 +157,14 @@ class UserStore {
       isValid: isValidPassword
     });
     
-    return isValidPassword ? user : null;
+    return isValidPassword ? (user as User) : null;
   }
 
   async changePassword(id: string, currentPassword: string, newPassword: string): Promise<boolean> {
-    const user = this.users.get(id);
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+    
     if (!user) {
       return false;
     }
@@ -179,8 +175,13 @@ class UserStore {
     }
 
     const hashedNewPassword = simpleHash(newPassword);
-    user.password = hashedNewPassword;
-    user.updatedAt = new Date();
+    
+    await prisma.user.update({
+      where: { id },
+      data: {
+        password: hashedNewPassword
+      }
+    });
 
     return true;
   }

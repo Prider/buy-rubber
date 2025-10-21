@@ -61,6 +61,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('PUT /api/users/[id] - Update user request:', params.id);
+    
     if (!verifyAdminRole(request)) {
       return NextResponse.json({
         success: false,
@@ -69,6 +71,8 @@ export async function PUT(
     }
 
     const body: UpdateUserRequest = await request.json();
+    console.log('Updating user in Prisma:', { id: params.id, updates: body });
+    
     const user = await userStore.updateUser(params.id, body);
 
     if (!user) {
@@ -78,6 +82,7 @@ export async function PUT(
       }, { status: 404 });
     }
 
+    console.log('User updated successfully in Prisma:', { id: user.id, username: user.username });
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
@@ -108,6 +113,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('DELETE /api/users/[id] - Delete user request:', params.id);
+    
     if (!verifyAdminRole(request)) {
       return NextResponse.json({
         success: false,
@@ -122,6 +129,8 @@ export async function DELETE(
         message: 'User not found'
       }, { status: 404 });
     }
+
+    console.log('User deleted successfully from Prisma:', params.id);
 
     return NextResponse.json({
       success: true,

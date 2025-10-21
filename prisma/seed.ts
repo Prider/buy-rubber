@@ -1,30 +1,96 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// Simple hash function (same as in userStore.ts)
+function simpleHash(password: string): string {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString();
+}
 
 async function main() {
   console.log('🌱 เริ่มต้นการสร้างข้อมูลตัวอย่าง...');
 
+  // ลบข้อมูลเก่าทั้งหมด (เรียงตาม foreign key dependencies)
+  console.log('🗑️  ลบข้อมูลเก่าทั้งหมด...');
+  
+  await prisma.sale.deleteMany({});
+  console.log('   - ลบข้อมูลการขาย');
+  
+  await prisma.payment.deleteMany({});
+  console.log('   - ลบข้อมูลการจ่ายเงิน');
+  
+  await prisma.advance.deleteMany({});
+  console.log('   - ลบข้อมูลเงินยืม');
+  
+  await prisma.purchase.deleteMany({});
+  console.log('   - ลบข้อมูลการรับซื้อ');
+  
+  await prisma.priceRule.deleteMany({});
+  console.log('   - ลบกฎการปรับราคา');
+  
+  await prisma.dailyPrice.deleteMany({});
+  console.log('   - ลบราคาประกาศประจำวัน');
+  
+  await prisma.member.deleteMany({});
+  console.log('   - ลบข้อมูลสมาชิก');
+  
+  await prisma.productType.deleteMany({});
+  console.log('   - ลบประเภทสินค้า');
+  
+  await prisma.location.deleteMany({});
+  console.log('   - ลบโรงรับซื้อ');
+  
+  await prisma.setting.deleteMany({});
+  console.log('   - ลบการตั้งค่าระบบ');
+  
+  await prisma.user.deleteMany({});
+  console.log('   - ลบผู้ใช้งาน');
+  
+  console.log('✅ ลบข้อมูลเก่าเรียบร้อยแล้ว');
+  console.log('');
+
   // สร้างผู้ใช้งาน
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.user.upsert({
-    where: { username: 'admin' },
-    update: {},
-    create: {
+  const admin = await prisma.user.create({
+    data: {
       username: 'admin',
-      password: hashedPassword,
-      name: 'ผู้ดูแลระบบ',
+      password: simpleHash('admin123'),
       role: 'admin',
+      isActive: true,
     },
   });
-  console.log('✅ สร้างผู้ใช้งาน:', admin.name);
+  
+  const user = await prisma.user.create({
+    data: {
+      username: 'user',
+      password: simpleHash('user123'),
+      role: 'user',
+      isActive: true,
+    },
+  });
+  
+  const viewer = await prisma.user.create({
+    data: {
+      username: 'viewer',
+      password: simpleHash('viewer123'),
+      role: 'viewer',
+      isActive: true,
+    },
+  });
+  
+  console.log('✅ สร้างผู้ใช้งาน:');
+  console.log('   - Admin:', admin.username, '(Full access)');
+  console.log('   - User:', user.username, '(Edit access)');
+  console.log('   - Viewer:', viewer.username, '(Read-only)');
 
   // สร้างโรงรับซื้อ
-  const location = await prisma.location.upsert({
-    where: { code: 'LOC001' },
-    update: {},
-    create: {
+  const location = await prisma.location.create({
+    data: {
       code: 'LOC001',
       name: 'โรงรับซื้อยางสาขาหลัก',
       address: '123 ถนนพระราม 4 กรุงเทพฯ',
@@ -35,28 +101,22 @@ async function main() {
 
   // สร้างประเภทสินค้า
   const productTypes = await Promise.all([
-    prisma.productType.upsert({
-      where: { code: 'FRESH' },
-      update: {},
-      create: {
+    prisma.productType.create({
+      data: {
         code: 'FRESH',
         name: 'น้ำยางสด',
         description: 'น้ำยางสดจากต้นยางพารา',
       },
     }),
-    prisma.productType.upsert({
-      where: { code: 'DRY' },
-      update: {},
-      create: {
+    prisma.productType.create({
+      data: {
         code: 'DRY',
         name: 'ยางแห้ง',
         description: 'ยางแผ่นดิบ',
       },
     }),
-    prisma.productType.upsert({
-      where: { code: 'SCRAP' },
-      update: {},
-      create: {
+    prisma.productType.create({
+      data: {
         code: 'SCRAP',
         name: 'เศษยาง',
         description: 'เศษยางคละ',
@@ -69,15 +129,8 @@ async function main() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const dailyPrice = await prisma.dailyPrice.upsert({
-    where: {
-      date_locationId: {
-        date: today,
-        locationId: location.id,
-      },
-    },
-    update: {},
-    create: {
+  const dailyPrice = await prisma.dailyPrice.create({
+    data: {
       date: today,
       locationId: location.id,
       basePrice: 50.0, // 50 บาท/กก.
@@ -152,19 +205,15 @@ async function main() {
   console.log('✅ สร้างสมาชิก:', members.length, 'ราย');
 
   // สร้างตั้งค่าระบบ
-  await prisma.setting.upsert({
-    where: { key: 'company_name' },
-    update: { value: 'บริษัท รับซื้อยางพารา จำกัด' },
-    create: {
+  await prisma.setting.create({
+    data: {
       key: 'company_name',
       value: 'บริษัท รับซื้อยางพารา จำกัด',
     },
   });
 
-  await prisma.setting.upsert({
-    where: { key: 'tax_id' },
-    update: { value: '0-1234-56789-01-2' },
-    create: {
+  await prisma.setting.create({
+    data: {
       key: 'tax_id',
       value: '0-1234-56789-01-2',
     },
@@ -175,8 +224,19 @@ async function main() {
   console.log('🎉 สร้างข้อมูลตัวอย่างเสร็จสมบูรณ์!');
   console.log('');
   console.log('ข้อมูลการเข้าสู่ระบบ:');
-  console.log('  Username: admin');
-  console.log('  Password: admin123');
+  console.log('');
+  console.log('  👤 Admin Account (Full access):');
+  console.log('     Username: admin');
+  console.log('     Password: admin123');
+  console.log('');
+  console.log('  👤 User Account (Edit access):');
+  console.log('     Username: user');
+  console.log('     Password: user123');
+  console.log('');
+  console.log('  👤 Viewer Account (Read-only):');
+  console.log('     Username: viewer');
+  console.log('     Password: viewer123');
+  console.log('');
 }
 
 main()

@@ -23,13 +23,13 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
   const [createForm, setCreateForm] = useState<CreateUserRequest>({
     username: '',
     password: '',
-    role: 'employee'
+    role: 'user'
   });
   
   // Edit form state
   const [editForm, setEditForm] = useState<UpdateUserRequest>({
     username: '',
-    role: 'employee',
+    role: 'user',
     isActive: true
   });
 
@@ -313,8 +313,9 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value as UserRole })}
                   className="input"
                 >
-                  <option value="employee">Employee</option>
-                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer (Read-only)</option>
+                  <option value="user">User (Can edit)</option>
+                  <option value="admin">Admin (Full access)</option>
                 </select>
               </div>
               <div className="flex space-x-3">
@@ -359,8 +360,9 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
                   className="input"
                 >
-                  <option value="employee">Employee</option>
-                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer (Read-only)</option>
+                  <option value="user">User (Can edit)</option>
+                  <option value="admin">Admin (Full access)</option>
                 </select>
               </div>
               <div className="flex items-center">

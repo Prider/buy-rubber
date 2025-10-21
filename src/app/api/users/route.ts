@@ -49,7 +49,10 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create new user (admin only)
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/users - Create user request received');
+    
     if (!verifyAdminRole(request)) {
+      console.log('Admin access denied');
       return NextResponse.json({
         success: false,
         message: 'Admin access required'
@@ -59,6 +62,8 @@ export async function POST(request: NextRequest) {
     const body: CreateUserRequest = await request.json();
     const { username, password, role } = body;
 
+    console.log('Creating user with Prisma:', { username, role });
+
     if (!username || !password || !role) {
       return NextResponse.json({
         success: false,
@@ -67,6 +72,8 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await userStore.createUser(body);
+    console.log('User created successfully in Prisma:', { id: user.id, username: user.username });
+    
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
