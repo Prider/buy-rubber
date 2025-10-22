@@ -102,7 +102,7 @@ export default function MembersPage() {
           </div>
 
           {/* Main Content */}
-          <div className="space-y-8">
+          <div className="space-y-2">
             {/* Error Display */}
             {error && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-red-200 dark:border-red-800 overflow-hidden">
