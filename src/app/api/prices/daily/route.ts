@@ -1,6 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// GET /api/prices/daily - Get prices for a specific date
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get('date');
+    
+    let targetDate;
+    if (date) {
+      targetDate = new Date(date);
+    } else {
+      targetDate = new Date();
+    }
+    
+    // Set to start of day to avoid timezone issues
+    targetDate.setHours(0, 0, 0, 0);
+    
+    console.log('[Daily Price API GET] Fetching prices for date:', targetDate.toISOString());
+    
+    const prices = await prisma.productPrice.findMany({
+      where: {
+        date: {
+          gte: targetDate,
+          lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000), // Next day
+        },
+      },
+      include: {
+        productType: true,
+      },
+      orderBy: {
+        productType: {
+          name: 'asc',
+        },
+      },
+    });
+    
+    console.log('[Daily Price API GET] Found prices:', prices.length, prices);
+    
+    return NextResponse.json(prices);
+  } catch (error) {
+    console.error('[Daily Price API GET] Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch daily prices', details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 // POST /api/prices/daily - Set prices for a specific date
 export async function POST(request: NextRequest) {
   try {

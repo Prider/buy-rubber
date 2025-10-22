@@ -29,13 +29,13 @@ export default function PurchasesPage() {
   const [showForm, setShowForm] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [dailyPrices, setDailyPrices] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     memberId: '',
     productTypeId: '',
     grossWeight: '',
-    containerWeight: '',
-    rubberPercent: '',
+    pricePerUnit: '',
     bonusPrice: '',
     notes: '',
   });
@@ -75,26 +75,6 @@ export default function PurchasesPage() {
     }
   };
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    loadData();
-  }, [user, router]);
-
-  const loadData = useCallback(async () => {
-    try {
-      await Promise.all([
-        loadPurchases(),
-        loadMembers(),
-        loadProductTypes(),
-      ]);
-    } catch (error) {
-      console.error('Load data error:', error);
-    }
-  }, []);
-
   const loadPurchases = useCallback(async () => {
     try {
       const response = await axios.get('/api/purchases');
@@ -124,14 +104,66 @@ export default function PurchasesPage() {
     }
   }, []);
 
+  const loadDailyPrices = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/prices/daily');
+      console.log('Daily prices API response:', response.data);
+      setDailyPrices(response.data);
+    } catch (error) {
+      console.error('Load daily prices error:', error);
+    }
+  }, []);
+
+  const loadData = useCallback(async () => {
+    try {
+      await Promise.all([
+        loadPurchases(),
+        loadMembers(),
+        loadProductTypes(),
+        loadDailyPrices(),
+      ]);
+    } catch (error) {
+      console.error('Load data error:', error);
+    }
+  }, [loadPurchases, loadMembers, loadProductTypes, loadDailyPrices]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, []);
+    
+    // If product type is selected, automatically set the price from daily prices
+    if (name === 'productTypeId' && value) {
+      const today = new Date().toISOString().split('T')[0];
+      console.log('Looking for price for productTypeId:', value, 'date:', today);
+      console.log('Available dailyPrices:', dailyPrices);
+      
+      // Try to find exact date match first
+      let priceForProductType = dailyPrices.find(price => 
+        price.productTypeId === value && 
+        price.date === today
+      );
+      
+      // If no exact match, try to find the most recent price for this product type
+      if (!priceForProductType) {
+        console.log('No exact date match, looking for most recent price...');
+        priceForProductType = dailyPrices
+          .filter(price => price.productTypeId === value)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      }
+      
+      console.log('Found price:', priceForProductType);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        pricePerUnit: priceForProductType ? priceForProductType.price.toString() : '',
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  }, [dailyPrices]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,8 +179,7 @@ export default function PurchasesPage() {
       const purchaseData = {
         ...formData,
         grossWeight: parseFloat(formData.grossWeight),
-        containerWeight: parseFloat(formData.containerWeight) || 0,
-        rubberPercent: formData.rubberPercent ? parseFloat(formData.rubberPercent) : null,
+        pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
         bonusPrice: parseFloat(formData.bonusPrice) || 0,
         locationId: null,
         userId: user.id,
@@ -162,8 +193,7 @@ export default function PurchasesPage() {
         memberId: '',
         productTypeId: '',
         grossWeight: '',
-        containerWeight: '',
-        rubberPercent: '',
+        pricePerUnit: '',
         bonusPrice: '',
         notes: '',
       });
@@ -185,8 +215,7 @@ export default function PurchasesPage() {
       memberId: '',
       productTypeId: '',
       grossWeight: '',
-      containerWeight: '',
-      rubberPercent: '',
+      pricePerUnit: '',
       bonusPrice: '',
       notes: '',
     });
@@ -199,19 +228,17 @@ export default function PurchasesPage() {
   }, []);
 
   const addToCart = useCallback(() => {
-    if (!formData.memberId || !formData.productTypeId || !formData.grossWeight) {
+    if (!formData.memberId || !formData.productTypeId || !formData.grossWeight || !formData.pricePerUnit) {
       setError('กรุณากรอกข้อมูลที่จำเป็น');
       return;
     }
     const member = members.find(m => m.id === formData.memberId);
     const productType = productTypes.find(pt => pt.id === formData.productTypeId);
     const grossWeight = parseFloat(formData.grossWeight) || 0;
-    const containerWeight = parseFloat(formData.containerWeight) || 0;
-    const netWeight = grossWeight - containerWeight;
-    const rubberPercent = formData.rubberPercent ? parseFloat(formData.rubberPercent) : null;
-    const dryWeight = rubberPercent ? (netWeight * rubberPercent) / 100 : netWeight;
+    const dryWeight = grossWeight;
+    const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
-    const basePrice = 0; // TODO: fetch from daily price
+    const basePrice = pricePerUnit;
     const adjustedPrice = basePrice + bonusPrice;
     const finalPrice = adjustedPrice;
     const totalAmount = dryWeight * finalPrice;
@@ -225,10 +252,8 @@ export default function PurchasesPage() {
       productTypeName: productType?.name || '',
       productTypeCode: productType?.code || '',
       grossWeight,
-      containerWeight,
-      netWeight,
       dryWeight,
-      rubberPercent,
+      pricePerUnit,
       bonusPrice,
       basePrice,
       adjustedPrice,
@@ -267,6 +292,15 @@ export default function PurchasesPage() {
       setSubmitting(false);
     }
   }, [user, cart, loadPurchases]);
+
+  // Load data on mount
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    loadData();
+  }, [user, router, loadData]);
 
   const printCart = useCallback(() => {
     const printWindow = window.open('', '_blank');
@@ -322,7 +356,6 @@ export default function PurchasesPage() {
     printWindow.document.close();
     printWindow.print();
   }, [cart]);
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -501,7 +534,7 @@ export default function PurchasesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pl-8">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      น้ำหนักรวมภาชนะ (กก.) <span className="text-red-500">*</span>
+                      น้ำหนักสุทธิ (กก.) <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -521,90 +554,28 @@ export default function PurchasesPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      น้ำหนักภาชนะ (กก.)
+                      ราคาต่อหน่วย (บาท/กก.) <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type="number"
                         step="0.01"
-                        name="containerWeight"
-                        value={formData.containerWeight}
+                        name="pricePerUnit"
+                        value={formData.pricePerUnit || ''}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0.00"
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">กก.</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      %ยาง (DRC)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="rubberPercent"
-                        value={formData.rubberPercent}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 pr-8 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0.0"
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing & Notes */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                    <svg className="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลราคา & หมายเหตุ</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pl-8">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      ราคาบวกพิเศษ (บาท/กก.)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="bonusPrice"
-                        value={formData.bonusPrice}
-                        onChange={handleInputChange}
+                        required
                         className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                        placeholder="0.00"
+                        placeholder={formData.pricePerUnit}
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                         <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">บาท/กก.</span>
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      หมายเหตุ
-                    </label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 resize-none shadow-sm"
-                      placeholder="หมายเหตุเพิ่มเติม..."
-                    />
-                  </div>
                 </div>
+
+                
+
               </div>
 
               {/* Actions */}
