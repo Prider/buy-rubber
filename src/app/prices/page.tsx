@@ -210,8 +210,16 @@ export default function PricesPage() {
               จัดการราคารับซื้อยางตามประเภท (10 วันล่าสุด)
             </p>
           </div>
-          <button onClick={handleOpenPriceForm} className="btn btn-primary">
-            + ตั้งราคาวันนี้
+          <button 
+            onClick={handleOpenPriceForm} 
+            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+          >
+            <div className="flex items-center space-x-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>ตั้งราคาวันนี้</span>
+            </div>
           </button>
         </div>
 
