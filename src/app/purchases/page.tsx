@@ -572,36 +572,33 @@ export default function PurchasesPage() {
                       </div>
                     </div>
                   </div>
-                     <div className="space-y-2">
-                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                         ยอดเงินรวม (บาท) <span className="text-red-500">*</span>
-                       </label>
-                       <div className="relative">
-                         <input
-                           type="number"
-                           step="0.01"
-                           name="totalAmount"
-                           value={(() => {
-                             const grossWeight = parseFloat(formData.grossWeight) || 0;
-                             const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
-                             const bonusPrice = parseFloat(formData.bonusPrice) || 0;
-                             const finalPrice = pricePerUnit + bonusPrice;
-                             const totalAmount = grossWeight * finalPrice;
-                             return totalAmount > 0 ? totalAmount.toFixed(2) : '';
-                           })()}
-                           readOnly
-                           className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm"
-                           placeholder="0.00"
-                         />
-                         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">บาท</span>
-                         </div>
-                       </div>
-                     </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      ยอดเงินรวม (บาท) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="totalAmount"
+                        value={(() => {
+                          const grossWeight = parseFloat(formData.grossWeight) || 0;
+                          const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
+                          const bonusPrice = parseFloat(formData.bonusPrice) || 0;
+                          const finalPrice = pricePerUnit + bonusPrice;
+                          const totalAmount = grossWeight * finalPrice;
+                          return totalAmount > 0 ? totalAmount.toFixed(2) : '';
+                        })()}
+                        readOnly
+                        className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm"
+                        placeholder="0.00"
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">บาท</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                
-
               </div>
 
               {/* Actions */}
@@ -615,7 +612,8 @@ export default function PurchasesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  disabled={!formData.memberId || !formData.productTypeId || !formData.grossWeight || !formData.pricePerUnit}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                 >
                   <div className="flex items-center space-x-1.5">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
