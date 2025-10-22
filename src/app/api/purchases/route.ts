@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         member: true,
-        location: true,
         productType: true,
         user: true,
       },
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
     const dailyPrice = await prisma.dailyPrice.findFirst({
       where: {
         date: new Date(data.date),
-        locationId: data.locationId,
       },
       include: {
         priceRules: true,
@@ -132,7 +130,7 @@ export async function POST(request: NextRequest) {
       data: {
         purchaseNo,
         date: new Date(data.date),
-        locationId: data.locationId,
+        locationId: data.locationId || null,
         memberId: data.memberId,
         productTypeId: data.productTypeId,
         userId: data.userId,
@@ -152,7 +150,6 @@ export async function POST(request: NextRequest) {
       },
       include: {
         member: true,
-        location: true,
         productType: true,
         user: true,
       },

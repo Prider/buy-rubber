@@ -28,6 +28,7 @@ async function main() {
   await prisma.productType.deleteMany({});
   console.log('   - ลบประเภทสินค้า');
   
+  
   await prisma.user.deleteMany({});
   console.log('   - ลบผู้ใช้งาน');
   
