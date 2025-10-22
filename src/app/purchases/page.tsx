@@ -42,6 +42,38 @@ export default function PurchasesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [cart, setCart] = useState<any[]>([]);
+  
+  // Member search state
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Filter members based on search term
+  const filteredMembers = members.filter(member => 
+    member.name.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+    member.code.toLowerCase().includes(memberSearchTerm.toLowerCase())
+  );
+
+  // Handle member selection
+  const handleMemberSelect = (member: Member) => {
+    setSelectedMember(member);
+    setMemberSearchTerm(`${member.code} - ${member.name}`);
+    setFormData(prev => ({ ...prev, memberId: member.id }));
+    setShowMemberDropdown(false);
+  };
+
+  // Handle member search input change
+  const handleMemberSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setMemberSearchTerm(value);
+    setShowMemberDropdown(true);
+    
+    // Clear selection if search term doesn't match selected member
+    if (selectedMember && !value.includes(selectedMember.code)) {
+      setSelectedMember(null);
+      setFormData(prev => ({ ...prev, memberId: '' }));
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -160,6 +192,10 @@ export default function PurchasesPage() {
     });
     setError('');
     setShowForm(false);
+    // Reset member search state
+    setMemberSearchTerm('');
+    setSelectedMember(null);
+    setShowMemberDropdown(false);
   }, []);
 
   const addToCart = useCallback(() => {
@@ -352,20 +388,82 @@ export default function PurchasesPage() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       สมาชิก <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      name="memberId"
-                      value={formData.memberId}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                    >
-                      <option value="">เลือกสมาชิก</option>
-                      {members.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.code} - {member.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={memberSearchTerm}
+                        onChange={handleMemberSearchChange}
+                        onFocus={() => setShowMemberDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowMemberDropdown(false), 200)}
+                        placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส..."
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                        required
+                      />
+                      {memberSearchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMemberSearchTerm('');
+                            setSelectedMember(null);
+                            setFormData(prev => ({ ...prev, memberId: '' }));
+                          }}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      {/* Dropdown */}
+                      {showMemberDropdown && filteredMembers.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredMembers.map((member) => (
+                            <button
+                              key={member.id}
+                              type="button"
+                              onClick={() => handleMemberSelect(member)}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-gray-100">
+                                    {member.code} - {member.name}
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    เจ้าของ {member.ownerPercent}% | คนตัด {member.tapperPercent}%
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* No results */}
+                      {showMemberDropdown && memberSearchTerm && filteredMembers.length === 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4">
+                          <div className="text-center text-gray-500 dark:text-gray-400">
+                            <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p className="text-sm">ไม่พบสมาชิกที่ตรงกับคำค้นหา</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
