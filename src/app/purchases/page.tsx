@@ -528,7 +528,7 @@ export default function PurchasesPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3-1m-3 1l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
                     </svg>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลน้ำหนัก</h3>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลน้ำหนัก x ราคา = ยอดเงินรวม</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pl-8">
@@ -572,6 +572,32 @@ export default function PurchasesPage() {
                       </div>
                     </div>
                   </div>
+                     <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                         ยอดเงินรวม (บาท) <span className="text-red-500">*</span>
+                       </label>
+                       <div className="relative">
+                         <input
+                           type="number"
+                           step="0.01"
+                           name="totalAmount"
+                           value={(() => {
+                             const grossWeight = parseFloat(formData.grossWeight) || 0;
+                             const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
+                             const bonusPrice = parseFloat(formData.bonusPrice) || 0;
+                             const finalPrice = pricePerUnit + bonusPrice;
+                             const totalAmount = grossWeight * finalPrice;
+                             return totalAmount > 0 ? totalAmount.toFixed(2) : '';
+                           })()}
+                           readOnly
+                           className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm"
+                           placeholder="0.00"
+                         />
+                         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">บาท</span>
+                         </div>
+                       </div>
+                     </div>
                 </div>
 
                 
