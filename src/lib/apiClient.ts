@@ -124,14 +124,6 @@ class ApiClient {
     return this.post('/api/purchases', data);
   }
 
-  public async getPayments() {
-    return this.get('/api/payments');
-  }
-
-  public async createPayment(data: any) {
-    return this.post('/api/payments', data);
-  }
-
   public async getAdvances() {
     return this.get('/api/advances');
   }

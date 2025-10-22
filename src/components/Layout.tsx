@@ -34,11 +34,6 @@ export default function Layout({ children }: LayoutProps) {
       icon: '🛒',
     },
     {
-      name: 'จ่ายเงิน',
-      href: '/payments',
-      icon: '💰',
-    },
-    {
       name: 'สมาชิก',
       href: '/members',
       icon: '👥',
