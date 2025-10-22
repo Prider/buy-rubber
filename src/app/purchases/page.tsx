@@ -108,6 +108,10 @@ export default function PurchasesPage() {
     try {
       const response = await axios.get('/api/prices/daily');
       console.log('Daily prices API response:', response.data);
+      console.log('Number of daily prices found:', response.data.length);
+      if (response.data.length > 0) {
+        console.log('Sample daily price:', response.data[0]);
+      }
       setDailyPrices(response.data);
     } catch (error) {
       console.error('Load daily prices error:', error);
@@ -136,18 +140,24 @@ export default function PurchasesPage() {
       console.log('Looking for price for productTypeId:', value, 'date:', today);
       console.log('Available dailyPrices:', dailyPrices);
       
-      // Try to find exact date match first
-      let priceForProductType = dailyPrices.find(price => 
-        price.productTypeId === value && 
-        price.date === today
-      );
+      // Try to find exact date match first (compare date strings, handle timezone)
+      let priceForProductType = dailyPrices.find(price => {
+        if (!price.date) return false;
+        const priceDate = new Date(price.date).toISOString().split('T')[0];
+        console.log('Comparing:', priceDate, 'with', today);
+        return price.productTypeId === value && priceDate === today;
+      });
       
       // If no exact match, try to find the most recent price for this product type
       if (!priceForProductType) {
         console.log('No exact date match, looking for most recent price...');
         priceForProductType = dailyPrices
           .filter(price => price.productTypeId === value)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+          .sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+          })[0];
       }
       
       console.log('Found price:', priceForProductType);
@@ -628,22 +638,27 @@ export default function PurchasesPage() {
         </div>
 
         {/* Cart */}
-        {cart.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
-            {/* Header */}
-            <div className="px-8 py-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">ตะกร้า</h2>
-                    <p className="text-gray-600 dark:text-gray-300 mt-1">รายการรับซื้อที่รอการบันทึก ({cart.length} รายการ)</p>
-                  </div>
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
+          {/* Header */}
+          <div className="px-8 py-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                  </svg>
                 </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">ตะกร้า</h2>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    {cart.length > 0 
+                      ? `รายการรับซื้อที่รอการบันทึก (${cart.length} รายการ)`
+                      : 'ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น'
+                    }
+                  </p>
+                </div>
+              </div>
+              {cart.length > 0 && (
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={printCart}
@@ -678,25 +693,27 @@ export default function PurchasesPage() {
                     )}
                   </button>
                 </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">วันที่รับซื้อ</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">สมาชิก</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภทสินค้า</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักแห้ง (กก.)</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">เงินที่ได้</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                  {cart.map((item, index) => (
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">วันที่รับซื้อ</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">สมาชิก</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภทสินค้า</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักแห้ง (กก.)</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">เงินที่ได้</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                {cart.length > 0 ? (
+                  cart.map((item, index) => (
                     <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{formatDate(item.date)}</td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.memberName}</td>
@@ -715,8 +732,26 @@ export default function PurchasesPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                          </svg>
+                        </div>
+                        <div className="text-gray-500 dark:text-gray-400">
+                          <p className="text-lg font-medium">ตะกร้าว่าง</p>
+                          <p className="text-sm">เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+              {cart.length > 0 && (
                 <tfoot>
                   <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-t-2 border-gray-200 dark:border-gray-500">
                     <td colSpan={5} className="px-6 py-4 text-right text-lg font-bold text-gray-900 dark:text-white">
@@ -728,10 +763,10 @@ export default function PurchasesPage() {
                     <td className="px-6 py-4"></td>
                   </tr>
                 </tfoot>
-              </table>
-            </div>
+              )}
+            </table>
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
