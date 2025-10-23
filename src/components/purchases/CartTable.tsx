@@ -26,8 +26,9 @@ interface CartTableProps {
   submitting: boolean;
   totalAmount: number;
   printCart: () => void;
-  saveCartToDb: () => void;
+  saveCartToDb: () => Promise<void>;
   removeFromCart: (id: string) => void;
+  onShowPrintModal: () => void;
 }
 
 export const CartTable: React.FC<CartTableProps> = ({
@@ -37,7 +38,16 @@ export const CartTable: React.FC<CartTableProps> = ({
   printCart,
   saveCartToDb,
   removeFromCart,
+  onShowPrintModal,
 }) => {
+  const handleSaveAndAskPrint = async () => {
+    try {
+      await saveCartToDb();
+      onShowPrintModal();
+    } catch (error) {
+      console.error('Error saving cart:', error);
+    }
+  };
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
@@ -60,20 +70,9 @@ export const CartTable: React.FC<CartTableProps> = ({
             </div>
           </div>
           {cart.length > 0 && (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center">
               <button
-                onClick={printCart}
-                className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                  </svg>
-                  <span>พิมพ์ PDF</span>
-                </div>
-              </button>
-              <button
-                onClick={saveCartToDb}
+                onClick={handleSaveAndAskPrint}
                 disabled={submitting}
                 className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
               >
@@ -89,7 +88,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>บันทึกลงฐานข้อมูล</span>
+                    <span>บันทึกข้อมูล</span>
                   </div>
                 )}
               </button>
