@@ -20,7 +20,6 @@ model User {
   updatedAt DateTime @updatedAt
 
   purchases Purchase[]
-  payments  Payment[]
 }
 
 // สมาชิก (เจ้าของสวน)
@@ -43,7 +42,6 @@ model Member {
   updatedAt       DateTime @updatedAt
 
   purchases      Purchase[]
-  payments       Payment[]
 }
 
 // ประเภทสินค้ายาง
@@ -113,39 +111,6 @@ model Purchase {
   member      Member      @relation(fields: [memberId], references: [id])
   productType ProductType @relation(fields: [productTypeId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
-  
-  paymentItems PaymentItem[]
-}
-
-// การจ่ายชำระหนี้
-model Payment {
-  id             String   @id @default(uuid())
-  paymentNo      String   @unique
-  date           DateTime @default(now())
-  memberId       String
-  userId         String
-  totalAmount    Float    // ยอดรวมก่อนหัก
-  advanceDeduct  Float    @default(0) // หักเงินล่วงหน้า
-  netAmount      Float    // ยอดจ่ายสุทธิ
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  member  Member        @relation(fields: [memberId], references: [id])
-  user    User          @relation(fields: [userId], references: [id])
-  items   PaymentItem[]
-}
-
-// รายการรับซื้อในการจ่ายแต่ละครั้ง
-model PaymentItem {
-  id         String @id @default(uuid())
-  paymentId  String
-  purchaseId String
-
-  payment  Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  purchase Purchase @relation(fields: [purchaseId], references: [id])
-
-  @@unique([paymentId, purchaseId])
 }
 
 // ตั้งค่าระบบ

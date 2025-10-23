@@ -93,28 +93,6 @@ export interface Advance {
   member?: Member;
 }
 
-export interface Payment {
-  id: string;
-  paymentNo: string;
-  date: Date;
-  memberId: string;
-  userId: string;
-  totalAmount: number;
-  advanceDeduct: number;
-  netAmount: number;
-  notes?: string;
-  member?: Member;
-  user?: User;
-  items?: PaymentItem[];
-}
-
-export interface PaymentItem {
-  id: string;
-  paymentId: string;
-  purchaseId: string;
-  purchase?: Purchase;
-}
-
 export interface Sale {
   id: string;
   saleNo: string;
