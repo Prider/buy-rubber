@@ -117,18 +117,33 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            ...item,
+            date: item.date,
+            memberId: item.memberId,
+            productTypeId: item.productTypeId,
             userId: user.id,
-            locationId: null,
+            grossWeight: item.grossWeight,
+            containerWeight: 0, // Set to 0 since we removed container weight from UI
+            rubberPercent: null, // Set to null since we removed rubber percent from UI
+            bonusPrice: item.bonusPrice,
+            notes: item.notes,
           }),
         })
       );
       
-      await Promise.all(promises);
+      const responses = await Promise.all(promises);
+      
+      // Check if any request failed
+      const failedResponses = responses.filter(response => !response.ok);
+      if (failedResponses.length > 0) {
+        const errorData = await failedResponses[0].json();
+        throw new Error(errorData.error || 'เกิดข้อผิดพลาดในการบันทึก');
+      }
+      
       setCart([]);
       await loadPurchases();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึก');
+      console.error('Save cart error:', err);
+      setError(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSubmitting(false);
     }

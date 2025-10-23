@@ -43,7 +43,6 @@ export interface ProductType {
 export interface DailyPrice {
   id: string;
   date: Date;
-  locationId: string;
   basePrice: number;
   priceRules?: PriceRule[];
 }
@@ -60,7 +59,6 @@ export interface Purchase {
   id: string;
   purchaseNo: string;
   date: Date;
-  locationId: string;
   memberId: string;
   productTypeId: string;
   userId: string;
@@ -121,7 +119,6 @@ export interface Sale {
   id: string;
   saleNo: string;
   date: Date;
-  locationId: string;
   productTypeId: string;
   userId: string;
   customerName: string;
@@ -162,7 +159,6 @@ export interface DashboardStats {
 export interface ReportFilter {
   startDate?: Date;
   endDate?: Date;
-  locationId?: string;
   memberId?: string;
   productTypeId?: string;
 }

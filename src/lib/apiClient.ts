@@ -140,10 +140,6 @@ class ApiClient {
     return this.put('/api/prices', data);
   }
 
-  public async getLocations() {
-    return this.get('/api/locations');
-  }
-
   // Health check for server connectivity
   public async healthCheck(): Promise<boolean> {
     try {

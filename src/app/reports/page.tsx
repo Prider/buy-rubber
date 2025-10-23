@@ -89,7 +89,6 @@ export default function ReportsPage() {
                 <option value="daily_purchase">รายงานรับซื้อประจำวัน</option>
                 <option value="member_summary">สรุปรายสมาชิก</option>
                 <option value="payment_summary">สรุปการจ่ายเงิน</option>
-                <option value="advance_summary">สรุปเงินล่วงหน้า</option>
               </select>
             </div>
 

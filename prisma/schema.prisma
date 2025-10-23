@@ -81,7 +81,6 @@ model Purchase {
   id              String   @id @default(uuid())
   purchaseNo      String   @unique
   date            DateTime @default(now())
-  locationId      String?
   memberId        String
   productTypeId   String
   userId          String
