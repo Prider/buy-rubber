@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 
 interface Member {
@@ -64,6 +67,8 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   resetForm,
   addToCart,
 }) => {
+  const router = useRouter();
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
@@ -190,10 +195,20 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   {showMemberDropdown && memberSearchTerm && filteredMembers.length === 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4">
                       <div className="text-center text-gray-500 dark:text-gray-400">
-                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="text-sm">ไม่พบสมาชิกที่ตรงกับคำค้นหา</p>
+                        <p className="text-sm font-medium mb-3">ไม่พบสมาชิกที่ตรงกับคำค้นหา</p>
+                        <button
+                          type="button"
+                          onClick={() => router.push('/members')}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
+                          เพิ่มสมาชิกใหม่
+                        </button>
                       </div>
                     </div>
                   )}
