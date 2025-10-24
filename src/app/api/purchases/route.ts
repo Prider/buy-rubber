@@ -180,8 +180,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(purchase, { status: 201 });
   } catch (error) {
     console.error('Create purchase error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ' },
+      { error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

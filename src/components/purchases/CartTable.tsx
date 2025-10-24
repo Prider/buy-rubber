@@ -41,11 +41,14 @@ export const CartTable: React.FC<CartTableProps> = ({
   onShowPrintModal,
 }) => {
   const handleSaveAndAskPrint = async () => {
+    console.log('[CartTable] Save button clicked, cart items:', cart);
     try {
+      console.log('[CartTable] Calling saveCartToDb...');
       await saveCartToDb();
+      console.log('[CartTable] saveCartToDb completed successfully');
       onShowPrintModal();
     } catch (error) {
-      console.error('Error saving cart:', error);
+      console.error('[CartTable] Error saving cart:', error);
     }
   };
   return (

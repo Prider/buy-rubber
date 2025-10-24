@@ -105,44 +105,57 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
 
   // Save cart to database
   const saveCartToDb = useCallback(async () => {
-    if (!user || cart.length === 0) return;
+    console.log('[useCart] saveCartToDb called, user:', user?.id, 'cart length:', cart.length);
+    if (!user || cart.length === 0) {
+      console.log('[useCart] Early return - no user or empty cart');
+      return;
+    }
     setSubmitting(true);
     setError('');
     
     try {
-      const promises = cart.map(item => 
-        fetch('/api/purchases', {
+      console.log('[useCart] Processing cart items:', cart);
+      const promises = cart.map((item, index) => {
+        const payload = {
+          date: item.date,
+          memberId: item.memberId,
+          productTypeId: item.productTypeId,
+          userId: user.id,
+          grossWeight: item.grossWeight,
+          containerWeight: 0, // Set to 0 since we removed container weight from UI
+          rubberPercent: null, // Set to null since we removed rubber percent from UI
+          bonusPrice: item.bonusPrice,
+          notes: item.notes,
+        };
+        console.log(`[useCart] Sending item ${index + 1}:`, payload);
+        
+        return fetch('/api/purchases', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            date: item.date,
-            memberId: item.memberId,
-            productTypeId: item.productTypeId,
-            userId: user.id,
-            grossWeight: item.grossWeight,
-            containerWeight: 0, // Set to 0 since we removed container weight from UI
-            rubberPercent: null, // Set to null since we removed rubber percent from UI
-            bonusPrice: item.bonusPrice,
-            notes: item.notes,
-          }),
-        })
-      );
+          body: JSON.stringify(payload),
+        });
+      });
       
+      console.log('[useCart] Waiting for API responses...');
       const responses = await Promise.all(promises);
+      console.log('[useCart] Received responses:', responses.map(r => ({ status: r.status, ok: r.ok })));
       
       // Check if any request failed
       const failedResponses = responses.filter(response => !response.ok);
       if (failedResponses.length > 0) {
+        console.error('[useCart] Some requests failed:', failedResponses);
         const errorData = await failedResponses[0].json();
         throw new Error(errorData.error || 'เกิดข้อผิดพลาดในการบันทึก');
       }
       
+      console.log('[useCart] All requests successful, clearing cart and reloading purchases');
       setCart([]);
       await loadPurchases();
+      console.log('[useCart] Cart cleared and purchases reloaded');
     } catch (err: any) {
-      console.error('Save cart error:', err);
+      console.error('[useCart] Save cart error:', err);
       setError(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSubmitting(false);
