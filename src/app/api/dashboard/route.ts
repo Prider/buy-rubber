@@ -70,7 +70,6 @@ export async function GET(request: NextRequest) {
       include: {
         member: true,
         productType: true,
-        location: true,
       },
     });
 
