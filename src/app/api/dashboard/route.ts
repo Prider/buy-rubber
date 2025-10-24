@@ -109,6 +109,30 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    // ดึงข้อมูลราคาวันนี้
+    const todayPrices = await prisma.productPrice.findMany({
+      where: {
+        date: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      include: {
+        productType: true,
+      },
+      orderBy: {
+        productType: {
+          name: 'asc',
+        },
+      },
+    });
+
+    // ดึงข้อมูลประเภทสินค้าทั้งหมด
+    const productTypes = await prisma.productType.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+    });
+
     return NextResponse.json({
       stats: {
         todayPurchases: todayPurchases._count,
@@ -122,6 +146,8 @@ export async function GET(request: NextRequest) {
       },
       recentPurchases,
       topMembers: topMembersWithDetails,
+      todayPrices,
+      productTypes,
     });
   } catch (error) {
     console.error('Get dashboard error:', error);
