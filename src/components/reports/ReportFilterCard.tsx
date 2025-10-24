@@ -36,7 +36,7 @@ export default function ReportFilterCard({
       
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
+          <div className="lg:col-span-1">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               ประเภทรายงาน
             </label>
@@ -48,7 +48,6 @@ export default function ReportFilterCard({
               >
                 <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน</option>
                 <option value="member_summary">👥 สรุปรายสมาชิก</option>
-                <option value="payment_summary">💰 สรุปการจ่ายเงิน</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

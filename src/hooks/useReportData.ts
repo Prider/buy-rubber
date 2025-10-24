@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-export type ReportType = 'daily_purchase' | 'member_summary' | 'payment_summary';
+export type ReportType = 'daily_purchase' | 'member_summary';
 
 export function useReportData() {
   const [loading, setLoading] = useState(false);
@@ -79,8 +79,6 @@ export function useReportData() {
         return 'รายงานรับซื้อประจำวัน';
       case 'member_summary':
         return 'สรุปรายสมาชิก';
-      case 'payment_summary':
-        return 'สรุปการจ่ายเงิน';
       default:
         return 'รายงาน';
     }
