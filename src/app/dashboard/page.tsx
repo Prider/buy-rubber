@@ -62,6 +62,7 @@ export default function DashboardPage() {
       <div className="space-y-8 pb-8">
         {/* Header Section */}
         <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">แดชบอร์ด</h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">ภาพรวมกิจการรับซื้อยาง</p>
         </div>
 
