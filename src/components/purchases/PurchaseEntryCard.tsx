@@ -38,12 +38,14 @@ interface PurchaseEntryCardProps {
   showMemberDropdown: boolean;
   selectedMember: Member | null;
   filteredMembers: Member[];
+  recentPurchases: any[];
   isFormValid: boolean;
   calculateTotalAmount: () => string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   handleMemberSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleMemberSelect: (member: Member) => void;
   clearMemberSearch: () => void;
+  applySuggestedPrice: (price: number) => void;
   setShowMemberDropdown: (show: boolean) => void;
   resetForm: () => void;
   addToCart: () => void;
@@ -52,16 +54,20 @@ interface PurchaseEntryCardProps {
 export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   formData,
   error,
+  members,
   productTypes,
   memberSearchTerm,
   showMemberDropdown,
+  selectedMember,
   filteredMembers,
+  recentPurchases,
   isFormValid,
   calculateTotalAmount,
   handleInputChange,
   handleMemberSearchChange,
   handleMemberSelect,
   clearMemberSearch,
+  applySuggestedPrice,
   setShowMemberDropdown,
   resetForm,
   addToCart,
@@ -322,6 +328,41 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               </div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลราคา</h3>
             </div>
+
+            {/* Recent Purchase Suggestions */}
+            {recentPurchases.length > 0 && formData.productTypeId && (
+              <div className="pl-8">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">ราคาล่าสุดจากประวัติการรับซื้อ</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recentPurchases.map((purchase, index) => (
+                      <button
+                        key={purchase.id}
+                        type="button"
+                        onClick={() => applySuggestedPrice(purchase.basePrice)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg transition-all duration-200 group"
+                      >
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {new Date(purchase.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                        </span>
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {purchase.basePrice.toFixed(2)} บาท/กก.
+                        </span>
+                        <svg className="w-4 h-4 text-blue-500 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-700 dark:text-blue-400 mt-2 italic">คลิกเพื่อใช้ราคานี้</p>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pl-8">
               <div className="space-y-2">

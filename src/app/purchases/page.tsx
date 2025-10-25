@@ -45,6 +45,7 @@ export default function PurchasesPage() {
     showMemberDropdown,
     selectedMember,
     filteredMembers,
+    recentPurchases,
     handleMemberSelect,
     handleMemberSearchChange,
     handleInputChange,
@@ -53,6 +54,7 @@ export default function PurchasesPage() {
     resetForm,
     resetAllFields,
     clearMemberSearch,
+    applySuggestedPrice,
     setShowMemberDropdown,
   } = usePurchaseForm({
     members,
@@ -118,12 +120,14 @@ export default function PurchasesPage() {
           showMemberDropdown={showMemberDropdown}
           selectedMember={selectedMember}
           filteredMembers={filteredMembers}
+          recentPurchases={recentPurchases}
           isFormValid={isFormValid()}
           calculateTotalAmount={calculateTotalAmount}
           handleInputChange={handleInputChange}
           handleMemberSearchChange={handleMemberSearchChange}
           handleMemberSelect={handleMemberSelect}
           clearMemberSearch={clearMemberSearch}
+          applySuggestedPrice={applySuggestedPrice}
           setShowMemberDropdown={setShowMemberDropdown}
           resetForm={resetAllFields}
           addToCart={handleAddToCart}

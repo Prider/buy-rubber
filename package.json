@@ -1,7 +1,7 @@
 {
   "name": "punsook-innotech",
   "version": "1.0.0",
-  "description": "ระบบบริหารจัดการรับซื้อน้ำยาง (Rubber Purchasing Management System)",
+  "description": "ระบบบริหารจัดการรับซื้อยาง (Rubber Purchasing Management System)",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",

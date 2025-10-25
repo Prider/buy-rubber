@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const memberId = searchParams.get('memberId');
+    const productTypeId = searchParams.get('productTypeId');
     const isPaid = searchParams.get('isPaid');
+    const limit = searchParams.get('limit');
 
     const where: any = {};
 
@@ -29,6 +31,10 @@ export async function GET(request: NextRequest) {
       where.memberId = memberId;
     }
 
+    if (productTypeId) {
+      where.productTypeId = productTypeId;
+    }
+
     if (isPaid !== null) {
       where.isPaid = isPaid === 'true';
     }
@@ -41,6 +47,7 @@ export async function GET(request: NextRequest) {
         user: true,
       },
       orderBy: { date: 'desc' },
+      take: limit ? parseInt(limit) : undefined,
     });
 
     return NextResponse.json(purchases);

@@ -52,6 +52,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
+  // Recent purchases for selected product type
+  const [recentPurchases, setRecentPurchases] = useState<any[]>([]);
+
   // Filter members based on search term
   const filteredMembers = members.filter(member => 
     member.name.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
@@ -79,6 +82,20 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     }
   }, [selectedMember]);
 
+  // Fetch recent purchases for a product type
+  const fetchRecentPurchases = useCallback(async (productTypeId: string) => {
+    try {
+      const response = await fetch(`/api/purchases?productTypeId=${productTypeId}&limit=3`);
+      if (response.ok) {
+        const purchases = await response.json();
+        setRecentPurchases(purchases.slice(0, 3)); // Max 3 purchases
+      }
+    } catch (error) {
+      console.error('Error fetching recent purchases:', error);
+      setRecentPurchases([]);
+    }
+  }, []);
+
   // Handle input changes
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -104,6 +121,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
             return dateB - dateA;
           })[0];
       }
+      
+      // Fetch recent purchases for this product type
+      fetchRecentPurchases(value);
       
       setFormData(prev => ({
         ...prev,
@@ -175,6 +195,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       notes: '',
     }));
     setError('');
+    setRecentPurchases([]); // Clear recent purchases
     // Keep member search term and selected member
     setShowMemberDropdown(false);
   }, []);
@@ -195,6 +216,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setError('');
     setMemberSearchTerm('');
     setSelectedMember(null);
+    setRecentPurchases([]); // Clear recent purchases
     setShowMemberDropdown(false);
   }, []);
 
@@ -205,6 +227,14 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setFormData(prev => ({ ...prev, memberId: '' }));
   }, []);
 
+  // Apply suggested price from recent purchase
+  const applySuggestedPrice = useCallback((price: number) => {
+    setFormData(prev => ({
+      ...prev,
+      pricePerUnit: price.toString(),
+    }));
+  }, []);
+
   return {
     formData,
     error,
@@ -213,6 +243,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     showMemberDropdown,
     selectedMember,
     filteredMembers,
+    recentPurchases,
     handleMemberSelect,
     handleMemberSearchChange,
     handleInputChange,
@@ -221,6 +252,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     resetForm,
     resetAllFields,
     clearMemberSearch,
+    applySuggestedPrice,
     setShowMemberDropdown,
   };
 };
