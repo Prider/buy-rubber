@@ -18,7 +18,9 @@ interface PurchaseFormData {
   date: string;
   memberId: string;
   productTypeId: string;
-  grossWeight: string;
+  grossWeight: string; // น้ำหนักรวมภาชนะ (total weight with container)
+  containerWeight: string; // น้ำหนักภาชนะ (container weight)
+  netWeight: string; // น้ำหนักสุทธิ (net weight - calculated)
   pricePerUnit: string;
   bonusPrice: string;
   notes: string;
@@ -36,6 +38,8 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     memberId: '',
     productTypeId: '',
     grossWeight: '',
+    containerWeight: '',
+    netWeight: '',
     pricePerUnit: '',
     bonusPrice: '',
     notes: '',
@@ -106,6 +110,20 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         [name]: value,
         pricePerUnit: priceForProductType ? priceForProductType.price.toString() : '',
       }));
+    } 
+    // Calculate net weight when gross weight or container weight changes
+    else if (name === 'grossWeight' || name === 'containerWeight') {
+      setFormData(prev => {
+        const newData = { ...prev, [name]: value };
+        const grossWeight = parseFloat(newData.grossWeight) || 0;
+        const containerWeight = parseFloat(newData.containerWeight) || 0;
+        const netWeight = grossWeight - containerWeight;
+        
+        return {
+          ...newData,
+          netWeight: netWeight > 0 ? netWeight.toFixed(2) : '',
+        };
+      });
     } else {
       setFormData(prev => ({
         ...prev,
@@ -116,26 +134,60 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
 
   // Calculate total amount
   const calculateTotalAmount = useCallback(() => {
-    const grossWeight = parseFloat(formData.grossWeight) || 0;
+    const netWeight = parseFloat(formData.netWeight) || 0;
     const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
     const finalPrice = pricePerUnit + bonusPrice;
-    const totalAmount = grossWeight * finalPrice;
+    const totalAmount = netWeight * finalPrice;
     return totalAmount > 0 ? totalAmount.toFixed(2) : '';
-  }, [formData.grossWeight, formData.pricePerUnit, formData.bonusPrice]);
+  }, [formData.netWeight, formData.pricePerUnit, formData.bonusPrice]);
 
   // Check if form is valid
   const isFormValid = useCallback(() => {
-    return !!(formData.memberId && formData.productTypeId && formData.grossWeight && formData.pricePerUnit);
-  }, [formData.memberId, formData.productTypeId, formData.grossWeight, formData.pricePerUnit]);
+    return !!(
+      formData.memberId && 
+      formData.productTypeId && 
+      formData.grossWeight && 
+      formData.containerWeight && 
+      formData.netWeight && 
+      formData.pricePerUnit
+    );
+  }, [
+    formData.memberId, 
+    formData.productTypeId, 
+    formData.grossWeight, 
+    formData.containerWeight, 
+    formData.netWeight, 
+    formData.pricePerUnit
+  ]);
 
-  // Reset form
+  // Reset form (keeping member selection for quick multiple entries)
   const resetForm = useCallback(() => {
+    setFormData(prev => ({
+      date: new Date().toISOString().split('T')[0],
+      memberId: prev.memberId, // Keep member selection
+      productTypeId: '',
+      grossWeight: '',
+      containerWeight: '',
+      netWeight: '',
+      pricePerUnit: '',
+      bonusPrice: '',
+      notes: '',
+    }));
+    setError('');
+    // Keep member search term and selected member
+    setShowMemberDropdown(false);
+  }, []);
+
+  // Reset ALL fields including member (for Reset button)
+  const resetAllFields = useCallback(() => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
       memberId: '',
       productTypeId: '',
       grossWeight: '',
+      containerWeight: '',
+      netWeight: '',
       pricePerUnit: '',
       bonusPrice: '',
       notes: '',
@@ -167,6 +219,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     calculateTotalAmount,
     isFormValid,
     resetForm,
+    resetAllFields,
     clearMemberSearch,
     setShowMemberDropdown,
   };

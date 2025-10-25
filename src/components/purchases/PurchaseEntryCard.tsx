@@ -22,7 +22,9 @@ interface PurchaseFormData {
   date: string;
   memberId: string;
   productTypeId: string;
-  grossWeight: string;
+  grossWeight: string; // น้ำหนักรวมภาชนะ (total weight with container)
+  containerWeight: string; // น้ำหนักภาชนะ (container weight)
+  netWeight: string; // น้ำหนักสุทธิ (net weight - calculated)
   pricePerUnit: string;
   bonusPrice: string;
   notes: string;
@@ -244,13 +246,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3-1m-3 1l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
                 </svg>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลน้ำหนัก x ราคา = ยอดเงินรวม</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลน้ำหนัก</h3>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pl-8">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  น้ำหนักสุทธิ (กก.) <span className="text-red-500">*</span>
+                  น้ำหนักรวมภาชนะ (กก.) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -268,6 +270,63 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   </div>
                 </div>
               </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  น้ำหนักภาชนะ (กก.) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="containerWeight"
+                    value={formData.containerWeight}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">กก.</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  น้ำหนักสุทธิ (กก.) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="netWeight"
+                    value={formData.netWeight}
+                    readOnly
+                    className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm cursor-not-allowed"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">กก.</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                  คำนวณอัตโนมัติ: น้ำหนักรวมภาชนะ - น้ำหนักภาชนะ
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Information */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
+                <svg className="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">ข้อมูลราคา</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pl-8">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   ราคาต่อหน่วย (บาท/กก.) <span className="text-red-500">*</span>
@@ -299,13 +358,16 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="totalAmount"
                     value={calculateTotalAmount()}
                     readOnly
-                    className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm"
+                    className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-gray-900 dark:text-gray-100 font-bold text-lg transition-all duration-200 shadow-sm cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">บาท</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">บาท</span>
                   </div>
                 </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                  คำนวณอัตโนมัติ: น้ำหนักสุทธิ x ราคาต่อหน่วย
+                </p>
               </div>
             </div>
           </div>

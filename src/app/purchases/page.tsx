@@ -51,6 +51,7 @@ export default function PurchasesPage() {
     calculateTotalAmount,
     isFormValid,
     resetForm,
+    resetAllFields,
     clearMemberSearch,
     setShowMemberDropdown,
   } = usePurchaseForm({
@@ -117,7 +118,7 @@ export default function PurchasesPage() {
           handleMemberSelect={handleMemberSelect}
           clearMemberSearch={clearMemberSearch}
           setShowMemberDropdown={setShowMemberDropdown}
-          resetForm={resetForm}
+          resetForm={resetAllFields}
           addToCart={handleAddToCart}
         />
 

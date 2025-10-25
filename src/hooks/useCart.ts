@@ -10,7 +10,9 @@ interface CartItem {
   productTypeId: string;
   productTypeName: string;
   productTypeCode: string;
-  grossWeight: number;
+  grossWeight: number; // น้ำหนักรวมภาชนะ
+  containerWeight: number; // น้ำหนักภาชนะ
+  netWeight: number; // น้ำหนักสุทธิ
   dryWeight: number;
   pricePerUnit: number;
   bonusPrice: number;
@@ -39,7 +41,9 @@ interface PurchaseFormData {
   date: string;
   memberId: string;
   productTypeId: string;
-  grossWeight: string;
+  grossWeight: string; // น้ำหนักรวมภาชนะ
+  containerWeight: string; // น้ำหนักภาชนะ
+  netWeight: string; // น้ำหนักสุทธิ (calculated)
   pricePerUnit: string;
   bonusPrice: string;
   notes: string;
@@ -61,14 +65,16 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
   const addToCart = useCallback((formData: PurchaseFormData) => {
     const member = members.find(m => m.id === formData.memberId);
     const productType = productTypes.find(pt => pt.id === formData.productTypeId);
-    const grossWeight = parseFloat(formData.grossWeight) || 0;
-    const dryWeight = grossWeight;
+    const grossWeight = parseFloat(formData.grossWeight) || 0; // น้ำหนักรวมภาชนะ
+    const containerWeight = parseFloat(formData.containerWeight) || 0; // น้ำหนักภาชนะ
+    const netWeight = parseFloat(formData.netWeight) || 0; // น้ำหนักสุทธิ
+    const dryWeight = netWeight; // For now, dry weight equals net weight
     const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
     const basePrice = pricePerUnit;
     const adjustedPrice = basePrice + bonusPrice;
     const finalPrice = adjustedPrice;
-    const totalAmount = dryWeight * finalPrice;
+    const totalAmount = netWeight * finalPrice; // Use netWeight for calculation
     
     const item: CartItem = {
       id: Date.now().toString(),
@@ -80,6 +86,8 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       productTypeName: productType?.name || '',
       productTypeCode: productType?.code || '',
       grossWeight,
+      containerWeight,
+      netWeight,
       dryWeight,
       pricePerUnit,
       bonusPrice,
@@ -121,9 +129,10 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           memberId: item.memberId,
           productTypeId: item.productTypeId,
           userId: user.id,
-          grossWeight: item.grossWeight,
-          containerWeight: 0, // Set to 0 since we removed container weight from UI
+          grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
+          containerWeight: item.containerWeight, // น้ำหนักภาชนะ
           rubberPercent: null, // Set to null since we removed rubber percent from UI
+          pricePerUnit: item.pricePerUnit, // Include the price per unit
           bonusPrice: item.bonusPrice,
           notes: item.notes,
         };

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
     }
 
-    // ดึงราคาประกาศสำหรับประเภทสินค้านี้
+    // ดึงราคาประกาศสำหรับประเภทสินค้านี้ (ถ้ามี)
     console.log('[Purchase API] Looking for product price:', {
       date: data.date,
       productTypeId: data.productTypeId,
@@ -90,20 +90,23 @@ export async function POST(request: NextRequest) {
 
     console.log('[Purchase API] Found product price:', productPrice);
 
-    if (!productPrice) {
+    // ใช้ราคาจากฟอร์ม หรือราคาประกาศ (ถ้ามี)
+    const basePrice = data.pricePerUnit || productPrice?.price || 0;
+    
+    if (basePrice === 0) {
       return NextResponse.json(
-        { error: 'ยังไม่มีราคาประกาศสำหรับประเภทสินค้านี้ในวันนี้' },
+        { error: 'กรุณาระบุราคาต่อหน่วย' },
         { status: 400 }
       );
     }
 
     // คำนวณราคาที่ปรับแล้ว (สำหรับตอนนี้ใช้ราคาพื้นฐาน)
-    let adjustedPrice = productPrice.price;
+    let adjustedPrice = basePrice;
     // TODO: Add price adjustment logic based on rubber percent if needed
 
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
-    const totalAmount = dryWeight * finalPrice;
+    const totalAmount = netWeight * finalPrice;
 
     // ดึงข้อมูลสมาชิก
     const member = await prisma.member.findUnique({
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
       containerWeight: data.containerWeight || 0,
       netWeight,
       dryWeight,
-      basePrice: productPrice.price,
+      basePrice,
       adjustedPrice,
       bonusPrice: data.bonusPrice || 0,
       finalPrice,
@@ -160,7 +163,7 @@ export async function POST(request: NextRequest) {
         netWeight,
         rubberPercent: data.rubberPercent,
         dryWeight,
-        basePrice: productPrice.price,
+        basePrice,
         adjustedPrice,
         bonusPrice: data.bonusPrice || 0,
         finalPrice,
