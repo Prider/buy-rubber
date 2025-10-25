@@ -131,6 +131,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           userId: user.id,
           grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
           containerWeight: item.containerWeight, // น้ำหนักภาชนะ
+          netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
           rubberPercent: null, // Set to null since we removed rubber percent from UI
           pricePerUnit: item.pricePerUnit, // Include the price per unit
           bonusPrice: item.bonusPrice,

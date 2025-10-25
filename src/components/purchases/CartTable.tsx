@@ -10,7 +10,9 @@ interface CartItem {
   productTypeId: string;
   productTypeName: string;
   productTypeCode: string;
-  grossWeight: number;
+  grossWeight: number; // น้ำหนักรวมภาชนะ
+  containerWeight: number; // น้ำหนักภาชนะ
+  netWeight: number; // น้ำหนักสุทธิ
   dryWeight: number;
   pricePerUnit: number;
   bonusPrice: number;
@@ -108,9 +110,11 @@ export const CartTable: React.FC<CartTableProps> = ({
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">วันที่รับซื้อ</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">สมาชิก</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภทสินค้า</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักแห้ง (กก.)</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">เงินที่ได้</th>
+              <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักรวมภาชนะ (กก.)</th>
+              <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักภาชนะ (กก.)</th>
+              <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักสุทธิ (กก.)</th>
+              <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
+              <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">เงินที่ได้</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">จัดการ</th>
             </tr>
           </thead>
@@ -121,9 +125,11 @@ export const CartTable: React.FC<CartTableProps> = ({
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{formatDate(item.date)}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.memberName}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.productTypeName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{formatNumber(item.dryWeight)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{formatNumber(item.finalPrice)}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-green-600 dark:text-green-400">
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.grossWeight)}</td>
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.containerWeight)}</td>
+                  <td className="px-4 py-4 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">{formatNumber(item.netWeight)}</td>
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.finalPrice)}</td>
+                  <td className="px-6 py-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">
                     {formatCurrency(item.totalAmount)}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -138,7 +144,7 @@ export const CartTable: React.FC<CartTableProps> = ({
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
+                <td colSpan={9} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,10 +163,10 @@ export const CartTable: React.FC<CartTableProps> = ({
           {cart.length > 0 && (
             <tfoot>
               <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-t-2 border-gray-200 dark:border-gray-500">
-                <td colSpan={5} className="px-6 py-4 text-right text-lg font-bold text-gray-900 dark:text-white">
+                <td colSpan={7} className="px-6 py-4 text-right text-lg font-bold text-gray-900 dark:text-white">
                   รวมทั้งหมด
                 </td>
-                <td className="px-6 py-4 text-lg font-bold text-green-600 dark:text-green-400">
+                <td className="px-6 py-4 text-right text-lg font-bold text-green-600 dark:text-green-400">
                   {formatCurrency(totalAmount)}
                 </td>
                 <td className="px-6 py-4"></td>

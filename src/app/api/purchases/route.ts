@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     console.log('[Purchase API] Received data:', data);
 
-    // คำนวณน้ำหนักสุทธิ
-    const netWeight = data.grossWeight - (data.containerWeight || 0);
+    // คำนวณน้ำหนักสุทธิ (ใช้ค่าที่ส่งมา หรือคำนวณใหม่)
+    const netWeight = data.netWeight || (data.grossWeight - (data.containerWeight || 0));
 
     // คำนวณน้ำหนักแห้ง
     let dryWeight = netWeight;

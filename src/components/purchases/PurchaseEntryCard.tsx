@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { formatCurrency } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -53,11 +52,9 @@ interface PurchaseEntryCardProps {
 export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   formData,
   error,
-  members,
   productTypes,
   memberSearchTerm,
   showMemberDropdown,
-  selectedMember,
   filteredMembers,
   isFormValid,
   calculateTotalAmount,
