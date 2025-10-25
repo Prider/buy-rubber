@@ -28,14 +28,14 @@ export default function Layout({ children }: LayoutProps) {
       icon: '📊',
     },
     {
-      name: 'สมาชิก',
-      href: '/members',
-      icon: '👥',
-    },
-    {
       name: 'รับซื้อยาง',
       href: '/purchases',
       icon: '🛒',
+    },
+    {
+      name: 'สมาชิก',
+      href: '/members',
+      icon: '👥',
     },
     {
       name: 'ตั้งราคา',
