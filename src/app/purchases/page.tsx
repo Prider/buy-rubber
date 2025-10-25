@@ -71,6 +71,13 @@ export default function PurchasesPage() {
     resetForm();
   };
 
+  // Handle saving cart with form reset
+  const handleSaveCart = async () => {
+    await saveCartToDb();
+    // Reset all form fields including member selection after successful save
+    resetAllFields();
+  };
+
   // Modal handlers
   const handleShowPrintModal = () => {
     setShowPrintModal(true);
@@ -128,7 +135,7 @@ export default function PurchasesPage() {
           submitting={submitting}
           totalAmount={totalAmount}
           printCart={printCart}
-          saveCartToDb={saveCartToDb}
+          saveCartToDb={handleSaveCart}
           removeFromCart={removeFromCart}
           onShowPrintModal={handleShowPrintModal}
         />
