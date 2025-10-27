@@ -7,7 +7,7 @@ interface DashboardStatsCardsProps {
 
 export default function DashboardStatsCards({ stats }: DashboardStatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
       {/* Today Purchases Card */}
       <div className="group relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-primary-200/50 dark:border-primary-800/30">
         <div className="relative z-10">
@@ -64,8 +64,64 @@ export default function DashboardStatsCards({ stats }: DashboardStatsCardsProps)
         <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-green-200/30 dark:bg-green-700/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
       </div>
 
+      {/* Today Expenses Card */}
+      <div className="group relative overflow-hidden bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900/20 dark:to-orange-800/10 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-red-200/50 dark:border-red-800/30">
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl backdrop-blur-sm shadow-sm">
+              <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-600 text-white dark:bg-red-500">
+              วันนี้
+            </span>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider">
+              ค่าใช้จ่ายวันนี้
+            </p>
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              {stats.todayExpenses || 0}
+            </p>
+            <p className="text-base font-semibold text-red-600 dark:text-red-400">
+              {formatCurrency(stats.todayExpenseAmount || 0)}
+            </p>
+          </div>
+        </div>
+        <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-red-200/30 dark:bg-red-700/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+      </div>
+
+      {/* Month Expenses Card */}
+      <div className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-800/10 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-purple-200/50 dark:border-purple-800/30">
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl backdrop-blur-sm shadow-sm">
+              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-600 text-white dark:bg-purple-500">
+              เดือนนี้
+            </span>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+              ค่าใช้จ่ายเดือนนี้
+            </p>
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              {stats.monthExpenses || 0}
+            </p>
+            <p className="text-base font-semibold text-purple-600 dark:text-purple-400">
+              {formatCurrency(stats.monthExpenseAmount || 0)}
+            </p>
+          </div>
+        </div>
+        <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-200/30 dark:bg-purple-700/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+      </div>
+
       {/* Members Card */}
-      <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-blue-200/50 dark:border-blue-800/30 sm:col-span-2 lg:col-span-1">
+      <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-blue-200/50 dark:border-blue-800/30 lg:col-span-1">
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl backdrop-blur-sm shadow-sm">

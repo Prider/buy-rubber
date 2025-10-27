@@ -132,6 +132,40 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' },
     });
 
+    // ดึงข้อมูลค่าใช้จ่ายวันนี้
+    const todayExpenses = await prisma.expense.aggregate({
+      where: {
+        date: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      _count: true,
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // ดึงข้อมูลค่าใช้จ่ายเดือนนี้
+    const monthExpenses = await prisma.expense.aggregate({
+      where: {
+        date: {
+          gte: firstDayOfMonth,
+          lt: firstDayOfNextMonth,
+        },
+      },
+      _count: true,
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
+    const recentExpenses = await prisma.expense.findMany({
+      take: 5,
+      orderBy: { date: 'desc' },
+    });
+
     return NextResponse.json({
       stats: {
         todayPurchases: todayPurchases._count,
@@ -142,11 +176,16 @@ export async function GET(request: NextRequest) {
         activeMembers,
         totalAdvance: totalAdvanceResult._sum.advanceBalance || 0,
         unpaidAmount: unpaidAmount._sum.totalAmount || 0,
+        todayExpenses: todayExpenses._count,
+        todayExpenseAmount: todayExpenses._sum.amount || 0,
+        monthExpenses: monthExpenses._count,
+        monthExpenseAmount: monthExpenses._sum.amount || 0,
       },
       recentPurchases,
       topMembers: topMembersWithDetails,
       todayPrices,
       productTypes,
+      recentExpenses,
     });
   } catch (error) {
     console.error('Get dashboard error:', error);

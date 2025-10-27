@@ -8,6 +8,10 @@ export interface DashboardStats {
   monthAmount: number;
   totalMembers: number;
   activeMembers: number;
+  todayExpenses: number;
+  todayExpenseAmount: number;
+  monthExpenses: number;
+  monthExpenseAmount: number;
 }
 
 export interface DashboardData {
@@ -16,6 +20,7 @@ export interface DashboardData {
   productTypes: any[];
   recentPurchases: any[];
   topMembers: any[];
+  recentExpenses: any[];
 }
 
 interface UseDashboardDataReturn {
@@ -26,6 +31,7 @@ interface UseDashboardDataReturn {
   productTypes: any[];
   recentPurchases: any[];
   topMembers: any[];
+  recentExpenses: any[];
   reload: () => Promise<void>;
 }
 
@@ -56,6 +62,10 @@ export function useDashboardData(): UseDashboardDataReturn {
     monthAmount: 0,
     totalMembers: 0,
     activeMembers: 0,
+    todayExpenses: 0,
+    todayExpenseAmount: 0,
+    monthExpenses: 0,
+    monthExpenseAmount: 0,
   };
 
   return {
@@ -66,6 +76,7 @@ export function useDashboardData(): UseDashboardDataReturn {
     productTypes: data?.productTypes || [],
     recentPurchases: data?.recentPurchases || [],
     topMembers: data?.topMembers || [],
+    recentExpenses: data?.recentExpenses || [],
     reload: loadData,
   };
 }
