@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/members - ดึงรายการสมาชิกทั้งหมด
+// GET /api/members - ดึงรายการสมาชิกทั้งหมด (with pagination)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
+    const search = searchParams.get('search') || '';
     const active = searchParams.get('active');
+    
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const skip = (page - 1) * limit;
 
+    // Build where clause
     const where: any = {};
     
     if (search) {
@@ -15,6 +21,8 @@ export async function GET(request: NextRequest) {
         { code: { contains: search } },
         { name: { contains: search } },
         { phone: { contains: search } },
+        { address: { contains: search } },
+        { tapperName: { contains: search } },
       ];
     }
     
@@ -22,12 +30,28 @@ export async function GET(request: NextRequest) {
       where.isActive = active === 'true';
     }
 
+    // Get total count for pagination
+    const total = await prisma.member.count({ where });
+
+    // Get paginated members
     const members = await prisma.member.findMany({
       where,
+      skip,
+      take: limit,
       orderBy: { code: 'asc' },
     });
 
-    return NextResponse.json(members);
+    // Return members with pagination info
+    return NextResponse.json({
+      members,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + members.length < total,
+      }
+    });
   } catch (error) {
     console.error('Get members error:', error);
     return NextResponse.json(

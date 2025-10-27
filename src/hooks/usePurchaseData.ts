@@ -35,8 +35,10 @@ export const usePurchaseData = () => {
 
   const loadMembers = useCallback(async () => {
     try {
-      const response = await axios.get('/api/members?active=true');
-      setMembers(response.data);
+      const response = await axios.get('/api/members?active=true&limit=1000');
+      // Handle paginated response - extract members array
+      const membersData = response.data.members || response.data;
+      setMembers(membersData);
     } catch (error) {
       console.error('Load members error:', error);
     }

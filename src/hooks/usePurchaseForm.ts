@@ -56,7 +56,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const [recentPurchases, setRecentPurchases] = useState<any[]>([]);
 
   // Filter members based on search term
-  const filteredMembers = members.filter(member => 
+  const filteredMembers = (members || []).filter(member => 
     member.name.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
     member.code.toLowerCase().includes(memberSearchTerm.toLowerCase())
   );

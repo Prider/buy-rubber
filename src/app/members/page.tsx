@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { MemberTable } from '@/components/members/MemberTable';
 import { MemberForm } from '@/components/members/MemberForm';
 import { useMembers } from '@/hooks/useMembers';
 import { useMemberForm } from '@/hooks/useMemberForm';
+import { useDebounce } from '@/hooks/useDebounce';
 import { MemberFormData } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -14,7 +15,30 @@ export default function MembersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { members, loading, error, loadMembers, createMember, updateMember, deleteMember } = useMembers();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Debounced search (waits 300ms after user stops typing)
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  
+  // Track if we should auto-open modal (set only once on mount)
+  const [shouldAutoOpen, setShouldAutoOpen] = useState(false);
+
+  const { 
+    members, 
+    pagination,
+    loading, 
+    error, 
+    loadMembers, 
+    createMember, 
+    updateMember, 
+    deleteMember 
+  } = useMembers();
+  
   const {
     isOpen,
     editingMember,
@@ -25,36 +49,20 @@ export default function MembersPage() {
     updateFormData,
     validateForm,
   } = useMemberForm(members);
-  
-  // Search state
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Track if we should auto-open modal (set only once on mount)
-  const [shouldAutoOpen, setShouldAutoOpen] = useState(false);
 
-  // Filter members based on search term
-  const filteredMembers = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return members;
-    }
-    
-    const term = searchTerm.toLowerCase();
-    return members.filter(member => 
-      member.name.toLowerCase().includes(term) ||
-      member.code.toLowerCase().includes(term) ||
-      (member.phone && member.phone.includes(term)) ||
-      (member.address && member.address.toLowerCase().includes(term)) ||
-      (member.tapperName && member.tapperName.toLowerCase().includes(term))
-    );
-  }, [members, searchTerm]);
-
+  // Load members when page or debounced search changes
   useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
-    loadMembers();
-  }, [user, router, loadMembers]);
+    loadMembers(currentPage, debouncedSearchTerm);
+  }, [user, router, currentPage, debouncedSearchTerm, loadMembers]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   // Check query parameter ONCE on mount
   useEffect(() => {
@@ -136,7 +144,7 @@ export default function MembersPage() {
                       จัดการสมาชิก
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400">
-                      ข้อมูลเจ้าของสวนและคนตัดยาง
+                      ทั้งหมด {pagination.total} สมาชิก
                     </p>
                   </div>
                 </div>
@@ -201,15 +209,11 @@ export default function MembersPage() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {searchTerm ? (
+                      {loading && <span className="animate-pulse">กำลังค้นหา...</span>}
+                      {!loading && (
                         <span>
-                          พบ <span className="font-semibold text-blue-600 dark:text-blue-400">{filteredMembers.length}</span> รายการ
-                          {filteredMembers.length !== members.length && (
-                            <span> จากทั้งหมด {members.length} รายการ</span>
-                          )}
+                          แสดง <span className="font-semibold text-blue-600 dark:text-blue-400">{members.length}</span> จาก {pagination.total} รายการ
                         </span>
-                      ) : (
-                        <span>ทั้งหมด <span className="font-semibold text-blue-600 dark:text-blue-400">{members.length}</span> รายการ</span>
                       )}
                     </div>
                   </div>
@@ -242,12 +246,74 @@ export default function MembersPage() {
             {/* Members Table */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <MemberTable
-                members={filteredMembers}
+                members={members}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={loading}
               />
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    แสดง {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} จาก {pagination.total} รายการ
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={pagination.page === 1 || loading}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ก่อนหน้า
+                    </button>
+                    
+                    {/* Page numbers */}
+                    <div className="flex items-center gap-1">
+                      {[...Array(pagination.totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        // Show first page, last page, current page, and pages around current
+                        if (
+                          pageNum === 1 ||
+                          pageNum === pagination.totalPages ||
+                          (pageNum >= pagination.page - 1 && pageNum <= pagination.page + 1)
+                        ) {
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              disabled={loading}
+                              className={`min-w-[40px] px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                pagination.page === pageNum
+                                  ? 'bg-primary-600 text-white'
+                                  : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        } else if (
+                          pageNum === pagination.page - 2 ||
+                          pageNum === pagination.page + 2
+                        ) {
+                          return <span key={pageNum} className="px-2 text-gray-500">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                      disabled={pagination.page === pagination.totalPages || loading}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

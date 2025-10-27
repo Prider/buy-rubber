@@ -40,11 +40,20 @@ export interface MemberTableProps {
   isLoading: boolean;
 }
 
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
 export interface UseMembersReturn {
   members: Member[];
+  pagination: PaginationInfo;
   loading: boolean;
   error: string | null;
-  loadMembers: () => Promise<void>;
+  loadMembers: (page?: number, search?: string) => Promise<void>;
   createMember: (data: MemberFormData) => Promise<void>;
   updateMember: (id: string, data: MemberFormData) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
