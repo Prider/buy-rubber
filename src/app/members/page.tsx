@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { MemberTable } from '@/components/members/MemberTable';
 import { MemberForm } from '@/components/members/MemberForm';
@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function MembersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { members, loading, error, loadMembers, createMember, updateMember, deleteMember } = useMembers();
   const {
@@ -27,6 +28,9 @@ export default function MembersPage() {
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Track if we should auto-open modal (set only once on mount)
+  const [shouldAutoOpen, setShouldAutoOpen] = useState(false);
 
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
@@ -51,6 +55,37 @@ export default function MembersPage() {
     }
     loadMembers();
   }, [user, router, loadMembers]);
+
+  // Check query parameter ONCE on mount
+  useEffect(() => {
+    const shouldShowModal = searchParams?.get('showAddModal');
+    if (shouldShowModal === 'true') {
+      setShouldAutoOpen(true);
+      // Clean URL immediately
+      if (typeof window !== 'undefined') {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('showAddModal');
+          window.history.replaceState({}, '', url.toString());
+        } catch (e) {
+          console.error('Error cleaning URL:', e);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run ONLY once on mount
+
+  // Open modal after data is loaded if needed
+  useEffect(() => {
+    if (shouldAutoOpen && !loading && members.length >= 0) {
+      const timer = setTimeout(() => {
+        openFormForNew();
+        setShouldAutoOpen(false); // Clear the flag so it doesn't trigger again
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoOpen, loading, members, openFormForNew]);
 
   const handleSubmit = async (data: MemberFormData) => {
     const validationError = validateForm();
