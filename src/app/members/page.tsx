@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { MemberTable } from '@/components/members/MemberTable';
 import { MemberForm } from '@/components/members/MemberForm';
+import { MemberPurchaseHistoryModal } from '@/components/members/MemberPurchaseHistoryModal';
 import { useMembers } from '@/hooks/useMembers';
 import { useMemberForm } from '@/hooks/useMemberForm';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -27,6 +28,10 @@ export default function MembersPage() {
   
   // Track if we should auto-open modal (set only once on mount)
   const [shouldAutoOpen, setShouldAutoOpen] = useState(false);
+
+  // Purchase history modal state
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedMemberForHistory, setSelectedMemberForHistory] = useState<any>(null);
 
   const { 
     members, 
@@ -123,6 +128,16 @@ export default function MembersPage() {
     } catch (error: any) {
       alert(error.message);
     }
+  };
+
+  const handleViewHistory = (member: any) => {
+    setSelectedMemberForHistory(member);
+    setHistoryModalOpen(true);
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryModalOpen(false);
+    setSelectedMemberForHistory(null);
   };
 
   return (
@@ -249,6 +264,7 @@ export default function MembersPage() {
                 members={members}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onViewHistory={handleViewHistory}
                 isLoading={loading}
               />
             </div>
@@ -327,6 +343,13 @@ export default function MembersPage() {
         onCancel={closeForm}
         onFormDataChange={updateFormData}
         isLoading={loading}
+      />
+
+      {/* Purchase History Modal */}
+      <MemberPurchaseHistoryModal
+        isOpen={historyModalOpen}
+        member={selectedMemberForHistory}
+        onClose={handleCloseHistory}
       />
     </Layout>
   );

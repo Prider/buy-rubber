@@ -6,6 +6,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
   members,
   onEdit,
   onDelete,
+  onViewHistory,
   isLoading,
 }) => {
   if (isLoading) {
@@ -52,6 +53,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
                 member={member}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onViewHistory={onViewHistory}
               />
             ))}
           </tbody>
@@ -65,12 +67,14 @@ interface MemberTableRowProps {
   member: any;
   onEdit: (member: any) => void;
   onDelete: (member: any) => void;
+  onViewHistory: (member: any) => void;
 }
 
 const MemberTableRow: React.FC<MemberTableRowProps> = ({
   member,
   onEdit,
   onDelete,
+  onViewHistory,
 }) => {
   return (
     <tr>
@@ -85,6 +89,16 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       </td>
       <td>
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => onViewHistory(member)}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
+            title="ดูประวัติการรับซื้อ"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>ประวัติ</span>
+          </button>
           <button
             onClick={() => onEdit(member)}
             className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"

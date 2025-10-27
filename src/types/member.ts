@@ -37,6 +37,7 @@ export interface MemberTableProps {
   members: Member[];
   onEdit: (member: Member) => void;
   onDelete: (member: Member) => void;
+  onViewHistory: (member: Member) => void;
   isLoading: boolean;
 }
 
