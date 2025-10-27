@@ -74,6 +74,24 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 }) => {
   const router = useRouter();
 
+  // Refs for input fields to enable Enter key navigation
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
+  const memberSearchRef = React.useRef<HTMLInputElement>(null);
+  const productTypeRef = React.useRef<HTMLSelectElement>(null);
+  const grossWeightRef = React.useRef<HTMLInputElement>(null);
+  const containerWeightRef = React.useRef<HTMLInputElement>(null);
+  const pricePerUnitRef = React.useRef<HTMLInputElement>(null);
+
+  // Handle Enter key to move to next field
+  const handleKeyDown = (e: React.KeyboardEvent, nextRef?: React.RefObject<any>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextRef && nextRef.current) {
+        nextRef.current.focus();
+      }
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
@@ -124,10 +142,12 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   วันที่รับซื้อ <span className="text-red-500">*</span>
                 </label>
                 <input
+                  ref={dateInputRef}
                   type="date"
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
+                  onKeyDown={(e) => handleKeyDown(e, memberSearchRef)}
                   required
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                 />
@@ -143,11 +163,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     </svg>
                   </div>
                   <input
+                    ref={memberSearchRef}
                     type="text"
                     value={memberSearchTerm}
                     onChange={handleMemberSearchChange}
                     onFocus={() => setShowMemberDropdown(true)}
                     onBlur={() => setTimeout(() => setShowMemberDropdown(false), 200)}
+                    onKeyDown={(e) => handleKeyDown(e, productTypeRef)}
                     placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     required
@@ -224,9 +246,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   ประเภทสินค้า <span className="text-red-500">*</span>
                 </label>
                 <select
+                  ref={productTypeRef}
                   name="productTypeId"
                   value={formData.productTypeId}
                   onChange={handleInputChange}
+                  onKeyDown={(e) => handleKeyDown(e, grossWeightRef)}
                   required
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                 >
@@ -259,11 +283,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 </label>
                 <div className="relative">
                   <input
+                    ref={grossWeightRef}
                     type="number"
                     step="0.01"
                     name="grossWeight"
                     value={formData.grossWeight}
                     onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, containerWeightRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"
@@ -279,11 +305,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 </label>
                 <div className="relative">
                   <input
+                    ref={containerWeightRef}
                     type="number"
                     step="0.01"
                     name="containerWeight"
                     value={formData.containerWeight}
                     onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"
@@ -371,11 +399,21 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 </label>
                 <div className="relative">
                   <input
+                    ref={pricePerUnitRef}
                     type="number"
                     step="0.01"
                     name="pricePerUnit"
                     value={formData.pricePerUnit || ''}
                     onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Trigger form submit (add to cart)
+                        if (isFormValid) {
+                          addToCart();
+                        }
+                      }
+                    }}
                     required
                     className="w-full px-3 py-2 pr-16 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder={formData.pricePerUnit}
