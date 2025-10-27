@@ -24,31 +24,31 @@ model User {
 
 // สมาชิก (เจ้าของสวน)
 model Member {
-  id              String   @id @default(uuid())
-  code            String   @unique
-  name            String
-  idCard          String?
-  phone           String?
-  address         String?
-  bankAccount     String?
-  bankName        String?
-  ownerPercent    Float    @default(100) // เปอร์เซ็นต์เจ้าของสวน
-  tapperPercent   Float    @default(0)   // เปอร์เซ็นต์คนตัด
-  tapperId        String?  // ID คนตัด (ถ้ามี)
-  tapperName      String?  // ชื่อคนตัด
-  advanceBalance  Float    @default(0)   // ยอดเบิกเงินล่วงหน้า
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  idCard         String?
+  phone          String?
+  address        String?
+  bankAccount    String?
+  bankName       String?
+  ownerPercent   Float    @default(100) // เปอร์เซ็นต์เจ้าของสวน
+  tapperPercent  Float    @default(0) // เปอร์เซ็นต์คนตัด
+  tapperId       String? // ID คนตัด (ถ้ามี)
+  tapperName     String? // ชื่อคนตัด
+  advanceBalance Float    @default(0) // ยอดเบิกเงินล่วงหน้า
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  purchases      Purchase[]
+  purchases Purchase[]
 }
 
 // ประเภทสินค้ายาง
 model ProductType {
   id          String   @id @default(uuid())
   code        String   @unique
-  name        String   // น้ำยางสด, ยางแห้ง, เศษยาง
+  name        String // น้ำยางสด, ยางแห้ง, เศษยาง
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -60,64 +60,77 @@ model ProductType {
 
 // ราคาสินค้าตามประเภทประจำวัน
 model ProductPrice {
-  id            String      @id @default(uuid())
-  date          DateTime    // วันที่ตั้งราคา
+  id            String   @id @default(uuid())
+  date          DateTime // วันที่ตั้งราคา
   productTypeId String
-  price         Float       // ราคา (บาท/กก.)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  price         Float // ราคา (บาท/กก.)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 
   @@unique([date, productTypeId]) // ป้องกันการตั้งราคาซ้ำในวันเดียวกัน
   @@index([date])
 }
 
-
 // การรับซื้อ
 model Purchase {
-  id              String   @id @default(uuid())
-  purchaseNo      String   @unique
-  date            DateTime @default(now())
-  memberId        String
-  productTypeId   String
-  userId          String
-  
+  id            String   @id @default(uuid())
+  purchaseNo    String   @unique
+  date          DateTime @default(now())
+  memberId      String
+  productTypeId String
+  userId        String
+
   // น้ำหนัก
-  grossWeight     Float    // น้ำหนักรวมภาชนะ (กก.)
-  containerWeight Float    @default(0) // น้ำหนักภาชนะ (กก.)
-  netWeight       Float    // น้ำหนักสุทธิ (กก.)
-  
+  grossWeight     Float // น้ำหนักรวมภาชนะ (กก.)
+  containerWeight Float @default(0) // น้ำหนักภาชนะ (กก.)
+  netWeight       Float // น้ำหนักสุทธิ (กก.)
+
   // สำหรับน้ำยางสด
-  rubberPercent   Float?   // %ยาง (DRC)
-  dryWeight       Float    // น้ำหนักแห้ง (กก.)
-  
+  rubberPercent Float? // %ยาง (DRC)
+  dryWeight     Float // น้ำหนักแห้ง (กก.)
+
   // ราคา
-  basePrice       Float    // ราคาพื้นฐาน (บาท/กก.)
-  adjustedPrice   Float    // ราคาหลังปรับตาม %ยาง
-  bonusPrice      Float    @default(0) // ราคาบวกพิเศษ
-  finalPrice      Float    // ราคาสุดท้าย (บาท/กก.)
-  totalAmount     Float    // ยอดเงินรวม
-  
+  basePrice     Float // ราคาพื้นฐาน (บาท/กก.)
+  adjustedPrice Float // ราคาหลังปรับตาม %ยาง
+  bonusPrice    Float @default(0) // ราคาบวกพิเศษ
+  finalPrice    Float // ราคาสุดท้าย (บาท/กก.)
+  totalAmount   Float // ยอดเงินรวม
+
   // การแบ่ง %
-  ownerAmount     Float    // เงินเจ้าของสวน
-  tapperAmount    Float    @default(0) // เงินคนตัด
-  
-  isPaid          Boolean  @default(false)
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  ownerAmount  Float // เงินเจ้าของสวน
+  tapperAmount Float @default(0) // เงินคนตัด
+
+  isPaid    Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   member      Member      @relation(fields: [memberId], references: [id])
   productType ProductType @relation(fields: [productTypeId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
 }
 
-// ตั้งค่าระบบ
-model Setting {
-  id    String @id @default(uuid())
-  key   String @unique
-  value String
-  updatedAt DateTime @updatedAt
+// ค่าใช้จ่ายประจำวัน
+model Expense {
+  id          String   @id @default(uuid())
+  expenseNo   String   @unique
+  date        DateTime @default(now())
+  category    String // ค่าน้ำมัน, ค่าซ่อมรถ, ค่าคนงาน, อื่นๆ
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([category])
 }
 
+// ตั้งค่าระบบ
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

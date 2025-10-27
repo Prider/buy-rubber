@@ -38,6 +38,11 @@ export default function Layout({ children }: LayoutProps) {
       icon: '👥',
     },
     {
+      name: 'ค่าใช้จ่าย',
+      href: '/expenses',
+      icon: '💰',
+    },
+    {
       name: 'ตั้งราคา',
       href: '/prices',
       icon: '💲',
