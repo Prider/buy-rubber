@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
-import { Member, MemberFormData, UseMembersReturn, PaginationInfo } from '@/types/member';
+import { Member, MemberFormData, UseMembersReturn, PaginationInfo, DeleteMemberResponse } from '@/types/member';
 
 export const useMembers = (): UseMembersReturn => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -64,11 +64,12 @@ export const useMembers = (): UseMembersReturn => {
     }
   }, [loadMembers]);
 
-  const deleteMember = useCallback(async (id: string) => {
+  const deleteMember = useCallback(async (id: string): Promise<DeleteMemberResponse> => {
     try {
       setError(null);
-      await axios.delete(`/api/members/${id}`);
+      const response = await axios.delete(`/api/members/${id}`);
       await loadMembers(); // Refresh the list
+      return response.data; // Return the response for the caller to handle
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'ไม่สามารถลบสมาชิกได้';
       setError(errorMessage);

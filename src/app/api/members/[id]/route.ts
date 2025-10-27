@@ -69,11 +69,37 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.member.delete({
-      where: { id: params.id },
+    // Check if member has any purchases
+    const purchaseCount = await prisma.purchase.count({
+      where: { memberId: params.id },
     });
 
-    return NextResponse.json({ message: 'ลบสมาชิกเรียบร้อยแล้ว' });
+    if (purchaseCount > 0) {
+      // Soft delete - mark as inactive instead of deleting
+      // This preserves historical data and relationships
+      await prisma.member.update({
+        where: { id: params.id },
+        data: { isActive: false },
+      });
+
+      return NextResponse.json({ 
+        message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',
+        note: `สมาชิกนี้มีประวัติการรับซื้อ ${purchaseCount} รายการ จึงไม่สามารถลบออกจากระบบได้ แต่จะถูกปิดการใช้งานแทน`,
+        softDelete: true
+      });
+    }
+
+    // If no purchases, still use soft delete for safety
+    // You can change this to actual delete if needed
+    await prisma.member.update({
+      where: { id: params.id },
+      data: { isActive: false },
+    });
+
+    return NextResponse.json({ 
+      message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',
+      softDelete: true
+    });
   } catch (error) {
     console.error('Delete member error:', error);
     return NextResponse.json(

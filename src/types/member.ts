@@ -49,6 +49,12 @@ export interface PaginationInfo {
   hasMore: boolean;
 }
 
+export interface DeleteMemberResponse {
+  message: string;
+  note?: string;
+  softDelete?: boolean;
+}
+
 export interface UseMembersReturn {
   members: Member[];
   pagination: PaginationInfo;
@@ -57,5 +63,5 @@ export interface UseMembersReturn {
   loadMembers: (page?: number, search?: string) => Promise<void>;
   createMember: (data: MemberFormData) => Promise<void>;
   updateMember: (id: string, data: MemberFormData) => Promise<void>;
-  deleteMember: (id: string) => Promise<void>;
+  deleteMember: (id: string) => Promise<DeleteMemberResponse>;
 }

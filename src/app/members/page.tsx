@@ -119,14 +119,21 @@ export default function MembersPage() {
   };
 
   const handleDelete = async (member: any) => {
-    if (!confirm(`คุณต้องการลบสมาชิก "${member.name}" (${member.code}) หรือไม่?\n\nการลบนี้ไม่สามารถกู้คืนได้`)) {
+    if (!confirm(`คุณต้องการลบสมาชิก "${member.name}" (${member.code}) หรือไม่?\n\nหมายเหตุ: หากสมาชิกมีประวัติการรับซื้อ ระบบจะปิดการใช้งานแทนการลบ`)) {
       return;
     }
 
     try {
-      await deleteMember(member.id);
+      const result = await deleteMember(member.id);
+      
+      // Show appropriate message based on the response
+      if (result.note) {
+        alert(`✓ ${result.message}\n\n${result.note}`);
+      } else {
+        alert(`✓ ${result.message}`);
+      }
     } catch (error: any) {
-      alert(error.message);
+      alert(`❌ ${error.message}`);
     }
   };
 
