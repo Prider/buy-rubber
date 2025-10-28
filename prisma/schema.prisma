@@ -134,3 +134,16 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+// ข้อมูลการสำรอง
+model Backup {
+  id          String   @id @default(uuid())
+  fileName    String   @unique
+  filePath    String
+  fileSize    Int
+  backupType  String   // "auto" or "manual"
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([backupType])
+}

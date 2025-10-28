@@ -53,6 +53,12 @@ export default function Layout({ children }: LayoutProps) {
       icon: '📈',
     },
     {
+      name: 'สำรองข้อมูล',
+      href: '/backup',
+      icon: '💾',
+      adminOnly: true, // Only show to admin users
+    },
+    {
       name: 'ตั้งค่า',
       href: '/admin',
       icon: '⚙️',
