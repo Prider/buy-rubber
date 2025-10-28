@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAppMode } from '@/contexts/AppModeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createApiClient, updateApiClient } from '@/lib/apiClient';
-import ModeSelection from '@/components/ModeSelection';
 import Layout from '@/components/Layout';
 import LoginPage from '@/app/login/page';
 
@@ -50,12 +49,6 @@ export default function AppWrapper({ children }: AppWrapperProps) {
         </div>
       </div>
     );
-  }
-
-  // Show mode selection if not selected yet
-  console.log('modeSelected', modeSelected);
-  if (!modeSelected) {
-    return <ModeSelection onModeSelected={handleModeSelected} />;
   }
 
   // Show login if not authenticated
