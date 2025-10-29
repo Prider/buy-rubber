@@ -64,6 +64,7 @@
   "build": {
     "appId": "com.punsook.innotech",
     "productName": "Punsook Innotech",
+    "asar": false,
     "directories": {
       "output": "dist"
     },
@@ -72,7 +73,8 @@
       ".next/**/*",
       "prisma/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "public/**/*"
     ],
     "extraResources": [
       {

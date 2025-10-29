@@ -31,11 +31,44 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // In production, start a local server for Next.js
+    // Get the app path - in packaged apps, resources are in app.getAppPath()
+    const appPath = app.isPackaged 
+      ? app.getAppPath()
+      : path.join(__dirname, '..');
+    
+    console.log('App path:', appPath);
+    console.log('Is packaged:', app.isPackaged);
+    
     const startServer = require('./server');
-    startServer().then((port) => {
-      mainWindow.loadURL(`http://localhost:${port}`);
-    });
+    startServer(appPath)
+      .then((port) => {
+        console.log(`Loading window at http://localhost:${port}`);
+        mainWindow.loadURL(`http://localhost:${port}`);
+        
+        // Show window once loaded
+        mainWindow.webContents.once('did-finish-load', () => {
+          console.log('Page loaded successfully');
+        });
+        
+        // Handle load errors
+        mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+          console.error('Failed to load:', errorCode, errorDescription, validatedURL);
+          mainWindow.loadURL(`data:text/html,<html><body style="font-family: Arial; padding: 20px;"><h1>Failed to Load Application</h1><p>Error: ${errorDescription}</p><p>Code: ${errorCode}</p><p>URL: ${validatedURL}</p><p>Please check the console for more details.</p></body></html>`);
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to start server:', error);
+        // Show error page
+        mainWindow.loadURL(`data:text/html,<html><body style="font-family: Arial; padding: 20px;"><h1>Failed to Start Server</h1><p>Error: ${error.message}</p><pre>${error.stack}</pre></body></html>`);
+        
+        // Open DevTools even in production to help debug
+        mainWindow.webContents.openDevTools();
+      });
   }
+  
+  // Show DevTools on production for debugging (remove after fixing)
+  // Uncomment next line if you need to debug
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
