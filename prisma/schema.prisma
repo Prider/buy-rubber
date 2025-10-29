@@ -20,6 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   purchases Purchase[]
+  payments  Payment[]
 }
 
 // สมาชิก (เจ้าของสวน)
@@ -42,6 +43,7 @@ model Member {
   updatedAt      DateTime @updatedAt
 
   purchases Purchase[]
+  payments  Payment[]
 }
 
 // ประเภทสินค้ายาง
@@ -110,6 +112,7 @@ model Purchase {
   member      Member      @relation(fields: [memberId], references: [id])
   productType ProductType @relation(fields: [productTypeId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
+  paymentItems PaymentItem[]
 }
 
 // ค่าใช้จ่ายประจำวัน
@@ -125,6 +128,41 @@ model Expense {
 
   @@index([date])
   @@index([category])
+}
+
+// การจ่ายเงินให้สมาชิก
+model Payment {
+  id            String       @id @default(uuid())
+  paymentNo     String       @unique
+  date          DateTime     @default(now())
+  memberId      String
+  userId        String
+  totalAmount   Float
+  advanceDeduct Float        @default(0)
+  netAmount     Float
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  items  PaymentItem[]
+
+  @@index([date])
+  @@index([memberId])
+}
+
+// รายการเชื่อมการจ่ายเงินกับรายการรับซื้อ
+model PaymentItem {
+  id         String   @id @default(uuid())
+  paymentId  String
+  purchaseId String
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([purchaseId])
 }
 
 // ตั้งค่าระบบ

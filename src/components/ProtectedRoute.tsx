@@ -106,7 +106,7 @@ export function AdminOnly({ children, fallback }: { children: ReactNode; fallbac
 
 export function EmployeeOnly({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
-    <ProtectedRoute requiredRole="employee" fallback={fallback}>
+    <ProtectedRoute requiredRole="user" fallback={fallback}>
       {children}
     </ProtectedRoute>
   );

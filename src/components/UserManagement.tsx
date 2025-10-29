@@ -78,7 +78,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       const data = await response.json();
       if (data.success) {
         setUsers([...users, data.user]);
-        setCreateForm({ username: '', password: '', role: 'employee' });
+        setCreateForm({ username: '', password: '', role: 'user' });
         setShowCreateForm(false);
         setSuccess('User created successfully');
         setTimeout(() => setSuccess(''), 3000);
@@ -110,7 +110,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       if (data.success) {
         setUsers(users.map(u => u.id === editingUser.id ? data.user : u));
         setEditingUser(null);
-        setEditForm({ username: '', role: 'employee', isActive: true });
+        setEditForm({ username: '', role: 'user', isActive: true });
         setSuccess('User updated successfully');
         setTimeout(() => setSuccess(''), 3000);
       } else {
