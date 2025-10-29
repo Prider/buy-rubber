@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 interface Member {
   id: string;
@@ -27,7 +28,7 @@ export const usePurchaseData = () => {
       const response = await axios.get('/api/purchases');
       setPurchases(response.data);
     } catch (error) {
-      console.error('Load purchases error:', error);
+      logger.error('Failed to load purchases', error);
     } finally {
       setLoading(false);
     }
@@ -40,7 +41,7 @@ export const usePurchaseData = () => {
       const membersData = response.data.members || response.data;
       setMembers(membersData);
     } catch (error) {
-      console.error('Load members error:', error);
+      logger.error('Failed to load members', error);
     }
   }, []);
 
@@ -49,21 +50,17 @@ export const usePurchaseData = () => {
       const response = await axios.get('/api/product-types');
       setProductTypes(response.data);
     } catch (error) {
-      console.error('Load product types error:', error);
+      logger.error('Failed to load product types', error);
     }
   }, []);
 
   const loadDailyPrices = useCallback(async () => {
     try {
       const response = await axios.get('/api/prices/daily');
-      console.log('Daily prices API response:', response.data);
-      console.log('Number of daily prices found:', response.data.length);
-      if (response.data.length > 0) {
-        console.log('Sample daily price:', response.data[0]);
-      }
+      logger.debug('Daily prices API response', { count: response.data.length, sample: response.data[0] });
       setDailyPrices(response.data);
     } catch (error) {
-      console.error('Load daily prices error:', error);
+      logger.error('Failed to load daily prices', error);
     }
   }, []);
 
@@ -76,7 +73,7 @@ export const usePurchaseData = () => {
         loadDailyPrices(),
       ]);
     } catch (error) {
-      console.error('Load data error:', error);
+      logger.error('Failed to load data', error);
     }
   }, [loadPurchases, loadMembers, loadProductTypes, loadDailyPrices]);
 

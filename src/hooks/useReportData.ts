@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 export type ReportType = 'daily_purchase' | 'member_summary';
 
@@ -47,7 +48,7 @@ export function useReportData() {
           break;
       }
     } catch (error) {
-      console.error('Generate report error:', error);
+      logger.error('Failed to generate report', error);
     } finally {
       setLoading(false);
     }

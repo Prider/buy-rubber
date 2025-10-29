@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 interface MemberPurchaseHistoryModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
       });
       setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error) {
-      console.error('Load purchase history error:', error);
+      logger.error('Failed to load purchase history', error);
     } finally {
       setLoading(false);
     }

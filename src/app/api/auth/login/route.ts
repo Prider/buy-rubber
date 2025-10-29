@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userStore } from '@/lib/userStore';
 import { LoginRequest, LoginResponse } from '@/types/user';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json();
     const { username, password } = body;
 
-    console.log('Login attempt:', { username, password: '***' });
+    logger.info('Login attempt', { username, password: '***' });
 
     if (!username || !password) {
       return NextResponse.json<LoginResponse>({
@@ -18,14 +19,14 @@ export async function POST(request: NextRequest) {
 
     // Debug: Check if users exist
     const allUsers = await userStore.getAllUsers();
-    console.log('Total users in store:', allUsers.length);
-    console.log('Users:', allUsers.map(u => ({ username: u.username, role: u.role })));
+    logger.debug('Total users in store', { count: allUsers.length });
+    logger.debug('Users list', { users: allUsers.map(u => ({ username: u.username, role: u.role })) });
 
     const user = await userStore.authenticateUser(username, password);
     
-    console.log('User found:', user ? 'Yes' : 'No');
+    logger.debug('Authentication result', { userFound: !!user });
     if (user) {
-      console.log('User details:', { id: user.id, username: user.username, role: user.role });
+      logger.info('Login successful', { userId: user.id, username: user.username, role: user.role });
     }
     
     if (!user) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     // For now, we'll use a simple session approach
     const token = Buffer.from(JSON.stringify({ userId: user.id, role: user.role })).toString('base64');
 
-    console.log('Login successful, token generated');
+    logger.info('Token generated successfully', { userId: user.id });
 
     return NextResponse.json<LoginResponse>({
       success: true,
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login failed', error);
     return NextResponse.json<LoginResponse>({
       success: false,
       message: 'Internal server error'

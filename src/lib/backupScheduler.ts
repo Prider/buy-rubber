@@ -1,6 +1,7 @@
 import * as cron from 'node-cron';
 import { autoBackup } from './backup';
 import { prisma } from './prisma';
+import { logger } from './logger';
 
 let scheduledTask: cron.ScheduledTask | null = null;
 
@@ -27,7 +28,7 @@ export async function startAutoBackup() {
     const settings = await getBackupSettings();
     
     if (!settings.enabled) {
-      console.log('Auto backup is disabled');
+      logger.info('Auto backup is disabled');
       return;
     }
 
@@ -40,13 +41,13 @@ export async function startAutoBackup() {
     const cronExpression = getCronExpression(settings.time, settings.frequency);
     
     scheduledTask = cron.schedule(cronExpression, async () => {
-      console.log('Running scheduled backup...');
+      logger.info('Running scheduled backup...');
       await autoBackup();
     });
 
-    console.log(`Auto backup scheduler started (${settings.frequency} at ${settings.time})`);
+    logger.info(`Auto backup scheduler started (${settings.frequency} at ${settings.time})`);
   } catch (error) {
-    console.error('Failed to start auto backup scheduler:', error);
+    logger.error('Failed to start auto backup scheduler', error);
   }
 }
 
@@ -88,7 +89,7 @@ export function stopAutoBackup() {
   if (scheduledTask) {
     scheduledTask.stop();
     scheduledTask = null;
-    console.log('Auto backup scheduler stopped');
+    logger.info('Auto backup scheduler stopped');
   }
 }
 

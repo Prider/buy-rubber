@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
@@ -43,14 +44,14 @@ export const CartTable: React.FC<CartTableProps> = ({
   onShowPrintModal,
 }) => {
   const handleSaveAndAskPrint = async () => {
-    console.log('[CartTable] Save button clicked, cart items:', cart);
+    logger.debug('Save button clicked', { cartItems: cart });
     try {
-      console.log('[CartTable] Calling saveCartToDb...');
+      logger.debug('Calling saveCartToDb');
       await saveCartToDb();
-      console.log('[CartTable] saveCartToDb completed successfully');
+      logger.debug('saveCartToDb completed successfully');
       onShowPrintModal();
     } catch (error) {
-      console.error('[CartTable] Error saving cart:', error);
+      logger.error('Error saving cart', error);
     }
   };
   return (

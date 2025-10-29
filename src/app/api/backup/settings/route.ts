@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { restartAutoBackup } from '@/lib/backupScheduler';
+import { logger } from '@/lib/logger';
 
 // GET /api/backup/settings - ดึงการตั้งค่าการสำรอง
 export async function GET() {
@@ -44,7 +45,7 @@ export async function GET() {
 
     return NextResponse.json(settingsObj);
   } catch (error: any) {
-    console.error('Get backup settings error:', error);
+    logger.error('Failed to get backup settings', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงการตั้งค่า' },
       { status: 500 }
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
       message: 'บันทึกการตั้งค่าเรียบร้อย',
     });
   } catch (error: any) {
-    console.error('Save backup settings error:', error);
+    logger.error('Failed to save backup settings', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า' },
       { status: 500 }

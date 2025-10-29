@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
@@ -115,16 +116,16 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
 
   // Save cart to database
   const saveCartToDb = useCallback(async () => {
-    console.log('[useCart] saveCartToDb called, user:', user?.id, 'cart length:', cart.length);
+    logger.debug('saveCartToDb called', { userId: user?.id, cartLength: cart.length });
     if (!user || cart.length === 0) {
-      console.log('[useCart] Early return - no user or empty cart');
+      logger.debug('Early return - no user or empty cart');
       return;
     }
     setSubmitting(true);
     setError('');
     
     try {
-      console.log('[useCart] Processing cart items:', cart);
+      logger.debug('Processing cart items', { cart });
       const promises = cart.map((item, index) => {
         const payload = {
           date: item.date,
@@ -139,7 +140,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           bonusPrice: item.bonusPrice,
           notes: item.notes,
         };
-        console.log(`[useCart] Sending item ${index + 1}:`, payload);
+        logger.debug(`Sending item ${index + 1}`, payload);
         
         return fetch('/api/purchases', {
           method: 'POST',
@@ -150,24 +151,24 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
         });
       });
       
-      console.log('[useCart] Waiting for API responses...');
+      logger.debug('Waiting for API responses');
       const responses = await Promise.all(promises);
-      console.log('[useCart] Received responses:', responses.map(r => ({ status: r.status, ok: r.ok })));
+      logger.debug('Received responses', { responses: responses.map(r => ({ status: r.status, ok: r.ok })) });
       
       // Check if any request failed
       const failedResponses = responses.filter(response => !response.ok);
       if (failedResponses.length > 0) {
-        console.error('[useCart] Some requests failed:', failedResponses);
+        logger.error('Some requests failed', undefined, { failedResponses });
         const errorData = await failedResponses[0].json();
         throw new Error(errorData.error || 'เกิดข้อผิดพลาดในการบันทึก');
       }
       
-      console.log('[useCart] All requests successful, clearing cart and reloading purchases');
+      logger.debug('All requests successful, clearing cart and reloading purchases');
       setCart([]);
       await loadPurchases();
-      console.log('[useCart] Cart cleared and purchases reloaded');
+      logger.debug('Cart cleared and purchases reloaded');
     } catch (err: any) {
-      console.error('[useCart] Save cart error:', err);
+      logger.error('Failed to save cart', err);
       setError(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSubmitting(false);

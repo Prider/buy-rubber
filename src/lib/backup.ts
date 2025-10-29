@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { prisma } from './prisma';
+import { logger } from './logger';
 
 const BACKUP_DIR = path.join(process.cwd(), 'prisma', 'backups');
 const DB_PATH = path.join(process.cwd(), 'prisma', 'dev.db');
@@ -15,6 +16,7 @@ export function ensureBackupDirectory() {
 // สร้างไฟล์สำรองข้อมูล
 export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
   try {
+    logger.info('Starting backup creation', { type: backupType });
     ensureBackupDirectory();
 
     // สร้างชื่อไฟล์ (timestamp)
@@ -46,13 +48,14 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     // ทำความสะอาดไฟล์เก่า
     await cleanupOldBackups();
 
+    logger.info('Backup created successfully', { fileName, fileSize });
     return {
       success: true,
       backup,
       message: 'สำรองข้อมูลเรียบร้อย',
     };
   } catch (error: any) {
-    console.error('Backup error:', error);
+    logger.error('Backup creation failed', error);
     return {
       success: false,
       error: error.message || 'เกิดข้อผิดพลาดในการสำรองข้อมูล',
@@ -63,6 +66,7 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
 // เรียกคืนข้อมูลจากไฟล์สำรอง
 export async function restoreBackup(backupId: string) {
   try {
+    logger.info('Starting backup restore', { backupId });
     const backup = await prisma.backup.findUnique({
       where: { id: backupId },
     });
@@ -77,17 +81,19 @@ export async function restoreBackup(backupId: string) {
     }
 
     // สำรองฐานข้อมูลปัจจุบันก่อนเรียกคืน (safety)
+    logger.info('Creating safety backup before restore');
     await createBackup('auto');
 
     // เรียกคืนข้อมูล
     fs.copyFileSync(backup.filePath, DB_PATH);
 
+    logger.info('Backup restored successfully', { fileName: backup.fileName });
     return {
       success: true,
       message: 'เรียกคืนข้อมูลเรียบร้อย - กรุณารีสตาร์ทแอปพลิเคชัน',
     };
   } catch (error: any) {
-    console.error('Restore error:', error);
+    logger.error('Backup restore failed', error);
     return {
       success: false,
       error: error.message || 'เกิดข้อผิดพลาดในการเรียกคืนข้อมูล',
@@ -176,32 +182,34 @@ export async function cleanupOldBackups() {
         });
       }
 
-      console.log(`Cleaned up ${toDelete.length} old backup files`);
+      logger.info(`Cleaned up ${toDelete.length} old backup files`);
     }
   } catch (error) {
-    console.error('Cleanup old backups error:', error);
+    logger.error('Failed to cleanup old backups', error);
   }
 }
 
 // ตรวจสอบและสำรองข้อมูลอัตโนมัติ
 export async function autoBackup() {
   try {
+    logger.info('Auto backup triggered');
     const autoBackupSetting = await prisma.setting.findUnique({
       where: { key: 'backup_enabled' },
     });
 
     // ถ้าไม่เปิดใช้งาน auto backup
     if (!autoBackupSetting || autoBackupSetting.value !== 'true') {
+      logger.debug('Auto backup is disabled in settings');
       return;
     }
 
     // สำรองข้อมูล
     const result = await createBackup('auto');
-    console.log('Auto backup completed:', result);
+    logger.info('Auto backup completed successfully', { result });
 
     return result;
   } catch (error) {
-    console.error('Auto backup error:', error);
+    logger.error('Auto backup failed', error);
   }
 }
 

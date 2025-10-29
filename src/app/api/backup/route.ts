@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBackup, getBackupList, restoreBackup, deleteBackup } from '@/lib/backup';
+import { logger } from '@/lib/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +10,7 @@ export async function GET() {
     const backups = await getBackupList();
     return NextResponse.json({ backups });
   } catch (error: any) {
-    console.error('Get backup list error:', error);
+    logger.error('Failed to get backup list', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงรายการสำรองข้อมูล' },
       { status: 500 }
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Create backup error:', error);
+    logger.error('Failed to create backup', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสำรองข้อมูล' },
       { status: 500 }
@@ -63,7 +64,7 @@ export async function PUT(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Restore backup error:', error);
+    logger.error('Failed to restore backup', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการเรียกคืนข้อมูล' },
       { status: 500 }
@@ -95,7 +96,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Delete backup error:', error);
+    logger.error('Failed to delete backup', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการลบข้อมูล' },
       { status: 500 }

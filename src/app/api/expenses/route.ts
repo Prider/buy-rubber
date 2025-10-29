@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // GET /api/expenses
 export async function GET(request: NextRequest) {
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       summary,
     });
   } catch (error) {
-    console.error('Get expenses error:', error);
+    logger.error('Failed to get expenses', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าใช้จ่าย' },
       { status: 500 }
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(expense);
   } catch (error) {
-    console.error('Create expense error:', error);
+    logger.error('Failed to create expense', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย' },
       { status: 500 }

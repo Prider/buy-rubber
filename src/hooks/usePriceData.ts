@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 interface ProductType {
   id: string;
@@ -40,14 +41,15 @@ export function usePriceData() {
       setPriceHistory(pricesRes.data || []);
       
       const todayDate = new Date().toISOString().split('T')[0];
-      console.log('=== Price Data Debug ===');
-      console.log('Today date:', todayDate);
-      console.log('Total prices loaded:', pricesRes.data?.length);
-      console.log('Product types:', productTypesRes.data?.length);
+      logger.debug('Price data loaded', { 
+        todayDate, 
+        totalPrices: pricesRes.data?.length, 
+        productTypes: productTypesRes.data?.length 
+      });
 
       return productTypesRes.data || [];
     } catch (error) {
-      console.error('Load data error:', error);
+      logger.error('Failed to load price data', error);
       return [];
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/lib/logger';
 
 interface UserManagementProps {
   className?: string;
@@ -55,7 +56,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       }
     } catch (error) {
       setError('Failed to load users');
-      console.error('Load users error:', error);
+      logger.error('Failed to load users', error);
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       }
     } catch (error) {
       setError('Failed to create user');
-      console.error('Create user error:', error);
+      logger.error('Failed to create user', error);
     }
   };
 
@@ -117,7 +118,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       }
     } catch (error) {
       setError('Failed to update user');
-      console.error('Update user error:', error);
+      logger.error('Failed to update user', error);
     }
   };
 
@@ -143,7 +144,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       }
     } catch (error) {
       setError('Failed to delete user');
-      console.error('Delete user error:', error);
+      logger.error('Failed to delete user', error);
     }
   };
 

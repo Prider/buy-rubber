@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 export interface Expense {
   id: string;
@@ -57,7 +58,7 @@ export const useExpenses = () => {
       });
     } catch (err: any) {
       setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลค่าใช้จ่าย');
-      console.error('Load expenses error:', err);
+      logger.error('Failed to load expenses', err);
     } finally {
       setLoading(false);
     }

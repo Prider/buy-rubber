@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 import { Member, MemberFormData, UseMembersReturn, PaginationInfo, DeleteMemberResponse } from '@/types/member';
 
 export const useMembers = (): UseMembersReturn => {
@@ -34,7 +35,7 @@ export const useMembers = (): UseMembersReturn => {
       setPagination(response.data.pagination);
     } catch (err: any) {
       setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลสมาชิก');
-      console.error('Load members error:', err);
+      logger.error('Failed to load members', err);
     } finally {
       setLoading(false);
     }

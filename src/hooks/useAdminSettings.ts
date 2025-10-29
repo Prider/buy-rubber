@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAppMode } from '@/contexts/AppModeContext';
 import { getLocalIPAddress, validateServerUrl, formatServerUrl } from '@/lib/config';
 import { updateApiClient } from '@/lib/apiClient';
+import { logger } from '@/lib/logger';
 
 export interface AdminSettingsState {
   serverUrl: string;
@@ -51,9 +52,9 @@ export function useAdminSettings() {
       try {
         const ip = await getLocalIPAddress();
         setLocalIP(ip);
-        console.log('Fetched local IP:', ip);
+        logger.debug('Fetched local IP', { ip });
       } catch (error) {
-        console.error('Failed to get local IP:', error);
+        logger.error('Failed to get local IP', error);
         setLocalIP('localhost');
       } finally {
         setIpLoading(false);
@@ -68,17 +69,17 @@ export function useAdminSettings() {
     const currentMode = isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์';
     const targetMode = isServerMode ? 'ไคลเอนต์' : 'เซิร์ฟเวอร์';
     
-    console.log('quickSwitchMode called:', { isServerMode, serverPort, serverUrl });
+    logger.debug('quickSwitchMode called', { isServerMode, serverPort, serverUrl });
     
     if (confirm(`คุณต้องการสลับจากโหมด${currentMode} เป็นโหมด${targetMode} หรือไม่?`)) {
       if (isServerMode) {
         // Switch to client mode - use localhost as default
         const defaultServerUrl = `http://localhost:${serverPort}`;
-        console.log('Switching to client mode with URL:', defaultServerUrl);
+        logger.debug('Switching to client mode', { url: defaultServerUrl });
         handleClientMode(defaultServerUrl, true); // Skip connection test when switching modes
       } else {
         // Switch to server mode
-        console.log('Switching to server mode');
+        logger.debug('Switching to server mode');
         handleServerMode();
       }
     }
@@ -111,7 +112,7 @@ export function useAdminSettings() {
       window.dispatchEvent(new CustomEvent('configChanged'));
     } catch (error) {
       setConnectionError('เกิดข้อผิดพลาดในการเปลี่ยนเป็นโหมดเซิร์ฟเวอร์');
-      console.error('Server mode error:', error);
+      logger.error('Server mode error', error);
     } finally {
       setIsConnecting(false);
     }
@@ -121,7 +122,7 @@ export function useAdminSettings() {
   const handleClientMode = useCallback(async (customServerUrl?: string, skipConnectionTest = false) => {
     const urlToUse = customServerUrl || serverUrl;
     
-    console.log('handleClientMode called with:', { customServerUrl, serverUrl, urlToUse, skipConnectionTest });
+    logger.debug('handleClientMode called', { customServerUrl, serverUrl, urlToUse, skipConnectionTest });
     
     if (!urlToUse.trim()) {
       setConnectionError('กรุณากรอก URL เซิร์ฟเวอร์');
@@ -184,7 +185,7 @@ export function useAdminSettings() {
       window.dispatchEvent(new CustomEvent('configChanged'));
     } catch (error) {
       setConnectionError(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      console.error('Client mode error:', error);
+      logger.error('Client mode error', error);
     } finally {
       setIsConnecting(false);
     }
@@ -203,7 +204,7 @@ export function useAdminSettings() {
       setCopySuccess(`${label} คัดลอกเรียบร้อยแล้ว`);
       setTimeout(() => setCopySuccess(''), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy to clipboard', error);
       setCopySuccess('ไม่สามารถคัดลอกได้');
       setTimeout(() => setCopySuccess(''), 2000);
     }

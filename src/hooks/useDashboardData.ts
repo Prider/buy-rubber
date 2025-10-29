@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getApiClient } from '@/lib/apiClient';
+import { logger } from '@/lib/logger';
 
 export interface DashboardStats {
   todayPurchases: number;
@@ -45,7 +46,7 @@ export function useDashboardData(): UseDashboardDataReturn {
       const response = await apiClient.getDashboard();
       setData(response as DashboardData);
     } catch (error) {
-      console.error('Load dashboard error:', error);
+      logger.error('Failed to load dashboard', error);
     } finally {
       setLoading(false);
     }

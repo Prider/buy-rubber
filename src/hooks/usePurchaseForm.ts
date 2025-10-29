@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 interface Member {
   id: string;
@@ -91,7 +92,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         setRecentPurchases(purchases.slice(0, 3)); // Max 3 purchases
       }
     } catch (error) {
-      console.error('Error fetching recent purchases:', error);
+      logger.error('Failed to fetch recent purchases', error);
       setRecentPurchases([]);
     }
   }, []);
