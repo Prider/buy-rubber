@@ -153,10 +153,15 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   <input
                     type="text"
                     value={localFormData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => {
+                      const numericValue = e.target.value.replace(/\D/g, '');
+                      handleInputChange('phone', numericValue);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                     disabled={isLoading}
                     placeholder="กรอกเบอร์โทรศัพท์"
+                    inputMode="tel"
+                    pattern="[0-9]*"
                   />
                 </div>
 
@@ -178,7 +183,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             </div>
 
             {/* Ownership Information Section */}
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-75 pointer-events-none">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                   <svg className="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,11 +203,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     <input
                       type="number"
                       value={localFormData.ownerPercent}
-                      onChange={(e) => handleInputChange('ownerPercent', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 pr-6 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                       min="0"
                       max="100"
-                      disabled={isLoading}
+                      disabled
                       placeholder="0"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -220,11 +224,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     <input
                       type="number"
                       value={localFormData.tapperPercent}
-                      onChange={(e) => handleInputChange('tapperPercent', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 pr-6 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                       min="0"
                       max="100"
-                      disabled={isLoading}
+                      disabled
                       placeholder="0"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -241,9 +244,8 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   <input
                     type="text"
                     value={localFormData.tapperName}
-                    onChange={(e) => handleInputChange('tapperName', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
-                    disabled={isLoading}
+                    disabled
                     placeholder="กรอกชื่อคนตัด"
                   />
                 </div>

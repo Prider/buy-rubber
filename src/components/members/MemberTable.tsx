@@ -1,5 +1,4 @@
 import React from 'react';
-import { formatCurrency } from '@/lib/utils';
 import { MemberTableProps } from '@/types/member';
 
 export const MemberTable: React.FC<MemberTableProps> = ({
@@ -39,10 +38,6 @@ export const MemberTable: React.FC<MemberTableProps> = ({
               <th>รหัส</th>
               <th>ชื่อ-นามสกุล</th>
               <th>เบอร์โทร</th>
-              <th>% เจ้าของสวน</th>
-              <th>% คนตัด</th>
-              <th>คนตัด</th>
-              <th>เบิกล่วงหน้า</th>
               <th>จัดการ</th>
             </tr>
           </thead>
@@ -81,12 +76,6 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       <td className="font-medium">{member.code}</td>
       <td>{member.name}</td>
       <td>{member.phone || '-'}</td>
-      <td>{member.ownerPercent}%</td>
-      <td>{member.tapperPercent}%</td>
-      <td>{member.tapperName || '-'}</td>
-      <td className="text-orange-600">
-        {formatCurrency(member.advanceBalance)}
-      </td>
       <td>
         <div className="flex items-center space-x-3">
           <button
