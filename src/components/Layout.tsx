@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
+import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +16,8 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useArrowFocusNavigation();
 
   const handleLogout = async () => {
     await logout();

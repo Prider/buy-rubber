@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
 
 interface LoginPageProps {
   onLogin?: () => void;
@@ -16,6 +17,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useArrowFocusNavigation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
