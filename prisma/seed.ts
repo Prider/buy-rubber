@@ -25,6 +25,8 @@ async function main() {
   
   await prisma.productPrice.deleteMany({});
   console.log('   - ลบราคาสินค้าประจำวัน');
+  await prisma.expense.deleteMany({});
+  console.log('   - ลบค่าใช้จ่าย');
   
   // ลบข้อมูลหลักหลังจากลบข้อมูลที่อ้างอิงแล้ว
   await prisma.member.deleteMany({});
@@ -132,6 +134,48 @@ async function main() {
     }
   }
   console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');
+
+  // สร้างค่าใช้จ่ายตัวอย่าง
+  console.log('💸 สร้างข้อมูลค่าใช้จ่าย...');
+  const expenseCategories = [
+    { category: 'ค่าน้ำมัน', description: 'ค่าน้ำมันรถรับซื้อยาง', baseAmount: 1200 },
+    { category: 'ค่าซ่อมบำรุง', description: 'ค่าบำรุงรักษารถและเครื่องมือ', baseAmount: 850 },
+    { category: 'ค่าคนงาน', description: 'ค่าแรงทีมงานประจำวัน', baseAmount: 1500 },
+    { category: 'ค่าไฟฟ้า', description: 'ค่าไฟฟ้าโรงรับซื้อ', baseAmount: 600 },
+    { category: 'ค่าเดินทาง', description: 'ค่าเดินทางไปตรวจสวนยาง', baseAmount: 700 },
+  ];
+
+  const expenses = [];
+  const expenseCount = 100;
+
+  for (let i = 0; i < expenseCount; i++) {
+    const categoryInfo = expenseCategories[i % expenseCategories.length];
+
+    const date = new Date();
+    date.setDate(date.getDate() - (i % 45));
+    date.setHours(12, 0, 0, 0);
+
+    const expenseNo = `EXP${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}${(i + 1).toString().padStart(3, '0')}`;
+    const amount = parseFloat((categoryInfo.baseAmount + ((i % 7) * 37)).toFixed(2));
+    const descriptionSuffix = i % 3 === 0 ? ' (รอบเช้า)' : i % 3 === 1 ? ' (รอบบ่าย)' : ' (รอบเย็น)';
+
+    const expense = await prisma.expense.create({
+      data: {
+        expenseNo,
+        date,
+        category: categoryInfo.category,
+        amount,
+        description: `${categoryInfo.description}${descriptionSuffix}`,
+      },
+    });
+
+    expenses.push(expense);
+
+    if ((i + 1) % 20 === 0) {
+      console.log(`   ✓ สร้างค่าใช้จ่ายครบ ${(i + 1)} รายการ`);
+    }
+  }
+  console.log('✅ สร้างค่าใช้จ่าย:', expenses.length, 'รายการ');
 
   // สร้างสมาชิกตัวอย่าง (103 ราย)
   console.log('👥 สร้างสมาชิกตัวอย่าง...');

@@ -6,12 +6,20 @@ interface ExpenseListTableProps {
   expenses: Expense[];
   loading: boolean;
   onDelete: (id: string) => Promise<void>;
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void | Promise<void>;
 }
 
 export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
   expenses,
   loading,
   onDelete,
+  page,
+  pageSize,
+  total,
+  onPageChange,
 }) => {
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -47,6 +55,20 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  };
+
+  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const canGoPrev = !loading && currentPage > 1 && total > 0;
+  const canGoNext = !loading && currentPage < totalPages && total > 0;
+  const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = total === 0 ? 0 : Math.min(currentPage * pageSize, total);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) {
+      return;
+    }
+    onPageChange(newPage);
   };
 
   if (loading) {
@@ -147,6 +169,43 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/70">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {total === 0
+            ? 'ยังไม่มีข้อมูลค่าใช้จ่ายในระบบ'
+            : `แสดง ${startItem.toLocaleString()}-${endItem.toLocaleString()} จาก ${total.toLocaleString()} รายการ`}
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={!canGoPrev}
+            className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
+              canGoPrev
+                ? 'text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed'
+            }`}
+          >
+            ก่อนหน้า
+          </button>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            หน้า {total === 0 ? 0 : currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={!canGoNext}
+            className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
+              canGoNext
+                ? 'text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed'
+            }`}
+          >
+            ถัดไป
+          </button>
+        </div>
       </div>
     </div>
   );

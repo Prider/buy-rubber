@@ -28,13 +28,25 @@ export async function GET(request: NextRequest) {
       where.category = category;
     }
 
+    const pageParam = parseInt(searchParams.get('page') ?? '1', 10);
+    const pageSizeParam = parseInt(searchParams.get('pageSize') ?? '10', 10);
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    let pageSize = Number.isNaN(pageSizeParam) ? 10 : pageSizeParam;
+    pageSize = Math.min(Math.max(pageSize, 1), 50);
+
+    const total = await prisma.expense.count({ where });
+    const totalPages = total === 0 ? 1 : Math.ceil(total / pageSize);
+    const currentPage = Math.min(page, totalPages);
+    const skip = total === 0 ? 0 : (currentPage - 1) * pageSize;
+
     // Get expenses
     const expenses = await prisma.expense.findMany({
       where,
       orderBy: {
         date: 'desc',
       },
-      take: 50, // Limit to last 50 records
+      skip,
+      take: pageSize,
     });
 
     // Calculate summary statistics
@@ -100,6 +112,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       expenses,
       summary,
+      pagination: {
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+      },
     });
   } catch (error) {
     logger.error('Failed to get expenses', error);

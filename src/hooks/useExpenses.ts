@@ -22,12 +22,29 @@ export interface ExpenseSummary {
   avgCount: number;
 }
 
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+interface LoadExpensesOptions {
+  page?: number;
+  pageSize?: number;
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+}
+
 const EXPENSE_CATEGORIES = [
   { value: 'ค่าน้ำมัน', label: 'ค่าน้ำมัน' },
   { value: 'ค่าซ่อมรถ', label: 'ค่าซ่อมรถ' },
   { value: 'ค่าคนงาน', label: 'ค่าคนงาน' },
   { value: 'อื่นๆ', label: 'อื่นๆ' },
 ];
+
+const DEFAULT_PAGE_SIZE = 10;
 
 export const useExpenses = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -39,14 +56,39 @@ export const useExpenses = () => {
     avgDaily: 0,
     avgCount: 0,
   });
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadExpenses = useCallback(async () => {
+  const loadExpenses = useCallback(async (options: LoadExpensesOptions = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('/api/expenses');
+
+      const page = options.page ?? 1;
+      const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
+
+      const params: Record<string, string | number> = {
+        page,
+        pageSize,
+      };
+
+      if (options.startDate) {
+        params.startDate = options.startDate;
+      }
+      if (options.endDate) {
+        params.endDate = options.endDate;
+      }
+      if (options.category) {
+        params.category = options.category;
+      }
+
+      const response = await axios.get('/api/expenses', { params });
       setExpenses(response.data.expenses || []);
       setSummary(response.data.summary || {
         todayTotal: 0,
@@ -56,6 +98,24 @@ export const useExpenses = () => {
         avgDaily: 0,
         avgCount: 0,
       });
+
+      const paginationData = response.data.pagination;
+      if (paginationData) {
+        setPagination({
+          page: paginationData.page ?? page,
+          pageSize: paginationData.pageSize ?? pageSize,
+          total: paginationData.total ?? 0,
+          totalPages: paginationData.totalPages ?? Math.max(1, Math.ceil((paginationData.total ?? 0) / (paginationData.pageSize ?? pageSize))),
+        });
+      } else {
+        const total = response.data.expenses?.length || 0;
+        setPagination({
+          page,
+          pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        });
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลค่าใช้จ่าย');
       logger.error('Failed to load expenses', err);
@@ -68,24 +128,32 @@ export const useExpenses = () => {
     try {
       setError(null);
       await axios.post('/api/expenses', expenseData);
-      await loadExpenses(); // Refresh the list
+      await loadExpenses({ page: 1, pageSize: pagination.pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [loadExpenses]);
+  }, [loadExpenses, pagination.pageSize]);
 
   const deleteExpense = useCallback(async (id: string) => {
     try {
       setError(null);
       await axios.delete(`/api/expenses/${id}`);
-      await loadExpenses(); // Refresh the list
+      await loadExpenses({ page: pagination.page, pageSize: pagination.pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบค่าใช้จ่าย';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
+  }, [loadExpenses, pagination.page, pagination.pageSize]);
+
+  const changePage = useCallback(async (page: number) => {
+    await loadExpenses({ page, pageSize: pagination.pageSize });
+  }, [loadExpenses, pagination.pageSize]);
+
+  const changePageSize = useCallback(async (pageSize: number) => {
+    await loadExpenses({ page: 1, pageSize });
   }, [loadExpenses]);
 
   return {
@@ -93,9 +161,12 @@ export const useExpenses = () => {
     summary,
     loading,
     error,
+    pagination,
     loadExpenses,
     createExpense,
     deleteExpense,
+    changePage,
+    changePageSize,
     categories: EXPENSE_CATEGORIES,
   };
 };

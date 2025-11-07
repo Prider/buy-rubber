@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 export default function ExpensesPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { expenses, summary, loading, loadExpenses, createExpense, deleteExpense } = useExpenses();
+  const { expenses, summary, loading, loadExpenses, createExpense, deleteExpense, pagination, changePage } = useExpenses();
 
   useEffect(() => {
     if (!user) {
@@ -31,6 +31,10 @@ export default function ExpensesPage() {
       return;
     }
     await deleteExpense(id);
+  };
+
+  const handlePageChange = (pageNumber: number) => {
+    changePage(pageNumber);
   };
 
   return (
@@ -110,6 +114,10 @@ export default function ExpensesPage() {
                 expenses={expenses} 
                 loading={loading}
                 onDelete={handleDeleteExpense}
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                total={pagination.total}
+                onPageChange={handlePageChange}
               />
             </div>
           </div>
