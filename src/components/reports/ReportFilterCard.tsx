@@ -48,6 +48,7 @@ export default function ReportFilterCard({
               >
                 <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน</option>
                 <option value="member_summary">👥 สรุปรายสมาชิก</option>
+                <option value="expense_summary">💸 รายงานค่าใช้จ่าย</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

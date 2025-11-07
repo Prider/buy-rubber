@@ -2,7 +2,13 @@ import { useState } from 'react';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
 
-export type ReportType = 'daily_purchase' | 'member_summary';
+export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary';
+
+interface ExpenseCategorySummary {
+  category: string;
+  totalAmount: number;
+  count: number;
+}
 
 export function useReportData() {
   const [loading, setLoading] = useState(false);
@@ -10,6 +16,7 @@ export function useReportData() {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [data, setData] = useState<any>(null);
+  const [expenseSummary, setExpenseSummary] = useState<ExpenseCategorySummary[]>([]);
 
   const generateReport = async () => {
     setLoading(true);
@@ -21,6 +28,7 @@ export function useReportData() {
             params: { startDate, endDate },
           });
           setData(response.data);
+          setExpenseSummary([]);
           break;
         case 'member_summary':
           response = await axios.get('/api/purchases', {
@@ -43,6 +51,35 @@ export function useReportData() {
             return acc;
           }, {});
           setData(Object.values(grouped));
+          setExpenseSummary([]);
+          break;
+        case 'expense_summary':
+          response = await axios.get('/api/expenses', {
+            params: {
+              startDate,
+              endDate,
+              page: 1,
+              pageSize: 1000,
+            },
+          });
+          setData(response.data.expenses || []);
+          if (response.data.expenses) {
+            const categorySummary = response.data.expenses.reduce((acc: Record<string, ExpenseCategorySummary>, expense: any) => {
+              if (!acc[expense.category]) {
+                acc[expense.category] = {
+                  category: expense.category,
+                  totalAmount: 0,
+                  count: 0,
+                };
+              }
+              acc[expense.category].totalAmount += expense.amount;
+              acc[expense.category].count += 1;
+              return acc;
+            }, {});
+            setExpenseSummary(Object.values(categorySummary).sort((a, b) => b.totalAmount - a.totalAmount));
+          } else {
+            setExpenseSummary([]);
+          }
           break;
         default:
           break;
@@ -60,6 +97,8 @@ export function useReportData() {
       return data.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
     } else if (reportType === 'member_summary') {
       return data.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
+    } else if (reportType === 'expense_summary') {
+      return data.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
     }
     return 0;
   };
@@ -80,6 +119,8 @@ export function useReportData() {
         return 'รายงานรับซื้อประจำวัน';
       case 'member_summary':
         return 'สรุปรายสมาชิก';
+      case 'expense_summary':
+        return 'รายงานค่าใช้จ่าย';
       default:
         return 'รายงาน';
     }
@@ -94,6 +135,7 @@ export function useReportData() {
     endDate,
     setEndDate,
     data,
+    expenseSummary,
     generateReport,
     getTotalAmount,
     getTotalWeight,

@@ -200,3 +200,69 @@ export function generateMemberSummaryTableHTML(data: any[]): string {
   `;
 }
 
+export function generateExpenseTableHTML(data: any[], categorySummary: Array<{ category: string; totalAmount: number; count: number }>): string {
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>วันที่</th>
+          <th>เลขที่</th>
+          <th>หมวดค่าใช้จ่าย</th>
+          <th>รายละเอียด</th>
+          <th>จำนวนเงิน</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data
+          .map(
+            (expense: any) => `
+          <tr>
+            <td>${new Date(expense.date || expense.createdAt).toLocaleDateString('th-TH')}</td>
+            <td>${expense.expenseNo}</td>
+            <td>${expense.category}</td>
+            <td>${expense.description || '-'}</td>
+            <td style="text-align: right; font-weight: bold; color: #dc2626;">${formatCurrency(expense.amount || 0)}</td>
+          </tr>
+        `
+          )
+          .join('')}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" style="text-align: right; font-weight: bold;">รวมทั้งหมด</td>
+          <td style="text-align: right; font-weight: bold; color: #dc2626;">${formatCurrency(
+            data.reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0)
+          )}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${categorySummary.length > 0
+      ? `<div style="margin-top: 30px;">
+        <h3 style="font-size: 18px; font-weight: bold; color: #047857; margin-bottom: 16px;">สรุปตามหมวดค่าใช้จ่าย</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>หมวดค่าใช้จ่าย</th>
+              <th>จำนวนรายการ</th>
+              <th>ยอดรวม</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${categorySummary
+              .map(
+                (summary) => `
+              <tr>
+                <td>${summary.category}</td>
+                <td>${summary.count.toLocaleString('th-TH')}</td>
+                <td style="text-align: right; font-weight: bold; color: #047857;">${formatCurrency(summary.totalAmount)}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>`
+      : ''}
+  `;
+}
+
