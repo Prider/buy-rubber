@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import axios from 'axios';
 import { Member, MemberFormData } from '@/types/member';
 import { generateMemberCode, validateMemberData } from '@/lib/memberUtils';
 
@@ -15,8 +16,18 @@ export const useMemberForm = (members: Member[]) => {
     tapperName: '',
   });
 
-  const openFormForNew = useCallback(() => {
-    const newCode = generateMemberCode(members);
+  const openFormForNew = useCallback(async () => {
+    let newCode = generateMemberCode(members);
+
+    try {
+      const response = await axios.get('/api/members/next-code');
+      if (response.data?.code) {
+        newCode = response.data.code;
+      }
+    } catch (error) {
+      console.error('Failed to fetch next member code, falling back to client-side generation.', error);
+    }
+
     setFormData({
       name: '',
       code: newCode,
