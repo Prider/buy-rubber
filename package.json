@@ -8,10 +8,11 @@
     "build": "next build",
     "start": "next start",
     "electron": "electron .",
-    "electron:build": "next build && electron-builder",
-    "electron:build:win": "next build && electron-builder --win",
-    "electron:build:mac": "next build && electron-builder --mac",
-    "electron:build:all": "next build && electron-builder --win --mac",
+    "prepare:build": "node scripts/prepare-build-db.js",
+    "electron:build": "npm run prepare:build && next build && electron-builder",
+    "electron:build:win": "npm run prepare:build && next build && electron-builder --win",
+    "electron:build:mac": "npm run prepare:build && next build && electron-builder --mac",
+    "electron:build:all": "npm run prepare:build && next build && electron-builder --win --mac",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -79,7 +80,8 @@
     "extraResources": [
       {
         "from": "prisma/dev.db",
-        "to": "prisma/dev.db"
+        "to": "prisma/dev.db",
+        "filter": ["**/*"]
       }
     ],
     "win": {

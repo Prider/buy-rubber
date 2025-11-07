@@ -84,8 +84,21 @@ function createWindow() {
   });
 }
 
+// Initialize database on app ready
+const { initializeDatabase } = require('./db-init');
+
 // This method will be called when Electron has finished initialization
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Initialize database first (copy seeded DB if needed)
+  try {
+    console.log('Initializing database...');
+    await initializeDatabase();
+    console.log('Database initialization complete');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    // Continue anyway - Prisma will create empty database if needed
+  }
+
   createWindow();
 
   app.on('activate', () => {
