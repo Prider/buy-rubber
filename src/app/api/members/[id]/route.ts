@@ -89,16 +89,13 @@ export async function DELETE(
       });
     }
 
-    // If no purchases, still use soft delete for safety
-    // You can change this to actual delete if needed
-    await prisma.member.update({
+    await prisma.member.delete({
       where: { id: params.id },
-      data: { isActive: false },
     });
 
-    return NextResponse.json({ 
-      message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',
-      softDelete: true
+    return NextResponse.json({
+      message: 'ลบสมาชิกเรียบร้อยแล้ว',
+      softDelete: false,
     });
   } catch (error) {
     console.error('Delete member error:', error);

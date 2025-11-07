@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MemberFormProps, MemberFormData } from '@/types/member';
-import { generateMemberCode } from '@/lib/memberUtils';
 
 export const MemberForm: React.FC<MemberFormProps> = ({
   isOpen,
@@ -13,11 +12,28 @@ export const MemberForm: React.FC<MemberFormProps> = ({
 }) => {
   const [localFormData, setLocalFormData] = useState<MemberFormData>(formData);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const initialEditingDataRef = useRef<MemberFormData | null>(null);
 
   useEffect(() => {
     setLocalFormData(formData);
     setValidationError(null);
   }, [formData, isOpen]);
+
+  useEffect(() => {
+    if (editingMember) {
+      initialEditingDataRef.current = {
+        name: editingMember.name,
+        code: editingMember.code,
+        phone: editingMember.phone || '',
+        address: editingMember.address || '',
+        ownerPercent: editingMember.ownerPercent,
+        tapperPercent: editingMember.tapperPercent,
+        tapperName: editingMember.tapperName || '',
+      };
+    } else {
+      initialEditingDataRef.current = null;
+    }
+  }, [editingMember]);
 
   const handleInputChange = (field: keyof MemberFormData, value: string | number) => {
     const newData = { ...localFormData, [field]: value };
@@ -41,6 +57,29 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     setValidationError(null);
     onCancel();
   };
+
+  const hasChanges = useMemo(() => {
+    if (!editingMember) {
+      return true;
+    }
+
+    const initialData = initialEditingDataRef.current;
+    if (!initialData) {
+      return true;
+    }
+
+    return (
+      localFormData.name !== initialData.name ||
+      localFormData.code !== initialData.code ||
+      localFormData.phone !== initialData.phone ||
+      localFormData.address !== initialData.address ||
+      localFormData.ownerPercent !== initialData.ownerPercent ||
+      localFormData.tapperPercent !== initialData.tapperPercent ||
+      localFormData.tapperName !== initialData.tapperName
+    );
+  }, [editingMember, localFormData]);
+
+  const isSubmitDisabled = isLoading || !hasChanges;
 
   if (!isOpen) return null;
 
@@ -258,14 +297,13 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                 type="button"
                 onClick={handleCancel}
                 className="px-5 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium text-sm"
-                disabled={isLoading}
               >
                 ยกเลิก
               </button>
               <button 
                 type="submit" 
                 className="px-6 py-2 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl disabled:shadow-none"
-                disabled={isLoading}
+                disabled={isLoading || isSubmitDisabled}
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-1.5">

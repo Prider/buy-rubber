@@ -21,9 +21,16 @@ export const validateMemberData = (data: { name: string }, members: Member[], ed
     return 'กรุณากรอกชื่อ-นามสกุล';
   }
 
+  if (editingMember && editingMember.name.toLowerCase() === data.name.toLowerCase()) {
+    return null;
+  }
+
   // Check for duplicate name
   const duplicateMember = members.find(member => {
-    if (editingMember && member.id === editingMember.id) {
+    if (
+      editingMember &&
+      (member.id === editingMember.id || member.code === editingMember.code)
+    ) {
       return false; // Skip the member being edited
     }
     return member.name.toLowerCase() === data.name.toLowerCase();
