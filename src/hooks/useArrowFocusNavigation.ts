@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-const FOCUSABLE_SELECTORS = [
+export const FOCUSABLE_SELECTORS = [
   'a[href]',
   'button',
   'input:not([type="hidden"])',
@@ -38,7 +38,7 @@ const isEditableElement = (element: Element | null): boolean => {
   ].includes(type);
 };
 
-const isFocusable = (element: HTMLElement): boolean => {
+export const isFocusable = (element: HTMLElement): boolean => {
   if (element.hasAttribute('disabled')) return false;
   if (element.getAttribute('aria-hidden') === 'true') return false;
   if (element.tabIndex < 0) return false;

@@ -1,12 +1,30 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
+import useArrowFocusNavigation, { FOCUSABLE_SELECTORS, isFocusable } from '@/hooks/useArrowFocusNavigation';
+
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: string;
+  adminOnly?: boolean;
+}
+
+const NAV_ITEMS: NavigationItem[] = [
+  { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
+  { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
+  { name: 'สมาชิก', href: '/members', icon: '👥' },
+  { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
+  { name: 'ตั้งราคา', href: '/prices', icon: '💲' },
+  { name: 'รายงาน', href: '/reports', icon: '📈' },
+  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true },
+  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
+];
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,71 +34,125 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
 
   useArrowFocusNavigation();
+
+  const focusElement = useCallback((element?: HTMLElement | null) => {
+    element?.focus({ preventScroll: true });
+  }, []);
+
+  const getFocusableWithin = useCallback((root: HTMLElement | null) => {
+    if (!root) {
+      return [];
+    }
+
+    return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(isFocusable);
+  }, []);
+
+  const focusActiveNavLink = useCallback(() => {
+    if (!pathname || pathname === '/login') {
+      return false;
+    }
+
+    const sidebarEl = sidebarRef.current;
+    if (!sidebarEl) {
+      return false;
+    }
+
+    const activeLink = sidebarEl.querySelector<HTMLElement>(`[data-nav-link="${pathname}"]`);
+    if (!activeLink) {
+      return false;
+    }
+
+    focusElement(activeLink);
+    return true;
+  }, [focusElement, pathname]);
+
+  const focusFirstMainElement = useCallback(() => {
+    const [firstFocusable] = getFocusableWithin(mainContentRef.current);
+    if (!firstFocusable) {
+      return false;
+    }
+    focusElement(firstFocusable);
+    return true;
+  }, [focusElement, getFocusableWithin]);
+
+  useEffect(() => {
+    const currentActiveElement = document.activeElement;
+    if (currentActiveElement && currentActiveElement !== document.body) {
+      return;
+    }
+
+    focusActiveNavLink();
+  }, [focusActiveNavLink]);
+
+  const handleDirectionalNavigation = useCallback((event: KeyboardEvent) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      return;
+    }
+
+    const sidebarEl = sidebarRef.current;
+    const mainEl = mainContentRef.current;
+    if (!sidebarEl || !mainEl) {
+      return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    if (!activeElement) {
+      return;
+    }
+
+    const isInSidebar = sidebarEl.contains(activeElement);
+    const isInMain = mainEl.contains(activeElement);
+
+    if (event.key === 'ArrowRight' && isInSidebar) {
+      const focused = focusFirstMainElement();
+      if (focused) {
+        event.preventDefault();
+      }
+    }
+
+    if (event.key === 'ArrowLeft' && isInMain) {
+      const focusedNav = focusActiveNavLink();
+      if (focusedNav) {
+        event.preventDefault();
+        return;
+      }
+
+      const [firstSidebarElement] = getFocusableWithin(sidebarEl);
+      if (firstSidebarElement) {
+        event.preventDefault();
+        focusElement(firstSidebarElement);
+      }
+    }
+  }, [focusActiveNavLink, focusElement, focusFirstMainElement, getFocusableWithin]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleDirectionalNavigation);
+    return () => {
+      document.removeEventListener('keydown', handleDirectionalNavigation);
+    };
+  }, [handleDirectionalNavigation]);
 
   const handleLogout = async () => {
     await logout();
     window.location.href = '/';
   };
 
-  const allNavigation = [
-    {
-      name: 'แดชบอร์ด',
-      href: '/dashboard',
-      icon: '📊',
-    },
-    {
-      name: 'รับซื้อยาง',
-      href: '/purchases',
-      icon: '🛒',
-    },
-    {
-      name: 'สมาชิก',
-      href: '/members',
-      icon: '👥',
-    },
-    {
-      name: 'ค่าใช้จ่าย',
-      href: '/expenses',
-      icon: '💰',
-    },
-    {
-      name: 'ตั้งราคา',
-      href: '/prices',
-      icon: '💲',
-    },
-    {
-      name: 'รายงาน',
-      href: '/reports',
-      icon: '📈',
-    },
-    {
-      name: 'สำรองข้อมูล',
-      href: '/backup',
-      icon: '💾',
-      adminOnly: true, // Only show to admin users
-    },
-    {
-      name: 'ตั้งค่า',
-      href: '/admin',
-      icon: '⚙️',
-      adminOnly: true, // Only show to admin users
-    },
-  ];
-
-  // Filter navigation based on user role
-  const navigation = allNavigation.filter(item => {
-    if (item.adminOnly) {
-      return user?.role === 'admin';
+  const navigation = NAV_ITEMS.filter((item) => {
+    if (!item.adminOnly) {
+      return true;
     }
-    return true;
+    return user?.role === 'admin';
   });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -129,6 +201,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-nav-link={item.href}
                   className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 font-semibold shadow-sm border border-blue-200/50 dark:border-blue-700/50'
@@ -252,7 +325,7 @@ export default function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6" ref={mainContentRef}>{children}</main>
       </div>
 
       {/* Mobile overlay */}
