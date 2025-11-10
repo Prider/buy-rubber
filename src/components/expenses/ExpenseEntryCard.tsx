@@ -139,7 +139,12 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+      tabIndex={0}
+      role="region"
+      aria-label="แบบฟอร์มบันทึกค่าใช้จ่าย"
+    >
       {/* Header */}
       <div className="px-6 py-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2">
@@ -221,6 +226,17 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
             step="0.01"
             value={expenseData.amount}
             onChange={(e) => setExpenseData({ ...expenseData, amount: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const descriptionElement = document.querySelector<HTMLTextAreaElement>('textarea[data-expense-description]');
+                descriptionElement?.focus();
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                inputRef.current?.focus();
+              }
+            }}
             className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
             placeholder="0.00"
             required
@@ -235,6 +251,16 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
           <textarea
             value={expenseData.description}
             onChange={(e) => setExpenseData({ ...expenseData, description: e.target.value })}
+            data-expense-description
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const amountInput = (e.currentTarget
+                  .closest('form')
+                  ?.querySelector('input[type="number"]') ?? null) as HTMLInputElement | null;
+                amountInput?.focus();
+              }
+            }}
             className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
             rows={3}
             placeholder="เพิ่มรายละเอียด..."

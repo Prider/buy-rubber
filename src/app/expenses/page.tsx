@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { ExpenseEntryCard } from '@/components/expenses/ExpenseEntryCard';
 import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
@@ -73,7 +72,12 @@ export default function ExpensesPage() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Today's Total */}
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200">
+                <div
+                  className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200"
+                  tabIndex={0}
+                  role="group"
+                  aria-label="ค่าใช้จ่ายวันนี้"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm opacity-90">ค่าใช้จ่ายวันนี้</div>
                     <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +89,12 @@ export default function ExpensesPage() {
                 </div>
 
                 {/* This Month's Total */}
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200">
+                <div
+                  className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200"
+                  tabIndex={0}
+                  role="group"
+                  aria-label="ค่าใช้จ่ายเดือนนี้"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm opacity-90">ค่าใช้จ่ายเดือนนี้</div>
                     <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +106,12 @@ export default function ExpensesPage() {
                 </div>
 
                 {/* Average Daily */}
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200">
+                <div
+                  className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200"
+                  tabIndex={0}
+                  role="group"
+                  aria-label="ค่าเฉลี่ยรายวัน"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm opacity-90">ค่าเฉลี่ยต่อวัน</div>
                     <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">

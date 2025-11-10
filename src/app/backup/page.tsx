@@ -270,7 +270,7 @@ export default function BackupPage() {
                     <input
                       type="number"
                       min="1"
-                      max="100"
+                      max="30"
                       value={settings.maxCount}
                       onChange={(e) => setSettings({ ...settings, maxCount: parseInt(e.target.value) || 30 })}
                       className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
