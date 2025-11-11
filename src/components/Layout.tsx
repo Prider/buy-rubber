@@ -19,10 +19,10 @@ interface NavigationItem {
 
 const NAV_ITEMS: NavigationItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
-  { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
+  { name: 'รับซื้อยาง', href: '/purchases', icon: '🚚' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
-  { name: 'ตั้งราคา', href: '/prices', icon: '💲' },
+  { name: 'ตั้งประเภทสินค้า', href: '/prices', icon: '📦' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
@@ -175,7 +175,7 @@ export default function Layout({ children }: LayoutProps) {
                 <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   Punsook Innotech
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0.demo</p>
               </div>
             </div>
             <button

@@ -200,41 +200,46 @@ export default function PricesPage() {
           onDelete={handleDeleteProductType}
         />
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              ตั้งราคาประกาศ
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              จัดการราคารับซื้อยางตามประเภท (10 วันล่าสุด)
-            </p>
-          </div>
-          <button 
-            onClick={handleOpenPriceForm} 
-            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-          >
-            <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>ตั้งราคาวันนี้</span>
+        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                ตั้งราคาประกาศ
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                จัดการราคารับซื้อยางตามประเภท (10 วันล่าสุด)
+              </p>
             </div>
-          </button>
+            <button 
+              onClick={handleOpenPriceForm} 
+              className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+              aria-disabled="true"
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>ตั้งราคาวันนี้</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Today's Prices */}
+          <TodayPricesDisplay
+            productTypes={productTypes}
+            getPriceForDateAndType={getPriceForDateAndType}
+          />
+
+          {/* Price History Table */}
+          <PriceHistoryTable
+            productTypes={productTypes}
+            getPriceForDateAndType={getPriceForDateAndType}
+            loading={loading}
+          />
+          <div className="absolute inset-0 rounded-2xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm pointer-events-auto"></div>
         </div>
-
-        {/* Today's Prices */}
-        <TodayPricesDisplay
-          productTypes={productTypes}
-          getPriceForDateAndType={getPriceForDateAndType}
-        />
-
-        {/* Price History Table */}
-        <PriceHistoryTable
-          productTypes={productTypes}
-          getPriceForDateAndType={getPriceForDateAndType}
-          loading={loading}
-        />
       </div>
 
       {/* Product Type Form Modal */}

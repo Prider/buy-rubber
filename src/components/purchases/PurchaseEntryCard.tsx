@@ -81,6 +81,8 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   const grossWeightRef = React.useRef<HTMLInputElement>(null);
   const containerWeightRef = React.useRef<HTMLInputElement>(null);
   const pricePerUnitRef = React.useRef<HTMLInputElement>(null);
+  const memberDropdownRef = React.useRef<HTMLDivElement>(null);
+  const dropdownHideTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle Enter key to move to next field
   const handleKeyDown = (e: React.KeyboardEvent, nextRef?: React.RefObject<any>) => {
@@ -90,6 +92,120 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
         nextRef.current.focus();
       }
     }
+  };
+
+  const clearDropdownHideTimeout = () => {
+    if (dropdownHideTimeout.current) {
+      clearTimeout(dropdownHideTimeout.current);
+      dropdownHideTimeout.current = null;
+    }
+  };
+
+  const scheduleDropdownHide = () => {
+    clearDropdownHideTimeout();
+    dropdownHideTimeout.current = setTimeout(() => {
+      setShowMemberDropdown(false);
+    }, 150);
+  };
+
+  const handleMemberSearchFocus = () => {
+    clearDropdownHideTimeout();
+    setShowMemberDropdown(true);
+  };
+
+  const focusMemberOption = (index: number) => {
+    const options = memberDropdownRef.current?.querySelectorAll<HTMLButtonElement>('[data-member-option]');
+    if (!options || options.length === 0) {
+      return;
+    }
+    const targetIndex = Math.max(0, Math.min(index, options.length - 1));
+    options[targetIndex]?.focus();
+  };
+
+  const handleMemberSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleKeyDown(event, productTypeRef);
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      clearDropdownHideTimeout();
+      setShowMemberDropdown(false);
+      requestAnimationFrame(() => {
+        productTypeRef.current?.focus();
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setShowMemberDropdown(true);
+      focusMemberOption(0);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      return;
+    }
+  };
+
+  const handleMemberOptionKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusMemberOption(index + 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (index === 0) {
+        memberSearchRef.current?.focus();
+      } else {
+        focusMemberOption(index - 1);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setShowMemberDropdown(false);
+      memberSearchRef.current?.focus();
+    }
+  };
+
+  const handleMemberOptionFocus = () => {
+    clearDropdownHideTimeout();
+  };
+
+  const handleMemberOptionBlur = () => {
+    scheduleDropdownHide();
+  };
+
+  const handleMemberSelectWithClose = (member: Member) => {
+    handleMemberSelect(member);
+    clearDropdownHideTimeout();
+    setShowMemberDropdown(false);
+  };
+
+  const handleProductTypeKeyDown = (event: React.KeyboardEvent<HTMLSelectElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      const picker = event.currentTarget as HTMLSelectElement & { showPicker?: () => void };
+      if (typeof picker.showPicker === 'function') {
+        event.preventDefault();
+        picker.showPicker();
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      grossWeightRef.current?.focus();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      memberSearchRef.current?.focus();
+      return;
+    }
+
+    handleKeyDown(event, grossWeightRef);
   };
 
   return (
@@ -167,9 +283,9 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     type="text"
                     value={memberSearchTerm}
                     onChange={handleMemberSearchChange}
-                    onFocus={() => setShowMemberDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowMemberDropdown(false), 200)}
-                    onKeyDown={(e) => handleKeyDown(e, productTypeRef)}
+                    onFocus={handleMemberSearchFocus}
+                    onBlur={scheduleDropdownHide}
+                    onKeyDown={handleMemberSearchKeyDown}
                     placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     required
@@ -188,12 +304,21 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   
                   {/* Dropdown */}
                   {showMemberDropdown && filteredMembers.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredMembers.map((member) => (
+                    <div
+                      ref={memberDropdownRef}
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      onMouseEnter={clearDropdownHideTimeout}
+                      onMouseLeave={scheduleDropdownHide}
+                    >
+                      {filteredMembers.map((member, index) => (
                         <button
+                          data-member-option
                           key={member.id}
                           type="button"
-                          onClick={() => handleMemberSelect(member)}
+                          onClick={() => handleMemberSelectWithClose(member)}
+                          onFocus={handleMemberOptionFocus}
+                          onBlur={handleMemberOptionBlur}
+                          onKeyDown={(event) => handleMemberOptionKeyDown(event, index)}
                           className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                         >
                           <div className="flex items-center justify-between">
@@ -220,7 +345,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   
                   {/* No results */}
                   {showMemberDropdown && memberSearchTerm && filteredMembers.length === 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4">
+                    <div
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4"
+                      onMouseEnter={clearDropdownHideTimeout}
+                      onMouseLeave={scheduleDropdownHide}
+                    >
                       <div className="text-center text-gray-500 dark:text-gray-400">
                         <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -250,7 +379,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   name="productTypeId"
                   value={formData.productTypeId}
                   onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, grossWeightRef)}
+                  onKeyDown={handleProductTypeKeyDown}
                   required
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                 >
