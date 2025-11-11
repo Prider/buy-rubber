@@ -1,3 +1,5 @@
+'use client';
+
 interface RecentExpensesListProps {
   expenses: any[];
 }
@@ -46,7 +48,7 @@ export default function RecentExpensesList({ expenses }: RecentExpensesListProps
           ค่าใช้จ่ายล่าสุด
         </h3>
       </div>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="max-h-[360px] overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
         {expenses.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
