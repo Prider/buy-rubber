@@ -9,7 +9,7 @@ export const useMembers = (): UseMembersReturn => {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
-    limit: 50,
+    limit: 30,
     total: 0,
     totalPages: 0,
     hasMore: false,
@@ -23,7 +23,7 @@ export const useMembers = (): UseMembersReturn => {
       const params = new URLSearchParams({
         active: 'true',
         page: page.toString(),
-        limit: '50',
+        limit: '30',
       });
       
       if (search) {
