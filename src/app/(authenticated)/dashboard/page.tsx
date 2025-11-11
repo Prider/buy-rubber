@@ -33,27 +33,31 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="flex flex-col gap-6 h-full min-h-0 overflow-hidden pb-4">
       {/* Header Section */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">แดชบอร์ด</h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">ภาพรวมกิจการรับซื้อยาง</p>
       </div>
       {/* Stats Cards */}
-      <DashboardStatsCards stats={stats} />
+      <div className="flex-shrink-0">
+        <DashboardStatsCards stats={stats} />
+      </div>
 
       {/* Today's Prices */}
-      <TodayPricesCard productTypes={productTypes} todayPrices={todayPrices} />
+      <div className="flex-shrink-0">
+        <TodayPricesCard productTypes={productTypes} todayPrices={todayPrices} />
+      </div>
 
       {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+        <div className="lg:col-span-1 h-full min-h-0">
           <RecentPurchasesList purchases={recentPurchases} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full min-h-0">
           <RecentExpensesList expenses={recentExpenses} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full min-h-0">
           <TopMembersList topMembers={topMembers} />
         </div>
       </div>

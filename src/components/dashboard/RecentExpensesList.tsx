@@ -42,13 +42,13 @@ export default function RecentExpensesList({ expenses }: RecentExpensesListProps
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           ค่าใช้จ่ายล่าสุด
         </h3>
       </div>
-      <div className="max-h-[360px] overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="flex-1 min-h-0 max-h-[360px] overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
         {expenses.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

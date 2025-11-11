@@ -8,7 +8,7 @@ interface RecentPurchasesListProps {
 
 export default function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -26,7 +26,7 @@ export default function RecentPurchasesList({ purchases }: RecentPurchasesListPr
           )}
         </div>
       </div>
-      <div className="p-6">
+      <div className="flex-1 p-6 min-h-0">
         {purchases.length > 0 ? (
           <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
             {purchases.map((purchase: any, idx: number) => {
