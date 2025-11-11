@@ -175,7 +175,7 @@ export default function Layout({ children }: LayoutProps) {
                 <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   Punsook Innotech
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0.demo</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0</p>
               </div>
             </div>
             <button

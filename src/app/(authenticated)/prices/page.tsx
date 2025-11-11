@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Layout from '@/components/Layout';
 import axios from 'axios';
 import { usePriceData } from '@/hooks/usePriceData';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
@@ -190,7 +189,7 @@ export default function PricesPage() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="space-y-6">
         {/* Product Type Management */}
         <ProductTypeManagement
@@ -211,8 +210,8 @@ export default function PricesPage() {
                 จัดการราคารับซื้อยางตามประเภท (10 วันล่าสุด)
               </p>
             </div>
-            <button 
-              onClick={handleOpenPriceForm} 
+            <button
+              onClick={handleOpenPriceForm}
               className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               disabled
               aria-disabled="true"
@@ -264,6 +263,6 @@ export default function PricesPage() {
         onDateChange={(date) => setFormData({ ...formData, date })}
         onPriceChange={updatePrice}
       />
-    </Layout>
+    </>
   );
 }

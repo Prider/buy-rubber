@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Layout from '@/components/Layout';
 import { MemberTable } from '@/components/members/MemberTable';
 import { MemberForm } from '@/components/members/MemberForm';
 import { MemberPurchaseHistoryModal } from '@/components/members/MemberPurchaseHistoryModal';
@@ -148,7 +147,7 @@ export default function MembersPage() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xlmx-auto px-4 sm:px-4 lg:px-4 py-4">
           {/* Page Header */}
@@ -358,7 +357,7 @@ export default function MembersPage() {
         member={selectedMemberForHistory}
         onClose={handleCloseHistory}
       />
-    </Layout>
+    </>
   );
 }
 

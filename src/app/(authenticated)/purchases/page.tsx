@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
 import { usePurchaseForm } from '@/hooks/usePurchaseForm';
@@ -110,7 +109,7 @@ export default function PurchasesPage() {
   }, [user, router, loadData]);
 
   return (
-    <Layout>
+    <>
       <div className="space-y-6">
         {/* Header Section */}
         <div className="space-y-2">
@@ -219,7 +218,7 @@ export default function PurchasesPage() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }
 

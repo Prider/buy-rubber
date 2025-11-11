@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,9 +54,8 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <Layout>
-      <ProtectedRoute requiredRole="admin">
-        <div className="space-y-8">
+    <ProtectedRoute requiredRole="admin">
+      <div className="space-y-8">
           {/* Header */}
           <AdminHeader 
             title="ตั้งค่าระบบ"
@@ -118,8 +116,7 @@ export default function AdminSettingsPage() {
               <UserManagement />
             </ProtectedRoute>
           )}
-        </div>
-      </ProtectedRoute>
-    </Layout>
+      </div>
+    </ProtectedRoute>
   );
 }
