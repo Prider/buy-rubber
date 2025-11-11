@@ -1,13 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { usePriceData } from '@/hooks/usePriceData';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
 import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
 import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
-import ProductTypeFormModal from '@/components/prices/ProductTypeFormModal';
-import SetPriceFormModal from '@/components/prices/SetPriceFormModal';
+
+const ProductTypeFormModal = dynamic(
+  () => import('@/components/prices/ProductTypeFormModal'),
+  { ssr: false, loading: () => null }
+);
+
+const SetPriceFormModal = dynamic(
+  () => import('@/components/prices/SetPriceFormModal'),
+  { ssr: false, loading: () => null }
+);
 
 interface ProductType {
   id: string;

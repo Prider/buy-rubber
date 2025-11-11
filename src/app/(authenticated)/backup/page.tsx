@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
 import { formatFileSize } from '@/lib/utils';
@@ -150,8 +149,7 @@ export default function BackupPage() {
   };
 
   return (
-    <ProtectedRoute requiredRole="admin">
-      <div className="space-y-8 pb-8">
+    <div className="space-y-8 pb-8">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -435,8 +433,6 @@ export default function BackupPage() {
           </div>
         )}
         </div>
-      </div>
-    </ProtectedRoute>
   );
 }
 

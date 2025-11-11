@@ -1,15 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MemberTable } from '@/components/members/MemberTable';
-import { MemberForm } from '@/components/members/MemberForm';
-import { MemberPurchaseHistoryModal } from '@/components/members/MemberPurchaseHistoryModal';
 import { useMembers } from '@/hooks/useMembers';
 import { useMemberForm } from '@/hooks/useMemberForm';
 import { useDebounce } from '@/hooks/useDebounce';
 import { MemberFormData } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
+
+const MemberForm = dynamic(
+  () => import('@/components/members/MemberForm').then((mod) => mod.MemberForm),
+  { ssr: false, loading: () => null }
+);
+
+const MemberPurchaseHistoryModal = dynamic(
+  () =>
+    import('@/components/members/MemberPurchaseHistoryModal').then(
+      (mod) => mod.MemberPurchaseHistoryModal
+    ),
+  { ssr: false, loading: () => null }
+);
 
 export default function MembersPage() {
   const router = useRouter();
@@ -32,15 +44,15 @@ export default function MembersPage() {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedMemberForHistory, setSelectedMemberForHistory] = useState<any>(null);
 
-  const { 
-    members, 
+  const {
+    members,
     pagination,
-    loading, 
-    error, 
-    loadMembers, 
-    createMember, 
-    updateMember, 
-    deleteMember 
+    loading,
+    error,
+    loadMembers,
+    createMember,
+    updateMember,
+    deleteMember,
   } = useMembers();
   
   const {
