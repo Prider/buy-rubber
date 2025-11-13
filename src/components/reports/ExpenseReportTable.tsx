@@ -15,10 +15,12 @@ interface ExpenseReport {
 interface ExpenseReportTableProps {
   data: ExpenseReport[];
   categorySummary: Array<{ category: string; totalAmount: number; count: number }>;
+  totalAmount?: number;
 }
 
-export default function ExpenseReportTable({ data, categorySummary }: ExpenseReportTableProps) {
-  const totalAmount = data.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+export default function ExpenseReportTable({ data, categorySummary, totalAmount }: ExpenseReportTableProps) {
+  const pageTotal = data.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  const footerTotal = typeof totalAmount === 'number' ? totalAmount : pageTotal;
 
   return (
     <div className="space-y-8">
@@ -65,7 +67,7 @@ export default function ExpenseReportTable({ data, categorySummary }: ExpenseRep
                   รวมทั้งหมด
                 </td>
                 <td className="px-6 py-4 text-right text-base font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(totalAmount)}
+                  {formatCurrency(footerTotal)}
                 </td>
               </tr>
             </tfoot>

@@ -2,9 +2,10 @@ import { formatCurrency, formatNumber } from '@/lib/utils';
 
 interface DailyPurchaseTableProps {
   data: any[];
+  offset?: number;
 }
 
-export default function DailyPurchaseTable({ data }: DailyPurchaseTableProps) {
+export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -28,12 +29,14 @@ export default function DailyPurchaseTable({ data }: DailyPurchaseTableProps) {
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {data.map((item: any, idx: number) => (
+          {data.map((item: any, idx: number) => {
+            const displayIndex = offset + idx + 1;
+            return (
             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 <div className="flex items-center gap-2">
                   <span className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-300">
-                    {idx + 1}
+                    {displayIndex}
                   </span>
                   {new Date(item.date).toLocaleDateString('th-TH', { 
                     day: 'numeric',
@@ -57,7 +60,8 @@ export default function DailyPurchaseTable({ data }: DailyPurchaseTableProps) {
                 {formatCurrency(item.totalAmount)}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

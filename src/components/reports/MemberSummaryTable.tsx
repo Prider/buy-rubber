@@ -2,9 +2,10 @@ import { formatCurrency, formatNumber } from '@/lib/utils';
 
 interface MemberSummaryTableProps {
   data: any[];
+  offset?: number;
 }
 
-export default function MemberSummaryTable({ data }: MemberSummaryTableProps) {
+export default function MemberSummaryTable({ data, offset = 0 }: MemberSummaryTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -25,17 +26,26 @@ export default function MemberSummaryTable({ data }: MemberSummaryTableProps) {
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {data.map((item: any, idx: number) => (
-            <tr key={item.member?.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+          {data.map((item: any, idx: number) => {
+            const rank = offset + idx + 1;
+            const badgeClass =
+              rank === 1
+                ? 'bg-gradient-to-br from-yellow-400 to-yellow-600'
+                : rank === 2
+                ? 'bg-gradient-to-br from-gray-300 to-gray-500'
+                : rank === 3
+                ? 'bg-gradient-to-br from-orange-400 to-orange-600'
+                : 'bg-gradient-to-br from-blue-400 to-blue-600';
+
+            return (
+              <tr
+                key={item.member?.id ?? `${item.member?.name}-${rank}`}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
+              >
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                    idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
-                    idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
-                    idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
-                    'bg-gradient-to-br from-blue-400 to-blue-600'
-                  }`}>
-                    {idx + 1}
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${badgeClass}`}>
+                    {rank}
                   </div>
                   <span>{item.member?.name}</span>
                 </div>
@@ -52,7 +62,8 @@ export default function MemberSummaryTable({ data }: MemberSummaryTableProps) {
                 {formatCurrency(item.totalAmount)}
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>

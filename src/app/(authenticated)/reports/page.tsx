@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReportData } from '@/hooks/useReportData';
 import {
@@ -16,9 +16,12 @@ import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
 import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
 import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
+import { PaginationControls } from '@/components/members/history/PaginationControls';
 
 export default function ReportsPage() {
   const router = useRouter();
+  const [tablePage, setTablePage] = useState(1);
+  const PAGE_SIZE = 15;
   const {
     loading,
     reportType,
@@ -43,6 +46,13 @@ export default function ReportsPage() {
     }
   }, [router]);
 
+  const totalPages = useMemo(() => {
+    if (!data || data.length === 0) {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  }, [PAGE_SIZE, data]);
+
   const hasData = useMemo(() => Array.isArray(data) && data.length > 0, [data]);
 
   const dateRangeLabel = useMemo(
@@ -50,6 +60,16 @@ export default function ReportsPage() {
       `ระหว่างวันที่ ${new Date(startDate).toLocaleDateString('th-TH')} - ${new Date(endDate).toLocaleDateString('th-TH')}`,
     [startDate, endDate]
   );
+
+  const paginatedData = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+    const startIndex = (tablePage - 1) * PAGE_SIZE;
+    return data.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [PAGE_SIZE, data, tablePage]);
+
+  const rowOffset = useMemo(() => (tablePage - 1) * PAGE_SIZE, [PAGE_SIZE, tablePage]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -95,6 +115,20 @@ export default function ReportsPage() {
       expenseSummary,
     });
   }, [data, endDate, expenseSummary, getReportTitle, getTotalAmount, getTotalWeight, hasData, reportType, startDate]);
+
+  useEffect(() => {
+    setTablePage(1);
+  }, [reportType, startDate, endDate]);
+
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      setTablePage(1);
+      return;
+    }
+    if (tablePage > totalPages) {
+      setTablePage(totalPages);
+    }
+  }, [data, tablePage, totalPages]);
 
   return (
     <div className="space-y-8 pb-8">
@@ -185,10 +219,18 @@ export default function ReportsPage() {
             </div>
             
             <div className="p-6">
-              {reportType === 'daily_purchase' && <DailyPurchaseTable data={data} />}
-              {reportType === 'member_summary' && <MemberSummaryTable data={data} />}
+              {reportType === 'daily_purchase' && <DailyPurchaseTable data={paginatedData} offset={rowOffset} />}
+              {reportType === 'member_summary' && <MemberSummaryTable data={paginatedData} offset={rowOffset} />}
               {reportType === 'expense_summary' && (
-                <ExpenseReportTable data={data} categorySummary={expenseSummary} />
+                <ExpenseReportTable data={paginatedData} categorySummary={expenseSummary} totalAmount={getTotalAmount()} />
+              )}
+              {hasData && totalPages > 1 && (
+                <PaginationControls
+                  currentPage={tablePage}
+                  totalPages={totalPages}
+                  onPrev={() => setTablePage((prev) => Math.max(1, prev - 1))}
+                  onNext={() => setTablePage((prev) => Math.min(totalPages, prev + 1))}
+                />
               )}
             </div>
           </div>
