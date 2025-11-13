@@ -4,7 +4,10 @@ import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export const generateHistoryHTML = (data: any[], memberName?: string) => `
+export const generateHistoryHTML = (
+  data: any[],
+  options?: { memberName?: string; page?: number; totalPages?: number }
+) => `
   <html>
     <head>
       <meta charset="utf-8" />
@@ -24,7 +27,7 @@ export const generateHistoryHTML = (data: any[], memberName?: string) => `
     </head>
     <body>
       <div class="wrapper">
-        <h1>ประวัติการรับซื้อของ ${memberName ?? '-'}</h1>
+        <h1>ประวัติการรับซื้อของ ${options?.memberName ?? '-'}${options?.totalPages && options.totalPages > 1 ? ` (หน้า ${options?.page ?? 1}/${options.totalPages})` : ''}</h1>
         <div class="info">
           <p><strong>วันที่ออกรายงาน:</strong> ${new Date().toLocaleString('th-TH')}</p>
         </div>
@@ -43,10 +46,7 @@ export const generateHistoryHTML = (data: any[], memberName?: string) => `
               .map(
                 (item) => `
                   <tr>
-                    <td>${formatDate(item.date)} ${new Date(item.date).toLocaleTimeString('th-TH', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}</td>
+                    <td>${formatDate(item.date)}</td>
                     <td>${item.productType?.name ?? '-'}</td>
                     <td class="number">${formatNumber(item.netWeight)} กก.</td>
                     <td class="number">${formatNumber(item.basePrice)}</td>
@@ -67,29 +67,47 @@ export const downloadMemberHistoryPDF = async (purchases: any[], member?: { name
     window.alert('ไม่มีข้อมูลสำหรับดาวน์โหลด');
     return;
   }
-
   const doc = new jsPDF('p', 'mm', 'a4');
-  const html = generateHistoryHTML(purchases, member?.name);
-
-  const container = document.createElement('div');
-  container.innerHTML = html;
-  container.style.position = 'fixed';
-  container.style.top = '-10000px';
-  container.style.left = '0';
-  container.style.width = '794px';
-  container.style.color = '#000';
-  container.style.background = '#fff';
-  document.body.appendChild(container);
-
-  await new Promise<void>((resolve) => setTimeout(resolve, 120));
-
-  const canvas = await html2canvas(container, { scale: 1, useCORS: true });
-  document.body.removeChild(container);
-
-  const imgData = canvas.toDataURL('image/png');
+  const pageMarginTop = 10;
+  const pageMarginBottom = 10;
   const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-  doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  const availableHeight = doc.internal.pageSize.getHeight() - pageMarginTop - pageMarginBottom;
+  const chunkSize = 15;
+  const totalPages = Math.ceil(purchases.length / chunkSize);
+
+  for (let index = 0; index < totalPages; index += 1) {
+    if (index > 0) {
+      doc.addPage();
+    }
+
+    const chunk = purchases.slice(index * chunkSize, index * chunkSize + chunkSize);
+    const html = generateHistoryHTML(chunk, {
+      memberName: member?.name,
+      page: index + 1,
+      totalPages,
+    });
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.position = 'fixed';
+    container.style.top = '-10000px';
+    container.style.left = '0';
+    container.style.width = '794px';
+    container.style.color = '#000';
+    container.style.background = '#fff';
+    document.body.appendChild(container);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 120));
+
+    const canvas = await html2canvas(container, { scale: 1, useCORS: true });
+    document.body.removeChild(container);
+
+    const imgData = canvas.toDataURL('image/png');
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    const drawHeight = Math.min(imgHeight, availableHeight);
+
+    doc.addImage(imgData, 'PNG', 0, pageMarginTop, pdfWidth, drawHeight);
+  }
 
   const fileName = `ประวัติการรับซื้อ_${member?.code ?? 'member'}_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
   doc.save(fileName);

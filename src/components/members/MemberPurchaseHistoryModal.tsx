@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { useMemberPurchaseHistory } from '@/hooks/useMemberPurchaseHistory';
 import { PurchaseSummary, QuickFilter } from '@/types/memberHistory';
 import { downloadMemberHistoryPDF } from '@/utils/memberHistoryPdf';
@@ -72,10 +73,32 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
 
   const hasPurchases = purchases.length > 0;
 
+  const fetchAllFilteredPurchases = async () => {
+     if (!member?.id) {
+       return [];
+     }
+ 
+    const params = new URLSearchParams({
+      fetchAll: 'true',
+    });
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const { data } = await axios.get(`/api/members/${member.id}/purchases?${params}`);
+    const collected = data.purchases || [];
+
+    return collected.sort((a: any, b: any) => {
+      const dateA = new Date(a?.date ?? 0).getTime();
+      const dateB = new Date(b?.date ?? 0).getTime();
+      return dateB - dateA;
+    });
+  };
+
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      await downloadMemberHistoryPDF(purchases, member);
+      const allPurchases = await fetchAllFilteredPurchases();
+      await downloadMemberHistoryPDF(allPurchases, member);
     } finally {
       setIsDownloading(false);
     }
@@ -165,7 +188,7 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
               <EmptyState />
             ) : (
               <>
-                <PurchasesTable purchases={purchases} />
+                <PurchasesTable purchases={purchases} totalCount={summary?.totalPurchases ?? purchases.length} />
                 {totalPages > 1 && (
                   <PaginationControls
                     currentPage={currentPage}

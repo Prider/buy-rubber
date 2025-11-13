@@ -4,10 +4,15 @@ import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 
 interface PurchasesTableProps {
   purchases: any[];
+  totalCount?: number;
 }
 
-export const PurchasesTable = ({ purchases }: PurchasesTableProps) => (
+export const PurchasesTable = ({ purchases, totalCount }: PurchasesTableProps) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 dark:bg-gray-800 dark:from-gray-700 dark:to-gray-600 ">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">รายการรับซื้อ</h3>
+      <span className="text-sm text-gray-600 dark:text-gray-300">ทั้งหมด {totalCount ?? purchases.length} รายการ</span>
+    </div>
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200.dark:border-gray-600">
@@ -29,7 +34,6 @@ export const PurchasesTable = ({ purchases }: PurchasesTableProps) => (
             >
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
                 {formatDate(purchase.date)}{' '}
-                {new Date(purchase.date).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{purchase.productType?.name || '-'}</td>
               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100 font-medium">

@@ -8,12 +8,14 @@ export async function GET(
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const fetchAll = searchParams.get('fetchAll') === 'true';
+    const requestedLimit = parseInt(searchParams.get('limit') || '10');
+    const limit = Number.isNaN(requestedLimit) || requestedLimit <= 0 ? 10 : requestedLimit;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const productTypeId = searchParams.get('productTypeId');
 
-    const skip = (page - 1) * limit;
+    const skip = fetchAll ? 0 : (page - 1) * limit;
 
     // Build where clause
     const where: any = {
@@ -40,6 +42,7 @@ export async function GET(
 
     // Get total count
     const total = await prisma.purchase.count({ where });
+    const take = fetchAll ? (total === 0 ? 0 : total) : limit;
 
     // Get purchases
     const purchases = await prisma.purchase.findMany({
@@ -52,7 +55,7 @@ export async function GET(
         date: 'desc',
       },
       skip,
-      take: limit,
+      take,
     });
 
     // Calculate summary statistics
@@ -77,13 +80,21 @@ export async function GET(
         : 0,
     };
 
-    const pagination = {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasMore: page * limit < total,
-    };
+    const pagination = fetchAll
+      ? {
+          page: 1,
+          limit: total,
+          total,
+          totalPages: total > 0 ? 1 : 0,
+          hasMore: false,
+        }
+      : {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasMore: page * limit < total,
+        };
 
     return NextResponse.json({
       purchases,
