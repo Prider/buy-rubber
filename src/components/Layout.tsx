@@ -1,13 +1,13 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import useArrowFocusNavigation, { FOCUSABLE_SELECTORS, isFocusable } from '@/hooks/useArrowFocusNavigation';
+// import useArrowFocusNavigation, { FOCUSABLE_SELECTORS, isFocusable } from '@/hooks/useArrowFocusNavigation';
 import appIcon from '../../electron/icon.png';
 
 interface NavigationItem {
@@ -39,104 +39,104 @@ export default function Layout({ children }: LayoutProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
-  useArrowFocusNavigation();
+  // useArrowFocusNavigation();
 
-  const focusElement = useCallback((element?: HTMLElement | null) => {
-    element?.focus({ preventScroll: true });
-  }, []);
+  // const focusElement = useCallback((element?: HTMLElement | null) => {
+  //   element?.focus({ preventScroll: true });
+  // }, []);
 
-  const getFocusableWithin = useCallback((root: HTMLElement | null) => {
-    if (!root) {
-      return [];
-    }
+  // const getFocusableWithin = useCallback((root: HTMLElement | null) => {
+  //   if (!root) {
+  //     return [];
+  //   }
 
-    return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(isFocusable);
-  }, []);
+  //   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(isFocusable);
+  // }, []);
 
-  const focusActiveNavLink = useCallback(() => {
-    if (!pathname || pathname === '/login') {
-      return false;
-    }
+  // const focusActiveNavLink = useCallback(() => {
+  //   if (!pathname || pathname === '/login') {
+  //     return false;
+  //   }
 
-    const sidebarEl = sidebarRef.current;
-    if (!sidebarEl) {
-      return false;
-    }
+  //   const sidebarEl = sidebarRef.current;
+  //   if (!sidebarEl) {
+  //     return false;
+  //   }
 
-    const activeLink = sidebarEl.querySelector<HTMLElement>(`[data-nav-link="${pathname}"]`);
-    if (!activeLink) {
-      return false;
-    }
+  //   const activeLink = sidebarEl.querySelector<HTMLElement>(`[data-nav-link="${pathname}"]`);
+  //   if (!activeLink) {
+  //     return false;
+  //   }
 
-    focusElement(activeLink);
-    return true;
-  }, [focusElement, pathname]);
+  //   focusElement(activeLink);
+  //   return true;
+  // }, [focusElement, pathname]);
 
-  const focusFirstMainElement = useCallback(() => {
-    const [firstFocusable] = getFocusableWithin(mainContentRef.current);
-    if (!firstFocusable) {
-      return false;
-    }
-    focusElement(firstFocusable);
-    return true;
-  }, [focusElement, getFocusableWithin]);
+  // const focusFirstMainElement = useCallback(() => {
+  //   const [firstFocusable] = getFocusableWithin(mainContentRef.current);
+  //   if (!firstFocusable) {
+  //     return false;
+  //   }
+  //   focusElement(firstFocusable);
+  //   return true;
+  // }, [focusElement, getFocusableWithin]);
 
-  useEffect(() => {
-    const currentActiveElement = document.activeElement;
-    if (currentActiveElement && currentActiveElement !== document.body) {
-      return;
-    }
+  // useEffect(() => {
+  //   const currentActiveElement = document.activeElement;
+  //   if (currentActiveElement && currentActiveElement !== document.body) {
+  //     return;
+  //   }
 
-    focusActiveNavLink();
-  }, [focusActiveNavLink]);
+  //   focusActiveNavLink();
+  // }, [focusActiveNavLink]);
 
-  const handleDirectionalNavigation = useCallback((event: KeyboardEvent) => {
-    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) {
-      return;
-    }
+  // const handleDirectionalNavigation = useCallback((event: KeyboardEvent) => {
+  //   if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+  //     return;
+  //   }
 
-    const sidebarEl = sidebarRef.current;
-    const mainEl = mainContentRef.current;
-    if (!sidebarEl || !mainEl) {
-      return;
-    }
+  //   const sidebarEl = sidebarRef.current;
+  //   const mainEl = mainContentRef.current;
+  //   if (!sidebarEl || !mainEl) {
+  //     return;
+  //   }
 
-    const activeElement = document.activeElement as HTMLElement | null;
-    if (!activeElement) {
-      return;
-    }
+  //   const activeElement = document.activeElement as HTMLElement | null;
+  //   if (!activeElement) {
+  //     return;
+  //   }
 
-    const isInSidebar = sidebarEl.contains(activeElement);
-    const isInMain = mainEl.contains(activeElement);
+  //   const isInSidebar = sidebarEl.contains(activeElement);
+  //   const isInMain = mainEl.contains(activeElement);
 
-    if (event.key === 'ArrowRight' && isInSidebar) {
-      const focused = focusFirstMainElement();
-      if (focused) {
-        event.preventDefault();
-      }
-    }
+  //   if (event.key === 'ArrowRight' && isInSidebar) {
+  //     const focused = focusFirstMainElement();
+  //     if (focused) {
+  //       event.preventDefault();
+  //     }
+  //   }
 
-    if (event.key === 'ArrowLeft' && isInMain) {
-      const focusedNav = focusActiveNavLink();
-      if (focusedNav) {
-        event.preventDefault();
-        return;
-      }
+  //   if (event.key === 'ArrowLeft' && isInMain) {
+  //     const focusedNav = focusActiveNavLink();
+  //     if (focusedNav) {
+  //       event.preventDefault();
+  //       return;
+  //     }
 
-      const [firstSidebarElement] = getFocusableWithin(sidebarEl);
-      if (firstSidebarElement) {
-        event.preventDefault();
-        focusElement(firstSidebarElement);
-      }
-    }
-  }, [focusActiveNavLink, focusElement, focusFirstMainElement, getFocusableWithin]);
+  //     const [firstSidebarElement] = getFocusableWithin(sidebarEl);
+  //     if (firstSidebarElement) {
+  //       event.preventDefault();
+  //       focusElement(firstSidebarElement);
+  //     }
+  //   }
+  // }, [focusActiveNavLink, focusElement, focusFirstMainElement, getFocusableWithin]);
 
-  useEffect(() => {
-    document.addEventListener('keydown', handleDirectionalNavigation);
-    return () => {
-      document.removeEventListener('keydown', handleDirectionalNavigation);
-    };
-  }, [handleDirectionalNavigation]);
+  // useEffect(() => {
+  //   document.addEventListener('keydown', handleDirectionalNavigation);
+  //   return () => {
+  //     document.removeEventListener('keydown', handleDirectionalNavigation);
+  //   };
+  // }, [handleDirectionalNavigation]);
 
   const handleLogout = async () => {
     await logout();

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 import { logger } from '@/lib/logger';
 
 interface CartItem {
@@ -61,6 +61,7 @@ interface UseCartProps {
 
 export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartProps) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [lastPrintedCart, setLastPrintedCart] = useState<CartItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -164,6 +165,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       }
       
       logger.debug('All requests successful, clearing cart and reloading purchases');
+      setLastPrintedCart(cart);
       setCart([]);
       await loadPurchases();
       logger.debug('Cart cleared and purchases reloaded');
@@ -176,19 +178,26 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
   }, [user, cart, loadPurchases]);
 
   // Generate HTML for printing/downloading
-  const generateCartHTML = useCallback(() => {
+  const generateCartHTML = useCallback((data: CartItem[]) => {
+    if (data.length === 0) {
+      return '';
+    }
     return `
       <html>
         <head>
           <title>รายการรับซื้อ</title>
           <meta charset="UTF-8">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
           <style>
-            body { font-family: 'Sarabun', Arial, sans-serif; margin: 20px; }
-            h1 { text-align: center; color: #333; }
+            body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 20px; color: #000000; }
+            h1 { text-align: center; color: #333; margin: 20px; text-size}
             .info { margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
+            .table-wrapper { margin: 12px 36px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #000000; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: #000000; }
+            th { background-color: #f2f2f2; font-weight: bold; color: #000000; }
             td.number { text-align: right; }
             .total { font-weight: bold; background-color: #f9f9f9; }
             .footer { margin-top: 30px; text-align: right; }
@@ -205,6 +214,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
               minute: '2-digit'
             })}</p>
           </div>
+          <div class="table-wrapper">
           <table>
             <thead>
               <tr>
@@ -219,7 +229,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
               </tr>
             </thead>
             <tbody>
-              ${cart.map(item => `
+              ${data.map(item => `
                 <tr>
                   <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
                   <td>${item.memberName}</td>
@@ -235,10 +245,11 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             <tfoot>
               <tr class="total">
                 <td colspan="7" style="text-align: right;">รวมทั้งหมด</td>
-                <td class="number">${formatCurrency(cart.reduce((sum, item) => sum + item.totalAmount, 0))}</td>
+                <td class="number">${formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0))}</td>
               </tr>
             </tfoot>
           </table>
+          </div>
           <div class="footer">
             <p>________________________</p>
             <p>ผู้จัดการ/เจ้าหน้าที่</p>
@@ -246,106 +257,64 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
         </body>
       </html>
     `;
-  }, [cart]);
+  }, []);
 
   // Print cart
   const printCart = useCallback(() => {
+    const data = cart.length > 0 ? cart : lastPrintedCart;
+    if (data.length === 0) {
+      window.alert('ไม่มีข้อมูลในตะกร้าให้พิมพ์');
+      return;
+    }
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     
-    const html = generateCartHTML();
+    const html = generateCartHTML(data);
+    if (!html) return;
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.print();
-  }, [generateCartHTML]);
+  }, [cart, lastPrintedCart, generateCartHTML]);
 
   // Download cart as PDF
-  const downloadPDF = useCallback(() => {
-    const doc = new jsPDF();
-    
-    // Set Thai font (using default font, but you can add Thai font if needed)
-    doc.setFont('helvetica');
-    
-    // Title
-    doc.setFontSize(18);
-    doc.text('รายการรับซื้อยาง', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    
-    // Date and time
-    doc.setFontSize(10);
-    const dateStr = new Date().toLocaleDateString('th-TH', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const downloadPDF = useCallback(async () => {
+    const data = cart.length > 0 ? cart : lastPrintedCart;
+    if (data.length === 0) {
+      window.alert('ไม่มีข้อมูลในตะกร้าให้ดาวน์โหลด');
+      return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const html = generateCartHTML(data);
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.position = 'fixed';
+    container.style.top = '-10000px';
+    container.style.left = '0';
+    container.style.width = '794px';
+    container.style.color = '#000000';
+    container.style.filter = 'none';
+    container.style.webkitFilter = 'none';
+    container.style.background = '#ffffff';
+    document.body.appendChild(container);
+
+    await new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), 100);
     });
-    doc.text(`วันที่พิมพ์: ${dateStr}`, 14, 30);
-    
-    // Prepare table data
-    const tableData = cart.map(item => [
-      new Date(item.date).toLocaleDateString('th-TH'),
-      item.memberName,
-      item.productTypeName,
-      formatNumber(item.grossWeight),
-      formatNumber(item.containerWeight),
-      formatNumber(item.netWeight),
-      formatNumber(item.finalPrice),
-      formatCurrency(item.totalAmount)
-    ]);
-    
-    // Generate table
-    autoTable(doc, {
-      head: [[
-        'วันที่รับซื้อ',
-        'สมาชิก',
-        'ประเภทสินค้า',
-        'น้ำหนักรวมภาชนะ\n(กก.)',
-        'น้ำหนักภาชนะ\n(กก.)',
-        'น้ำหนักสุทธิ\n(กก.)',
-        'ราคา/กก.',
-        'เงินที่ได้'
-      ]],
-      body: tableData,
-      startY: 35,
-      styles: {
-        font: 'helvetica',
-        fontSize: 9,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: [66, 139, 202],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'center',
-      },
-      columnStyles: {
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right' },
-        6: { halign: 'right' },
-        7: { halign: 'right' },
-      },
-      foot: [[
-        { content: 'รวมทั้งหมด', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: formatCurrency(cart.reduce((sum, item) => sum + item.totalAmount, 0)), styles: { halign: 'right', fontStyle: 'bold' } }
-      ]],
-      footStyles: {
-        fillColor: [240, 240, 240],
-        textColor: [0, 0, 0],
-        fontStyle: 'bold',
-      }
-    });
-    
-    // Footer signature
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
-    doc.setFontSize(10);
-    doc.text('________________________', doc.internal.pageSize.getWidth() - 60, finalY + 30);
-    doc.text('ผู้จัดการ/เจ้าหน้าที่', doc.internal.pageSize.getWidth() - 55, finalY + 35);
-    
-    // Save the PDF
+
+    const canvas = await html2canvas(container, { scale: 1, useCORS: true });
+    document.body.removeChild(container);
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdfWidth = doc.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
     const fileName = `รายการรับซื้อ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
     doc.save(fileName);
-  }, [cart]);
+  }, [cart, lastPrintedCart, generateCartHTML]);
 
   // Calculate total amount
   const totalAmount = cart.reduce((sum, item) => sum + item.totalAmount, 0);

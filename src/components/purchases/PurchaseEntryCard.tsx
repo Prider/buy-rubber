@@ -85,12 +85,20 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   const dropdownHideTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle Enter key to move to next field
-  const handleKeyDown = (e: React.KeyboardEvent, nextRef?: React.RefObject<any>) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    nextRef?: React.RefObject<any>,
+    prevRef?: React.RefObject<any>
+  ) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (nextRef && nextRef.current) {
         nextRef.current.focus();
       }
+    }
+    if (e.key === 'ArrowLeft' && prevRef?.current) {
+      e.preventDefault();
+      prevRef.current.focus();
     }
   };
 
@@ -181,6 +189,9 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     handleMemberSelect(member);
     clearDropdownHideTimeout();
     setShowMemberDropdown(false);
+    requestAnimationFrame(() => {
+      productTypeRef.current?.focus();
+    });
   };
 
   const handleProductTypeKeyDown = (event: React.KeyboardEvent<HTMLSelectElement>) => {
@@ -199,13 +210,14 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
       return;
     }
 
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      memberSearchRef.current?.focus();
-      return;
-    }
+    handleKeyDown(event, grossWeightRef, memberSearchRef);
+  };
 
-    handleKeyDown(event, grossWeightRef);
+  const handleProductTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    handleInputChange(event);
+    requestAnimationFrame(() => {
+      grossWeightRef.current?.focus();
+    });
   };
 
   return (
@@ -378,7 +390,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   ref={productTypeRef}
                   name="productTypeId"
                   value={formData.productTypeId}
-                  onChange={handleInputChange}
+                  onChange={handleProductTypeChange}
                   onKeyDown={handleProductTypeKeyDown}
                   required
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
@@ -418,7 +430,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="grossWeight"
                     value={formData.grossWeight}
                     onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, containerWeightRef)}
+                  onKeyDown={(e) => handleKeyDown(e, containerWeightRef, memberSearchRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"
@@ -440,7 +452,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="containerWeight"
                     value={formData.containerWeight}
                     onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef)}
+                  onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef, grossWeightRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"
@@ -541,6 +553,10 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                         if (isFormValid) {
                           addToCart();
                         }
+                      }
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        containerWeightRef.current?.focus();
                       }
                     }}
                     required

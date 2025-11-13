@@ -273,7 +273,6 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ประเภทสินค้า</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">น้ำหนักสุทธิ</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ราคา/กก.</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">โบนัส</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ยอดรวม</th>
                         </tr>
                       </thead>
@@ -291,9 +290,6 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                             </td>
                             <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
                               {formatNumber(purchase.basePrice)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
-                              {formatNumber(purchase.bonusPrice || 0)}
                             </td>
                             <td className="px-4 py-3 text-sm text-right font-bold text-green-600 dark:text-green-400">
                               {formatCurrency(purchase.totalAmount)}
