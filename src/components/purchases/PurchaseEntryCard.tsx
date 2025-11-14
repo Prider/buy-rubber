@@ -97,6 +97,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   const grossWeightRef = React.useRef<HTMLInputElement>(null);
   const containerWeightRef = React.useRef<HTMLInputElement>(null);
   const pricePerUnitRef = React.useRef<HTMLInputElement>(null);
+  const submitButtonRef = React.useRef<HTMLButtonElement>(null);
   const memberDropdownRef = React.useRef<HTMLDivElement>(null);
   const productTypeDropdownRef = React.useRef<HTMLDivElement>(null);
   const dropdownHideTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,7 +109,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     nextRef?: React.RefObject<any>,
     prevRef?: React.RefObject<any>
   ) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight') {
       e.preventDefault();
       if (nextRef && nextRef.current) {
         nextRef.current.focus();
@@ -242,8 +243,14 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   };
 
   const handleProductTypeSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || event.key === 'Tab') {
       handleKeyDown(event, grossWeightRef);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      memberSearchRef.current?.focus();
       return;
     }
 
@@ -338,7 +345,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); addToCart(); }} className="space-y-6">
+        <form onSubmit={(e) => { 
+          e.preventDefault(); 
+          addToCart(); 
+          requestAnimationFrame(() => {
+            productTypeRef.current?.focus();
+          });
+        }} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -713,10 +726,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        // Trigger form submit (add to cart)
-                        if (isFormValid) {
-                          addToCart();
-                        }
+                        submitButtonRef.current?.focus();
                       }
                       if (e.key === 'ArrowLeft') {
                         e.preventDefault();
@@ -767,6 +777,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               รีเซ็ต
             </button>
             <button
+              ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
