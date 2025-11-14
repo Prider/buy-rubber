@@ -18,6 +18,26 @@ export function useReportData() {
   const [data, setData] = useState<any>(null);
   const [expenseSummary, setExpenseSummary] = useState<ExpenseCategorySummary[]>([]);
 
+  const clearReportData = () => {
+    setData(null);
+    setExpenseSummary([]);
+  };
+
+  const handleSetReportType = (type: ReportType) => {
+    setReportType(type);
+    clearReportData();
+  };
+
+  const handleSetStartDate = (date: string) => {
+    setStartDate(date);
+    clearReportData();
+  };
+
+  const handleSetEndDate = (date: string) => {
+    setEndDate(date);
+    clearReportData();
+  };
+
   const generateReport = async () => {
     setLoading(true);
     try {
@@ -129,11 +149,11 @@ export function useReportData() {
   return {
     loading,
     reportType,
-    setReportType,
+    setReportType: handleSetReportType,
     startDate,
-    setStartDate,
+    setStartDate: handleSetStartDate,
     endDate,
-    setEndDate,
+    setEndDate: handleSetEndDate,
     data,
     expenseSummary,
     generateReport,
