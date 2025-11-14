@@ -207,6 +207,20 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         const newData = { ...prev, [name]: value };
         const grossWeight = parseFloat(newData.grossWeight) || 0;
         const containerWeight = parseFloat(newData.containerWeight) || 0;
+        
+        // Validate that container weight is less than gross weight
+        if (grossWeight > 0 && containerWeight > 0 && containerWeight >= grossWeight) {
+          setError('น้ำหนักภาชนะต้องน้อยกว่าน้ำหนักรวมภาชนะ');
+        } else {
+          // Clear error if validation passes (only if it was a weight validation error)
+          setError(prevError => {
+            if (prevError === 'น้ำหนักภาชนะต้องน้อยกว่าน้ำหนักรวมภาชนะ') {
+              return '';
+            }
+            return prevError;
+          });
+        }
+        
         const netWeight = grossWeight - containerWeight;
         
         return {
@@ -220,7 +234,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         [name]: value,
       }));
     }
-  }, [dailyPrices]);
+  }, [dailyPrices, fetchRecentPurchases]);
 
   // Calculate total amount
   const calculateTotalAmount = useCallback(() => {
@@ -234,13 +248,19 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
 
   // Check if form is valid
   const isFormValid = useCallback(() => {
+    const grossWeight = parseFloat(formData.grossWeight) || 0;
+    const containerWeight = parseFloat(formData.containerWeight) || 0;
+    const isWeightValid = grossWeight > 0 && containerWeight > 0 && containerWeight < grossWeight;
+    
     return !!(
       formData.memberId && 
       formData.productTypeId && 
       formData.grossWeight && 
       formData.containerWeight && 
       formData.netWeight && 
-      formData.pricePerUnit
+      formData.pricePerUnit &&
+      isWeightValid &&
+      !error
     );
   }, [
     formData.memberId, 
@@ -248,7 +268,8 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     formData.grossWeight, 
     formData.containerWeight, 
     formData.netWeight, 
-    formData.pricePerUnit
+    formData.pricePerUnit,
+    error
   ]);
 
   // Reset form (keeping member selection for quick multiple entries)
