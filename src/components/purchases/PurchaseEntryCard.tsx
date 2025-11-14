@@ -594,7 +594,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="grossWeight"
                     value={formData.grossWeight}
                     onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, containerWeightRef, memberSearchRef)}
+                    onKeyDown={(e) => handleKeyDown(e, containerWeightRef, productTypeRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"
