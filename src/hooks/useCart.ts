@@ -277,6 +277,23 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     printWindow.print();
   }, [cart, lastPrintedCart, generateCartHTML]);
 
+  const previewCart = useCallback(() => {
+    const data = cart.length > 0 ? cart : lastPrintedCart;
+    if (data.length === 0) {
+      window.alert('ไม่มีข้อมูลในตะกร้าให้ดูตัวอย่าง');
+      return;
+    }
+
+    const previewWindow = window.open('', '_blank');
+    if (!previewWindow) {
+      return;
+    }
+
+    const html = generateCartHTML(data);
+    previewWindow.document.write(html);
+    previewWindow.document.close();
+  }, [cart, lastPrintedCart, generateCartHTML]);
+
   // Download cart as PDF
   const downloadPDF = useCallback(async () => {
     const data = cart.length > 0 ? cart : lastPrintedCart;
@@ -329,6 +346,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     clearCart,
     saveCartToDb,
     printCart,
+    previewCart,
     downloadPDF,
     totalAmount,
   };

@@ -27,6 +27,7 @@ export default function PurchasesPage() {
     removeFromCart,
     saveCartToDb,
     printCart,
+    previewCart,
     downloadPDF,
     totalAmount,
   } = useCart({
@@ -85,8 +86,8 @@ export default function PurchasesPage() {
     setShowPrintModal(true);
   };
 
-  const handlePrintConfirm = () => {
-    printCart();
+  const handlePreview = () => {
+    previewCart();
     setShowPrintModal(false);
   };
 
@@ -178,7 +179,7 @@ export default function PurchasesPage() {
                     ข้อมูลถูกบันทึกลงฐานข้อมูลเรียบร้อยแล้ว
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    คุณต้องการพิมพ์เอกสารหรือไม่?
+                    คุณต้องการดูหรือดาวน์โหลดใบรับซื้อหรือไม่?
                   </p>
                 </div>
               </div>
@@ -203,14 +204,15 @@ export default function PurchasesPage() {
                   </div>
                 </button>
                 <button
-                  onClick={handlePrintConfirm}
-                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  onClick={handlePreview}
+                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7s-8.268-2.943-9.542-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span>พิมพ์เอกสาร</span>
+                    <span>ดูตัวอย่าง PDF</span>
                   </div>
                 </button>
               </div>
