@@ -57,6 +57,14 @@ export default function PurchasesPage() {
     clearMemberSearch,
     applySuggestedPrice,
     setShowMemberDropdown,
+    productTypeSearchTerm,
+    showProductTypeDropdown,
+    selectedProductType,
+    filteredProductTypes,
+    handleProductTypeSelect,
+    handleProductTypeSearchChange,
+    clearProductTypeSearch,
+    setShowProductTypeDropdown,
   } = usePurchaseForm({
     members,
     productTypes,
@@ -137,6 +145,14 @@ export default function PurchasesPage() {
           setShowMemberDropdown={setShowMemberDropdown}
           resetForm={resetAllFields}
           addToCart={handleAddToCart}
+          productTypeSearchTerm={productTypeSearchTerm}
+          showProductTypeDropdown={showProductTypeDropdown}
+          selectedProductType={selectedProductType}
+          filteredProductTypes={filteredProductTypes}
+          handleProductTypeSelect={handleProductTypeSelect}
+          handleProductTypeSearchChange={handleProductTypeSearchChange}
+          clearProductTypeSearch={clearProductTypeSearch}
+          setShowProductTypeDropdown={setShowProductTypeDropdown}
         />
 
         {/* Cart Table */}

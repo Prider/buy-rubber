@@ -49,6 +49,14 @@ interface PurchaseEntryCardProps {
   setShowMemberDropdown: (show: boolean) => void;
   resetForm: () => void;
   addToCart: () => void;
+  productTypeSearchTerm: string;
+  showProductTypeDropdown: boolean;
+  selectedProductType: ProductType | null;
+  filteredProductTypes: ProductType[];
+  handleProductTypeSelect: (productType: ProductType) => void;
+  handleProductTypeSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  clearProductTypeSearch: () => void;
+  setShowProductTypeDropdown: (show: boolean) => void;
 }
 
 export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
@@ -71,18 +79,28 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   setShowMemberDropdown,
   resetForm,
   addToCart,
+  productTypeSearchTerm,
+  showProductTypeDropdown,
+  selectedProductType,
+  filteredProductTypes,
+  handleProductTypeSelect,
+  handleProductTypeSearchChange,
+  clearProductTypeSearch,
+  setShowProductTypeDropdown,
 }) => {
   const router = useRouter();
 
   // Refs for input fields to enable Enter key navigation
   const dateInputRef = React.useRef<HTMLInputElement>(null);
   const memberSearchRef = React.useRef<HTMLInputElement>(null);
-  const productTypeRef = React.useRef<HTMLSelectElement>(null);
+  const productTypeRef = React.useRef<HTMLInputElement>(null);
   const grossWeightRef = React.useRef<HTMLInputElement>(null);
   const containerWeightRef = React.useRef<HTMLInputElement>(null);
   const pricePerUnitRef = React.useRef<HTMLInputElement>(null);
   const memberDropdownRef = React.useRef<HTMLDivElement>(null);
+  const productTypeDropdownRef = React.useRef<HTMLDivElement>(null);
   const dropdownHideTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const productTypeDropdownHideTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle Enter key to move to next field
   const handleKeyDown = (
@@ -194,31 +212,99 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     });
   };
 
-  const handleProductTypeKeyDown = (event: React.KeyboardEvent<HTMLSelectElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      const picker = event.currentTarget as HTMLSelectElement & { showPicker?: () => void };
-      if (typeof picker.showPicker === 'function') {
-        event.preventDefault();
-        picker.showPicker();
-      }
+  // Product type dropdown handlers
+  const clearProductTypeDropdownHideTimeout = () => {
+    if (productTypeDropdownHideTimeout.current) {
+      clearTimeout(productTypeDropdownHideTimeout.current);
+      productTypeDropdownHideTimeout.current = null;
+    }
+  };
+
+  const scheduleProductTypeDropdownHide = () => {
+    clearProductTypeDropdownHideTimeout();
+    productTypeDropdownHideTimeout.current = setTimeout(() => {
+      setShowProductTypeDropdown(false);
+    }, 150);
+  };
+
+  const handleProductTypeSearchFocus = () => {
+    clearProductTypeDropdownHideTimeout();
+    setShowProductTypeDropdown(true);
+  };
+
+  const focusProductTypeOption = (index: number) => {
+    const options = productTypeDropdownRef.current?.querySelectorAll<HTMLButtonElement>('[data-product-type-option]');
+    if (!options || options.length === 0) {
+      return;
+    }
+    const targetIndex = Math.max(0, Math.min(index, options.length - 1));
+    options[targetIndex]?.focus();
+  };
+
+  const handleProductTypeSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleKeyDown(event, grossWeightRef);
       return;
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      grossWeightRef.current?.focus();
+      clearProductTypeDropdownHideTimeout();
+      setShowProductTypeDropdown(false);
+      requestAnimationFrame(() => {
+        grossWeightRef.current?.focus();
+      });
       return;
     }
 
-    handleKeyDown(event, grossWeightRef, memberSearchRef);
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setShowProductTypeDropdown(true);
+      focusProductTypeOption(0);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      return;
+    }
   };
 
-  const handleProductTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    handleInputChange(event);
+  const handleProductTypeOptionKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusProductTypeOption(index + 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (index === 0) {
+        productTypeRef.current?.focus();
+      } else {
+        focusProductTypeOption(index - 1);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setShowProductTypeDropdown(false);
+      productTypeRef.current?.focus();
+    }
+  };
+
+  const handleProductTypeOptionFocus = () => {
+    clearProductTypeDropdownHideTimeout();
+  };
+
+  const handleProductTypeOptionBlur = () => {
+    scheduleProductTypeDropdownHide();
+  };
+
+  const handleProductTypeSelectWithClose = (productType: ProductType) => {
+    handleProductTypeSelect(productType);
+    clearProductTypeDropdownHideTimeout();
+    setShowProductTypeDropdown(false);
     requestAnimationFrame(() => {
       grossWeightRef.current?.focus();
     });
   };
+
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
@@ -386,22 +472,100 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   ประเภทสินค้า <span className="text-red-500">*</span>
                 </label>
-                <select
-                  ref={productTypeRef}
-                  name="productTypeId"
-                  value={formData.productTypeId}
-                  onChange={handleProductTypeChange}
-                  onKeyDown={handleProductTypeKeyDown}
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                >
-                  <option value="">เลือกประเภทสินค้า</option>
-                  {productTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.code} - {type.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    ref={productTypeRef}
+                    type="text"
+                    value={productTypeSearchTerm}
+                    onChange={handleProductTypeSearchChange}
+                    onFocus={handleProductTypeSearchFocus}
+                    onBlur={scheduleProductTypeDropdownHide}
+                    onKeyDown={handleProductTypeSearchKeyDown}
+                    placeholder="ค้นหาประเภทสินค้าตามชื่อหรือรหัส..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                    required
+                  />
+                  {productTypeSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={clearProductTypeSearch}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  {/* Dropdown */}
+                  {showProductTypeDropdown && filteredProductTypes.length > 0 && (
+                    <div
+                      ref={productTypeDropdownRef}
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      onMouseEnter={clearProductTypeDropdownHideTimeout}
+                      onMouseLeave={scheduleProductTypeDropdownHide}
+                    >
+                      {filteredProductTypes.map((type, index) => (
+                        <button
+                          data-product-type-option
+                          key={type.id}
+                          type="button"
+                          onClick={() => handleProductTypeSelectWithClose(type)}
+                          onFocus={handleProductTypeOptionFocus}
+                          onBlur={handleProductTypeOptionBlur}
+                          onKeyDown={(event) => handleProductTypeOptionKeyDown(event, index)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {type.code} - {type.name}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* No results */}
+                  {showProductTypeDropdown && productTypeSearchTerm && filteredProductTypes.length === 0 && (
+                    <div
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4"
+                      onMouseEnter={clearProductTypeDropdownHideTimeout}
+                      onMouseLeave={scheduleProductTypeDropdownHide}
+                    >
+                      <div className="text-center text-gray-500 dark:text-gray-400">
+                        <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-sm font-medium mb-3">ไม่พบประเภทสินค้าที่ตรงกับคำค้นหา</p>
+                        <button
+                          type="button"
+                          onClick={() => router.push('/prices?showAddModal=true')}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
+                          เพิ่มประเภทสินค้าใหม่
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -430,7 +594,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="grossWeight"
                     value={formData.grossWeight}
                     onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, containerWeightRef, memberSearchRef)}
+                    onKeyDown={(e) => handleKeyDown(e, containerWeightRef, memberSearchRef)}
                     required
                     className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="0.00"

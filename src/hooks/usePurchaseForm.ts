@@ -53,6 +53,11 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
+  // Product type search state
+  const [productTypeSearchTerm, setProductTypeSearchTerm] = useState('');
+  const [showProductTypeDropdown, setShowProductTypeDropdown] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState<ProductType | null>(null);
+
   // Recent purchases for selected product type
   const [recentPurchases, setRecentPurchases] = useState<any[]>([]);
 
@@ -60,6 +65,12 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const filteredMembers = (members || []).filter(member => 
     member.name.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
     member.code.toLowerCase().includes(memberSearchTerm.toLowerCase())
+  );
+
+  // Filter product types based on search term
+  const filteredProductTypes = (productTypes || []).filter(type =>
+    type.name.toLowerCase().includes(productTypeSearchTerm.toLowerCase()) ||
+    type.code.toLowerCase().includes(productTypeSearchTerm.toLowerCase())
   );
 
   // Handle member selection
@@ -95,6 +106,64 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       logger.error('Failed to fetch recent purchases', error);
       setRecentPurchases([]);
     }
+  }, []);
+
+  // Handle product type selection
+  const handleProductTypeSelect = useCallback((productType: ProductType) => {
+    setSelectedProductType(productType);
+    setProductTypeSearchTerm(`${productType.code} - ${productType.name}`);
+    setFormData(prev => ({ ...prev, productTypeId: productType.id }));
+    setShowProductTypeDropdown(false);
+    
+    // Trigger price fetch and recent purchases fetch
+    const today = new Date().toISOString().split('T')[0];
+    let priceForProductType = dailyPrices.find(price => {
+      if (!price.date) return false;
+      const priceDate = new Date(price.date).toISOString().split('T')[0];
+      return price.productTypeId === productType.id && priceDate === today;
+    });
+    
+    if (!priceForProductType) {
+      priceForProductType = dailyPrices
+        .filter(price => price.productTypeId === productType.id)
+        .sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA;
+        })[0];
+    }
+    
+    fetchRecentPurchases(productType.id);
+    
+    if (priceForProductType) {
+      setFormData(prev => ({
+        ...prev,
+        productTypeId: productType.id,
+        pricePerUnit: priceForProductType.price.toString(),
+      }));
+    }
+  }, [dailyPrices, fetchRecentPurchases]);
+
+  // Handle product type search input change
+  const handleProductTypeSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setProductTypeSearchTerm(value);
+    setShowProductTypeDropdown(true);
+    
+    // Clear selection if search term doesn't match selected product type
+    if (selectedProductType && !value.includes(selectedProductType.code)) {
+      setSelectedProductType(null);
+      setFormData(prev => ({ ...prev, productTypeId: '', pricePerUnit: '' }));
+      setRecentPurchases([]);
+    }
+  }, [selectedProductType]);
+
+  // Clear product type search
+  const clearProductTypeSearch = useCallback(() => {
+    setProductTypeSearchTerm('');
+    setSelectedProductType(null);
+    setFormData(prev => ({ ...prev, productTypeId: '', pricePerUnit: '' }));
+    setRecentPurchases([]);
   }, []);
 
   // Handle input changes
@@ -199,6 +268,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setRecentPurchases([]); // Clear recent purchases
     // Keep member search term and selected member
     setShowMemberDropdown(false);
+    setProductTypeSearchTerm('');
+    setSelectedProductType(null);
+    setShowProductTypeDropdown(false);
   }, []);
 
   // Reset ALL fields including member (for Reset button)
@@ -219,6 +291,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setSelectedMember(null);
     setRecentPurchases([]); // Clear recent purchases
     setShowMemberDropdown(false);
+    setProductTypeSearchTerm('');
+    setSelectedProductType(null);
+    setShowProductTypeDropdown(false);
   }, []);
 
   // Clear member search
@@ -255,5 +330,13 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     clearMemberSearch,
     applySuggestedPrice,
     setShowMemberDropdown,
+    productTypeSearchTerm,
+    showProductTypeDropdown,
+    selectedProductType,
+    filteredProductTypes,
+    handleProductTypeSelect,
+    handleProductTypeSearchChange,
+    clearProductTypeSearch,
+    setShowProductTypeDropdown,
   };
 };
