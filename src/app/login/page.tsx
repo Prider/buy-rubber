@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
@@ -59,11 +58,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg">
-                  <Image
-                    src={appIcon}
+                  <img
+                    src={appIcon.src}
                     alt="Punsook Innotech logo"
                     className="w-full h-full object-cover"
-                    priority
+                    loading="eager"
+                    decoding="sync"
                   />
                 </div>
                 <div>

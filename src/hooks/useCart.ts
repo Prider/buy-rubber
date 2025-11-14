@@ -193,14 +193,15 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           <style>
             body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 20px; color: #000000; }
             h1 { text-align: center; color: #333; margin: 20px; text-size}
-            .info { margin-bottom: 20px; }
+            .info { margin: 20px 40px; }
             .table-wrapper { margin: 12px 36px; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #000000; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: #000000; }
             th { background-color: #f2f2f2; font-weight: bold; color: #000000; }
+            th.member-column, td.member-column { width: 180px; }
             td.number { text-align: right; }
             .total { font-weight: bold; background-color: #f9f9f9; }
-            .footer { margin-top: 30px; text-align: right; }
+            .footer { text-align: right; margin: 30px 40px;}
           </style>
         </head>
         <body>
@@ -219,7 +220,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             <thead>
               <tr>
                 <th>วันที่รับซื้อ</th>
-                <th>สมาชิก</th>
+                <th class="member-column">สมาชิก</th>
                 <th>ประเภทสินค้า</th>
                 <th style="text-align: right;">น้ำหนักรวมภาชนะ (กก.)</th>
                 <th style="text-align: right;">น้ำหนักภาชนะ (กก.)</th>
@@ -232,7 +233,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
               ${data.map(item => `
                 <tr>
                   <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
-                  <td>${item.memberName}</td>
+                  <td class="member-column">${item.memberName}</td>
                   <td>${item.productTypeName}</td>
                   <td class="number">${formatNumber(item.grossWeight)}</td>
                   <td class="number">${formatNumber(item.containerWeight)}</td>
