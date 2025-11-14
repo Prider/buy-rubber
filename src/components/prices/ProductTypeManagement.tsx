@@ -17,12 +17,16 @@ interface ProductTypeManagementProps {
   onDelete: (productType: ProductType) => void;
 }
 
+const MAX_PRODUCT_TYPES = 10;
+
 export default function ProductTypeManagement({ 
   productTypes, 
   onAdd, 
   onEdit, 
   onDelete 
 }: ProductTypeManagementProps) {
+  const isMaxReached = productTypes.length >= MAX_PRODUCT_TYPES;
+
   return (
     <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 border border-primary-100 dark:border-gray-700 shadow-sm">
       <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100 dark:bg-primary-900 rounded-full -mr-32 -mt-32 opacity-20"></div>
@@ -45,14 +49,25 @@ export default function ProductTypeManagement({
           </div>
           <button
             onClick={onAdd}
-            className="group relative px-4 py-2 bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 rounded-lg font-medium text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 border border-primary-200 dark:border-primary-700"
+            disabled={isMaxReached}
+            className={`group relative px-4 py-2 rounded-lg font-medium text-sm shadow-md border transition-all.duration-200 ${
+              isMaxReached
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed'
+                : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 hover:shadow-lg transform hover:-translate-y-0.5 border-primary-200 dark:border-primary-700'
+            }`}
           >
-            <span className="flex items-center space-x-1">
-              <span className="text-lg group-hover:scale-110 transition-transform">+</span>
-              <span>เพิ่มประเภท</span>
+            <span className="flex.items-center space-x-1">
+              <span className={`text-lg transition-transform ${isMaxReached ? '' : 'group-hover:scale-110'}`}>+</span>
+              <span>{isMaxReached ? 'ครบจำนวนสูงสุด' : 'เพิ่มประเภท'}</span>
             </span>
           </button>
         </div>
+
+        {isMaxReached && (
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            สามารถเพิ่มประเภทสินค้าได้สูงสุด {MAX_PRODUCT_TYPES} รายการ
+          </p>
+        )}
         
         <div className="flex flex-wrap gap-3">
           {productTypes.map((productType, index) => (
