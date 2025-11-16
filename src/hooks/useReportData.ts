@@ -96,7 +96,7 @@ export function useReportData() {
               acc[expense.category].count += 1;
               return acc;
             }, {});
-            setExpenseSummary(Object.values(categorySummary).sort((a, b) => b.totalAmount - a.totalAmount));
+            setExpenseSummary((Object.values(categorySummary) as ExpenseCategorySummary[]).sort((a, b) => b.totalAmount - a.totalAmount));
           } else {
             setExpenseSummary([]);
           }

@@ -57,10 +57,19 @@ class UserStore {
   }
 
   async getAllUsers(): Promise<User[]> {
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    return users as User[];
+    try {
+      const users = await prisma.user.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      return users as User[];
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      throw error; // Re-throw to be handled by the API route
+    }
   }
 
   async updateUser(id: string, updates: UpdateUserRequest): Promise<User | null> {
@@ -131,33 +140,43 @@ class UserStore {
   }
 
   async authenticateUser(username: string, password: string): Promise<User | null> {
-    console.log('Authenticating user from Prisma:', username);
-    
-    const user = await prisma.user.findUnique({
-      where: { username }
-    });
-    
-    if (!user) {
-      console.log('User not found in Prisma:', username);
-      return null;
-    }
-    
-    if (!user.isActive) {
-      console.log('User is inactive:', username);
-      return null;
-    }
+    try {
+      console.log('Authenticating user from Prisma:', username);
+      console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+      
+      const user = await prisma.user.findUnique({
+        where: { username }
+      });
+      
+      if (!user) {
+        console.log('User not found in Prisma:', username);
+        return null;
+      }
+      
+      if (!user.isActive) {
+        console.log('User is inactive:', username);
+        return null;
+      }
 
-    const hashedPassword = simpleHash(password);
-    const isValidPassword = hashedPassword === user.password;
-    
-    console.log('Password check:', {
-      username,
-      providedPasswordHash: hashedPassword,
-      storedPasswordHash: user.password,
-      isValid: isValidPassword
-    });
-    
-    return isValidPassword ? (user as User) : null;
+      const hashedPassword = simpleHash(password);
+      const isValidPassword = hashedPassword === user.password;
+      
+      console.log('Password check:', {
+        username,
+        providedPasswordHash: hashedPassword,
+        storedPasswordHash: user.password,
+        isValid: isValidPassword
+      });
+      
+      return isValidPassword ? (user as User) : null;
+    } catch (error) {
+      console.error('Error in authenticateUser:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      throw error; // Re-throw to be handled by the API route
+    }
   }
 
   async changePassword(id: string, currentPassword: string, newPassword: string): Promise<boolean> {

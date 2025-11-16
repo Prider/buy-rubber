@@ -40,7 +40,10 @@ function createWindow() {
     console.log('Is packaged:', app.isPackaged);
     
     const startServer = require('./server');
-    startServer(appPath)
+    // Use database path from initialization, or calculate it as fallback
+    const dbPath = databasePath || path.join(app.getPath('userData'), 'prisma', 'dev.db');
+    console.log('Starting server with database path:', dbPath);
+    startServer(appPath, dbPath)
       .then((port) => {
         console.log(`Loading window at http://localhost:${port}`);
         mainWindow.loadURL(`http://localhost:${port}`);
@@ -87,16 +90,23 @@ function createWindow() {
 // Initialize database on app ready
 const { initializeDatabase } = require('./db-init');
 
+// Store database path globally so it can be accessed in createWindow
+let databasePath = null;
+
 // This method will be called when Electron has finished initialization
 app.whenReady().then(async () => {
   // Initialize database first (copy seeded DB if needed)
   try {
     console.log('Initializing database...');
-    await initializeDatabase();
+    databasePath = await initializeDatabase();
     console.log('Database initialization complete');
+    console.log('Database path:', databasePath);
   } catch (error) {
     console.error('Database initialization failed:', error);
-    // Continue anyway - Prisma will create empty database if needed
+    // Calculate fallback path
+    const userDataPath = app.getPath('userData');
+    databasePath = path.join(userDataPath, 'prisma', 'dev.db');
+    console.log('Using fallback database path:', databasePath);
   }
 
   createWindow();

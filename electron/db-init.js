@@ -16,9 +16,13 @@ function initializeDatabase() {
       
       // Set DATABASE_URL environment variable for Prisma
       // This ensures Prisma client uses the correct database path
-      const dbUrl = `file:${userDbPath}`;
+      const encodedPath = encodeURI(userDbPath);
+      const dbUrl = `file:${encodedPath}`;
       process.env.DATABASE_URL = dbUrl;
       console.log('Set DATABASE_URL:', dbUrl);
+      
+      // Also return the database path so it can be passed to the server
+      global.databasePath = userDbPath;
       
       // Create prisma directory if it doesn't exist
       if (!fs.existsSync(userDbDir)) {

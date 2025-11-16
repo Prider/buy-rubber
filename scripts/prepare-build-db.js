@@ -13,6 +13,18 @@ console.log('📦 Preparing database for build...');
 const dbPath = path.join(__dirname, '..', 'prisma', 'dev.db');
 const prismaPath = path.join(__dirname, '..', 'prisma');
 
+// Step 0: Ensure Prisma Client is generated with the correct platform binaries
+console.log('🔧 Generating Prisma Client...');
+try {
+  execSync('npx prisma generate', {
+    cwd: path.join(__dirname, '..'),
+    stdio: 'inherit',
+  });
+} catch (error) {
+  console.error('❌ Failed to generate Prisma Client:', error);
+  process.exit(1);
+}
+
 // Step 1: Push schema to ensure database exists
 console.log('📝 Pushing database schema...');
 try {

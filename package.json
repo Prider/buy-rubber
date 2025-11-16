@@ -9,15 +9,16 @@
     "start": "next start",
     "electron": "electron .",
     "prepare:build": "node scripts/prepare-build-db.js",
-    "electron:build": "npm run prepare:build && next build && electron-builder",
-    "electron:build:win": "npm run prepare:build && next build && electron-builder --win",
-    "electron:build:mac": "npm run prepare:build && next build && electron-builder --mac",
-    "electron:build:all": "npm run prepare:build && next build && electron-builder --win --mac",
+    "electron:build": "npm run prepare:build && next build && npx prisma generate && electron-builder",
+    "electron:build:win": "npm run prepare:build && next build && npx prisma generate && electron-builder --win",
+    "electron:build:mac": "npm run prepare:build && next build && npx prisma generate && electron-builder --mac",
+    "electron:build:all": "npm run prepare:build && next build && npx prisma generate && electron-builder --win --mac",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts"
   },
+  "postinstall": "prisma generate",
   "dependencies": {
     "@prisma/client": "^5.6.0",
     "@tanstack/react-query": "^5.8.4",
@@ -73,6 +74,7 @@
       "electron/**/*",
       ".next/**/*",
       "prisma/**/*",
+      "node_modules/.prisma/**",
       "node_modules/**/*",
       "package.json",
       "public/**/*"
@@ -81,6 +83,16 @@
       {
         "from": "prisma/dev.db",
         "to": "prisma/dev.db",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules/.prisma",
+        "to": "node_modules/.prisma",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules/@prisma/engines",
+        "to": "node_modules/@prisma/engines",
         "filter": ["**/*"]
       }
     ],

@@ -3,6 +3,94 @@ const { parse } = require('url');
 const path = require('path');
 const fs = require('fs');
 
+// Simple file logger that mirrors console to a log file in userData
+(() => {
+  try {
+    const originalConsole = {
+      log: console.log,
+      info: console.info,
+      warn: console.warn,
+      error: console.error,
+    };
+  
+    function getLogFilePath() {
+      // Prefer Electron's userData path when available
+      try {
+        const { app } = require('electron');
+        if (app && app.getPath) {
+          const userDataPath = app.getPath('userData');
+          const logPath = path.join(userDataPath, 'server.log');
+          // Ensure directory exists
+          fs.mkdirSync(path.dirname(logPath), { recursive: true });
+          return logPath;
+        }
+      } catch (_) {
+        // Not in Electron context yet; fall back to macOS Application Support
+      }
+  
+      // Fallback: ~/Library/Application Support/Punsook Innotech/server.log (macOS)
+      try {
+        const os = require('os');
+        const homeDir = os.homedir();
+        const fallbackDir = path.join(homeDir, 'Library', 'Application Support', 'Punsook Innotech');
+        fs.mkdirSync(fallbackDir, { recursive: true });
+        return path.join(fallbackDir, 'server.log');
+      } catch (_) {
+        // Ultimate fallback: current working directory
+        return path.join(process.cwd(), 'server.log');
+      }
+    }
+  
+    const logFilePath = getLogFilePath();
+    const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+  
+    function safeStringify(value) {
+      if (typeof value === 'string') return value;
+      try {
+        return JSON.stringify(value);
+      } catch {
+        try {
+          return String(value);
+        } catch {
+          return '[Unserializable]';
+        }
+      }
+    }
+  
+    function writeLog(level, args) {
+      const timestamp = new Date().toISOString();
+      const line = `[${timestamp}] [${level}] ${args.map(safeStringify).join(' ')}\n`;
+      try {
+        logStream.write(line);
+      } catch (_) {
+        // Swallow file write errors to avoid impacting runtime
+      }
+    }
+  
+    console.log = (...args) => {
+      writeLog('LOG', args);
+      originalConsole.log(...args);
+    };
+    console.info = (...args) => {
+      writeLog('INFO', args);
+      originalConsole.info(...args);
+    };
+    console.warn = (...args) => {
+      writeLog('WARN', args);
+      originalConsole.warn(...args);
+    };
+    console.error = (...args) => {
+      writeLog('ERROR', args);
+      originalConsole.error(...args);
+    };
+  
+    // Announce log file location once
+    originalConsole.log('File logging enabled at:', logFilePath);
+  } catch (_) {
+    // Never let logging setup break the server
+  }
+})();
+
 // Get the correct app path for Electron
 function getAppPath() {
   // Check if we're in an Electron app
@@ -51,15 +139,54 @@ function getAppPath() {
   return process.cwd();
 }
 
-const startServer = async (customAppPath = null) => {
+const startServer = async (customAppPath = null, databasePath = null) => {
   const hostname = 'localhost';
   let port = 3000;
+  
+  // Set DATABASE_URL before starting Next.js server
+  // This ensures Prisma client uses the correct database path
+  if (databasePath) {
+    // URL-encode path to handle spaces (e.g. Application Support) and special chars
+    const encodedPath = encodeURI(databasePath);
+    const dbUrl = `file:${encodedPath}`;
+    process.env.DATABASE_URL = dbUrl;
+    console.log('Set DATABASE_URL in server process:', dbUrl);
+  } else {
+    // Try to get from global or app path
+    try {
+      const { app } = require('electron');
+      if (app && app.getPath) {
+        const userDataPath = app.getPath('userData');
+        const userDbPath = path.join(userDataPath, 'prisma', 'dev.db');
+        const encodedPath = encodeURI(userDbPath);
+        const dbUrl = `file:${encodedPath}`;
+        process.env.DATABASE_URL = dbUrl;
+        console.log('Set DATABASE_URL from app path:', dbUrl);
+      }
+    } catch (e) {
+      console.log('Could not set DATABASE_URL from Electron app:', e.message);
+    }
+  }
   
   // Use provided path, or detect it
   const appPath = customAppPath || getAppPath();
   console.log('Starting server from:', appPath);
   console.log('__dirname:', __dirname);
   console.log('process.cwd():', process.cwd());
+
+  // Prefer WASM engine in packaged Electron to avoid native binary path issues
+  try {
+    const wasmRuntimeDir = path.join(appPath, 'node_modules', '@prisma', 'client', 'runtime');
+    const wasmUrl = `file://${wasmRuntimeDir}/`;
+    process.env.PRISMA_CLIENT_ENGINE_TYPE = process.env.PRISMA_CLIENT_ENGINE_TYPE || 'wasm';
+    process.env.PRISMA_WASM_QUERY_ENGINE_BASE_URL = process.env.PRISMA_WASM_QUERY_ENGINE_BASE_URL || wasmUrl;
+    console.log('Prisma engine config:', {
+      PRISMA_CLIENT_ENGINE_TYPE: process.env.PRISMA_CLIENT_ENGINE_TYPE,
+      PRISMA_WASM_QUERY_ENGINE_BASE_URL: process.env.PRISMA_WASM_QUERY_ENGINE_BASE_URL,
+    });
+  } catch (e) {
+    console.log('Could not set Prisma WASM engine config:', e.message);
+  }
 
   // Check if we're in standalone mode
   const standalonePath = path.join(appPath, '.next', 'standalone');
