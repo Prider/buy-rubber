@@ -3,8 +3,42 @@ import path from 'path';
 import { prisma } from './prisma';
 import { logger } from './logger';
 
-const BACKUP_DIR = path.join(process.cwd(), 'prisma', 'backups');
-const DB_PATH = path.join(process.cwd(), 'prisma', 'dev.db');
+function getAppDataDir() {
+  try {
+    // Prefer Electron userData path
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const electron = require('electron');
+    const app = electron?.app || electron?.remote?.app;
+    if (app?.getPath) {
+      return app.getPath('userData');
+    }
+  } catch {
+    // ignore
+  }
+  // macOS fallback
+  const os = require('os');
+  const home = os.homedir();
+  return path.join(home, 'Library', 'Application Support', 'Punsook Innotech');
+}
+
+function getDatabasePathFromEnv(): string {
+  const url = process.env.DATABASE_URL;
+  if (url && url.startsWith('file:')) {
+    try {
+      const rawPath = url.replace(/^file:/, '');
+      // decode %20 etc.
+      return decodeURIComponent(rawPath);
+    } catch {
+      // ignore
+    }
+  }
+  // Fallback to local dev db
+  return path.join(process.cwd(), 'prisma', 'dev.db');
+}
+
+const APP_DATA_DIR = getAppDataDir();
+const BACKUP_DIR = path.join(APP_DATA_DIR, 'backups');
+const DB_PATH = getDatabasePathFromEnv();
 
 // สร้างโฟลเดอร์สำรองข้อมูล (ถ้ายังไม่มี)
 export function ensureBackupDirectory() {

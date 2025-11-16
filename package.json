@@ -9,6 +9,7 @@
     "start": "next start",
     "electron": "electron .",
     "prepare:build": "node scripts/prepare-build-db.js",
+    "rebuild:mac": "rm -rf dist && yarn install && yarn prisma generate && yarn electron:build:mac",
     "electron:build": "npm run prepare:build && next build && npx prisma generate && electron-builder",
     "electron:build:win": "npm run prepare:build && next build && npx prisma generate && electron-builder --win",
     "electron:build:mac": "npm run prepare:build && next build && npx prisma generate && electron-builder --mac",

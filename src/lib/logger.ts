@@ -5,6 +5,7 @@ const isServer = typeof window === 'undefined';
 let fs: any;
 let path: any;
 let LOG_DIR: string = '';
+let os: any;
 
 function getServerModules() {
   if (!isServer) return { fs: null, path: null, LOG_DIR: '' };
@@ -15,7 +16,23 @@ function getServerModules() {
       // Use eval to prevent webpack from analyzing this
       fs = eval('require')('fs');
       path = eval('require')('path');
-      LOG_DIR = path.join(process.cwd(), 'logs');
+      os = eval('require')('os');
+      // Prefer Electron userData path if available
+      try {
+        const electron = eval('require')('electron');
+        const app = electron?.app || electron?.remote?.app;
+        if (app?.getPath) {
+          const userData = app.getPath('userData');
+          LOG_DIR = path.join(userData, 'logs');
+        }
+      } catch {
+        // ignore, fallback below
+      }
+      if (!LOG_DIR) {
+        // Fallback to OS application support dir (macOS path)
+        const home = os.homedir();
+        LOG_DIR = path.join(home, 'Library', 'Application Support', 'Punsook Innotech', 'logs');
+      }
     } catch (error) {
       // Ignore errors
     }
