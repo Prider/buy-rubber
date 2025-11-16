@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const { loading, stats, todayPrices, productTypes, recentPurchases, topMembers, recentExpenses } = useDashboardData();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
