@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
 import { formatFileSize } from '@/lib/utils';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
+import GamerLoader from '@/components/GamerLoader';
 
 export default function BackupPage() {
   const router = useRouter();
@@ -358,11 +359,8 @@ export default function BackupPage() {
 
         {/* Backups List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">กำลังโหลดข้อมูล...</p>
-            </div>
+          <div className="py-12">
+            <GamerLoader message="กำลังโหลดข้อมูล..." />
           </div>
         ) : backups.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">

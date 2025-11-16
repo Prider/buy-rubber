@@ -1,6 +1,7 @@
 'use client';
 
 import { Expense } from '@/hooks/useExpenses';
+import GamerLoader from '@/components/GamerLoader';
 
 interface ExpenseListTableProps {
   expenses: Expense[];
@@ -74,9 +75,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">กำลังโหลดข้อมูล...</p>
+        <div className="py-10">
+          <GamerLoader message="กำลังโหลดข้อมูล..." />
         </div>
       </div>
     );

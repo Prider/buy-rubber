@@ -15,6 +15,7 @@ import { MessageBanner } from './user-management/MessageBanner';
 import { UsersTable } from './user-management/UsersTable';
 import { CreateUserModal } from './user-management/CreateUserModal';
 import { EditUserModal } from './user-management/EditUserModal';
+import GamerLoader from '@/components/GamerLoader';
 
 interface UserManagementProps {
   className?: string;
@@ -212,9 +213,8 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
   if (loading) {
     return (
       <div className={`card ${className}`}>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">กำลังโหลดข้อมูลผู้ใช้งาน...</span>
+        <div className="py-6">
+          <GamerLoader message="กำลังโหลดข้อมูลผู้ใช้งาน..." />
         </div>
       </div>
     );

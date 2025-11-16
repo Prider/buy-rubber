@@ -8,6 +8,7 @@ import RecentPurchasesList from '@/components/dashboard/RecentPurchasesList';
 import TopMembersList from '@/components/dashboard/TopMembersList';
 import RecentExpensesList from '@/components/dashboard/RecentExpensesList';
 import TodayPricesCard from '@/components/dashboard/TodayPricesCard';
+import GamerLoader from '@/components/GamerLoader';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,11 +24,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400"></div>
-          <p className="mt-6 text-lg font-medium text-gray-600 dark:text-gray-400">กำลังโหลดข้อมูล...</p>
-        </div>
+      <div className="min-h-[60vh]">
+        <GamerLoader className="py-12" message="กำลังโหลดข้อมูล..." />
       </div>
     );
   }
