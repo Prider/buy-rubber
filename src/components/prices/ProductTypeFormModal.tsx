@@ -30,6 +30,27 @@ export default function ProductTypeFormModal({
   onSubmit,
   onChange,
 }: ProductTypeFormModalProps) {
+  const codeRef = React.useRef<HTMLInputElement>(null);
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const descRef = React.useRef<HTMLTextAreaElement>(null);
+  const cancelRef = React.useRef<HTMLButtonElement>(null);
+  const submitRef = React.useRef<HTMLButtonElement>(null);
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    nextRef?: React.RefObject<any>,
+    prevRef?: React.RefObject<any>
+  ) => {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (nextRef?.current) nextRef.current.focus();
+    }
+    if (e.key === 'ArrowLeft' && prevRef?.current) {
+      e.preventDefault();
+      prevRef.current.focus();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -78,9 +99,11 @@ export default function ProductTypeFormModal({
                     รหัสประเภท <span className="text-red-500">*</span>
                   </label>
                   <input
+                    ref={codeRef}
                     type="text"
                     value={formData.code}
                     onChange={(e) => onChange('code', e.target.value.toUpperCase())}
+                    onKeyDown={(e) => handleKeyDown(e, nameRef)}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                     placeholder="เช่น FRESH, DRY"
                     required
@@ -100,9 +123,11 @@ export default function ProductTypeFormModal({
                     ชื่อประเภท <span className="text-red-500">*</span>
                   </label>
                   <input
+                    ref={nameRef}
                     type="text"
                     value={formData.name}
                     onChange={(e) => onChange('name', e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, descRef, codeRef)}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                     placeholder="เช่น น้ำยางสด, ยางแห้ง"
                     required
@@ -128,8 +153,10 @@ export default function ProductTypeFormModal({
                     รายละเอียดเพิ่มเติม
                   </label>
                   <textarea
+                    ref={descRef}
                     value={formData.description}
                     onChange={(e) => onChange('description', e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, submitRef, nameRef)}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 resize-none"
                     placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
                     rows={4}
@@ -143,12 +170,14 @@ export default function ProductTypeFormModal({
               <button
                 type="button"
                 onClick={onClose}
+                ref={cancelRef}
                 className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium"
               >
                 ยกเลิก
               </button>
               <button 
                 type="submit" 
+                ref={submitRef}
                 className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
               >
                 <div className="flex items-center space-x-2">

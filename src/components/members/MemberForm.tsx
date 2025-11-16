@@ -13,6 +13,12 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const [localFormData, setLocalFormData] = useState<MemberFormData>(formData);
   const [validationError, setValidationError] = useState<string | null>(null);
   const initialEditingDataRef = useRef<MemberFormData | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const codeRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLTextAreaElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setLocalFormData(formData);
@@ -34,6 +40,22 @@ export const MemberForm: React.FC<MemberFormProps> = ({
       initialEditingDataRef.current = null;
     }
   }, [editingMember]);
+
+  // Arrow/Enter navigation similar to PurchaseEntryCard
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    nextRef?: React.RefObject<any>,
+    prevRef?: React.RefObject<any>
+  ) => {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (nextRef?.current) nextRef.current.focus();
+    }
+    if (e.key === 'ArrowLeft' && prevRef?.current) {
+      e.preventDefault();
+      prevRef.current.focus();
+    }
+  };
 
   const handleInputChange = (field: keyof MemberFormData, value: string | number) => {
     const newData = { ...localFormData, [field]: value };
@@ -140,9 +162,11 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     ชื่อ-นามสกุล <span className="text-red-500">*</span>
                   </label>
                   <input
+                    ref={nameRef}
                     type="text"
                     value={localFormData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, phoneRef)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                     required
                     disabled={isLoading}
@@ -159,6 +183,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     )}
                   </label>
                   <input
+                    ref={codeRef}
                     type="text"
                     value={localFormData.code}
                     onChange={(e) => handleInputChange('code', e.target.value)}
@@ -190,12 +215,14 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     เบอร์โทรศัพท์
                   </label>
                   <input
+                    ref={phoneRef}
                     type="text"
                     value={localFormData.phone}
                     onChange={(e) => {
                       const numericValue = e.target.value.replace(/\D/g, '');
                       handleInputChange('phone', numericValue);
                     }}
+                    onKeyDown={(e) => handleKeyDown(e, addressRef, nameRef)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200"
                     disabled={isLoading}
                     placeholder="กรอกเบอร์โทรศัพท์"
@@ -210,8 +237,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                     ที่อยู่
                   </label>
                   <textarea
+                    ref={addressRef}
                     value={localFormData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, submitButtonRef, phoneRef)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 resize-none"
                     rows={2}
                     disabled={isLoading}
@@ -296,12 +325,14 @@ export const MemberForm: React.FC<MemberFormProps> = ({
               <button
                 type="button"
                 onClick={handleCancel}
+                ref={cancelButtonRef}
                 className="px-5 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium text-sm"
               >
                 ยกเลิก
               </button>
               <button 
                 type="submit" 
+                ref={submitButtonRef}
                 className="px-6 py-2 bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 dark:hover:from-primary-600 dark:hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl disabled:shadow-none"
                 disabled={isLoading || isSubmitDisabled}
               >
