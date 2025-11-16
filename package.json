@@ -87,12 +87,12 @@
       },
       {
         "from": "node_modules/.prisma",
-        "to": "node_modules/.prisma",
+        "to": "app/node_modules/.prisma",
         "filter": ["**/*"]
       },
       {
         "from": "node_modules/@prisma/engines",
-        "to": "node_modules/@prisma/engines",
+        "to": "app/node_modules/@prisma/engines",
         "filter": ["**/*"]
       }
     ],
