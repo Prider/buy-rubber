@@ -22,7 +22,7 @@ export function usePriceData() {
   const [priceHistory, setPriceHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
       router.push('/login');
       return;
