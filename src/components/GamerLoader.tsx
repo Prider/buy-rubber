@@ -6,7 +6,7 @@ interface GamerLoaderProps {
   className?: string;
 }
 
-export function GamerLoader({ fullScreen = false, message = 'GAMER MODE • กำลังโหลด...', className = '' }: GamerLoaderProps) {
+export function GamerLoader({ fullScreen = false, message = 'Punsook Innotech • กำลังโหลด...', className = '' }: GamerLoaderProps) {
   return (
     <div className={`${fullScreen ? 'min-h-screen flex items-center justify-center' : ''} ${className}`}>
       <div className="text-center">

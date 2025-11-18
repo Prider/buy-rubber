@@ -78,26 +78,31 @@ export function ModeSelectionCards({
                 ข้อมูลเครือข่าย
               </h4>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                Server URL:
-              </span>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-mono text-blue-900 dark:text-blue-100 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-lg">
-                  {ipLoading ? 'กำลังโหลด...' : `http://${localIP}:${serverPort}`}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                  Server URL (สำหรับเครื่องอื่น):
                 </span>
-                {!ipLoading && (
-                  <button
-                    onClick={() => onCopyToClipboard(`http://${localIP}:${serverPort}`, 'Server URL')}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-all duration-200"
-                    title="คัดลอก Server URL"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                )}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-mono text-blue-900 dark:text-blue-100 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-lg">
+                    {ipLoading ? 'กำลังโหลด...' : `http://${localIP}:3000`}
+                  </span>
+                  {!ipLoading && (
+                    <button
+                      onClick={() => onCopyToClipboard(`http://${localIP}:3000`, 'Server URL')}
+                      className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-all duration-200"
+                      title="คัดลอก Server URL"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                💡 ใช้ URL นี้ในเครื่องอื่นที่ต้องการเชื่อมต่อเป็นโหมดไคลเอนต์
+              </p>
             </div>
           </div>
           
@@ -159,29 +164,36 @@ export function ModeSelectionCards({
               value={serverUrl}
               onChange={(e) => onServerUrlChange(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-              placeholder="http://192.168.1.100:3001"
+              placeholder="http://192.168.0.179:3000"
             />
           </div>
           
           {/* Quick Connect Buttons */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              เชื่อมต่อด่วน
+              เชื่อมต่อด่วน (กรอก IP ของเครื่องเซิร์ฟเวอร์)
             </label>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => onQuickConnect(localIP)}
+                onClick={() => {
+                  const url = `http://${localIP}:3000`;
+                  onServerUrlChange(url);
+                }}
                 className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-all duration-200 font-medium"
                 disabled={ipLoading}
+                title="ใช้ IP ของเครื่องนี้ (สำหรับทดสอบ)"
               >
                 <div className="flex items-center space-x-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
-                  <span>{ipLoading ? 'กำลังโหลด...' : localIP}</span>
+                  <span>{ipLoading ? 'กำลังโหลด...' : `${localIP}:3000`}</span>
                 </div>
               </button>
             </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              💡 กรอก IP address ของเครื่องที่รันโหมดเซิร์ฟเวอร์ เช่น http://192.168.0.179:3000
+            </p>
           </div>
           
           <button

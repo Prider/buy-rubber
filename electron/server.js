@@ -140,7 +140,8 @@ function getAppPath() {
 }
 
 const startServer = async (customAppPath = null, databasePath = null) => {
-  const hostname = 'localhost';
+  // Use 0.0.0.0 to allow connections from other machines on the network
+  const hostname = '0.0.0.0';
   let port = 3000;
   
   // Set DATABASE_URL before starting Next.js server
@@ -224,10 +225,12 @@ const startServer = async (customAppPath = null, databasePath = null) => {
       if (serverModule && typeof serverModule.default === 'function') {
         const server = serverModule.default({ port, hostname });
         return new Promise((resolve, reject) => {
-          server.listen(port, (err) => {
+          server.listen(port, hostname, (err) => {
             if (err) reject(err);
             else {
               console.log(`> Standalone server ready on http://${hostname}:${port}`);
+              console.log(`> Server accessible from network at http://<your-ip>:${port}`);
+              console.log(`> Local access: http://localhost:${port}`);
               resolve(port);
             }
           });
@@ -308,6 +311,8 @@ const startServer = async (customAppPath = null, databasePath = null) => {
         server.listen(attemptPort, hostname, () => {
           port = attemptPort;
           console.log(`> Next.js server ready on http://${hostname}:${port}`);
+          console.log(`> Server accessible from network at http://<your-ip>:${port}`);
+          console.log(`> Local access: http://localhost:${port}`);
           resolve(port);
         });
       };
