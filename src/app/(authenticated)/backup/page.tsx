@@ -22,7 +22,7 @@ export default function BackupPage() {
     enabled: false,
     frequency: 'daily',
     time: '22:00',
-    maxCount: 30,
+    maxCount: 80,
     autoCleanup: true,
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -292,9 +292,9 @@ export default function BackupPage() {
                     <input
                       type="number"
                       min="1"
-                      max="30"
+                      max="80"
                       value={settings.maxCount}
-                      onChange={(e) => setSettings({ ...settings, maxCount: parseInt(e.target.value) || 30 })}
+                      onChange={(e) => setSettings({ ...settings, maxCount: parseInt(e.target.value) || 60 })}
                       className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

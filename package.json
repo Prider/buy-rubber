@@ -25,7 +25,7 @@
   },
   "postinstall": "prisma generate",
   "dependencies": {
-    "@prisma/client": "^5.6.0",
+    "@prisma/client": "^6.19.0",
     "@tanstack/react-query": "^5.8.4",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
@@ -88,17 +88,23 @@
       {
         "from": "prisma/dev.db",
         "to": "prisma/dev.db",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "node_modules/.prisma",
         "to": "app/node_modules/.prisma",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "node_modules/@prisma/engines",
         "to": "app/node_modules/@prisma/engines",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {

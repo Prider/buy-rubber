@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <AppWrapper>
-      <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 ">
         <GamerLoader fullScreen />
       </div>
     </AppWrapper>
