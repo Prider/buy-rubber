@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
 import { usePurchaseForm } from '@/hooks/usePurchaseForm';
+import { useExpenseForm } from '@/hooks/useExpenseForm';
 import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
+import { ExpenseEntryCard } from '@/components/purchases/ExpenseEntryCard';
 import { CartTable } from '@/components/purchases/CartTable';
 
 export default function PurchasesPage() {
@@ -24,6 +26,7 @@ export default function PurchasesPage() {
     error: cartError,
     setError: setCartError,
     addToCart,
+    addExpenseToCart,
     removeFromCart,
     saveCartToDb,
     printCart,
@@ -37,7 +40,7 @@ export default function PurchasesPage() {
     loadPurchases,
   });
 
-  // Form management hook
+  // Purchase form management hook
   const {
     formData,
     error: formError,
@@ -71,7 +74,17 @@ export default function PurchasesPage() {
     dailyPrices,
   });
 
-  // Handle adding item to cart
+  // Expense form management hook
+  const {
+    formData: expenseFormData,
+    error: expenseFormError,
+    setError: setExpenseFormError,
+    handleInputChange: handleExpenseInputChange,
+    isFormValid: isExpenseFormValid,
+    resetForm: resetExpenseForm,
+  } = useExpenseForm();
+
+  // Handle adding purchase item to cart
   const handleAddToCart = () => {
     if (!isFormValid()) {
       setFormError('กรุณากรอกข้อมูลที่จำเป็น');
@@ -80,6 +93,17 @@ export default function PurchasesPage() {
     
     addToCart(formData);
     resetForm();
+  };
+
+  // Handle adding expense item to cart
+  const handleAddExpenseToCart = () => {
+    if (!isExpenseFormValid()) {
+      setExpenseFormError('กรุณากรอกข้อมูลที่จำเป็น');
+      return;
+    }
+    
+    addExpenseToCart(expenseFormData);
+    resetExpenseForm();
   };
 
   // Handle saving cart with form reset
@@ -153,6 +177,16 @@ export default function PurchasesPage() {
           handleProductTypeSearchChange={handleProductTypeSearchChange}
           clearProductTypeSearch={clearProductTypeSearch}
           setShowProductTypeDropdown={setShowProductTypeDropdown}
+        />
+
+        {/* Expense Entry Card */}
+        <ExpenseEntryCard
+          formData={expenseFormData}
+          error={expenseFormError}
+          handleInputChange={handleExpenseInputChange}
+          isFormValid={isExpenseFormValid()}
+          resetForm={resetExpenseForm}
+          addToCart={handleAddExpenseToCart}
         />
 
         {/* Cart Table */}

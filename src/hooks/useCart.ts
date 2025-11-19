@@ -6,24 +6,31 @@ import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
+  type: 'purchase' | 'expense';
   date: string;
-  memberId: string;
-  memberName: string;
-  memberCode: string;
-  productTypeId: string;
-  productTypeName: string;
-  productTypeCode: string;
-  grossWeight: number; // น้ำหนักรวมภาชนะ
-  containerWeight: number; // น้ำหนักภาชนะ
-  netWeight: number; // น้ำหนักสุทธิ
-  dryWeight: number;
-  pricePerUnit: number;
-  bonusPrice: number;
-  basePrice: number;
-  adjustedPrice: number;
-  finalPrice: number;
-  totalAmount: number;
-  notes: string;
+  // Purchase fields
+  memberId?: string;
+  memberName?: string;
+  memberCode?: string;
+  productTypeId?: string;
+  productTypeName?: string;
+  productTypeCode?: string;
+  grossWeight?: number; // น้ำหนักรวมภาชนะ
+  containerWeight?: number; // น้ำหนักภาชนะ
+  netWeight?: number; // น้ำหนักสุทธิ
+  dryWeight?: number;
+  pricePerUnit?: number;
+  bonusPrice?: number;
+  basePrice?: number;
+  adjustedPrice?: number;
+  finalPrice?: number;
+  // Expense fields
+  category?: string;
+  amount?: number;
+  description?: string;
+  // Common fields
+  totalAmount: number; // Positive for purchases, negative for expenses
+  notes?: string;
 }
 
 interface Member {
@@ -52,6 +59,11 @@ interface PurchaseFormData {
   notes: string;
 }
 
+interface ExpenseFormData {
+  category: string;
+  amount: string;
+}
+
 interface UseCartProps {
   members: Member[];
   productTypes: ProductType[];
@@ -65,7 +77,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Add item to cart
+  // Add purchase item to cart
   const addToCart = useCallback((formData: PurchaseFormData) => {
     const member = members.find(m => m.id === formData.memberId);
     const productType = productTypes.find(pt => pt.id === formData.productTypeId);
@@ -82,6 +94,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     
     const item: CartItem = {
       id: Date.now().toString(),
+      type: 'purchase',
       date: formData.date,
       memberId: formData.memberId,
       memberName: member?.name || '',
@@ -104,6 +117,23 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     
     setCart(prev => [...prev, item]);
   }, [members, productTypes]);
+
+  // Add expense item to cart
+  const addExpenseToCart = useCallback((formData: ExpenseFormData) => {
+    const amount = parseFloat(formData.amount) || 0;
+    const totalAmount = -Math.abs(amount); // Negative value for expenses
+    
+    const item: CartItem = {
+      id: `expense-${Date.now()}`,
+      type: 'expense',
+      date: new Date().toISOString().split('T')[0], // Use current date
+      category: formData.category,
+      amount: amount,
+      totalAmount, // Negative value
+    };
+    
+    setCart(prev => [...prev, item]);
+  }, []);
 
   // Remove item from cart
   const removeFromCart = useCallback((id: string) => {
@@ -128,28 +158,45 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     try {
       logger.debug('Processing cart items', { cart });
       const promises = cart.map((item, index) => {
-        const payload = {
-          date: item.date,
-          memberId: item.memberId,
-          productTypeId: item.productTypeId,
-          userId: user.id,
-          grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
-          containerWeight: item.containerWeight, // น้ำหนักภาชนะ
-          netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
-          rubberPercent: null, // Set to null since we removed rubber percent from UI
-          pricePerUnit: item.pricePerUnit, // Include the price per unit
-          bonusPrice: item.bonusPrice,
-          notes: item.notes,
-        };
-        logger.debug(`Sending item ${index + 1}`, payload);
-        
-        return fetch('/api/purchases', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+        if (item.type === 'expense') {
+          const payload = {
+            date: item.date,
+            category: item.category,
+            amount: item.amount,
+          };
+          logger.debug(`Sending expense ${index + 1}`, payload);
+          
+          return fetch('/api/expenses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          const payload = {
+            date: item.date,
+            memberId: item.memberId,
+            productTypeId: item.productTypeId,
+            userId: user.id,
+            grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
+            containerWeight: item.containerWeight, // น้ำหนักภาชนะ
+            netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
+            rubberPercent: null, // Set to null since we removed rubber percent from UI
+            pricePerUnit: item.pricePerUnit, // Include the price per unit
+            bonusPrice: item.bonusPrice,
+            notes: item.notes,
+          };
+          logger.debug(`Sending purchase ${index + 1}`, payload);
+          
+          return fetch('/api/purchases', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+        }
       });
       
       logger.debug('Waiting for API responses');
@@ -348,6 +395,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     error,
     setError,
     addToCart,
+    addExpenseToCart,
     removeFromCart,
     clearCart,
     saveCartToDb,

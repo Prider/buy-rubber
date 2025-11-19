@@ -4,24 +4,31 @@ import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
+  type: 'purchase' | 'expense';
   date: string;
-  memberId: string;
-  memberName: string;
-  memberCode: string;
-  productTypeId: string;
-  productTypeName: string;
-  productTypeCode: string;
-  grossWeight: number; // น้ำหนักรวมภาชนะ
-  containerWeight: number; // น้ำหนักภาชนะ
-  netWeight: number; // น้ำหนักสุทธิ
-  dryWeight: number;
-  pricePerUnit: number;
-  bonusPrice: number;
-  basePrice: number;
-  adjustedPrice: number;
-  finalPrice: number;
-  totalAmount: number;
-  notes: string;
+  // Purchase fields
+  memberId?: string;
+  memberName?: string;
+  memberCode?: string;
+  productTypeId?: string;
+  productTypeName?: string;
+  productTypeCode?: string;
+  grossWeight?: number; // น้ำหนักรวมภาชนะ
+  containerWeight?: number; // น้ำหนักภาชนะ
+  netWeight?: number; // น้ำหนักสุทธิ
+  dryWeight?: number;
+  pricePerUnit?: number;
+  bonusPrice?: number;
+  basePrice?: number;
+  adjustedPrice?: number;
+  finalPrice?: number;
+  // Expense fields
+  category?: string;
+  amount?: number;
+  description?: string;
+  // Common fields
+  totalAmount: number; // Positive for purchases, negative for expenses
+  notes?: string;
 }
 
 interface CartTableProps {
@@ -108,14 +115,14 @@ export const CartTable: React.FC<CartTableProps> = ({
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">วันที่รับซื้อ</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">สมาชิก</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภทสินค้า</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภท</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">วันที่</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">รายละเอียด</th>
               <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักรวมภาชนะ (กก.)</th>
               <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักภาชนะ (กก.)</th>
               <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักสุทธิ (กก.)</th>
               <th className="px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
-              <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">เงินที่ได้</th>
+              <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">จำนวนเงิน</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">จัดการ</th>
             </tr>
           </thead>
@@ -123,14 +130,50 @@ export const CartTable: React.FC<CartTableProps> = ({
             {cart.length > 0 ? (
               cart.map((item, index) => (
                 <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
+                  <td className="px-6 py-4 text-sm">
+                    {item.type === 'purchase' ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        รับซื้อ
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                        ค่าใช้จ่าย
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{formatDate(item.date)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.memberName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.productTypeName}</td>
-                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.grossWeight)}</td>
-                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.containerWeight)}</td>
-                  <td className="px-4 py-4 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">{formatNumber(item.netWeight)}</td>
-                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{formatNumber(item.finalPrice)}</td>
-                  <td className="px-6 py-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                    {item.type === 'purchase' ? (
+                      <div>
+                        <div className="font-medium">{item.memberName}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.productTypeName}</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="font-medium">{item.category}</div>
+                        {item.description && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                    {item.type === 'purchase' ? formatNumber(item.grossWeight || 0) : '-'}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                    {item.type === 'purchase' ? formatNumber(item.containerWeight || 0) : '-'}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
+                    {item.type === 'purchase' ? formatNumber(item.netWeight || 0) : '-'}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                    {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
+                  </td>
+                  <td className={`px-6 py-4 text-sm text-right font-semibold ${
+                    item.totalAmount >= 0 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-red-600 dark:text-red-400'
+                  }`}>
                     {formatCurrency(item.totalAmount)}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -154,7 +197,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                     </div>
                     <div className="text-gray-500 dark:text-gray-400">
                       <p className="text-lg font-medium">ตะกร้าว่าง</p>
-                      <p className="text-sm">เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
+                      <p className="text-sm">เพิ่มรายการรับซื้อหรือค่าใช้จ่ายเพื่อเริ่มต้น</p>
                     </div>
                   </div>
                 </td>
@@ -167,7 +210,11 @@ export const CartTable: React.FC<CartTableProps> = ({
                 <td colSpan={7} className="px-6 py-4 text-right text-lg font-bold text-gray-900 dark:text-white">
                   รวมทั้งหมด
                 </td>
-                <td className="px-6 py-4 text-right text-lg font-bold text-green-600 dark:text-green-400">
+                <td className={`px-6 py-4 text-right text-lg font-bold ${
+                  totalAmount >= 0 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
                   {formatCurrency(totalAmount)}
                 </td>
                 <td className="px-6 py-4"></td>
