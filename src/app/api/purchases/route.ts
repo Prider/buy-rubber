@@ -155,14 +155,42 @@ export async function POST(request: NextRequest) {
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
     const totalAmount = netWeight * finalPrice;
 
-    // ดึงข้อมูลสมาชิก
-    const member = await prisma.member.findUnique({
-      where: { id: data.memberId },
+    // Validate all foreign keys exist
+    console.log('[Purchase API] Validating foreign keys:', {
+      memberId: data.memberId,
+      productTypeId: data.productTypeId,
+      userId: data.userId,
+    });
+
+    const [member, productType, user] = await Promise.all([
+      prisma.member.findUnique({ where: { id: data.memberId } }),
+      prisma.productType.findUnique({ where: { id: data.productTypeId } }),
+      prisma.user.findUnique({ where: { id: data.userId } }),
+    ]);
+
+    console.log('[Purchase API] Foreign key validation results:', {
+      member: member ? 'found' : 'NOT FOUND',
+      productType: productType ? 'found' : 'NOT FOUND',
+      user: user ? 'found' : 'NOT FOUND',
     });
 
     if (!member) {
       return NextResponse.json(
-        { error: 'ไม่พบข้อมูลสมาชิก' },
+        { error: 'ไม่พบข้อมูลสมาชิก', details: `Member with id ${data.memberId} not found` },
+        { status: 404 }
+      );
+    }
+
+    if (!productType) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลประเภทสินค้า', details: `ProductType with id ${data.productTypeId} not found` },
+        { status: 404 }
+      );
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${data.userId} not found. Please log out and log in again.` },
         { status: 404 }
       );
     }
