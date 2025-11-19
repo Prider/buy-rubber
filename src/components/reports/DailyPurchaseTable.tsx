@@ -38,10 +38,13 @@ export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTa
                   <span className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-300">
                     {displayIndex}
                   </span>
-                  {new Date(item.date).toLocaleDateString('th-TH', { 
+                  {new Date(item.date).toLocaleString('th-TH', { 
                     day: 'numeric',
                     month: 'short',
-                    year: 'numeric'
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
                   })}
                 </div>
               </td>

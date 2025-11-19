@@ -226,10 +226,37 @@ export async function POST(request: NextRequest) {
     });
 
     // บันทึกการรับซื้อ
+    // Use current time when creating purchase to preserve the exact creation time
+    // If date string includes time, use it; otherwise combine the date with current time
+    let purchaseDate: Date;
+    if (typeof data.date === 'string') {
+      const dateOnly = new Date(data.date);
+      // Check if the date string includes time (has 'T' or time components like HH:MM)
+      if (data.date.includes('T') || /:\d{2}/.test(data.date)) {
+        // Date includes time, use it as-is
+        purchaseDate = new Date(data.date);
+      } else {
+        // Date only, combine with current time
+        const now = new Date();
+        purchaseDate = new Date(
+          dateOnly.getFullYear(),
+          dateOnly.getMonth(),
+          dateOnly.getDate(),
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+          now.getMilliseconds()
+        );
+      }
+    } else {
+      // Already a Date object or use current time
+      purchaseDate = data.date instanceof Date ? data.date : new Date();
+    }
+    
     const purchase = await prisma.purchase.create({
       data: {
         purchaseNo,
-        date: new Date(data.date),
+        date: purchaseDate,
         memberId: data.memberId,
         productTypeId: data.productTypeId,
         userId: data.userId,
