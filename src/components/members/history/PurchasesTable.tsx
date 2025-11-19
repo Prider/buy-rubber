@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
+import { formatCurrency, formatNumber, formatDateTime } from '@/lib/utils';
 
 interface PurchasesTableProps {
   purchases: any[];
@@ -33,7 +33,7 @@ export const PurchasesTable = ({ purchases, totalCount }: PurchasesTableProps) =
               }`}
             >
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                {formatDate(purchase.date)}{' '}
+                {formatDateTime(purchase.date)}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{purchase.productType?.name || '-'}</td>
               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100 font-medium">
