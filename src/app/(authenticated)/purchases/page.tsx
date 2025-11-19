@@ -33,6 +33,7 @@ export default function PurchasesPage() {
     previewCart,
     downloadPDF,
     totalAmount,
+    clearCart,
   } = useCart({
     members,
     productTypes,
@@ -179,16 +180,6 @@ export default function PurchasesPage() {
           setShowProductTypeDropdown={setShowProductTypeDropdown}
         />
 
-        {/* Expense Entry Card */}
-        <ExpenseEntryCard
-          formData={expenseFormData}
-          error={expenseFormError}
-          handleInputChange={handleExpenseInputChange}
-          isFormValid={isExpenseFormValid()}
-          resetForm={resetExpenseForm}
-          addToCart={handleAddExpenseToCart}
-        />
-
         {/* Cart Table */}
         <CartTable
           cart={cart}
@@ -198,6 +189,17 @@ export default function PurchasesPage() {
           saveCartToDb={handleSaveCart}
           removeFromCart={removeFromCart}
           onShowPrintModal={handleShowPrintModal}
+          clearCart={clearCart}
+          expenseEntryCard={
+            <ExpenseEntryCard
+              formData={expenseFormData}
+              error={expenseFormError}
+              handleInputChange={handleExpenseInputChange}
+              isFormValid={isExpenseFormValid()}
+              resetForm={resetExpenseForm}
+              addToCart={handleAddExpenseToCart}
+            />
+          }
         />
       </div>
 

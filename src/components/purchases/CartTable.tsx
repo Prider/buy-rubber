@@ -39,6 +39,8 @@ interface CartTableProps {
   saveCartToDb: () => Promise<void>;
   removeFromCart: (id: string) => void;
   onShowPrintModal: () => void;
+  expenseEntryCard?: React.ReactNode;
+  clearCart: () => void;
 }
 
 export const CartTable: React.FC<CartTableProps> = ({
@@ -49,6 +51,8 @@ export const CartTable: React.FC<CartTableProps> = ({
   saveCartToDb,
   removeFromCart,
   onShowPrintModal,
+  expenseEntryCard,
+  clearCart,
 }) => {
   const handleSaveAndAskPrint = async () => {
     logger.debug('Save button clicked', { cartItems: cart });
@@ -65,7 +69,7 @@ export const CartTable: React.FC<CartTableProps> = ({
     <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
       <div className="px-8 py-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,31 +86,6 @@ export const CartTable: React.FC<CartTableProps> = ({
               </p>
             </div>
           </div>
-          {cart.length > 0 && (
-            <div className="flex items-center">
-              <button
-                onClick={handleSaveAndAskPrint}
-                disabled={submitting}
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
-              >
-                {submitting ? (
-                  <div className="flex items-center space-x-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>กำลังบันทึก...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>บันทึกข้อมูล</span>
-                  </div>
-                )}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -218,6 +197,52 @@ export const CartTable: React.FC<CartTableProps> = ({
                   {formatCurrency(totalAmount)}
                 </td>
                 <td className="px-6 py-4"></td>
+              </tr>
+              <tr>
+                {expenseEntryCard && (
+                  <td colSpan={4} className="px-6 py-4">
+                    <div className="w-full">{expenseEntryCard}</div>
+                  </td>
+                )}
+                <td colSpan={8} className="px-6 py-4">
+                  <div className="flex flex-col lg:flex-row gap-4 lg:items-start lg:justify-between">
+                    <div className="flex items-center justify-end gap-3 w-full">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm('ต้องการล้างตะกร้าทั้งหมดหรือไม่?')) {
+                            clearCart();
+                          }
+                        }}
+                        disabled={submitting || cart.length === 0}
+                        className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        รีเซ็ตตะกร้า
+                      </button>
+                      <button
+                        onClick={handleSaveAndAskPrint}
+                        disabled={submitting}
+                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
+                      >
+                        {submitting ? (
+                          <div className="flex items-center space-x-2">
+                            <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>กำลังบันทึก...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>บันทึกข้อมูล</span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </td>
               </tr>
             </tfoot>
           )}
