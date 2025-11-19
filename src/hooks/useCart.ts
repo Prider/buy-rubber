@@ -234,78 +234,85 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     if (data.length === 0) {
       return '';
     }
+
+    const total = data.reduce((sum, item) => sum + item.totalAmount, 0);
+    const printDate = new Date().toLocaleString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     return `
       <html>
         <head>
-          <title>รายการรับซื้อ</title>
-          <meta charset="UTF-8">
+          <title>ใบรับซื้อ</title>
+          <meta charset="UTF-8" />
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
           <style>
-            body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 20px; color: #000000; }
-            h1 { text-align: center; color: #333; margin: 20px; text-size}
-            .info { margin: 20px 40px; }
-            .table-wrapper { margin: 12px 36px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #000000; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: #000000; }
-            th { background-color: #f2f2f2; font-weight: bold; color: #000000; }
-            th.member-column, td.member-column { width: 180px; }
-            td.number { text-align: right; }
-            .total { font-weight: bold; background-color: #f9f9f9; }
-            .footer { text-align: right; margin: 30px 40px;}
+            body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+            .slip { width: 320px; margin: 16px auto; background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+            .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
+            .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
+            .store p { margin: 4px 0; font-size: 13px; color: #475569; }
+            .meta { font-size: 12px; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed #cbd5f5; padding-bottom: 6px; }
+            .item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; }
+            .item:last-child { border-bottom: none; }
+            .item-name { font-size: 13px; color: #0f172a; font-weight: 600; }
+            .item-meta { font-size: 11px; color: #64748b; }
+            .item-amount { text-align: right; font-size: 13px; color: #0f172a; font-weight: 600; }
+            .item-amount .price { font-size: 11px; color: #475569; font-weight: 400; display: block; }
+            .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
+            .footer { margin-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
           </style>
         </head>
         <body>
-          <h1>รายการรับซื้อยาง</h1>
-          <div class="info">
-            <p><strong>วันที่พิมพ์:</strong> ${new Date().toLocaleDateString('th-TH', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</p>
-          </div>
-          <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>วันที่รับซื้อ</th>
-                <th class="member-column">สมาชิก</th>
-                <th>ประเภทสินค้า</th>
-                <th style="text-align: right;">น้ำหนักรวมภาชนะ (กก.)</th>
-                <th style="text-align: right;">น้ำหนักภาชนะ (กก.)</th>
-                <th style="text-align: right;">น้ำหนักสุทธิ (กก.)</th>
-                <th style="text-align: right;">ราคา/กก.</th>
-                <th style="text-align: right;">เงินที่ได้</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.map(item => `
-                <tr>
-                  <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
-                  <td class="member-column">${item.memberName}</td>
-                  <td>${item.productTypeName}</td>
-                  <td class="number">${formatNumber(item.grossWeight)}</td>
-                  <td class="number">${formatNumber(item.containerWeight)}</td>
-                  <td class="number">${formatNumber(item.netWeight)}</td>
-                  <td class="number">${formatNumber(item.finalPrice)}</td>
-                  <td class="number">${formatCurrency(item.totalAmount)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total">
-                <td colspan="7" style="text-align: right;">รวมทั้งหมด</td>
-                <td class="number">${formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0))}</td>
-              </tr>
-            </tfoot>
-          </table>
-          </div>
-          <div class="footer">
-            <p>________________________</p>
-            <p>ผู้จัดการ/เจ้าหน้าที่</p>
+          <div class="slip">
+            <div class="store">
+              <h1>สินทวี</h1>
+              <p>171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ</p>
+            </div>
+            <div class="meta">
+              เลขที่: ${Date.now()}<br/>
+              วันที่พิมพ์: ${printDate}
+            </div>
+            ${data
+              .map(
+                (item) => `
+                  <div class="item">
+                    <div>
+                      <div class="item-name">${item.memberName || item.category || '-'}</div>
+                      <div class="item-meta">
+                        ${item.productTypeName || 'ค่าใช้จ่าย'}
+                        ${
+                          item.type === 'purchase'
+                            ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.`
+                            : ''
+                        }
+                      </div>
+                    </div>
+                    <div class="item-amount">
+                      ${formatCurrency(item.totalAmount)}
+                      ${
+                        item.type === 'purchase'
+                          ? `<span class="price">@ ${formatNumber(item.finalPrice || 0)} /กก.</span>`
+                          : ''
+                      }
+                    </div>
+                  </div>
+                `
+              )
+              .join('')}
+            <div class="total">
+              <span>ยอดสุทธิ</span>
+              <span>${formatCurrency(total)}</span>
+            </div>
+            <div class="footer">
+              ขอบคุณที่ใช้บริการ
+            </div>
           </div>
         </body>
       </html>
