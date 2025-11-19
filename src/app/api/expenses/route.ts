@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
+// Force Node.js runtime for Prisma support
+export const runtime = 'nodejs';
+
 // GET /api/expenses
 export async function GET(request: NextRequest) {
   try {

@@ -161,7 +161,12 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       if (failedResponses.length > 0) {
         logger.error('Some requests failed', undefined, { failedResponses });
         const errorData = await failedResponses[0].json();
-        throw new Error(errorData.error || 'เกิดข้อผิดพลาดในการบันทึก');
+        // Include full error details for debugging
+        const errorMessage = errorData.details 
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || 'เกิดข้อผิดพลาดในการบันทึก';
+        logger.error('Purchase API error details', undefined, errorData);
+        throw new Error(errorMessage);
       }
       
       logger.debug('All requests successful, clearing cart and reloading purchases');

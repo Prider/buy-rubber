@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Force Node.js runtime for Prisma support
+export const runtime = 'nodejs';
+
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
 export async function GET(request: NextRequest) {
   try {

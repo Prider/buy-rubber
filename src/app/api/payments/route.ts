@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateDocumentNumber } from '@/lib/utils';
 
+// Force Node.js runtime for Prisma support
+export const runtime = 'nodejs';
+
 // GET /api/payments - ดึงรายการจ่ายเงิน
 export async function GET(request: NextRequest) {
   try {

@@ -7,6 +7,9 @@ import {
   generateDocumentNumber
 } from '@/lib/utils';
 
+// Force Node.js runtime for Prisma support
+export const runtime = 'nodejs';
+
 // GET /api/purchases - ดึงรายการรับซื้อ
 export async function GET(request: NextRequest) {
   try {
@@ -70,6 +73,38 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     console.log('[Purchase API] Received data:', data);
+
+    // Validate required fields
+    if (!data.memberId) {
+      return NextResponse.json(
+        { error: 'กรุณาเลือกสมาชิก', details: 'memberId is required' },
+        { status: 400 }
+      );
+    }
+    if (!data.productTypeId) {
+      return NextResponse.json(
+        { error: 'กรุณาเลือกประเภทสินค้า', details: 'productTypeId is required' },
+        { status: 400 }
+      );
+    }
+    if (!data.userId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required' },
+        { status: 400 }
+      );
+    }
+    if (!data.date) {
+      return NextResponse.json(
+        { error: 'กรุณาระบุวันที่', details: 'date is required' },
+        { status: 400 }
+      );
+    }
+    if (!data.grossWeight || data.grossWeight <= 0) {
+      return NextResponse.json(
+        { error: 'กรุณาระบุน้ำหนักรวมภาชนะ', details: 'grossWeight must be greater than 0' },
+        { status: 400 }
+      );
+    }
 
     // คำนวณน้ำหนักสุทธิ (ใช้ค่าที่ส่งมา หรือคำนวณใหม่)
     const netWeight = data.netWeight || (data.grossWeight - (data.containerWeight || 0));
@@ -198,9 +233,22 @@ export async function POST(request: NextRequest) {
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      code: (error as any)?.code,
     });
+    
+    // Return detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorCode = (error as any)?.code;
+    
     return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ', details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ',
+        details: errorMessage,
+        code: errorCode,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+      },
       { status: 500 }
     );
   }

@@ -6,8 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Use standalone output for better Electron integration
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Disable standalone mode for Electron - it causes path issues in packaged apps
+  // The standard Next.js build works better with Electron's file structure
+  // output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 }
 
 module.exports = nextConfig

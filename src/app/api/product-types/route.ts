@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Force Node.js runtime for Prisma support
+export const runtime = 'nodejs';
+
 // GET /api/product-types - Get all product types
 export async function GET(request: NextRequest) {
   try {

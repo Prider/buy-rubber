@@ -194,9 +194,13 @@ const startServer = async (customAppPath = null, databasePath = null) => {
   const isStandalone = fs.existsSync(standalonePath);
   console.log('Standalone mode:', isStandalone);
 
-  if (isStandalone) {
+  // Skip standalone mode for Electron - use standard Next.js server instead
+  // Standalone mode has path issues in Electron packaged apps
+  // The standard Next.js approach works better with Electron's file structure
+  if (false && isStandalone) {
     // For standalone mode, we need to use the server.js differently
     // The standalone build includes a minimal server
+    // DISABLED: Using standard Next.js approach instead for better Electron compatibility
     try {
       // Save original working directory
       const originalCwd = process.cwd();
@@ -251,17 +255,35 @@ const startServer = async (customAppPath = null, databasePath = null) => {
     console.log('Looking for .next at:', nextPath);
     console.log('Exists:', fs.existsSync(nextPath));
     
+    // Check for static folder
+    const staticPath = path.join(nextPath, 'static');
+    console.log('Looking for .next/static at:', staticPath);
+    console.log('Static exists:', fs.existsSync(staticPath));
+    
+    // Check for public folder
+    const publicPath = path.join(appPath, 'public');
+    console.log('Looking for public at:', publicPath);
+    console.log('Public exists:', fs.existsSync(publicPath));
+    
     if (!fs.existsSync(nextPath)) {
       // Try to find where .next might actually be
       const possiblePaths = [
         path.join(process.cwd(), '.next'),
         path.join(__dirname, '..', '.next'),
+        path.join(process.resourcesPath, 'app', '.next'),
         path.join(process.resourcesPath, '.next'),
       ];
       
       console.log('Tried these paths:');
       possiblePaths.forEach(p => {
-        console.log(`  ${p}: ${fs.existsSync(p)}`);
+        const exists = fs.existsSync(p);
+        console.log(`  ${p}: ${exists}`);
+        if (exists && !fs.existsSync(nextPath)) {
+          // Found it, update appPath
+          const foundAppPath = path.dirname(p);
+          console.log(`Found .next at: ${p}, updating appPath to: ${foundAppPath}`);
+          // Don't update appPath here, just log it for debugging
+        }
       });
       
       throw new Error(
