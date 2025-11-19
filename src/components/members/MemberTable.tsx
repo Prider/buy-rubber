@@ -1,5 +1,6 @@
 import React from 'react';
 import { MemberTableProps } from '@/types/member';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const MemberTable: React.FC<MemberTableProps> = ({
   members,
@@ -71,6 +72,9 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
   onDelete,
   onViewHistory,
 }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <tr>
       <td className="font-medium">{member.code}</td>
@@ -94,12 +98,14 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
           >
             แก้ไข
           </button>
-          <button
-            onClick={() => onDelete(member)}
-            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-          >
-            ลบ
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(member)}
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+            >
+              ลบ
+            </button>
+          )}
         </div>
       </td>
     </tr>

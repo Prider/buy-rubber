@@ -4,6 +4,9 @@ import { logger } from '@/lib/logger';
 import fs from 'fs';
 import path from 'path';
 
+// Force Node.js runtime for file system operations
+export const runtime = 'nodejs';
+
 // GET /api/backup - ดึงรายการสำรองข้อมูล
 export async function GET() {
   try {

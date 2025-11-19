@@ -23,22 +23,83 @@ function getAppDataDir() {
 
 function getDatabasePathFromEnv(): string {
   const url = process.env.DATABASE_URL;
+  logger.info('Getting database path from DATABASE_URL', { 
+    hasUrl: !!url, 
+    urlPrefix: url?.substring(0, 50) 
+  });
+  
+  // List of possible database paths to try
+  const possiblePaths: string[] = [];
+  
   if (url && url.startsWith('file:')) {
     try {
       const rawPath = url.replace(/^file:/, '');
       // decode %20 etc.
-      return decodeURIComponent(rawPath);
-    } catch {
-      // ignore
+      let decodedPath = decodeURIComponent(rawPath);
+      
+      // Handle relative paths - resolve them relative to process.cwd()
+      if (!path.isAbsolute(decodedPath)) {
+        decodedPath = path.resolve(process.cwd(), decodedPath);
+      }
+      
+      possiblePaths.push(decodedPath);
+      
+      logger.info('Decoded database path from DATABASE_URL', { 
+        rawPath, 
+        decodedPath, 
+        isAbsolute: path.isAbsolute(decodedPath),
+        exists: fs.existsSync(decodedPath) 
+      });
+    } catch (error) {
+      logger.error('Failed to decode DATABASE_URL', error);
     }
   }
-  // Fallback to local dev db
-  return path.join(process.cwd(), 'prisma', 'dev.db');
+  
+  // Try Electron userData path
+  try {
+    const electron = require('electron');
+    const app = electron?.app || electron?.remote?.app;
+    if (app?.getPath) {
+      const userDataPath = app.getPath('userData');
+      const electronDbPath = path.join(userDataPath, 'prisma', 'dev.db');
+      possiblePaths.push(electronDbPath);
+    }
+  } catch {
+    // Not in Electron context
+  }
+  
+  // Common fallback paths
+  possiblePaths.push(
+    path.join(process.cwd(), 'prisma', 'dev.db'),
+    path.join(process.cwd(), 'dev.db'),
+    path.resolve('./prisma/dev.db'),
+    path.resolve('./dev.db')
+  );
+  
+  // Try each path and return the first one that exists
+  for (const dbPath of possiblePaths) {
+    if (fs.existsSync(dbPath)) {
+      logger.info('Found database at path', { path: dbPath });
+      return dbPath;
+    }
+  }
+  
+  // If none exist, return the first possible path (from DATABASE_URL or fallback)
+  const finalPath = possiblePaths[0] || path.join(process.cwd(), 'prisma', 'dev.db');
+  logger.warn('Database file not found in any expected location', { 
+    triedPaths: possiblePaths,
+    returning: finalPath
+  });
+  return finalPath;
 }
 
 const APP_DATA_DIR = getAppDataDir();
 const BACKUP_DIR = path.join(APP_DATA_DIR, 'backups');
-const DB_PATH = getDatabasePathFromEnv();
+
+// Get DB_PATH dynamically instead of at module load time
+function getDatabasePath(): string {
+  return getDatabasePathFromEnv();
+}
 
 // สร้างโฟลเดอร์สำรองข้อมูล (ถ้ายังไม่มี)
 export function ensureBackupDirectory() {
@@ -58,12 +119,38 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     const fileName = `backup-${timestamp}.db`;
     const backupPath = path.join(BACKUP_DIR, fileName);
 
+    // Get database path dynamically
+    const dbPath = getDatabasePath();
+    logger.info('Creating backup', { 
+      dbPath, 
+      exists: fs.existsSync(dbPath),
+      DATABASE_URL: process.env.DATABASE_URL,
+      cwd: process.cwd()
+    });
+    
     // สำรองไฟล์ฐานข้อมูล
-    if (!fs.existsSync(DB_PATH)) {
-      throw new Error('Database file not found');
+    if (!fs.existsSync(dbPath)) {
+      // Try to get the actual database path from Prisma if available
+      let actualDbPath = dbPath;
+      try {
+        // Try to query Prisma to get the actual connection info
+        const prismaUrl = process.env.DATABASE_URL;
+        if (prismaUrl) {
+          logger.error('Database file not found at resolved path', { 
+            dbPath, 
+            DATABASE_URL: prismaUrl,
+            cwd: process.cwd(),
+            resolvedPath: path.resolve(dbPath)
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+      
+      throw new Error(`Database file not found at: ${dbPath}. DATABASE_URL: ${process.env.DATABASE_URL || 'not set'}. Please ensure the database file exists.`);
     }
 
-    fs.copyFileSync(DB_PATH, backupPath);
+    fs.copyFileSync(dbPath, backupPath);
 
     // ตรวจสอบขนาดไฟล์
     const stats = fs.statSync(backupPath);
@@ -118,8 +205,11 @@ export async function restoreBackup(backupId: string) {
     logger.info('Creating safety backup before restore');
     await createBackup('auto');
 
+    // Get database path dynamically
+    const dbPath = getDatabasePath();
+    
     // เรียกคืนข้อมูล
-    fs.copyFileSync(backup.filePath, DB_PATH);
+    fs.copyFileSync(backup.filePath, dbPath);
 
     logger.info('Backup restored successfully', { fileName: backup.fileName });
     return {
