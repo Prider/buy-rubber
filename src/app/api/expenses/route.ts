@@ -135,18 +135,58 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    logger.debug('Expense POST request data', data);
     const { category, amount, description, date } = data;
 
     // Validate required fields
-    if (!category || !amount) {
+    if (!category || category.trim() === '') {
       return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
+        { 
+          error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          details: 'Category is required',
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!amount || amount === 0) {
+      return NextResponse.json(
+        { 
+          error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          details: 'Amount is required and must be greater than 0',
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Parse and validate amount
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return NextResponse.json(
+        { 
+          error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          details: `Invalid amount: ${amount}`,
+          code: 'VALIDATION_ERROR'
+        },
         { status: 400 }
       );
     }
 
     // Generate expense number
-    const today = new Date(date || new Date());
+    const today = date ? new Date(date) : new Date();
+    if (isNaN(today.getTime())) {
+      return NextResponse.json(
+        { 
+          error: 'วันที่ไม่ถูกต้อง',
+          details: `Invalid date: ${date}`,
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
@@ -167,23 +207,36 @@ export async function POST(request: NextRequest) {
 
     const expenseNo = `EXP-${year}${month}${day}-${String(count + 1).padStart(3, '0')}`;
 
+    logger.debug('Creating expense', { expenseNo, category, amount: parsedAmount, date: today });
+
     const expense = await prisma.expense.create({
       data: {
         expenseNo,
-        date: new Date(date || new Date()),
-        category,
-        amount: parseFloat(amount),
-        description,
+        date: today,
+        category: category.trim(),
+        amount: Math.abs(parsedAmount), // Ensure positive value
+        description: description?.trim() || null,
       },
     });
 
+    logger.debug('Expense created successfully', { id: expense.id });
     return NextResponse.json(expense);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to create expense', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย' },
-      { status: 500 }
-    );
+    
+    // Return detailed error information
+    const errorResponse: any = {
+      error: 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย',
+      details: error?.message || 'Unknown error',
+      code: error?.code || 'UNKNOWN_ERROR',
+    };
+
+    // Add stack trace in development
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.stack = error?.stack;
+    }
+
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
-  type: 'purchase' | 'expense';
+  type: 'purchase' | 'serviceFee';
   date: string;
   // Purchase fields
   memberId?: string;
@@ -22,12 +22,12 @@ interface CartItem {
   basePrice?: number;
   adjustedPrice?: number;
   finalPrice?: number;
-  // Expense fields
+  // service fee fields
   category?: string;
   amount?: number;
   description?: string;
   // Common fields
-  totalAmount: number; // Positive for purchases, negative for expenses
+  totalAmount: number; // Positive for purchases, negative for service fees
   notes?: string;
 }
 
@@ -39,7 +39,7 @@ interface CartTableProps {
   saveCartToDb: () => Promise<void>;
   removeFromCart: (id: string) => void;
   onShowPrintModal: () => void;
-  expenseEntryCard?: React.ReactNode;
+  serviceFeeCard?: React.ReactNode;
   clearCart: () => void;
 }
 
@@ -51,7 +51,7 @@ export const CartTable: React.FC<CartTableProps> = ({
   saveCartToDb,
   removeFromCart,
   onShowPrintModal,
-  expenseEntryCard,
+  serviceFeeCard,
   clearCart,
 }) => {
   const handleSaveAndAskPrint = async () => {
@@ -199,9 +199,9 @@ export const CartTable: React.FC<CartTableProps> = ({
                 <td className="px-6 py-4"></td>
               </tr>
               <tr>
-                {expenseEntryCard && (
+                {serviceFeeCard && (
                   <td colSpan={4} className="px-6 py-4">
-                    <div className="w-full">{expenseEntryCard}</div>
+                    <div className="w-full">{serviceFeeCard}</div>
                   </td>
                 )}
                 <td colSpan={8} className="px-6 py-4">

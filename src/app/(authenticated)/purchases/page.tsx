@@ -8,7 +8,7 @@ import { usePurchaseForm } from '@/hooks/usePurchaseForm';
 import { useExpenseForm } from '@/hooks/useExpenseForm';
 import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
-import { ExpenseEntryCard } from '@/components/purchases/ExpenseEntryCard';
+import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
 import { CartTable } from '@/components/purchases/CartTable';
 
 export default function PurchasesPage() {
@@ -96,8 +96,8 @@ export default function PurchasesPage() {
     resetForm();
   };
 
-  // Handle adding expense item to cart
-  const handleAddExpenseToCart = () => {
+  // Handle adding service fee item to cart
+  const handleAddServiceFeeToCart = () => {
     if (!isExpenseFormValid()) {
       setExpenseFormError('กรุณากรอกข้อมูลที่จำเป็น');
       return;
@@ -190,14 +190,14 @@ export default function PurchasesPage() {
           removeFromCart={removeFromCart}
           onShowPrintModal={handleShowPrintModal}
           clearCart={clearCart}
-          expenseEntryCard={
-            <ExpenseEntryCard
+          serviceFeeCard={
+            <ServiceFeeCard
               formData={expenseFormData}
               error={expenseFormError}
               handleInputChange={handleExpenseInputChange}
               isFormValid={isExpenseFormValid()}
               resetForm={resetExpenseForm}
-              addToCart={handleAddExpenseToCart}
+              addToCart={handleAddServiceFeeToCart}
             />
           }
         />

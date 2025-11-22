@@ -2,13 +2,13 @@
 
 import React, { useRef } from 'react';
 
-interface ExpenseFormData {
+interface ServiceFeeFormData {
   category: string;
   amount: string;
 }
 
-interface ExpenseEntryCardProps {
-  formData: ExpenseFormData;
+interface ServiceFeeCardProps {
+  formData: ServiceFeeFormData;
   error: string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isFormValid: boolean;
@@ -16,7 +16,7 @@ interface ExpenseEntryCardProps {
   addToCart: () => void;
 }
 
-export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
+export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   formData,
   error,
   handleInputChange,
