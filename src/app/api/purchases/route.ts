@@ -68,11 +68,18 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/purchases - บันทึกการรับซื้อ
+// POST /api/purchases - บันทึกการรับซื้อ (single or batch)
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     console.log('[Purchase API] Received data:', data);
+
+    // Check if this is a batch request (array of purchases)
+    if (Array.isArray(data.items) && data.items.length > 0) {
+      return handleBatchPurchase(data);
+    }
+
+    // Single purchase (existing logic)
 
     // Validate required fields
     if (!data.memberId) {
@@ -300,6 +307,210 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ',
+        details: errorMessage,
+        code: errorCode,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Handle batch purchase creation with same purchaseNo
+async function handleBatchPurchase(data: { items: any[]; userId: string; date?: string }) {
+  try {
+    const { items, userId, date } = data;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!items || items.length === 0) {
+      return NextResponse.json(
+        { error: 'ไม่มีรายการให้บันทึก', details: 'items array is required' },
+        { status: 400 }
+      );
+    }
+
+    // Use the first item's date or provided date
+    const purchaseDate = date || items[0]?.date || new Date().toISOString().split('T')[0];
+    
+    // Generate a base purchase number for all items (will add sequence suffix)
+    const basePurchaseNo = await generateDocumentNumber('PUR', new Date(purchaseDate));
+    console.log('[Purchase API] Batch purchase - Generated base purchaseNo:', basePurchaseNo);
+
+    // Validate all items and prepare purchase data
+    const purchaseDataList = [];
+    
+    for (const item of items) {
+      // Validate required fields
+      if (!item.memberId) {
+        return NextResponse.json(
+          { error: 'กรุณาเลือกสมาชิก', details: 'memberId is required for all items' },
+          { status: 400 }
+        );
+      }
+      if (!item.productTypeId) {
+        return NextResponse.json(
+          { error: 'กรุณาเลือกประเภทสินค้า', details: 'productTypeId is required for all items' },
+          { status: 400 }
+        );
+      }
+      if (!item.grossWeight || item.grossWeight <= 0) {
+        return NextResponse.json(
+          { error: 'กรุณาระบุน้ำหนักรวมภาชนะ', details: 'grossWeight must be greater than 0' },
+          { status: 400 }
+        );
+      }
+
+      // Calculate net weight
+      const netWeight = item.netWeight || (item.grossWeight - (item.containerWeight || 0));
+
+      // Calculate dry weight
+      let dryWeight = netWeight;
+      if (item.rubberPercent) {
+        dryWeight = calculateDryWeight(netWeight, item.rubberPercent);
+      }
+
+      // Get product price
+      const productPrice = await prisma.productPrice.findFirst({
+        where: {
+          date: {
+            gte: new Date(purchaseDate + 'T00:00:00'),
+            lte: new Date(purchaseDate + 'T23:59:59'),
+          },
+          productTypeId: item.productTypeId,
+        },
+      });
+
+      // Use price from form or product price
+      // Allow negative prices for service fees (COST product type)
+      const basePrice = item.pricePerUnit !== undefined ? item.pricePerUnit : (productPrice?.price || 0);
+      
+      if (basePrice === 0) {
+        return NextResponse.json(
+          { error: 'กรุณาระบุราคาต่อหน่วย', details: `Price is required for product type ${item.productTypeId}` },
+          { status: 400 }
+        );
+      }
+
+      // Calculate prices
+      let adjustedPrice = basePrice;
+      const finalPrice = adjustedPrice + (item.bonusPrice || 0);
+      const totalAmount = netWeight * finalPrice;
+
+      // Validate foreign keys
+      const [member, productType] = await Promise.all([
+        prisma.member.findUnique({ where: { id: item.memberId } }),
+        prisma.productType.findUnique({ where: { id: item.productTypeId } }),
+      ]);
+
+      if (!member) {
+        return NextResponse.json(
+          { error: 'ไม่พบข้อมูลสมาชิก', details: `Member with id ${item.memberId} not found` },
+          { status: 404 }
+        );
+      }
+
+      if (!productType) {
+        return NextResponse.json(
+          { error: 'ไม่พบข้อมูลประเภทสินค้า', details: `ProductType with id ${item.productTypeId} not found` },
+          { status: 404 }
+        );
+      }
+
+      // Calculate split
+      const { ownerAmount, tapperAmount } = calculateSplit(
+        totalAmount,
+        member.ownerPercent,
+        member.tapperPercent
+      );
+
+      // Prepare purchase date
+      let itemPurchaseDate: Date;
+      if (typeof item.date === 'string') {
+        const dateOnly = new Date(item.date);
+        if (item.date.includes('T') || /:\d{2}/.test(item.date)) {
+          itemPurchaseDate = new Date(item.date);
+        } else {
+          const now = new Date();
+          itemPurchaseDate = new Date(
+            dateOnly.getFullYear(),
+            dateOnly.getMonth(),
+            dateOnly.getDate(),
+            now.getHours(),
+            now.getMinutes(),
+            now.getSeconds(),
+            now.getMilliseconds()
+          );
+        }
+      } else {
+        itemPurchaseDate = item.date instanceof Date ? item.date : new Date();
+      }
+
+      // Add sequence number to make purchaseNo unique (001, 002, 003, etc.)
+      const sequence: string = String(purchaseDataList.length + 1).padStart(3, '0');
+      const itemPurchaseNo: string = `${basePurchaseNo}-${sequence}`;
+      
+      purchaseDataList.push({
+        purchaseNo: itemPurchaseNo, // Base purchaseNo + sequence for uniqueness
+        date: itemPurchaseDate,
+        memberId: item.memberId,
+        productTypeId: item.productTypeId,
+        userId: userId,
+        grossWeight: item.grossWeight,
+        containerWeight: item.containerWeight || 0,
+        netWeight,
+        rubberPercent: item.rubberPercent || null,
+        dryWeight,
+        basePrice,
+        adjustedPrice,
+        bonusPrice: item.bonusPrice || 0,
+        finalPrice,
+        totalAmount,
+        ownerAmount,
+        tapperAmount,
+        notes: item.notes || null,
+      });
+    }
+
+    // Validate user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
+        { status: 404 }
+      );
+    }
+
+    // Save all purchases in a transaction with the same purchaseNo
+    const purchases = await prisma.$transaction(
+      purchaseDataList.map(data => 
+        prisma.purchase.create({
+          data,
+          include: {
+            member: true,
+            productType: true,
+            user: true,
+          },
+        })
+      )
+    );
+
+    console.log('[Purchase API] Batch purchase - Successfully created', purchases.length, 'purchases with base purchaseNo:', basePurchaseNo);
+    return NextResponse.json({ purchases, purchaseNo: basePurchaseNo }, { status: 201 });
+  } catch (error) {
+    console.error('Batch purchase error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorCode = (error as any)?.code;
+
+    return NextResponse.json(
+      {
+        error: 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อแบบกลุ่ม',
         details: errorMessage,
         code: errorCode,
         stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
