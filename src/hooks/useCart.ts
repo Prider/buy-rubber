@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 
 interface CartItem {
   id: string;
-  type: 'purchase' | 'expense';
+  type: 'purchase' | 'serviceFee';
   date: string;
   // Purchase fields
   memberId?: string;
@@ -24,12 +24,12 @@ interface CartItem {
   basePrice?: number;
   adjustedPrice?: number;
   finalPrice?: number;
-  // Expense fields
+  // Service fee fields
   category?: string;
   amount?: number;
   description?: string;
   // Common fields
-  totalAmount: number; // Positive for purchases, negative for expenses
+  totalAmount: number; // Positive for purchases, negative for service fees
   notes?: string;
 }
 
@@ -59,7 +59,7 @@ interface PurchaseFormData {
   notes: string;
 }
 
-interface ExpenseFormData {
+interface ServiceFeeFormData {
   category: string;
   amount: string;
 }
@@ -118,14 +118,14 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     setCart(prev => [...prev, item]);
   }, [members, productTypes]);
 
-  // Add expense item to cart
-  const addExpenseToCart = useCallback((formData: ExpenseFormData) => {
+  // Add service fee item to cart
+  const addServiceFeeToCart = useCallback((formData: ServiceFeeFormData) => {
     const amount = parseFloat(formData.amount) || 0;
-    const totalAmount = -Math.abs(amount); // Negative value for expenses
+    const totalAmount = -Math.abs(amount); // Negative value for service fees
     
     const item: CartItem = {
-      id: `expense-${Date.now()}`,
-      type: 'expense',
+      id: `serviceFee-${Date.now()}`,
+      type: 'serviceFee',
       date: new Date().toISOString().split('T')[0], // Use current date
       category: formData.category,
       amount: amount,
@@ -157,23 +157,12 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     
     try {
       logger.debug('Processing cart items', { cart });
-      const promises = cart.map((item, index) => {
-        if (item.type === 'expense') {
-          const payload = {
-            date: item.date,
-            category: item.category,
-            amount: item.amount,
-          };
-          logger.debug(`Sending expense ${index + 1}`, payload);
-          
-          return fetch('/api/expenses', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
-        } else {
+      // Filter out serviceFee items - they are only for display/calculation, not stored in database
+      const purchaseItems = cart.filter(item => item.type === 'purchase');
+      
+      // If there are purchase items, save them to database
+      if (purchaseItems.length > 0) {
+        const promises = purchaseItems.map((item, index) => {
           const payload = {
             date: item.date,
             memberId: item.memberId,
@@ -196,26 +185,29 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             },
             body: JSON.stringify(payload),
           });
+        });
+        
+        logger.debug('Waiting for API responses');
+        const responses = await Promise.all(promises);
+        logger.debug('Received responses', { responses: responses.map(r => ({ status: r.status, ok: r.ok })) });
+        
+        // Check if any request failed
+        const failedResponses = responses.filter(response => !response.ok);
+        if (failedResponses.length > 0) {
+          logger.error('Some requests failed', undefined, { failedResponses });
+          const errorData = await failedResponses[0].json();
+          // Include full error details for debugging
+          const errorMessage = errorData.details 
+            ? `${errorData.error}: ${errorData.details}`
+            : errorData.error || 'เกิดข้อผิดพลาดในการบันทึก';
+          logger.error('Purchase API error details', undefined, errorData);
+          throw new Error(errorMessage);
         }
-      });
-      
-      logger.debug('Waiting for API responses');
-      const responses = await Promise.all(promises);
-      logger.debug('Received responses', { responses: responses.map(r => ({ status: r.status, ok: r.ok })) });
-      
-      // Check if any request failed
-      const failedResponses = responses.filter(response => !response.ok);
-      if (failedResponses.length > 0) {
-        logger.error('Some requests failed', undefined, { failedResponses });
-        const errorData = await failedResponses[0].json();
-        // Include full error details for debugging
-        const errorMessage = errorData.details 
-          ? `${errorData.error}: ${errorData.details}`
-          : errorData.error || 'เกิดข้อผิดพลาดในการบันทึก';
-        logger.error('Purchase API error details', undefined, errorData);
-        throw new Error(errorMessage);
+      } else {
+        logger.debug('No purchase items to save - only service fees (which are not stored in database)');
       }
       
+      // Clear cart and reload purchases (even if only service fees were present)
       logger.debug('All requests successful, clearing cart and reloading purchases');
       setLastPrintedCart(cart);
       setCart([]);
@@ -402,7 +394,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     error,
     setError,
     addToCart,
-    addExpenseToCart,
+    addServiceFeeToCart,
     removeFromCart,
     clearCart,
     saveCartToDb,

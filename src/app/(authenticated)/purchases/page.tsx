@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
 import { usePurchaseForm } from '@/hooks/usePurchaseForm';
-import { useExpenseForm } from '@/hooks/useExpenseForm';
+import { useExpenseForm as useServiceFeeForm } from '@/hooks/useExpenseForm';
 import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
 import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
@@ -26,7 +26,7 @@ export default function PurchasesPage() {
     error: cartError,
     setError: setCartError,
     addToCart,
-    addExpenseToCart,
+    addServiceFeeToCart,
     removeFromCart,
     saveCartToDb,
     printCart,
@@ -75,15 +75,15 @@ export default function PurchasesPage() {
     dailyPrices,
   });
 
-  // Expense form management hook
+  // Service fee form management hook
   const {
-    formData: expenseFormData,
-    error: expenseFormError,
-    setError: setExpenseFormError,
-    handleInputChange: handleExpenseInputChange,
-    isFormValid: isExpenseFormValid,
-    resetForm: resetExpenseForm,
-  } = useExpenseForm();
+    formData: serviceFeeFormData,
+    error: serviceFeeFormError,
+    setError: setServiceFeeFormError,
+    handleInputChange: handleServiceFeeInputChange,
+    isFormValid: isServiceFeeFormValid,
+    resetForm: resetServiceFeeForm,
+  } = useServiceFeeForm();
 
   // Handle adding purchase item to cart
   const handleAddToCart = () => {
@@ -98,13 +98,13 @@ export default function PurchasesPage() {
 
   // Handle adding service fee item to cart
   const handleAddServiceFeeToCart = () => {
-    if (!isExpenseFormValid()) {
-      setExpenseFormError('กรุณากรอกข้อมูลที่จำเป็น');
+    if (!isServiceFeeFormValid()) {
+      setServiceFeeFormError('กรุณากรอกข้อมูลที่จำเป็น');
       return;
     }
     
-    addExpenseToCart(expenseFormData);
-    resetExpenseForm();
+    addServiceFeeToCart(serviceFeeFormData);
+    resetServiceFeeForm();
   };
 
   // Handle saving cart with form reset
@@ -192,11 +192,11 @@ export default function PurchasesPage() {
           clearCart={clearCart}
           serviceFeeCard={
             <ServiceFeeCard
-              formData={expenseFormData}
-              error={expenseFormError}
-              handleInputChange={handleExpenseInputChange}
-              isFormValid={isExpenseFormValid()}
-              resetForm={resetExpenseForm}
+              formData={serviceFeeFormData}
+              error={serviceFeeFormError}
+              handleInputChange={handleServiceFeeInputChange}
+              isFormValid={isServiceFeeFormValid()}
+              resetForm={resetServiceFeeForm}
               addToCart={handleAddServiceFeeToCart}
             />
           }
