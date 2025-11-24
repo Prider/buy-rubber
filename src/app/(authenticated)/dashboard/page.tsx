@@ -24,7 +24,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh]">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังโหลดข้อมูล..." />
       </div>
     );

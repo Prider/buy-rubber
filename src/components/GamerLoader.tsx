@@ -10,14 +10,6 @@ export function GamerLoader({ fullScreen = false, message = 'Punsook Innotech â€
   return (
     <div className={`${fullScreen ? 'min-h-screen flex items-center justify-center' : ''} ${className}`}>
       <div className="text-center">
-        <div className="relative mx-auto w-24 h-24 mb-6">
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-fuchsia-500 via-violet-500 to-sky-500 dark:from-fuchsia-700 dark:via-violet-700 dark:to-sky-700 blur-lg opacity-70 dark:opacity-40 animate-pulse" style={{ animationDuration: '2.4s' }}></div>
-          <div className="relative w-full h-full rounded-xl bg-gray-900 dark:bg-gray-800 flex items-center justify-center shadow-[0_0_28px_rgba(139,92,246,0.45)] dark:shadow-[0_0_28px_rgba(139,92,246,0.25)]">
-            <svg className="w-10 h-10 text-fuchsia-400 dark:text-fuchsia-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] dark:drop-shadow-[0_0_10px_rgba(236,72,153,0.4)] animate-pulse" style={{ animationDuration: '2.4s' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6M9 12h6m-6 5h6" />
-            </svg>
-          </div>
-        </div>
         <div className="flex items-end justify-center gap-1.5 h-12">
           <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
           <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />

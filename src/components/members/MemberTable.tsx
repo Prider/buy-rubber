@@ -1,6 +1,7 @@
 import React from 'react';
 import { MemberTableProps } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
+import GamerLoader from '@/components/GamerLoader';
 
 export const MemberTable: React.FC<MemberTableProps> = ({
   members,
@@ -12,10 +13,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
   if (isLoading) {
     return (
       <div className="card">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">กำลังโหลด...</p>
-        </div>
+        <GamerLoader className="py-12" message="กำลังโหลดข้อมูลสมาชิก..." />
       </div>
     );
   }
