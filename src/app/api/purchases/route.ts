@@ -338,9 +338,9 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
     // Use the first item's date or provided date
     const purchaseDate = date || items[0]?.date || new Date().toISOString().split('T')[0];
     
-    // Generate a base purchase number for all items (will add sequence suffix)
-    const basePurchaseNo = await generateDocumentNumber('PUR', new Date(purchaseDate));
-    console.log('[Purchase API] Batch purchase - Generated base purchaseNo:', basePurchaseNo);
+    // Generate one purchase number for all items in the batch
+    const batchPurchaseNo = await generateDocumentNumber('PUR', new Date(purchaseDate));
+    console.log('[Purchase API] Batch purchase - Generated purchaseNo for all items:', batchPurchaseNo);
 
     // Validate all items and prepare purchase data
     const purchaseDataList = [];
@@ -450,13 +450,9 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       } else {
         itemPurchaseDate = item.date instanceof Date ? item.date : new Date();
       }
-
-      // Add sequence number to make purchaseNo unique (001, 002, 003, etc.)
-      const sequence: string = String(purchaseDataList.length + 1).padStart(3, '0');
-      const itemPurchaseNo: string = `${basePurchaseNo}-${sequence}`;
       
       purchaseDataList.push({
-        purchaseNo: itemPurchaseNo, // Base purchaseNo + sequence for uniqueness
+        purchaseNo: batchPurchaseNo, // Same purchaseNo for all items in the batch
         date: itemPurchaseDate,
         memberId: item.memberId,
         productTypeId: item.productTypeId,
@@ -500,8 +496,8 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       )
     );
 
-    console.log('[Purchase API] Batch purchase - Successfully created', purchases.length, 'purchases with base purchaseNo:', basePurchaseNo);
-    return NextResponse.json({ purchases, purchaseNo: basePurchaseNo }, { status: 201 });
+    console.log('[Purchase API] Batch purchase - Successfully created', purchases.length, 'purchases with purchaseNo:', batchPurchaseNo);
+    return NextResponse.json({ purchases, purchaseNo: batchPurchaseNo }, { status: 201 });
   } catch (error) {
     console.error('Batch purchase error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

@@ -190,6 +190,8 @@ export default function PurchasesPage() {
           removeFromCart={removeFromCart}
           onShowPrintModal={handleShowPrintModal}
           clearCart={clearCart}
+          error={cartError}
+          setError={setCartError}
           serviceFeeCard={
             <ServiceFeeCard
               formData={serviceFeeFormData}

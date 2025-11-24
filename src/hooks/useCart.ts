@@ -157,54 +157,115 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     
     try {
       logger.debug('Processing cart items', { cart });
-      // Filter out serviceFee items - they are only for display/calculation, not stored in database
-      const purchaseItems = cart.filter(item => item.type === 'purchase');
       
-      // If there are purchase items, save them to database
+      if (cart.length === 0) {
+        logger.debug('No items to save');
+        return;
+      }
+      // Separate purchase items and service fee items
+      const purchaseItems = cart.filter(item => item.type === 'purchase');
+      const serviceFeeItems = cart.filter(item => item.type === 'serviceFee');
+      
+      logger.debug('Cart items separated', { 
+        totalItems: cart.length, 
+        purchaseCount: purchaseItems.length, 
+        serviceFeeCount: serviceFeeItems.length 
+      });
+      
+      let purchaseNo: string | null = null;
+      
+      // 1. Save purchase items first (if any)
       if (purchaseItems.length > 0) {
-        const promises = purchaseItems.map((item, index) => {
-          const payload = {
-            date: item.date,
-            memberId: item.memberId,
-            productTypeId: item.productTypeId,
-            userId: user.id,
-            grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
-            containerWeight: item.containerWeight, // น้ำหนักภาชนะ
-            netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
-            rubberPercent: null, // Set to null since we removed rubber percent from UI
-            pricePerUnit: item.pricePerUnit, // Include the price per unit
-            bonusPrice: item.bonusPrice,
-            notes: item.notes,
-          };
-          logger.debug(`Sending purchase ${index + 1}`, payload);
-          
-          return fetch('/api/purchases', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
+        // Use the first purchase item's date for batch purchase number generation
+        const batchDate = purchaseItems[0]?.date || new Date().toISOString().split('T')[0];
+        
+        // Convert purchase items to API format
+        const purchasePayloadItems = purchaseItems.map((item) => ({
+          date: item.date,
+          memberId: item.memberId,
+          productTypeId: item.productTypeId,
+          grossWeight: item.grossWeight, // น้ำหนักรวมภาชนะ
+          containerWeight: item.containerWeight, // น้ำหนักภาชนะ
+          netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
+          rubberPercent: null, // Set to null since we removed rubber percent from UI
+          pricePerUnit: item.pricePerUnit, // Include the price per unit
+          bonusPrice: item.bonusPrice,
+          notes: item.notes,
+        }));
+        
+        // Prepare batch payload
+        const batchPayload = {
+          items: purchasePayloadItems,
+          userId: user.id,
+          date: batchDate,
+        };
+        
+        logger.debug('Sending batch purchase request', { itemCount: purchaseItems.length, date: batchDate });
+        
+        const response = await fetch('/api/purchases', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(batchPayload),
         });
         
-        logger.debug('Waiting for API responses');
-        const responses = await Promise.all(promises);
-        logger.debug('Received responses', { responses: responses.map(r => ({ status: r.status, ok: r.ok })) });
+        logger.debug('Received batch response', { status: response.status, ok: response.ok });
         
-        // Check if any request failed
-        const failedResponses = responses.filter(response => !response.ok);
-        if (failedResponses.length > 0) {
-          logger.error('Some requests failed', undefined, { failedResponses });
-          const errorData = await failedResponses[0].json();
-          // Include full error details for debugging
+        if (!response.ok) {
+          const errorData = await response.json();
           const errorMessage = errorData.details 
             ? `${errorData.error}: ${errorData.details}`
-            : errorData.error || 'เกิดข้อผิดพลาดในการบันทึก';
-          logger.error('Purchase API error details', undefined, errorData);
+            : errorData.error || 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ';
+          logger.error('Batch purchase API error details', undefined, errorData);
           throw new Error(errorMessage);
         }
-      } else {
-        logger.debug('No purchase items to save - only service fees (which are not stored in database)');
+        
+        const result = await response.json();
+        purchaseNo = result.purchaseNo;
+        logger.debug('Batch purchase successful', { purchaseNo, count: result.purchases?.length });
+      }
+      
+      // 2. Save service fee items to servicefees API (if any)
+      if (serviceFeeItems.length > 0) {
+        logger.debug('Sending service fee items to servicefees API', { 
+          count: serviceFeeItems.length, 
+          purchaseNo 
+        });
+        
+        // Convert service fee items to API format
+        const serviceFeePayloadItems = serviceFeeItems.map((item) => ({
+          category: item.category || 'ค่าบริการ',
+          amount: Math.abs(item.amount || 0),
+          notes: item.notes || null,
+          date: item.date,
+        }));
+        
+        // Prepare batch payload for service fees
+        const serviceFeePayload = {
+          items: serviceFeePayloadItems,
+          purchaseNo: purchaseNo, // Link to purchase transaction (same cart)
+        };
+        
+        const response = await fetch('/api/servicefees', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(serviceFeePayload),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorMessage = errorData.details 
+            ? `${errorData.error}: ${errorData.details}`
+            : errorData.error || 'เกิดข้อผิดพลาดในการบันทึกค่าบริการ';
+          logger.error('ServiceFee API error details', undefined, errorData);
+          throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        logger.debug('All service fees saved successfully', { count: result.serviceFees?.length });
       }
       
       // Clear cart and reload purchases (even if only service fees were present)

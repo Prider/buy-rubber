@@ -79,7 +79,7 @@ model ProductPrice {
 // การรับซื้อ
 model Purchase {
   id            String   @id @default(uuid())
-  purchaseNo    String   @unique
+  purchaseNo    String
   date          DateTime @default(now())
   memberId      String
   productTypeId String
@@ -114,6 +114,10 @@ model Purchase {
   productType ProductType @relation(fields: [productTypeId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
   paymentItems PaymentItem[]
+
+  @@index([purchaseNo])
+  @@index([date])
+  @@index([memberId])
 }
 
 // ค่าใช้จ่ายประจำวัน
@@ -128,6 +132,23 @@ model Expense {
   updatedAt   DateTime @updatedAt
 
   @@index([date])
+  @@index([category])
+}
+
+// ค่าบริการ (Service Fees)
+model ServiceFee {
+  id          String   @id @default(uuid())
+  serviceFeeNo String  @unique
+  purchaseNo  String? // Link to purchase transaction (same cart)
+  date        DateTime @default(now())
+  category    String // ประเภทค่าบริการ
+  amount      Float // จำนวนเงิน (บวก)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([purchaseNo])
   @@index([category])
 }
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
@@ -34,10 +34,20 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
+  console.log('user :', user);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
+
+  // Redirect to login if username is Unknown
+  useEffect(() => {
+    if (user?.username === 'Unknown') {
+      console.log('Unknown user detected, redirecting to login');
+      router.push('/login');
+    }
+  }, [user?.username, router]);
 
   // useArrowFocusNavigation();
 
