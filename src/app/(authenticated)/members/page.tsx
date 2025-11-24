@@ -23,6 +23,14 @@ const MemberPurchaseHistoryModal = dynamic(
   { ssr: false, loading: () => null }
 );
 
+const MemberServiceFeeModal = dynamic(
+  () =>
+    import('@/components/members/MemberServiceFeeModal').then(
+      (mod) => mod.MemberServiceFeeModal
+    ),
+  { ssr: false, loading: () => null }
+);
+
 export default function MembersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,6 +51,10 @@ export default function MembersPage() {
   // Purchase history modal state
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedMemberForHistory, setSelectedMemberForHistory] = useState<any>(null);
+
+  // Service fees modal state
+  const [serviceFeeModalOpen, setServiceFeeModalOpen] = useState(false);
+  const [selectedMemberForServiceFees, setSelectedMemberForServiceFees] = useState<any>(null);
 
   const {
     members,
@@ -156,6 +168,16 @@ export default function MembersPage() {
   const handleCloseHistory = () => {
     setHistoryModalOpen(false);
     setSelectedMemberForHistory(null);
+  };
+
+  const handleViewServiceFees = (member: any) => {
+    setSelectedMemberForServiceFees(member);
+    setServiceFeeModalOpen(true);
+  };
+
+  const handleCloseServiceFees = () => {
+    setServiceFeeModalOpen(false);
+    setSelectedMemberForServiceFees(null);
   };
 
   return (
@@ -283,6 +305,7 @@ export default function MembersPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onViewHistory={handleViewHistory}
+                onViewServiceFees={handleViewServiceFees}
                 isLoading={loading}
               />
             </div>
@@ -368,6 +391,12 @@ export default function MembersPage() {
         isOpen={historyModalOpen}
         member={selectedMemberForHistory}
         onClose={handleCloseHistory}
+      />
+
+      <MemberServiceFeeModal
+        isOpen={serviceFeeModalOpen}
+        member={selectedMemberForServiceFees}
+        onClose={handleCloseServiceFees}
       />
     </>
   );
