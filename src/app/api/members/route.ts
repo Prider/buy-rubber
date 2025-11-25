@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
     const skip = (page - 1) * limit;
+
+    logger.info('GET /api/members', { search, active, page, limit });
 
     // Build where clause
     const where: any = {};
@@ -48,6 +51,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Return members with pagination info
+    logger.info('GET /api/members - Success', { count: members.length, total, page });
     return NextResponse.json({
       members,
       pagination: {
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Get members error:', error);
+    logger.error('GET /api/members - Failed', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงข้อมูลสมาชิก' },
       { status: 500 }
@@ -71,6 +75,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    logger.info('POST /api/members - Request', { code: data.code, name: data.name });
 
     // ตรวจสอบรหัสซ้ำ
     const existing = await prisma.member.findUnique({
@@ -78,6 +83,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
+      logger.warn('POST /api/members - Duplicate code', { code: data.code });
       return NextResponse.json(
         { error: 'รหัสสมาชิกนี้มีอยู่แล้ว' },
         { status: 400 }
@@ -100,9 +106,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    logger.info('POST /api/members - Success', { memberId: member.id, code: member.code });
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error('Create member error:', error);
+    logger.error('POST /api/members - Failed', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสร้างสมาชิก' },
       { status: 500 }

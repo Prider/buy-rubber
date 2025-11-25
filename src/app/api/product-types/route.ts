@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -7,13 +8,16 @@ export const runtime = 'nodejs';
 // GET /api/product-types - Get all product types
 export async function GET(request: NextRequest) {
   try {
+    logger.info('GET /api/product-types');
+    
     const productTypes = await prisma.productType.findMany({
       orderBy: { code: 'asc' },
     });
 
+    logger.info('GET /api/product-types - Success', { count: productTypes.length });
     return NextResponse.json(productTypes);
   } catch (error) {
-    console.error('Get product types error:', error);
+    logger.error('GET /api/product-types - Failed', error);
     return NextResponse.json(
       { error: 'Failed to load product types' },
       { status: 500 }
@@ -27,7 +31,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { code, name, description } = body;
 
+    logger.info('POST /api/product-types', { code, name });
+
     if (!code || !name) {
+      logger.warn('POST /api/product-types - Missing required fields');
       return NextResponse.json(
         { error: 'Code and name are required' },
         { status: 400 }
@@ -40,6 +47,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
+      logger.warn('POST /api/product-types - Duplicate code', { code });
       return NextResponse.json(
         { error: 'Product type code already exists' },
         { status: 409 }
@@ -54,9 +62,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    logger.info('POST /api/product-types - Success', { id: productType.id, code });
     return NextResponse.json(productType, { status: 201 });
   } catch (error) {
-    console.error('Create product type error:', error);
+    logger.error('POST /api/product-types - Failed', error);
     return NextResponse.json(
       { error: 'Failed to create product type' },
       { status: 500 }

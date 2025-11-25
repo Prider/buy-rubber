@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userStore } from '@/lib/userStore';
 import { CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import { logger } from '@/lib/logger';
 
 // Helper function to verify admin role
 function verifyAdminRole(request: NextRequest): boolean {
@@ -21,7 +22,10 @@ function verifyAdminRole(request: NextRequest): boolean {
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
   try {
+    logger.info('GET /api/users - Request received');
+    
     if (!verifyAdminRole(request)) {
+      logger.warn('GET /api/users - Unauthorized access attempt');
       return NextResponse.json({
         success: false,
         message: 'Admin access required'
@@ -32,13 +36,14 @@ export async function GET(request: NextRequest) {
     // Remove passwords from response
     const usersWithoutPasswords = users.map(({ password, ...user }) => user);
 
+    logger.info('GET /api/users - Success', { count: users.length });
     return NextResponse.json({
       success: true,
       users: usersWithoutPasswords
     });
 
   } catch (error) {
-    console.error('Get users error:', error);
+    logger.error('GET /api/users - Failed', error);
     return NextResponse.json({
       success: false,
       message: 'Internal server error'
@@ -49,10 +54,10 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create new user (admin only)
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/users - Create user request received');
+    logger.info('POST /api/users - Request received');
     
     if (!verifyAdminRole(request)) {
-      console.log('Admin access denied');
+      logger.warn('POST /api/users - Unauthorized access attempt');
       return NextResponse.json({
         success: false,
         message: 'Admin access required'
@@ -62,9 +67,10 @@ export async function POST(request: NextRequest) {
     const body: CreateUserRequest = await request.json();
     const { username, password, role } = body;
 
-    console.log('Creating user with Prisma:', { username, role });
+    logger.info('Creating user', { username, role });
 
     if (!username || !password || !role) {
+      logger.warn('POST /api/users - Missing required fields');
       return NextResponse.json({
         success: false,
         message: 'Username, password, and role are required'
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await userStore.createUser(body);
-    console.log('User created successfully in Prisma:', { id: user.id, username: user.username });
+    logger.info('POST /api/users - Success', { userId: user.id, username: user.username });
     
     const { password: _, ...userWithoutPassword } = user;
 
@@ -82,9 +88,10 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Create user error:', error);
+    logger.error('POST /api/users - Failed', error);
     
     if (error instanceof Error && error.message === 'Username already exists') {
+      logger.warn('POST /api/users - Duplicate username');
       return NextResponse.json({
         success: false,
         message: 'Username already exists'

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -7,6 +8,7 @@ export const runtime = 'nodejs';
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
 export async function GET(request: NextRequest) {
   try {
+    logger.info('GET /api/dashboard - Request received');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -169,6 +171,11 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'desc' },
     });
 
+    logger.info('GET /api/dashboard - Success', {
+      todayPurchases: todayPurchases._count,
+      monthPurchases: monthPurchases._count
+    });
+    
     return NextResponse.json({
       stats: {
         todayPurchases: todayPurchases._count,
@@ -191,7 +198,7 @@ export async function GET(request: NextRequest) {
       recentExpenses,
     });
   } catch (error) {
-    console.error('Get dashboard error:', error);
+    logger.error('GET /api/dashboard - Failed', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' },
       { status: 500 }

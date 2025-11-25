@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 import { 
   calculateDryWeight, 
   calculateAdjustedPrice, 
@@ -20,6 +21,8 @@ export async function GET(request: NextRequest) {
     const productTypeId = searchParams.get('productTypeId');
     const isPaid = searchParams.get('isPaid');
     const limit = searchParams.get('limit');
+
+    logger.info('GET /api/purchases', { startDate, endDate, memberId, productTypeId, isPaid, limit });
 
     const where: any = {};
 
@@ -58,9 +61,10 @@ export async function GET(request: NextRequest) {
       take: limit ? parseInt(limit) : undefined,
     });
 
+    logger.info('GET /api/purchases - Success', { count: purchases.length });
     return NextResponse.json(purchases);
   } catch (error) {
-    console.error('Get purchases error:', error);
+    logger.error('GET /api/purchases - Failed', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงข้อมูลการรับซื้อ' },
       { status: 500 }
@@ -72,7 +76,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    console.log('[Purchase API] Received data:', data);
+    logger.info('POST /api/purchases - Received', { 
+      isBatch: Array.isArray(data.items), 
+      itemCount: data.items?.length || 1 
+    });
 
     // Check if this is a batch request (array of purchases)
     if (Array.isArray(data.items) && data.items.length > 0) {
@@ -123,13 +130,9 @@ export async function POST(request: NextRequest) {
     }
 
     // ดึงราคาประกาศสำหรับประเภทสินค้านี้ (ถ้ามี)
-    console.log('[Purchase API] Looking for product price:', {
+    logger.debug('Looking for product price', {
       date: data.date,
-      productTypeId: data.productTypeId,
-      dateRange: {
-        gte: new Date(data.date + 'T00:00:00'),
-        lte: new Date(data.date + 'T23:59:59'),
-      }
+      productTypeId: data.productTypeId
     });
     
     const productPrice = await prisma.productPrice.findFirst({
@@ -142,7 +145,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('[Purchase API] Found product price:', productPrice);
+    logger.debug('Found product price', { price: productPrice?.price });
 
     // ใช้ราคาจากฟอร์ม หรือราคาประกาศ (ถ้ามี)
     const basePrice = data.pricePerUnit || productPrice?.price || 0;
@@ -163,22 +166,16 @@ export async function POST(request: NextRequest) {
     const totalAmount = netWeight * finalPrice;
 
     // Validate all foreign keys exist
-    console.log('[Purchase API] Validating foreign keys:', {
-      memberId: data.memberId,
-      productTypeId: data.productTypeId,
-      userId: data.userId,
-    });
-
     const [member, productType, user] = await Promise.all([
       prisma.member.findUnique({ where: { id: data.memberId } }),
       prisma.productType.findUnique({ where: { id: data.productTypeId } }),
       prisma.user.findUnique({ where: { id: data.userId } }),
     ]);
 
-    console.log('[Purchase API] Foreign key validation results:', {
-      member: member ? 'found' : 'NOT FOUND',
-      productType: productType ? 'found' : 'NOT FOUND',
-      user: user ? 'found' : 'NOT FOUND',
+    logger.debug('Foreign key validation', {
+      member: !!member,
+      productType: !!productType,
+      user: !!user
     });
 
     if (!member) {
@@ -212,24 +209,11 @@ export async function POST(request: NextRequest) {
     // สร้างเลขที่รับซื้อ
     const purchaseNo = await generateDocumentNumber('PUR', new Date(data.date));
 
-    console.log('[Purchase API] Creating purchase with data:', {
+    logger.debug('Creating purchase', {
       purchaseNo,
-      date: new Date(data.date),
       memberId: data.memberId,
       productTypeId: data.productTypeId,
-      userId: data.userId,
-      grossWeight: data.grossWeight,
-      containerWeight: data.containerWeight || 0,
-      netWeight,
-      dryWeight,
-      basePrice,
-      adjustedPrice,
-      bonusPrice: data.bonusPrice || 0,
-      finalPrice,
-      totalAmount,
-      ownerAmount,
-      tapperAmount,
-      notes: data.notes,
+      totalAmount
     });
 
     // บันทึกการรับซื้อ
@@ -288,15 +272,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('[Purchase API] Successfully created purchase:', purchase.id);
+    logger.info('POST /api/purchases - Success', { 
+      purchaseId: purchase.id, 
+      purchaseNo: purchase.purchaseNo 
+    });
     return NextResponse.json(purchase, { status: 201 });
   } catch (error) {
-    console.error('Create purchase error:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined,
-      code: (error as any)?.code,
+    logger.error('POST /api/purchases - Failed', error, {
+      code: (error as any)?.code
     });
     
     // Return detailed error for debugging
@@ -340,7 +323,10 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
     
     // Generate one purchase number for all items in the batch
     const batchPurchaseNo = await generateDocumentNumber('PUR', new Date(purchaseDate));
-    console.log('[Purchase API] Batch purchase - Generated purchaseNo for all items:', batchPurchaseNo);
+    logger.info('Batch purchase - Generated purchaseNo', { 
+      purchaseNo: batchPurchaseNo, 
+      itemCount: items.length 
+    });
 
     // Validate all items and prepare purchase data
     const purchaseDataList = [];
@@ -496,10 +482,13 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       )
     );
 
-    console.log('[Purchase API] Batch purchase - Successfully created', purchases.length, 'purchases with purchaseNo:', batchPurchaseNo);
+    logger.info('Batch purchase - Success', { 
+      count: purchases.length, 
+      purchaseNo: batchPurchaseNo 
+    });
     return NextResponse.json({ purchases, purchaseNo: batchPurchaseNo }, { status: 201 });
   } catch (error) {
-    console.error('Batch purchase error:', error);
+    logger.error('Batch purchase - Failed', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
     const errorCode = (error as any)?.code;
