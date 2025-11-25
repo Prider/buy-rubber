@@ -21,7 +21,7 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "cross-env DATABASE_URL=\"file:./dev.db\" tsx prisma/seed.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
@@ -29,7 +29,7 @@
   },
   "postinstall": "prisma generate",
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "5.22.0",
     "@tanstack/react-query": "^5.8.4",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",

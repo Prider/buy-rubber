@@ -48,10 +48,6 @@ export const useBackup = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      if (!confirm('คุณต้องการเรียกคืนข้อมูลจากไฟล์สำรองนี้หรือไม่? การกระทำนี้อาจจะทำให้ข้อมูลปัจจุบันสูญหาย')) {
-        return null;
-      }
 
       const response = await axios.put('/api/backup', { id });
       return response.data;

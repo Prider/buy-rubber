@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
@@ -101,14 +101,37 @@ export default function BackupPage() {
   };
 
   const handleRestore = async (backup: Backup) => {
+    if (!confirm(`คุณต้องการเรียกคืนข้อมูลจาก:\n${backup.fileName}\n\nการกระทำนี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด`)) {
+      return;
+    }
+
     setActionLoading(true);
     try {
       const result = await restoreBackup(backup.id);
       if (result) {
-        alert('เรียกคืนข้อมูลเรียบร้อย! กรุณารีสตาร์ทแอปพลิเคชัน');
+        // Check if running in Electron
+        const isElectron = typeof window !== 'undefined' && 
+                          window.navigator.userAgent.toLowerCase().includes('electron');
+        
+        if (isElectron) {
+          // For Electron: Show message and request app restart
+          alert(
+            '✅ เรียกคืนข้อมูลสำเร็จ!\n\n' +
+            'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\n' +
+            'เพื่อให้ข้อมูลที่เรียกคืนมาแสดงผลอย่างถูกต้อง\n\n' +
+            '(กด Cmd+Q หรือปิดหน้าต่างแอป)'
+          );
+        } else {
+          // For web browser: Can reload
+          alert('✅ เรียกคืนข้อมูลเรียบร้อย!\n\nหน้าเว็บจะรีโหลดอัตโนมัติ...');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to restore backup:', err);
+      alert('❌ เกิดข้อผิดพลาด:\n' + (err?.message || 'ไม่สามารถเรียกคืนข้อมูลได้'));
     } finally {
       setActionLoading(false);
     }

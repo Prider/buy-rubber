@@ -11,14 +11,24 @@ console.log('📦 Preparing database for build...');
 
 // Ensure database exists
 const dbPath = path.join(__dirname, '..', 'prisma', 'dev.db');
-const prismaPath = path.join(__dirname, '..', 'prisma');
 
 // Step 0: Ensure Prisma Client is generated with the correct platform binaries
+const projectRoot = path.join(__dirname, '..');
+// Path relative to prisma/schema.prisma location
+const dbUrl = 'file:./dev.db';
+
 console.log('🔧 Generating Prisma Client...');
+console.log('Project root:', projectRoot);
+console.log('Database path:', dbUrl);
+
 try {
   execSync('npx prisma generate', {
-    cwd: path.join(__dirname, '..'),
+    cwd: projectRoot,
     stdio: 'inherit',
+    env: {
+      ...process.env,
+      DATABASE_URL: dbUrl,
+    },
   });
 } catch (error) {
   console.error('❌ Failed to generate Prisma Client:', error);
@@ -26,18 +36,23 @@ try {
 }
 
 // Step 1: Push schema to ensure database exists
-console.log('📝 Pushing database schema...');
+console.log('📝 Pushing database schema...', dbUrl);
+
 try {
   execSync('npx prisma db push --accept-data-loss', {
-    cwd: path.join(__dirname, '..'),
+    cwd: projectRoot,
     stdio: 'inherit',
+    env: {
+      ...process.env,
+      DATABASE_URL: dbUrl,
+    },
   });
 } catch (error) {
   console.error('❌ Failed to push schema:', error);
   process.exit(1);
 }
 
-// Step 2: Seed the database
+// // Step 2: Seed the database
 console.log('🌱 Seeding database...');
 try {
   execSync('npm run db:seed', {
@@ -49,7 +64,7 @@ try {
   process.exit(1);
 }
 
-// Step 3: Verify database exists
+// // Step 3: Verify database exists
 if (!fs.existsSync(dbPath)) {
   console.error('❌ Database file not found after seeding:', dbPath);
   process.exit(1);
