@@ -36,7 +36,6 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  console.log('user :', user);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
