@@ -1,40 +1,39 @@
 // Check if we're in server environment
 const isServer = typeof window === 'undefined';
 
-// Lazy-load server-side modules only when needed
+// Lazy-load server-side modules
 let fs: any;
 let path: any;
 let LOG_DIR: string = '';
-let os: any;
 
 function getServerModules() {
   if (!isServer) return { fs: null, path: null, LOG_DIR: '' };
   
-  // Lazy require - webpack won't analyze this function body
+  // Load modules on first use
   if (!fs || !path) {
     try {
-      // Use eval to prevent webpack from analyzing this
-      fs = eval('require')('fs');
-      path = eval('require')('path');
-      os = eval('require')('os');
-      // Prefer Electron userData path if available
+      // Use require directly - only runs in Node.js runtime
+      fs = require('fs');
+      path = require('path');
+      
+      // Try to get Electron userData path if available
       try {
-        const electron = eval('require')('electron');
+        const electron = require('electron');
         const app = electron?.app || electron?.remote?.app;
         if (app?.getPath) {
           const userData = app.getPath('userData');
           LOG_DIR = path.join(userData, 'logs');
         }
       } catch {
-        // ignore, fallback below
+        // Not in Electron
       }
+      
       if (!LOG_DIR) {
-        // Fallback to OS application support dir (macOS path)
-        const home = os.homedir();
-        LOG_DIR = path.join(home, 'Library', 'Application Support', 'Punsook Innotech', 'logs');
+        // Use project logs directory for Next.js development
+        LOG_DIR = path.join(process.cwd(), 'logs');
       }
     } catch (error) {
-      // Ignore errors
+      // Silently fail - logger won't work but app will continue
     }
   }
   
