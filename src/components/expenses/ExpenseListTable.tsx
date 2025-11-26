@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Expense } from '@/hooks/useExpenses';
 import GamerLoader from '@/components/GamerLoader';
 

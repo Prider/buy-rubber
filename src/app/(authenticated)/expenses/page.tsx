@@ -1,11 +1,11 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { ExpenseEntryCard } from '@/components/expenses/ExpenseEntryCard';
 import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function ExpensesPage() {
   const { user } = useAuth();
