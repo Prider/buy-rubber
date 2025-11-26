@@ -147,8 +147,21 @@ const startServer = async (customAppPath = null, databasePath = null) => {
   // Set DATABASE_URL before starting Next.js server
   // This ensures Prisma client uses the correct database path
   if (databasePath) {
+    // Verify database file exists
+    if (!fs.existsSync(databasePath)) {
+      console.error('❌ Database file does not exist at:', databasePath);
+      console.error('This is a critical error. The app cannot function without a database.');
+      throw new Error(`Database file not found: ${databasePath}`);
+    }
+    
+    // Check file size to verify it's not empty
+    const stats = fs.statSync(databasePath);
+    console.log(`✅ Database file verified: ${(stats.size / 1024).toFixed(2)} KB at ${databasePath}`);
+    
     // URL-encode path to handle spaces (e.g. Application Support) and special chars
-    const encodedPath = encodeURI(databasePath);
+    // For Windows, we need to use forward slashes in the URL
+    const normalizedPath = databasePath.replace(/\\/g, '/');
+    const encodedPath = encodeURI(normalizedPath);
     const dbUrl = `file:${encodedPath}`;
     process.env.DATABASE_URL = dbUrl;
     console.log('Set DATABASE_URL in server process:', dbUrl);
@@ -159,13 +172,23 @@ const startServer = async (customAppPath = null, databasePath = null) => {
       if (app && app.getPath) {
         const userDataPath = app.getPath('userData');
         const userDbPath = path.join(userDataPath, 'prisma', 'dev.db');
-        const encodedPath = encodeURI(userDbPath);
+        
+        // Verify database file exists
+        if (!fs.existsSync(userDbPath)) {
+          console.error('❌ Database file does not exist at:', userDbPath);
+          throw new Error(`Database file not found: ${userDbPath}`);
+        }
+        
+        // Normalize path for URL
+        const normalizedPath = userDbPath.replace(/\\/g, '/');
+        const encodedPath = encodeURI(normalizedPath);
         const dbUrl = `file:${encodedPath}`;
         process.env.DATABASE_URL = dbUrl;
         console.log('Set DATABASE_URL from app path:', dbUrl);
       }
     } catch (e) {
-      console.log('Could not set DATABASE_URL from Electron app:', e.message);
+      console.error('Could not set DATABASE_URL from Electron app:', e.message);
+      throw e;
     }
   }
   

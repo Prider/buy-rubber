@@ -2,6 +2,22 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Create a debug log file for main process
+function mainLog(message) {
+  try {
+    // Only write to file if app is ready, otherwise just console.log
+    if (app.isReady()) {
+      const logPath = path.join(app.getPath('userData'), 'main-debug.log');
+      const timestamp = new Date().toISOString();
+      fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+    }
+    console.log(message);
+  } catch (e) {
+    console.error('Failed to write main log:', e.message);
+    console.log(message);
+  }
+}
+
 // Check if we're in development mode by looking for .next folder
 const nextPath = path.join(__dirname, '..', '.next');
 const isDev = !fs.existsSync(nextPath) || !app.isPackaged;
@@ -97,18 +113,30 @@ let databasePath = null;
 app.whenReady().then(async () => {
   // Initialize database first (copy seeded DB if needed)
   try {
-    console.log('Initializing database...');
+    mainLog('=== ELECTRON APP READY ===');
+    mainLog('App path: ' + app.getAppPath());
+    mainLog('Resources path: ' + process.resourcesPath);
+    mainLog('User data path: ' + app.getPath('userData'));
+    mainLog('Is packaged: ' + app.isPackaged);
+    mainLog('');
+    
+    mainLog('Initializing database...');
     databasePath = await initializeDatabase();
-    console.log('Database initialization complete');
-    console.log('Database path:', databasePath);
+    mainLog('✅ Database initialization complete');
+    mainLog('Final database path: ' + databasePath);
   } catch (error) {
-    console.error('Database initialization failed:', error);
+    mainLog('=== DATABASE INITIALIZATION ERROR ===');
+    mainLog('❌ Error: ' + error.message);
+    mainLog('Stack: ' + error.stack);
     // Calculate fallback path
     const userDataPath = app.getPath('userData');
     databasePath = path.join(userDataPath, 'prisma', 'dev.db');
-    console.log('Using fallback database path:', databasePath);
+    mainLog('⚠️  Using fallback database path: ' + databasePath);
+    mainLog('⚠️  This will likely fail if no database exists!');
   }
 
+  mainLog('');
+  mainLog('Creating window...');
   createWindow();
 
   app.on('activate', () => {
