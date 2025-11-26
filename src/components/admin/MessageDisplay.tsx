@@ -12,7 +12,7 @@ export function MessageDisplay({ connectionError, successMessage, copySuccess }:
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-4">
       {/* Error Message */}
       {connectionError && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-red-200 dark:border-red-800 overflow-hidden">

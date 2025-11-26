@@ -37,8 +37,14 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isElectron, setIsElectron] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
+
+  // Check if running in Electron
+  useEffect(() => {
+    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
+  }, []);
 
   // Redirect to login if username is Unknown
   useEffect(() => {
@@ -47,105 +53,6 @@ export default function Layout({ children }: LayoutProps) {
       router.push('/login');
     }
   }, [user?.username, router]);
-
-  // useArrowFocusNavigation();
-
-  // const focusElement = useCallback((element?: HTMLElement | null) => {
-  //   element?.focus({ preventScroll: true });
-  // }, []);
-
-  // const getFocusableWithin = useCallback((root: HTMLElement | null) => {
-  //   if (!root) {
-  //     return [];
-  //   }
-
-  //   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(isFocusable);
-  // }, []);
-
-  // const focusActiveNavLink = useCallback(() => {
-  //   if (!pathname || pathname === '/login') {
-  //     return false;
-  //   }
-
-  //   const sidebarEl = sidebarRef.current;
-  //   if (!sidebarEl) {
-  //     return false;
-  //   }
-
-  //   const activeLink = sidebarEl.querySelector<HTMLElement>(`[data-nav-link="${pathname}"]`);
-  //   if (!activeLink) {
-  //     return false;
-  //   }
-
-  //   focusElement(activeLink);
-  //   return true;
-  // }, [focusElement, pathname]);
-
-  // const focusFirstMainElement = useCallback(() => {
-  //   const [firstFocusable] = getFocusableWithin(mainContentRef.current);
-  //   if (!firstFocusable) {
-  //     return false;
-  //   }
-  //   focusElement(firstFocusable);
-  //   return true;
-  // }, [focusElement, getFocusableWithin]);
-
-  // useEffect(() => {
-  //   const currentActiveElement = document.activeElement;
-  //   if (currentActiveElement && currentActiveElement !== document.body) {
-  //     return;
-  //   }
-
-  //   focusActiveNavLink();
-  // }, [focusActiveNavLink]);
-
-  // const handleDirectionalNavigation = useCallback((event: KeyboardEvent) => {
-  //   if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) {
-  //     return;
-  //   }
-
-  //   const sidebarEl = sidebarRef.current;
-  //   const mainEl = mainContentRef.current;
-  //   if (!sidebarEl || !mainEl) {
-  //     return;
-  //   }
-
-  //   const activeElement = document.activeElement as HTMLElement | null;
-  //   if (!activeElement) {
-  //     return;
-  //   }
-
-  //   const isInSidebar = sidebarEl.contains(activeElement);
-  //   const isInMain = mainEl.contains(activeElement);
-
-  //   if (event.key === 'ArrowRight' && isInSidebar) {
-  //     const focused = focusFirstMainElement();
-  //     if (focused) {
-  //       event.preventDefault();
-  //     }
-  //   }
-
-  //   if (event.key === 'ArrowLeft' && isInMain) {
-  //     const focusedNav = focusActiveNavLink();
-  //     if (focusedNav) {
-  //       event.preventDefault();
-  //       return;
-  //     }
-
-  //     const [firstSidebarElement] = getFocusableWithin(sidebarEl);
-  //     if (firstSidebarElement) {
-  //       event.preventDefault();
-  //       focusElement(firstSidebarElement);
-  //     }
-  //   }
-  // }, [focusActiveNavLink, focusElement, focusFirstMainElement, getFocusableWithin]);
-
-  // useEffect(() => {
-  //   document.addEventListener('keydown', handleDirectionalNavigation);
-  //   return () => {
-  //     document.removeEventListener('keydown', handleDirectionalNavigation);
-  //   };
-  // }, [handleDirectionalNavigation]);
 
   const handleLogout = async () => {
     await logout();
@@ -312,10 +219,12 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Right side - Controls */}
             <div className="flex items-center space-x-3">
-              {/* Mode Switcher */}
-              <div className="hidden md:block">
-                <ModeSwitcher />
-              </div>
+              {/* Mode Switcher - Only show in Electron */}
+              {isElectron && (
+                <div className="hidden md:block">
+                  <ModeSwitcher />
+                </div>
+              )}
               
               {/* Dark Mode Toggle */}
               <DarkModeToggle />

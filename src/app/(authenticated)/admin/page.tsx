@@ -11,7 +11,6 @@ import { AdminTabs } from '@/components/admin/AdminTabs';
 import { CurrentStatusCard } from '@/components/admin/CurrentStatusCard';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
-import { AdditionalSettingsCard } from '@/components/admin/AdditionalSettingsCard';
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -39,7 +38,6 @@ export default function AdminSettingsPage() {
     handleClientMode,
     handleQuickConnect,
     copyToClipboard,
-    resetSettings,
   } = useAdminSettings();
 
   // Redirect if not authenticated
@@ -62,60 +60,36 @@ export default function AdminSettingsPage() {
             subtitle="จัดการการตั้งค่าโหมดการทำงานและผู้ใช้งาน"
           />
 
-          {/* Tab Navigation */}
-          <AdminTabs 
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
+          <div className="w-full max-w-7xl mx-auto">
 
-          {/* Tab Content */}
-          {activeTab === 'settings' && (
-            <div className="space-y-6">
-              {/* Current Status */}
-              <CurrentStatusCard
-                isServerMode={isServerMode}
-                isClientMode={isClientMode}
-                config={config}
-                isConnecting={isConnecting}
-                onQuickSwitch={quickSwitchMode}
-              />
+            {/* Messages */}
+            <MessageDisplay
+              connectionError={connectionError}
+              successMessage={successMessage}
+              copySuccess={copySuccess}
+            />
 
-              {/* Messages */}
-              <MessageDisplay
-                connectionError={connectionError}
-                successMessage={successMessage}
-                copySuccess={copySuccess}
-              />
+            {/* Mode Selection */}
+            <ModeSelectionCards
+              serverPort={serverPort}
+              serverUrl={serverUrl}
+              localIP={localIP}
+              ipLoading={ipLoading}
+              isConnecting={isConnecting}
+              isServerMode={isServerMode}
+              isClientMode={isClientMode}
+              onServerPortChange={setServerPort}
+              onServerUrlChange={setServerUrl}
+              onServerMode={handleServerMode}
+              onClientMode={() => handleClientMode()}
+              onQuickConnect={handleQuickConnect}
+              onCopyToClipboard={copyToClipboard}
+            />
+          </div>
 
-              {/* Mode Selection */}
-              <ModeSelectionCards
-                serverPort={serverPort}
-                serverUrl={serverUrl}
-                localIP={localIP}
-                ipLoading={ipLoading}
-                isConnecting={isConnecting}
-                isServerMode={isServerMode}
-                isClientMode={isClientMode}
-                onServerPortChange={setServerPort}
-                onServerUrlChange={setServerUrl}
-                onServerMode={handleServerMode}
-                onClientMode={() => handleClientMode()}
-                onQuickConnect={handleQuickConnect}
-                onCopyToClipboard={copyToClipboard}
-              />
-
-              {/* Additional Settings */}
-              <AdditionalSettingsCard
-                onResetSettings={resetSettings}
-              />
-            </div>
-          )}
-
-          {activeTab === 'users' && (
-            <ProtectedRoute requiredPermission="user.read">
-              <UserManagement />
-            </ProtectedRoute>
-          )}
+          <ProtectedRoute requiredPermission="user.read">
+            <UserManagement />
+          </ProtectedRoute>
       </div>
     </ProtectedRoute>
   );
