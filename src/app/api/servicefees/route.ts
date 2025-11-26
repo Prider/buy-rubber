@@ -203,7 +203,7 @@ async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; 
       )
     );
 
-    logger.debug('Batch service fee - Successfully created', serviceFees.length, 'service fees');
+    logger.debug('Batch service fee - Successfully created', serviceFees.length);
     return NextResponse.json({ serviceFees, purchaseNo }, { status: 201 });
   } catch (error: any) {
     logger.error('Batch service fee error', error);
