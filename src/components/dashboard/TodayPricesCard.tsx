@@ -24,7 +24,7 @@ export default function TodayPricesCard({ productTypes, todayPrices }: TodayPric
         </div>
         <div className="flex-1">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            ราคาประกาศวันนี้
+            ชนิดยางที่ราคาวันนี้
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
             {new Date().toLocaleDateString('th-TH', { 
