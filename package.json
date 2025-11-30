@@ -5,9 +5,9 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "prisma generate && next dev",
-    "build": "prisma generate && prisma db push && prisma db seed && next build",
+    "build": "bash scripts/vercel-build.sh",
     "start": "next start",
-    "vercel-build": "prisma generate && prisma db push && prisma db seed && next build",
+    "vercel-build": "bash scripts/vercel-build.sh",
     "electron:dev": "concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "npm run prepare:build && next build && npx prisma generate && electron-builder",
     "web:dev": "cross-env SKIP_ENV_VALIDATION=true next dev -H 0.0.0.0",
@@ -33,6 +33,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "postinstall": "prisma generate",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "5.22.0",
     "@tanstack/react-query": "^5.8.4",
