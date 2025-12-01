@@ -9,12 +9,6 @@ interface ProductType {
   name: string;
   description?: string;
 }
-
-interface ProductPrice {
-  productTypeId: string;
-  price: number;
-}
-
 export function usePriceData() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);

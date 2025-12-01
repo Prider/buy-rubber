@@ -134,7 +134,6 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     // สำรองไฟล์ฐานข้อมูล
     if (!fs.existsSync(dbPath)) {
       // Try to get the actual database path from Prisma if available
-      let actualDbPath = dbPath;
       try {
         // Try to query Prisma to get the actual connection info
         const prismaUrl = process.env.DATABASE_URL;
@@ -146,7 +145,7 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
             resolvedPath: path.resolve(dbPath)
           });
         }
-      } catch (e) {
+      } catch (_error) {
         // ignore
       }
       

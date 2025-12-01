@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { logger } from '@/lib/logger';

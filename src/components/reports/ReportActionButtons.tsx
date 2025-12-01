@@ -10,7 +10,6 @@ interface ReportActionButtonsProps {
 export default function ReportActionButtons({
   onPreview,
   onDownloadPDF,
-  onPrint,
   disabled = false,
 }: ReportActionButtonsProps) {
   return (

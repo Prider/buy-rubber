@@ -80,7 +80,7 @@ export const useBackup = () => {
     }
   }, []);
 
-  const downloadBackup = useCallback((id: string, fileName: string) => {
+  const downloadBackup = useCallback((id: string) => {
     window.open(`/api/backup/${id}/download`, '_blank');
   }, []);
 

@@ -49,7 +49,6 @@ export const CartTable: React.FC<CartTableProps> = ({
   cart,
   submitting,
   totalAmount,
-  printCart,
   saveCartToDb,
   removeFromCart,
   onShowPrintModal,

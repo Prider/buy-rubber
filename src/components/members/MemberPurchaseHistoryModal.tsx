@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { useMemberPurchaseHistory } from '@/hooks/useMemberPurchaseHistory';
 import { PurchaseSummary, QuickFilter } from '@/types/memberHistory';
 import { HeaderIcon } from '@/components/members/history/HeaderIcon';

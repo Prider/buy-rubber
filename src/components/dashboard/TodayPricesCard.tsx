@@ -1,4 +1,3 @@
-import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 
 interface TodayPricesCardProps {
@@ -7,7 +6,6 @@ interface TodayPricesCardProps {
 }
 
 export default function TodayPricesCard({ productTypes, todayPrices }: TodayPricesCardProps) {
-  const router = useRouter();
 
   const getPriceForProductType = (productTypeId: string) => {
     const priceRecord = todayPrices.find((p: any) => p.productTypeId === productTypeId);

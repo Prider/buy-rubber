@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { AppConfig, DEFAULT_SERVER_CONFIG, DEFAULT_CLIENT_CONFIG, CONFIG_KEYS } from '@/lib/config';
+import { AppConfig, DEFAULT_SERVER_CONFIG, CONFIG_KEYS } from '@/lib/config';
 
 interface AppModeContextType {
   config: AppConfig;
