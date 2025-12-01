@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { formatCurrency } from '@/lib/utils';
 import GamerLoader from '@/components/GamerLoader';
+import { PaginationControls } from '@/components/members/history/PaginationControls';
 
 interface MemberServiceFeeModalProps {
   isOpen: boolean;
@@ -108,7 +109,7 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '10',
+        limit: '8',
       });
 
       if (startDate) params.append('startDate', startDate);
@@ -117,7 +118,6 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
       const { data } = await axios.get(
         `/api/members/${member.id}/servicefees?${params}`
       );
-
       setServiceFees(data.serviceFees || []);
       setSummary(data.summary);
       setTotalPages(data.pagination?.totalPages || 1);
@@ -322,65 +322,65 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>วันที่</th>
-                      {/* <th>เลขที่เอกสาร</th> */}
-                      <th>เลขที่รับซื้อ</th>
-                      <th>ประเภท</th>
-                      <th className="text-right">จำนวนเงิน</th>
-                      <th>หมายเหตุ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {serviceFees.map((fee) => (
-                      <tr key={fee.id}>
-                        <td>{formatDateWithTime(fee.createdAt || fee.date)}</td>
-                        {/* <td className="font-medium">{fee.serviceFeeNo}</td> */}
-                        <td className="font-medium text-blue-600 dark:text-blue-400">
-                          {fee.purchaseNo || '-'}
-                        </td>
-                        <td>{fee.category}</td>
-                        <td className="font-semibold text-purple-600 dark:text-purple-400">
-                          {formatCurrency(fee.amount)}
-                        </td>
-                        <td className="text-gray-600 dark:text-gray-400">
-                          {fee.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">รายการค่าบริการ</h3>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      ทั้งหมด {summary?.totalRecords ?? serviceFees.length} รายการ
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">วันที่</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">เลขที่รับซื้อ</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ประเภท</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">จำนวนเงิน</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">หมายเหตุ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                        {serviceFees.map((fee, index) => (
+                          <tr
+                            key={fee.id}
+                            className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                              index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'
+                            }`}
+                          >
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                              {formatDateWithTime(fee.createdAt || fee.date)}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+                              {fee.purchaseNo || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                              {fee.category}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-semibold text-purple-600 dark:text-purple-400">
+                              {formatCurrency(fee.amount)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                              {fee.notes || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {totalPages > 1 && (
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                )}
+              </>
             )}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ← ก่อนหน้า
-                </button>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  หน้า {currentPage} จาก {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ถัดไป →
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

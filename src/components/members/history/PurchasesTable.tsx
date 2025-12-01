@@ -18,6 +18,7 @@ export const PurchasesTable = ({ purchases, totalCount }: PurchasesTableProps) =
         <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200.dark:border-gray-600">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">วันที่</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">เลขที่รับซื้อ</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ประเภทสินค้า</th>
             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700.dark:text-gray-200 uppercase tracking-wider">น้ำหนักสุทธิ</th>
             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700.dark:text-gray-200 uppercase tracking-wider">ราคา/กก.</th>
@@ -34,6 +35,9 @@ export const PurchasesTable = ({ purchases, totalCount }: PurchasesTableProps) =
             >
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
                 {formatDateTime(purchase.date)}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-medium">
+                {purchase.purchaseNo || '-'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{purchase.productType?.name || '-'}</td>
               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100 font-medium">

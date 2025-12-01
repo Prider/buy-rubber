@@ -34,7 +34,7 @@ export const useMemberPurchaseHistory = ({
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '10',
+        limit: '8',
       });
 
       if (startDate) params.append('startDate', startDate);

@@ -20,6 +20,9 @@ async function main() {
   console.log('🗑️  ลบข้อมูลเก่าทั้งหมด...');
   
   // ลบข้อมูลที่อ้างอิง foreign key ก่อน
+  await prisma.serviceFee.deleteMany({});
+  console.log('   - ลบข้อมูลค่าบริการ');
+  
   await prisma.purchase.deleteMany({});
   console.log('   - ลบข้อมูลการรับซื้อ');
   
@@ -184,7 +187,7 @@ async function main() {
     {
       code: 'M001',
       name: 'นายสมชาย ใจดี',
-      phone: '081-234-5678',
+      phone: '0812345678',
       address: 'สวนยาง ต.บ้านใหม่ อ.เมือง จ.สงขลา',
       ownerPercent: 70,
       tapperPercent: 30,
@@ -193,7 +196,7 @@ async function main() {
     {
       code: 'M002',
       name: 'นางสาวสมหญิง รักษ์ดี',
-      phone: '082-345-6789',
+      phone: '0823456789',
       address: 'สวนยาง ต.ท่าช้าง อ.เมือง จ.สงขลา',
       ownerPercent: 100,
       tapperPercent: 0,
@@ -201,7 +204,7 @@ async function main() {
     {
       code: 'M003',
       name: 'นายประยุทธ์ ขยัน',
-      phone: '083-456-7890',
+      phone: '0834567890',
       address: 'สวนยาง ต.คลองแห อ.หาดใหญ่ จ.สงขลา',
       ownerPercent: 60,
       tapperPercent: 40,
@@ -210,7 +213,7 @@ async function main() {
     {
       code: 'M004',
       name: 'นายวิศาล สมบูรณ์',
-      phone: '084-567-8901',
+      phone: '0845678901',
       address: 'สวนยาง ต.คลองอู่ตะเภา อ.หาดใหญ่ จ.สงขลา',
       ownerPercent: 80,
       tapperPercent: 20,
@@ -219,7 +222,7 @@ async function main() {
     {
       code: 'M005',
       name: 'นางสมศรี ใจงาม',
-      phone: '085-678-9012',
+      phone: '0856789012',
       address: 'สวนยาง ต.คลองหอยโข่ง อ.คลองหอยโข่ง จ.สงขลา',
       ownerPercent: 100,
       tapperPercent: 0,
@@ -227,7 +230,7 @@ async function main() {
     {
       code: 'M006',
       name: 'นายสมศักดิ์ รักษ์ดี',
-      phone: '086-789-0123',
+      phone: '0867890123',
       address: 'สวนยาง ต.ควนเนียง อ.ควนเนียง จ.สงขลา',
       ownerPercent: 65,
       tapperPercent: 35,
@@ -236,7 +239,7 @@ async function main() {
     {
       code: 'M007',
       name: 'นางสาวสมพร ใจดี',
-      phone: '087-890-1234',
+      phone: '0878901234',
       address: 'สวนยาง ต.รัตภูมิ อ.รัตภูมิ จ.สงขลา',
       ownerPercent: 75,
       tapperPercent: 25,
@@ -245,7 +248,7 @@ async function main() {
     {
       code: 'M008',
       name: 'นายสมชาย รักษ์ดี',
-      phone: '088-901-2345',
+      phone: '0889012345',
       address: 'สวนยาง ต.สะเดา อ.สะเดา จ.สงขลา',
       ownerPercent: 90,
       tapperPercent: 10,
@@ -254,7 +257,7 @@ async function main() {
     {
       code: 'M009',
       name: 'นางสมศรี ใจงาม',
-      phone: '089-012-3456',
+      phone: '0890123456',
       address: 'สวนยาง ต.จะนะ อ.จะนะ จ.สงขลา',
       ownerPercent: 100,
       tapperPercent: 0,
@@ -262,7 +265,7 @@ async function main() {
     {
       code: 'M010',
       name: 'นายสมศักดิ์ ขยัน',
-      phone: '090-123-4567',
+      phone: '0901234567',
       address: 'สวนยาง ต.นาทวี อ.นาทวี จ.สงขลา',
       ownerPercent: 70,
       tapperPercent: 30,
@@ -283,6 +286,138 @@ async function main() {
     console.log(`   ✓ สร้างสมาชิกรุ่นที่ ${Math.floor(i/batchSize) + 1}: ${batchMembers.length} ราย`);
   }
   console.log('✅ สร้างสมาชิก:', members.length, 'ราย');
+
+  // Helper function to generate document number
+  const generateDocumentNumber = (prefix: string, date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `${prefix}-${year}${month}-${random}`;
+  };
+
+  // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
+  console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
+  const purchases = [];
+  const purchaseCount = 150; // Create enough purchases to link service fees
+  
+  for (let i = 0; i < purchaseCount; i++) {
+    const member = members[i % members.length];
+    const productType = productTypes[i % productTypes.length];
+    const randomUser = [admin, user][i % 2]; // Alternate between admin and user
+    
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(i / 5)); // Spread across days
+    date.setHours(8 + (i % 12), (i * 7) % 60, 0, 0); // Vary times
+    
+    const grossWeight = 50 + Math.random() * 100;
+    const containerWeight = 2 + Math.random() * 5;
+    const netWeight = grossWeight - containerWeight;
+    const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
+    const finalPrice = basePrice + (Math.random() * 5);
+    const totalAmount = netWeight * finalPrice;
+    
+    const ownerAmount = (totalAmount * member.ownerPercent) / 100;
+    const tapperAmount = (totalAmount * member.tapperPercent) / 100;
+    
+    const purchaseNo = generateDocumentNumber('PUR', date);
+    
+    try {
+      const purchase = await prisma.purchase.create({
+        data: {
+          purchaseNo,
+          date,
+          memberId: member.id,
+          productTypeId: productType.id,
+          userId: randomUser.id,
+          grossWeight: parseFloat(grossWeight.toFixed(2)),
+          containerWeight: parseFloat(containerWeight.toFixed(2)),
+          netWeight: parseFloat(netWeight.toFixed(2)),
+          dryWeight: parseFloat(netWeight.toFixed(2)),
+          basePrice: parseFloat(basePrice.toFixed(2)),
+          adjustedPrice: parseFloat(finalPrice.toFixed(2)),
+          bonusPrice: 0,
+          finalPrice: parseFloat(finalPrice.toFixed(2)),
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          ownerAmount: parseFloat(ownerAmount.toFixed(2)),
+          tapperAmount: parseFloat(tapperAmount.toFixed(2)),
+          isPaid: false,
+        },
+      });
+      purchases.push(purchase);
+    } catch (error) {
+      // Skip if duplicate or error
+      console.log(`   ⚠️  ข้ามการรับซื้อ ${purchaseNo}`);
+    }
+    
+    if ((i + 1) % 50 === 0) {
+      console.log(`   ✓ สร้างการรับซื้อครบ ${i + 1} รายการ`);
+    }
+  }
+  console.log('✅ สร้างการรับซื้อ:', purchases.length, 'รายการ');
+
+  // สร้างค่าบริการตัวอย่าง (100+ รายการ)
+  console.log('💰 สร้างค่าบริการตัวอย่าง...');
+  
+  const serviceFeeCategories = [
+    { category: 'ค่าขนส่ง', baseAmount: 200 },
+    { category: 'ค่าบรรจุภัณฑ์', baseAmount: 150 },
+    { category: 'ค่าการตรวจสอบ', baseAmount: 100 },
+    { category: 'ค่าบริการอื่นๆ', baseAmount: 80 },
+    { category: 'ค่าธรรมเนียม', baseAmount: 50 },
+    { category: 'ค่าใช้จ่ายเพิ่มเติม', baseAmount: 120 },
+  ];
+  
+  const serviceFees = [];
+  const serviceFeeCount = 120; // Create 120 service fees for testing
+  
+  for (let i = 0; i < serviceFeeCount; i++) {
+    const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];
+    
+    // Create dates spread over last 60 days
+    const date = new Date();
+    date.setDate(date.getDate() - (i % 60));
+    // Vary times throughout the day
+    const hour = 7 + Math.floor((i * 13) % 15); // 7 AM to 9 PM
+    const minute = (i * 17) % 60;
+    date.setHours(hour, minute, (i * 23) % 60, (i * 37) % 1000);
+    
+    const serviceFeeNo = generateDocumentNumber('SVC', date);
+    
+    // Link 100% to purchases - always use actual purchaseNo from created purchases
+    let purchaseNo: string | null = null;
+    
+    if (purchases.length > 0) {
+      // Use actual purchase number from an existing purchase
+      const linkedPurchase = purchases[i % purchases.length];
+      purchaseNo = linkedPurchase.purchaseNo; // Use the actual purchaseNo from the purchase
+    }
+    
+    const amount = parseFloat((categoryInfo.baseAmount + (Math.random() * 100)).toFixed(2));
+    const notes = i % 3 === 0 ? `หมายเหตุ ${i + 1}` : null;
+    
+    try {
+      const serviceFee = await prisma.serviceFee.create({
+        data: {
+          serviceFeeNo,
+          purchaseNo: purchaseNo, // Use actual purchaseNo from created purchase, or null
+          date,
+          category: categoryInfo.category,
+          amount,
+          notes,
+        },
+      });
+      serviceFees.push(serviceFee);
+    } catch (error) {
+      // Skip if duplicate
+      console.log(`   ⚠️  ข้ามค่าบริการ ${serviceFeeNo}`);
+    }
+    
+    if ((i + 1) % 30 === 0) {
+      console.log(`   ✓ สร้างค่าบริการครบ ${i + 1} รายการ`);
+    }
+  }
+  console.log('✅ สร้างค่าบริการ:', serviceFees.length, 'รายการ');
+  console.log(`   - เชื่อมกับ purchase: ${serviceFees.filter(sf => sf.purchaseNo).length} รายการ (100%)`);
 
   console.log('✅ สร้างข้อมูลเบื้องต้นเรียบร้อย');
   console.log('');
