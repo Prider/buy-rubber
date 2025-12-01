@@ -415,7 +415,6 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       return;
     }
 
-    const doc = new jsPDF('p', 'mm', 'a4');
     const html = generateCartHTML(data);
 
     const container = document.createElement('div');
@@ -423,7 +422,8 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     container.style.position = 'fixed';
     container.style.top = '-10000px';
     container.style.left = '0';
-    container.style.width = '794px';
+    // Use the actual slip width (320px) to match the HTML design
+    container.style.width = '320px';
     container.style.color = '#000000';
     container.style.filter = 'none';
     container.style.webkitFilter = 'none';
@@ -434,13 +434,30 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       setTimeout(() => resolve(), 100);
     });
 
-    const canvas = await html2canvas(container, { scale: 1, useCORS: true });
+    const canvas = await html2canvas(container, { 
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
     document.body.removeChild(container);
 
+    // Slip width is 320px, which is approximately 85mm at standard screen DPI
+    // Make PDF a bit bigger: use 100mm width (about 15-20% larger than slip)
+    // This creates a receipt-sized PDF that's just a bit bigger than the slip
+    const pdfWidthMm = 100; // 100mm wide (a bit bigger than typical 80mm receipt)
+    
+    // Calculate PDF height based on content aspect ratio
+    const pdfHeightMm = (canvas.height / canvas.width) * pdfWidthMm;
+    
+    // Create custom-sized PDF (portrait orientation)
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: [pdfWidthMm, pdfHeightMm]
+    });
+
     const imgData = canvas.toDataURL('image/png');
-    const pdfWidth = doc.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    doc.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
 
     const fileName = `รายการรับซื้อ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
     doc.save(fileName);
