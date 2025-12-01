@@ -5,21 +5,35 @@
 
 echo "🔧 Setting up local SQLite database..."
 
-# Check if .env exists
-if [ ! -f .env ]; then
-    echo "Creating .env file..."
-    echo 'DATABASE_URL="file:./dev.db"' > .env
-    echo "NODE_ENV=development" >> .env
-else
-    echo "⚠️  .env file already exists"
-    echo "Make sure it contains: DATABASE_URL=\"file:./dev.db\""
-fi
+# # Backup and update .env file
+# if [ -f .env ]; then
+#     echo "Backing up current .env to .env.local..."
+#     cp .env .env.local
+# fi
 
-# Backup current schema
-if [ -f prisma/schema.prisma ]; then
-    echo "Backing up current schema to schema.postgres.prisma..."
-    cp prisma/schema.prisma prisma/schema.postgres.prisma
-fi
+echo "Creating/updating .env file for SQLite..."
+cat > .env << 'EOF'
+# Local Development with SQLite
+DATABASE_URL="file:./dev.db"
+
+# JWT Secret
+JWT_SECRET="your-secret-key-change-this-in-production"
+
+# App
+NEXT_PUBLIC_APP_NAME="BigLatex-Pro"
+NEXT_PUBLIC_APP_VERSION="1.0.0"
+
+NODE_ENV="development"
+SKIP_ENV_VALIDATION="true"
+EOF
+
+echo "✅ .env updated for SQLite"
+
+# # Backup current schema
+# if [ -f prisma/schema.prisma ]; then
+#     echo "Backing up current schema to schema.postgres.prisma..."
+#     cp prisma/schema.prisma prisma/schema.postgres.prisma
+# fi
 
 # Copy SQLite schema
 if [ -f prisma/schema.sqlite.prisma ]; then
