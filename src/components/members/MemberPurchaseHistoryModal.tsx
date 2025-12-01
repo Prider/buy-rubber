@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useMemberPurchaseHistory } from '@/hooks/useMemberPurchaseHistory';
 import { PurchaseSummary, QuickFilter } from '@/types/memberHistory';
-import { downloadMemberHistoryPDF } from '@/utils/memberHistoryPdf';
 import { HeaderIcon } from '@/components/members/history/HeaderIcon';
 import { SummaryCard, SUMMARY_CARD_CONFIG } from '@/components/members/history/SummaryCard';
 import { QuickFilters } from '@/components/members/history/QuickFilters';
@@ -13,7 +12,7 @@ import { LoadingState } from '@/components/members/history/LoadingState';
 import { EmptyState } from '@/components/members/history/EmptyState';
 import { PurchasesTable } from '@/components/members/history/PurchasesTable';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
-import { CloseIcon, DownloadIcon } from '@/components/members/history/Icons';
+import { CloseIcon } from '@/components/members/history/Icons';
 
 interface MemberPurchaseHistoryModalProps {
   isOpen: boolean;
@@ -37,7 +36,7 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
   const [selectedQuickFilter, setSelectedQuickFilter] = useState<number | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
+  // const [isDownloading, setIsDownloading] = useState(false);
 
   const { loading, purchases, summary, totalPages } = useMemberPurchaseHistory({
     memberId: member?.id,
@@ -73,36 +72,36 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
 
   const hasPurchases = purchases.length > 0;
 
-  const fetchAllFilteredPurchases = async () => {
-     if (!member?.id) {
-       return [];
-     }
+    // const fetchAllFilteredPurchases = async () => {
+  //    if (!member?.id) {
+  //      return [];
+  //    }
  
-    const params = new URLSearchParams({
-      fetchAll: 'true',
-    });
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+  //   const params = new URLSearchParams({
+  //     fetchAll: 'true',
+  //   });
+  //   if (startDate) params.append('startDate', startDate);
+  //   if (endDate) params.append('endDate', endDate);
 
-    const { data } = await axios.get(`/api/members/${member.id}/purchases?${params}`);
-    const collected = data.purchases || [];
+  //   const { data } = await axios.get(`/api/members/${member.id}/purchases?${params}`);
+  //   const collected = data.purchases || [];
 
-    return collected.sort((a: any, b: any) => {
-      const dateA = new Date(a?.date ?? 0).getTime();
-      const dateB = new Date(b?.date ?? 0).getTime();
-      return dateB - dateA;
-    });
-  };
+  //   return collected.sort((a: any, b: any) => {
+  //     const dateA = new Date(a?.date ?? 0).getTime();
+  //     const dateB = new Date(b?.date ?? 0).getTime();
+  //     return dateB - dateA;
+  //   });
+  // };
 
-  const handleDownload = async () => {
-    try {
-      setIsDownloading(true);
-      const allPurchases = await fetchAllFilteredPurchases();
-      await downloadMemberHistoryPDF(allPurchases, member);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  // const handleDownload = async () => {
+  //   try {
+  //     setIsDownloading(true);
+  //     const allPurchases = await fetchAllFilteredPurchases();
+  //     await downloadMemberHistoryPDF(allPurchases, member);
+  //   } finally {
+  //     setIsDownloading(false);
+  //   }
+  // };
 
   const summaryCards = useMemo(
     () =>
@@ -132,14 +131,14 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                {/* <button
                   onClick={handleDownload}
                   disabled={isDownloading || !hasPurchases}
                   className="px-4 py-2 bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <DownloadIcon />
                   {isDownloading ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลด PDF'}
-                </button>
+                </button> */}
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                   <CloseIcon />
                 </button>
