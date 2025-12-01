@@ -251,7 +251,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             </div>
 
             {/* Ownership Information Section */}
-            <div className="space-y-3 opacity-75 pointer-events-none">
+            {/* <div className="space-y-3 opacity-75 pointer-events-none">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                   <svg className="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +262,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pl-8">
-                {/* Owner Percent */}
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     % เจ้าของสวน
@@ -283,7 +282,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   </div>
                 </div>
 
-                {/* Tapper Percent */}
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     % คนตัด
@@ -304,7 +302,6 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   </div>
                 </div>
 
-                {/* Tapper Name */}
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     ชื่อคนตัด
@@ -318,7 +315,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

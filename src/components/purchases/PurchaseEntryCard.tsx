@@ -686,7 +686,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">ราคาล่าสุดจากประวัติการรับซื้อ</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {recentPurchases.map((purchase, index) => (
+                    {recentPurchases.map((purchase) => (
                       <button
                         key={purchase.id}
                         type="button"

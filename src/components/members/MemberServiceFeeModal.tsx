@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import GamerLoader from '@/components/GamerLoader';
 
 interface MemberServiceFeeModalProps {
@@ -11,11 +11,47 @@ interface MemberServiceFeeModalProps {
   onClose: () => void;
 }
 
+// Helper function to format date with time (without seconds)
+// Uses createdAt if available (actual timestamp), otherwise uses date field
+const formatDateWithTime = (date: Date | string): string => {
+  const dateStr = typeof date === 'string' ? date : date.toISOString();
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Get local time components
+  const localHours = dateObj.getHours();
+  const localMinutes = dateObj.getMinutes();
+  
+  // Check if this is likely a date-only value that was timezone-shifted
+  // UTC midnight (00:00:00) becomes 07:00 in Thailand (UTC+7)
+  // If time is 07:00:00, it's likely a date-only value - don't show time
+  const isDateOnly = (localHours === 7 && localMinutes === 0) || 
+                     (dateStr.includes('T00:00:00') && localHours === 7);
+  
+  if (isDateOnly) {
+    // This is likely a date-only value, just show the date
+    return new Intl.DateTimeFormat('th-TH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(dateObj);
+  }
+  
+  // Show date with actual time
+  return new Intl.DateTimeFormat('th-TH', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateObj);
+};
+
 interface ServiceFee {
   id: string;
   serviceFeeNo: string;
   purchaseNo: string | null;
   date: string;
+  createdAt?: string; // Actual creation timestamp
   category: string;
   amount: number;
   notes: string | null;
@@ -291,7 +327,7 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
                   <thead>
                     <tr>
                       <th>วันที่</th>
-                      <th>เลขที่เอกสาร</th>
+                      {/* <th>เลขที่เอกสาร</th> */}
                       <th>เลขที่รับซื้อ</th>
                       <th>ประเภท</th>
                       <th className="text-right">จำนวนเงิน</th>
@@ -301,13 +337,13 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
                   <tbody>
                     {serviceFees.map((fee) => (
                       <tr key={fee.id}>
-                        <td>{formatDate(new Date(fee.date))}</td>
-                        <td className="font-medium">{fee.serviceFeeNo}</td>
+                        <td>{formatDateWithTime(fee.createdAt || fee.date)}</td>
+                        {/* <td className="font-medium">{fee.serviceFeeNo}</td> */}
                         <td className="font-medium text-blue-600 dark:text-blue-400">
                           {fee.purchaseNo || '-'}
                         </td>
                         <td>{fee.category}</td>
-                        <td className="text-right font-semibold text-purple-600 dark:text-purple-400">
+                        <td className="font-semibold text-purple-600 dark:text-purple-400">
                           {formatCurrency(fee.amount)}
                         </td>
                         <td className="text-gray-600 dark:text-gray-400">
