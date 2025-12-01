@@ -74,6 +74,7 @@ interface UseCartProps {
 export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartProps) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [lastPrintedCart, setLastPrintedCart] = useState<CartItem[]>([]);
+  const [lastPurchaseNo, setLastPurchaseNo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -271,6 +272,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       // Clear cart and reload purchases (even if only service fees were present)
       logger.debug('All requests successful, clearing cart and reloading purchases');
       setLastPrintedCart(cart);
+      setLastPurchaseNo(purchaseNo); // Store purchaseNo for PDF filename
       setCart([]);
       await loadPurchases();
       logger.debug('Cart cleared and purchases reloaded');
@@ -297,6 +299,11 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       minute: '2-digit',
     });
 
+    // Get member info from first purchase item that has member data
+    const firstPurchaseItem = data.find(item => item.memberName && item.memberCode);
+    const memberName = firstPurchaseItem?.memberName || '';
+    const memberCode = firstPurchaseItem?.memberCode || '';
+
     return `
       <html>
         <head>
@@ -312,14 +319,19 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
             .store p { margin: 4px 0; font-size: 13px; color: #475569; }
             .meta { font-size: 12px; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed #cbd5f5; padding-bottom: 6px; }
-            .item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; }
+            .item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0;}
             .item:last-child { border-bottom: none; }
             .item-name { font-size: 13px; color: #0f172a; font-weight: 600; }
             .item-meta { font-size: 11px; color: #64748b; }
             .item-amount { text-align: right; font-size: 13px; color: #0f172a; font-weight: 600; }
             .item-amount .price { font-size: 11px; color: #475569; font-weight: 400; display: block; }
             .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
+            .signatures { display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px }
+            .signature { flex: 1; text-align: center; }
+            .signature-label { font-size: 12px; color: #475569; margin-bottom: 10px; margin-top: 10px; }
+            .signature-line { border-top: 1px dotted #64748b; margin: 0 auto; width: 120px; margin-top: 40px; }
             .footer { margin-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
+            .footer-text { margin-top: 10px; width: 80%; margin-left: auto; margin-right: auto; text-align: center; font-size: 11px; color: #94a3b8; }
           </style>
         </head>
         <body>
@@ -330,6 +342,8 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             </div>
             <div class="meta">
               เลขที่: ${Date.now()}<br/>
+              ${memberName ? `สมาชิก: ${memberName}<br/>` : ''}
+              ${memberCode ? `รหัสสมาชิก: ${memberCode}<br/>` : ''}
               วันที่พิมพ์: ${printDate}
             </div>
             ${data
@@ -337,7 +351,6 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
                 (item) => `
                   <div class="item">
                     <div>
-                      <div class="item-name">${item.memberName || item.category || '-'}</div>
                       <div class="item-meta">
                         ${item.productTypeName || 'ค่าใช้จ่าย'}
                         ${
@@ -363,8 +376,20 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
               <span>ยอดสุทธิ</span>
               <span>${formatCurrency(total)}</span>
             </div>
+            <div class="signatures">
+              <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">ผู้จัดทำ</div>
+              </div>
+              <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">ผู้รับเงิน</div>
+              </div>
+            </div>
             <div class="footer">
-              ขอบคุณที่ใช้บริการ
+              <div class="footer-text">
+              กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ
+              </div>
             </div>
           </div>
         </body>
@@ -434,22 +459,26 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       setTimeout(() => resolve(), 100);
     });
 
+    // Use scale 1 for exact 1:1 pixel mapping to avoid size calculation issues
     const canvas = await html2canvas(container, { 
-      scale: 2, // Higher scale for better quality
+      scale: 1, // Use scale 1 for exact pixel dimensions (320px = 320px canvas)
       useCORS: true,
       backgroundColor: '#ffffff'
     });
     document.body.removeChild(container);
 
-    // Slip width is 320px, which is approximately 85mm at standard screen DPI
-    // Make PDF a bit bigger: use 100mm width (about 15-20% larger than slip)
-    // This creates a receipt-sized PDF that's just a bit bigger than the slip
-    const pdfWidthMm = 100; // 100mm wide (a bit bigger than typical 80mm receipt)
+    // Slip width is 320px, convert to mm to match exactly
+    // At 96 DPI (standard screen): 1px = 25.4/96 mm = 0.264583mm
+    // 320px = 320 * 0.264583 = 84.67mm
+    // With scale: 1, canvas.width = 320px exactly
+    const slipWidthPx = 320; // Actual slip width in pixels
+    const pdfWidthMm = slipWidthPx * (25.4 / 96); // Convert 320px to mm (≈84.67mm)
     
-    // Calculate PDF height based on content aspect ratio
+    // Calculate PDF height based on canvas dimensions (1:1 with slip)
+    // canvas.width = 320px, canvas.height = actual content height
     const pdfHeightMm = (canvas.height / canvas.width) * pdfWidthMm;
     
-    // Create custom-sized PDF (portrait orientation)
+    // Create custom-sized PDF (portrait orientation) matching slip size exactly
     const doc = new jsPDF({
       orientation: 'p',
       unit: 'mm',
@@ -457,11 +486,16 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     });
 
     const imgData = canvas.toDataURL('image/png');
+    // Add image at exact slip size (320px = 84.67mm)
     doc.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
 
-    const fileName = `รายการรับซื้อ_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
+    // Generate filename with PurchaseNo if available
+    const dateStr = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
+    const fileName = lastPurchaseNo 
+      ? `รายการรับซื้อ_${lastPurchaseNo}_${dateStr}.pdf`
+      : `รายการรับซื้อ_${dateStr}.pdf`;
     doc.save(fileName);
-  }, [cart, lastPrintedCart, generateCartHTML]);
+  }, [cart, lastPrintedCart, lastPurchaseNo, generateCartHTML]);
 
   // Calculate total amount
   const totalAmount = cart.reduce((sum, item) => sum + item.totalAmount, 0);
