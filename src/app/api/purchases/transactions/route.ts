@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const memberId = searchParams.get('memberId');
+    const searchTerm = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    logger.info('GET /api/purchases/transactions', { startDate, endDate, memberId, page, limit });
+    logger.info('GET /api/purchases/transactions', { startDate, endDate, memberId, searchTerm, page, limit });
 
     // Build where clause for purchases
     const where: any = {};
@@ -35,6 +36,8 @@ export async function GET(request: NextRequest) {
     if (memberId) {
       where.memberId = memberId;
     }
+
+    // Note: Search filtering will be done after grouping since we need to search across grouped transactions
 
     // Get all purchases with related data
     const purchases = await prisma.purchase.findMany({
@@ -103,26 +106,45 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Convert to array and sort by date and time (most recent first)
-    const allTransactions = Array.from(transactionsMap.values()).sort((a, b) => {
-      // First sort by createdAt (descending - most recent first) if available
-      const aTime = new Date(a.createdAt || a.date).getTime();
-      const bTime = new Date(b.createdAt || b.date).getTime();
+    // Convert to array, filter by search term if provided, then sort by date and time (most recent first)
+    let allTransactions = Array.from(transactionsMap.values());
+    
+    // Apply search filter after grouping
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      allTransactions = allTransactions.filter(transaction => {
+        const purchaseNoMatch = transaction.purchaseNo.toLowerCase().includes(searchLower);
+        const memberNameMatch = transaction.member.name.toLowerCase().includes(searchLower);
+        const memberCodeMatch = transaction.member.code.toLowerCase().includes(searchLower);
+        return purchaseNoMatch || memberNameMatch || memberCodeMatch;
+      });
+    }
+    
+    // Sort by date and time (oldest first) - ALWAYS sort regardless of search
+    allTransactions = allTransactions.sort((a, b) => {
+      // Priority 1: Sort by createdAt or date (oldest first)
+      // Use createdAt if available (has timestamp), otherwise use date
+      const aTime = a.createdAt 
+        ? new Date(a.createdAt).getTime() 
+        : new Date(a.date).getTime();
+      const bTime = b.createdAt 
+        ? new Date(b.createdAt).getTime() 
+        : new Date(b.date).getTime();
       
       if (aTime !== bTime) {
-        return bTime - aTime;
+        return aTime - bTime; // Ascending: oldest first
       }
       
-      // If times are equal, sort by date (descending)
+      // Priority 2: If times are equal, sort by date (oldest first)
       const aDate = new Date(a.date).getTime();
       const bDate = new Date(b.date).getTime();
       
       if (aDate !== bDate) {
-        return bDate - aDate;
+        return aDate - bDate; // Ascending: oldest first
       }
       
-      // Finally, sort by purchaseNo (descending) as tiebreaker
-      return b.purchaseNo.localeCompare(a.purchaseNo);
+      // Priority 3: Sort by purchaseNo (ascending) as tiebreaker
+      return a.purchaseNo.localeCompare(b.purchaseNo);
     });
 
     // Calculate pagination

@@ -11,7 +11,7 @@ interface UsePurchaseTransactionsReturn {
   error: string;
   currentPage: number;
   setCurrentPage: (page: number) => void;
-  loadTransactions: (page: number) => Promise<void>;
+  loadTransactions: (page: number, searchTerm?: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -28,11 +28,12 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadTransactions = useCallback(async (page: number = 1) => {
+  const loadTransactions = useCallback(async (page: number = 1, searchTerm?: string) => {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get(`/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
+      const response = await axios.get(`/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}${searchParam}`);
       
       // Handle both old format (array) and new format (object with transactions and pagination)
       if (Array.isArray(response.data)) {
@@ -64,12 +65,8 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
     }
   }, []);
 
-  const refresh = useCallback(async () => {
-    await loadTransactions(currentPage);
-  }, [currentPage, loadTransactions]);
-
-  useEffect(() => {
-    loadTransactions(currentPage);
+  const refresh = useCallback(async (searchTerm?: string) => {
+    await loadTransactions(currentPage, searchTerm);
   }, [currentPage, loadTransactions]);
 
   return {
