@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const os = require('os');
     const interfaces = os.networkInterfaces();
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
         network: networkInfo
       }
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to get server info' },
       { status: 500 }

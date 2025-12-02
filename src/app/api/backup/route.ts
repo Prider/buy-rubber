@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBackup, getBackupList, restoreBackup, deleteBackup } from '@/lib/backup';
 import { logger } from '@/lib/logger';
-import fs from 'fs';
-import path from 'path';
 
 // Force Node.js runtime for file system operations
 export const runtime = 'nodejs';

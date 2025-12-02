@@ -344,7 +344,7 @@ async function main() {
         },
       });
       purchases.push(purchase);
-    } catch (error) {
+    } catch (_error) {
       // Skip if duplicate or error
       console.log(`   ⚠️  ข้ามการรับซื้อ ${purchaseNo}`);
     }
@@ -407,7 +407,7 @@ async function main() {
         },
       });
       serviceFees.push(serviceFee);
-    } catch (error) {
+    } catch (_error) {
       // Skip if duplicate
       console.log(`   ⚠️  ข้ามค่าบริการ ${serviceFeeNo}`);
     }

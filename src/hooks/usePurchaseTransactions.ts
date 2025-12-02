@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { PurchaseTransaction, PaginationInfo } from '@/components/purchases/types';
 

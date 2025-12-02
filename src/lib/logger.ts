@@ -32,7 +32,7 @@ function getServerModules() {
         // Use project logs directory for Next.js development
         LOG_DIR = path.join(process.cwd(), 'logs');
       }
-    } catch (error) {
+    } catch (_error) {
       // Silently fail - logger won't work but app will continue
     }
   }
@@ -48,7 +48,7 @@ function ensureLogDir() {
     if (fsModule && dir && !fsModule.existsSync(dir)) {
       fsModule.mkdirSync(dir, { recursive: true });
     }
-  } catch (error) {
+  } catch (_error) {
     // Ignore errors in browser
   }
 }
@@ -79,8 +79,8 @@ function formatLog(level: string, message: string, data?: any): string {
   return JSON.stringify(logEntry) + '\n';
 }
 
-// Log levels
-const logLevels = {
+// Log levels (exported for potential future use)
+export const logLevels = {
   INFO: 'info',
   WARN: 'warn',
   ERROR: 'error',

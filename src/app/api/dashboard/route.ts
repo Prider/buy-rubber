@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     logger.info('GET /api/dashboard - Request received');
     const today = new Date();

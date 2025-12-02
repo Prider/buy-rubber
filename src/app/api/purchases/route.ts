@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     }
 
     // คำนวณราคาที่ปรับแล้ว (สำหรับตอนนี้ใช้ราคาพื้นฐาน)
-    let adjustedPrice = basePrice;
+    const adjustedPrice = basePrice;
     // TODO: Add price adjustment logic based on rubber percent if needed
 
     // ราคาสุดท้าย

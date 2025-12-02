@@ -7,8 +7,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { AdminHeader } from '@/components/admin/AdminHeader';
-import { AdminTabs } from '@/components/admin/AdminTabs';
-import { CurrentStatusCard } from '@/components/admin/CurrentStatusCard';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 
@@ -26,14 +24,10 @@ export default function AdminSettingsPage() {
     copySuccess,
     localIP,
     ipLoading,
-    activeTab,
-    config,
     isServerMode,
     isClientMode,
     setServerUrl,
     setServerPort,
-    setActiveTab,
-    quickSwitchMode,
     handleServerMode,
     handleClientMode,
     handleQuickConnect,

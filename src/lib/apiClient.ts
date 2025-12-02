@@ -145,7 +145,7 @@ class ApiClient {
     try {
       await this.get('/api/health');
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

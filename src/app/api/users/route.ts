@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userStore } from '@/lib/userStore';
-import { CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import { CreateUserRequest } from '@/types/user';
 import { logger } from '@/lib/logger';
 
 // Helper function to verify admin role
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const users = await userStore.getAllUsers();
     // Remove passwords from response
-    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+    const usersWithoutPasswords = users.map(({ password: _password, ...user }) => user);
 
     logger.info('GET /api/users - Success', { count: users.length });
     return NextResponse.json({
