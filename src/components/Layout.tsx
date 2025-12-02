@@ -20,6 +20,7 @@ interface NavigationItem {
 const NAV_ITEMS: NavigationItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
   { name: 'รับซื้อยาง', href: '/purchases', icon: '🚚' },
+  { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'ตั้งประเภทสินค้า', href: '/prices', icon: '📦' },

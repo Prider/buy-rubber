@@ -149,6 +149,7 @@ export default function PurchasesPage() {
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">รับซื้อยาง</h1>
         </div>
+
         {/* Purchase Entry Card */}
         <PurchaseEntryCard
           formData={formData}

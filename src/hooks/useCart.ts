@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { logger } from '@/lib/logger';
+import { generatePDFFromHTML, printHTML } from '@/components/purchases/utils/pdfGenerator';
 
 interface CartItem {
   id: string;
@@ -313,8 +312,10 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
           <style>
-            body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-            .slip { width: 320px; margin: 16px auto; background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+            * { box-sizing: border-box; }
+            html { background: #ffffff !important; margin: 0; padding: 0; }
+            body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 0; padding: 0; background: #ffffff !important; width: 100%; height: 100%; }
+            .slip { width: 320px; margin: 16px 16px; background: #ffffff !important; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
             .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
             .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
             .store p { margin: 4px 0; font-size: 13px; color: #475569; }
@@ -326,7 +327,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             .item-amount { text-align: right; font-size: 13px; color: #0f172a; font-weight: 600; }
             .item-amount .price { font-size: 11px; color: #475569; font-weight: 400; display: block; }
             .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
-            .signatures { display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px }
+            .signatures { display: flex; justify-content: space-between; padding-top: 16px;}
             .signature { flex: 1; text-align: center; }
             .signature-label { font-size: 12px; color: #475569; margin-bottom: 10px; margin-top: 10px; }
             .signature-line { border-top: 1px dotted #64748b; margin: 0 auto; width: 120px; margin-top: 40px; }
@@ -405,14 +406,9 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       return;
     }
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    
     const html = generateCartHTML(data);
     if (!html) return;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.print();
+    printHTML(html);
   }, [cart, lastPrintedCart, generateCartHTML]);
 
   const previewCart = useCallback(() => {
@@ -441,60 +437,12 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     }
 
     const html = generateCartHTML(data);
-
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    container.style.position = 'fixed';
-    container.style.top = '-10000px';
-    container.style.left = '0';
-    // Use the actual slip width (320px) to match the HTML design
-    container.style.width = '320px';
-    container.style.color = '#000000';
-    container.style.filter = 'none';
-    container.style.webkitFilter = 'none';
-    container.style.background = '#ffffff';
-    document.body.appendChild(container);
-
-    await new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), 100);
-    });
-
-    // Use scale 1 for exact 1:1 pixel mapping to avoid size calculation issues
-    const canvas = await html2canvas(container, { 
-      scale: 1, // Use scale 1 for exact pixel dimensions (320px = 320px canvas)
-      useCORS: true,
-      backgroundColor: '#ffffff'
-    });
-    document.body.removeChild(container);
-
-    // Slip width is 320px, convert to mm to match exactly
-    // At 96 DPI (standard screen): 1px = 25.4/96 mm = 0.264583mm
-    // 320px = 320 * 0.264583 = 84.67mm
-    // With scale: 1, canvas.width = 320px exactly
-    const slipWidthPx = 320; // Actual slip width in pixels
-    const pdfWidthMm = slipWidthPx * (25.4 / 96); // Convert 320px to mm (≈84.67mm)
-    
-    // Calculate PDF height based on canvas dimensions (1:1 with slip)
-    // canvas.width = 320px, canvas.height = actual content height
-    const pdfHeightMm = (canvas.height / canvas.width) * pdfWidthMm;
-    
-    // Create custom-sized PDF (portrait orientation) matching slip size exactly
-    const doc = new jsPDF({
-      orientation: 'p',
-      unit: 'mm',
-      format: [pdfWidthMm, pdfHeightMm]
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    // Add image at exact slip size (320px = 84.67mm)
-    doc.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
-
-    // Generate filename with PurchaseNo if available
     const dateStr = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
     const fileName = lastPurchaseNo 
       ? `รายการรับซื้อ_${lastPurchaseNo}_${dateStr}.pdf`
       : `รายการรับซื้อ_${dateStr}.pdf`;
-    doc.save(fileName);
+
+    await generatePDFFromHTML(html, fileName);
   }, [cart, lastPrintedCart, lastPurchaseNo, generateCartHTML]);
 
   // Calculate total amount
