@@ -7,7 +7,6 @@ import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-// import useArrowFocusNavigation, { FOCUSABLE_SELECTORS, isFocusable } from '@/hooks/useArrowFocusNavigation';
 import appIcon from '../../electron/icon.png';
 
 interface NavigationItem {

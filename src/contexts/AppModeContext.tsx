@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { AppConfig, DEFAULT_SERVER_CONFIG, CONFIG_KEYS } from '@/lib/config';
 
 interface AppModeContextType {
@@ -33,11 +33,14 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
       const savedServerPort = localStorage.getItem(CONFIG_KEYS.SERVER_PORT);
       const savedClientPort = localStorage.getItem(CONFIG_KEYS.CLIENT_PORT);
 
+      const serverPort = savedServerPort ? parseInt(savedServerPort, 10) : DEFAULT_SERVER_CONFIG.port;
+      const clientPort = savedClientPort ? parseInt(savedClientPort, 10) : 3000;
+
       setConfig({
         mode: savedMode as 'server' | 'client',
         serverUrl: savedServerUrl || undefined,
-        serverPort: savedServerPort ? parseInt(savedServerPort) : DEFAULT_SERVER_CONFIG.port,
-        clientPort: savedClientPort ? parseInt(savedClientPort) : 3000,
+        serverPort: isNaN(serverPort) ? DEFAULT_SERVER_CONFIG.port : serverPort,
+        clientPort: isNaN(clientPort) ? 3000 : clientPort,
       });
     } catch (error) {
       console.error('Error loading config:', error);

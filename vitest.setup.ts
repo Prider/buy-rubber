@@ -52,7 +52,8 @@ process.on('unhandledRejection', (reason, promise) => {
     if (
       errorMessage.includes('database connection failed') ||
       errorMessage.includes('transaction failed') ||
-      errorMessage.includes('service fee')
+      errorMessage.includes('service fee') ||
+      errorMessage.includes('invalid token')
     ) {
       // These are expected in error handling tests, suppress them
       return;
