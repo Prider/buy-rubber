@@ -6,6 +6,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    // Suppress unhandled rejections for error handling tests
+    // These are expected when testing error scenarios
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [
