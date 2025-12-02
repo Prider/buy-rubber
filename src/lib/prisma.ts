@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import path from 'path';
 // Import type only; does not load runtime
 import type { PrismaClient as PrismaClientType } from '@prisma/client';

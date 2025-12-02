@@ -35,7 +35,6 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
   const [selectedQuickFilter, setSelectedQuickFilter] = useState<number | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  // const [isDownloading, setIsDownloading] = useState(false);
 
   const { loading, purchases, summary, totalPages } = useMemberPurchaseHistory({
     memberId: member?.id,
@@ -71,36 +70,6 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
 
   const hasPurchases = purchases.length > 0;
 
-    // const fetchAllFilteredPurchases = async () => {
-  //    if (!member?.id) {
-  //      return [];
-  //    }
- 
-  //   const params = new URLSearchParams({
-  //     fetchAll: 'true',
-  //   });
-  //   if (startDate) params.append('startDate', startDate);
-  //   if (endDate) params.append('endDate', endDate);
-
-  //   const { data } = await axios.get(`/api/members/${member.id}/purchases?${params}`);
-  //   const collected = data.purchases || [];
-
-  //   return collected.sort((a: any, b: any) => {
-  //     const dateA = new Date(a?.date ?? 0).getTime();
-  //     const dateB = new Date(b?.date ?? 0).getTime();
-  //     return dateB - dateA;
-  //   });
-  // };
-
-  // const handleDownload = async () => {
-  //   try {
-  //     setIsDownloading(true);
-  //     const allPurchases = await fetchAllFilteredPurchases();
-  //     await downloadMemberHistoryPDF(allPurchases, member);
-  //   } finally {
-  //     setIsDownloading(false);
-  //   }
-  // };
 
   const summaryCards = useMemo(
     () =>
