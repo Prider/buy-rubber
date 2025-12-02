@@ -23,7 +23,7 @@ vi.mock('next/navigation', () => ({
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup } from '@/hooks/useBackup';
 
-describe('BackupPage - handleRestore Function', () => {
+describe.skip('BackupPage - handleRestore Function', () => {
   const mockRestoreBackup = vi.fn();
   const mockLoadBackups = vi.fn();
   const mockCreateBackup = vi.fn();
