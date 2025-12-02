@@ -60,19 +60,6 @@ export function calculateDryWeight(netWeight: number, rubberPercent: number): nu
   return (netWeight * rubberPercent) / 100;
 }
 
-// คำนวณราคาตาม %ยาง
-export function calculateAdjustedPrice(
-  basePrice: number,
-  rubberPercent: number,
-  priceRules: { minPercent: number; maxPercent: number; adjustment: number }[]
-): number {
-  const rule = priceRules.find(
-    (r) => rubberPercent >= r.minPercent && rubberPercent <= r.maxPercent
-  );
-  
-  return basePrice + (rule?.adjustment || 0);
-}
-
 // คำนวณการแบ่งเงินเจ้าของสวนและคนตัด
 export function calculateSplit(
   totalAmount: number,

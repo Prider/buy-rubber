@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { 
   calculateDryWeight, 
-  calculateAdjustedPrice, 
   calculateSplit,
   generateDocumentNumber
 } from '@/lib/utils';
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Check if this is a batch request (array of purchases)
-    if (Array.isArray(data.items) && data.items.length > 0) {
+    if (Array.isArray(data.items)) {
       return handleBatchPurchase(data);
     }
 
@@ -384,7 +383,7 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       }
 
       // Calculate prices
-      let adjustedPrice = basePrice;
+      const adjustedPrice = basePrice;
       const finalPrice = adjustedPrice + (item.bonusPrice || 0);
       const totalAmount = netWeight * finalPrice;
 

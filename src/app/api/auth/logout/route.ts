@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
-export async function POST(request: NextRequest) {
+export async function POST(_: NextRequest) {
   try {
     logger.info('POST /api/auth/logout - User logged out');
     
