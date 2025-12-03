@@ -37,10 +37,21 @@ export function transactionToCartItems(transaction: PurchaseTransaction): CartIt
 }
 
 /**
- * Generate HTML for slip/receipt
+ * Generate HTML for slip/receipt from cart items
+ * This is the shared function used by both generateSlipHTML and generateCartHTML
  */
-export function generateSlipHTML(transaction: PurchaseTransaction): string {
-  const items = transactionToCartItems(transaction);
+export function generateSlipHTMLFromItems(
+  items: CartItem[],
+  options?: {
+    purchaseNo?: string;
+    memberName?: string;
+    memberCode?: string;
+  }
+): string {
+  if (items.length === 0) {
+    return '';
+  }
+
   const total = items.reduce((sum, item) => sum + item.totalAmount, 0);
   const printDate = new Date().toLocaleString('th-TH', {
     year: 'numeric',
@@ -50,8 +61,12 @@ export function generateSlipHTML(transaction: PurchaseTransaction): string {
     minute: '2-digit',
   });
 
-  const memberName = transaction.member.name;
-  const memberCode = transaction.member.code;
+  // Get purchase number - use provided or generate from timestamp
+  const purchaseNo = options?.purchaseNo || String(Date.now());
+
+  // Get member info - use provided or find from first item
+  const memberName = options?.memberName || items.find(item => item.memberName && item.memberCode)?.memberName || '';
+  const memberCode = options?.memberCode || items.find(item => item.memberName && item.memberCode)?.memberCode || '';
 
   return `
     <html>
@@ -65,7 +80,7 @@ export function generateSlipHTML(transaction: PurchaseTransaction): string {
           * { box-sizing: border-box; }
           html { background: #ffffff !important; margin: 0; padding: 0; }
           body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 0; padding: 0; background: #ffffff !important; width: 100%; height: 100%; }
-          .slip { width: 320px; margin: 16px 16px; background: #ffffff !important; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08);}
+          .slip { width: 320px; margin: 16px 16px; background: #ffffff !important; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
           .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
           .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
           .store p { margin: 4px 0; font-size: 13px; color: #475569; }
@@ -92,7 +107,7 @@ export function generateSlipHTML(transaction: PurchaseTransaction): string {
             <p>171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ</p>
           </div>
           <div class="meta">
-            เลขที่: ${transaction.purchaseNo}<br/>
+            เลขที่: ${purchaseNo}<br/>
             ${memberName ? `สมาชิก: ${memberName}<br/>` : ''}
             ${memberCode ? `รหัสสมาชิก: ${memberCode}<br/>` : ''}
             วันที่พิมพ์: ${printDate}
@@ -146,6 +161,18 @@ export function generateSlipHTML(transaction: PurchaseTransaction): string {
       </body>
     </html>
   `;
+}
+
+/**
+ * Generate HTML for slip/receipt from a purchase transaction
+ */
+export function generateSlipHTML(transaction: PurchaseTransaction): string {
+  const items = transactionToCartItems(transaction);
+  return generateSlipHTMLFromItems(items, {
+    purchaseNo: transaction.purchaseNo,
+    memberName: transaction.member.name,
+    memberCode: transaction.member.code,
+  });
 }
 
 
