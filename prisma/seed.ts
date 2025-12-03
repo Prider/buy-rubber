@@ -56,8 +56,8 @@ async function main() {
 
   const adminTwo = await prisma.user.create({
     data: {
-      username: 'Mayrin',
-      password: simpleHash('Mayrin123'),
+      username: 'mayrin',
+      password: simpleHash('mayrin123'),
       role: 'admin',
       isActive: true,
     },

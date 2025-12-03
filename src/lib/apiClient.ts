@@ -53,11 +53,27 @@ class ApiClient {
   }
 
   private getBaseURL(): string {
+    // Client mode - connect to external server
     if (this.config.mode === 'client' && this.config.serverUrl) {
       return this.config.serverUrl;
     }
     
-    // Server mode - use local API
+    // Server mode - determine if we should use localhost or relative URLs
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
+      
+      // If running locally, use localhost with port
+      if (isLocalhost) {
+        return `http://localhost:${this.config.clientPort || 3000}`;
+      }
+      
+      // If deployed (Vercel, etc.), use relative URLs (same origin)
+      // Empty string means axios will use the current origin
+      return '';
+    }
+    
+    // Server-side rendering - default to localhost
     return `http://localhost:${this.config.clientPort || 3000}`;
   }
 
