@@ -1,13 +1,11 @@
 'use client';
 
 import { ReactNode, useRef, useState, useEffect } from 'react';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import appIcon from '../../electron/icon.png';
 
 interface NavigationItem {
   name: string;
@@ -85,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 overflow-hidden shadow-sm">
+              <div className="w-10 h-10 overflow-hidden">
                 {/* <Image
                   src={appIcon}
                   alt="Punsook Innotech logo"
@@ -102,7 +100,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div>
                 <h1 className="text-lg font-extrabold tracking-tight">
-                  <span className="text-gray-700 dark:text-gray-300 ml-1.5">Punsook Innotech</span>
+                  <span className="text-gray-700 dark:text-white ml-1.5">Punsook Innotech</span>
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5 tracking-wide">
                   <span className="inline-flex items-center gap-1">

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   transactionToCartItems,
   generateSlipHTMLFromItems,
@@ -315,7 +315,6 @@ describe('slipGenerator', () => {
       ];
 
       const result = generateSlipHTMLFromItems(items);
-      const total = 5000 + 3000 - 100; // 7900
 
       expect(result).toContain('7,900');
     });

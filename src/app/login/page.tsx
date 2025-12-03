@@ -56,7 +56,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="px-8 py-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 overflow-hidden shadow-lg">
+                <div className="w-12 h-12 overflow-hidden">
                   <div className="flex items-end justify-center gap-1.5 h-12">
                     <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
                     <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />
