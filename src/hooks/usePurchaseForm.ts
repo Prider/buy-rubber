@@ -39,7 +39,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     memberId: '',
     productTypeId: '',
     grossWeight: '',
-    containerWeight: '',
+    containerWeight: '0',
     netWeight: '',
     pricePerUnit: '',
     bonusPrice: '',
@@ -203,13 +203,21 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     } 
     // Calculate net weight when gross weight or container weight changes
     else if (name === 'grossWeight' || name === 'containerWeight') {
+      // Block negative values for containerWeight
+      if (name === 'containerWeight') {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && numValue < 0) {
+          return; // Don't update if negative
+        }
+      }
+      
       setFormData(prev => {
         const newData = { ...prev, [name]: value };
         const grossWeight = parseFloat(newData.grossWeight) || 0;
         const containerWeight = parseFloat(newData.containerWeight) || 0;
         
-        // Validate that container weight is less than gross weight
-        if (grossWeight > 0 && containerWeight > 0 && containerWeight >= grossWeight) {
+        // Validate that container weight is less than gross weight (allow 0)
+        if (grossWeight > 0 && containerWeight >= 0 && containerWeight >= grossWeight) {
           setError('น้ำหนักภาชนะต้องน้อยกว่าน้ำหนักรวมภาชนะ');
         } else {
           // Clear error if validation passes (only if it was a weight validation error)
@@ -250,13 +258,17 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const isFormValid = useCallback(() => {
     const grossWeight = parseFloat(formData.grossWeight) || 0;
     const containerWeight = parseFloat(formData.containerWeight) || 0;
-    const isWeightValid = grossWeight > 0 && containerWeight > 0 && containerWeight < grossWeight;
+    // Allow containerWeight to be 0, but it must be less than grossWeight when both are set
+    const isWeightValid = grossWeight > 0 && containerWeight >= 0 && containerWeight < grossWeight;
+    
+    // Check that containerWeight is provided (including '0' as a valid value)
+    const hasContainerWeight = formData.containerWeight !== '' && !isNaN(parseFloat(formData.containerWeight));
     
     return !!(
       formData.memberId && 
       formData.productTypeId && 
       formData.grossWeight && 
-      formData.containerWeight && 
+      hasContainerWeight && 
       formData.netWeight && 
       formData.pricePerUnit &&
       isWeightValid &&
@@ -279,7 +291,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       memberId: prev.memberId, // Keep member selection
       productTypeId: '',
       grossWeight: '',
-      containerWeight: '',
+      containerWeight: '0',
       netWeight: '',
       pricePerUnit: '',
       bonusPrice: '',
@@ -301,7 +313,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       memberId: '',
       productTypeId: '',
       grossWeight: '',
-      containerWeight: '',
+      containerWeight: '0',
       netWeight: '',
       pricePerUnit: '',
       bonusPrice: '',
