@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -13,6 +13,7 @@ import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 export default function AdminSettingsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isElectron, setIsElectron] = useState(false);
   
   // Admin settings hook
   const {
@@ -34,14 +35,27 @@ export default function AdminSettingsPage() {
     copyToClipboard,
   } = useAdminSettings();
 
-  // Redirect if not authenticated
+  // Check if running in Electron
+  useEffect(() => {
+    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
+  }, []);
+
+  // Redirect if not authenticated or not in Electron
   useEffect(() => {
     if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, router]);
+    if (!isElectron) {
+      router.push('/dashboard');
+      return;
+    }
+  }, [user, router, isElectron]);
 
   if (!user) {
+    return null;
+  }
+  if (!isElectron) {
     return null;
   }
 

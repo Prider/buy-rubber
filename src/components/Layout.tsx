@@ -14,6 +14,7 @@ interface NavigationItem {
   href: string;
   icon: string;
   adminOnly?: boolean;
+  electronOnly?: boolean;
 }
 
 const NAV_ITEMS: NavigationItem[] = [
@@ -24,8 +25,8 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'ตั้งประเภทสินค้า', href: '/prices', icon: '📦' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
-  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true },
-  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
+  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
+  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true, electronOnly: true },
 ];
 
 interface LayoutProps {
@@ -60,10 +61,15 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navigation = NAV_ITEMS.filter((item) => {
-    if (!item.adminOnly) {
-      return true;
+    // Check if item is Electron-only and we're not in Electron
+    if (item.electronOnly && !isElectron) {
+      return false;
     }
-    return user?.role === 'admin';
+    // Check if item is admin-only and user is not admin
+    if (item.adminOnly && user?.role !== 'admin') {
+      return false;
+    }
+    return true;
   });
 
   return (

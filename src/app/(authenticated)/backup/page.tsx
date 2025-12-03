@@ -14,6 +14,7 @@ import { BackupList } from './components/BackupList';
 export default function BackupPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isElectron, setIsElectron] = useState(false);
   const {
     loading,
     error,
@@ -35,13 +36,22 @@ export default function BackupPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Redirect if not admin
+  // Check if running in Electron
+  useEffect(() => {
+    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
+  }, []);
+
+  // Redirect if not admin or not in Electron
   useEffect(() => {
     if (user && user.role !== 'admin') {
       router.push('/dashboard');
       return;
     }
-  }, [user, router]);
+    if (!isElectron) {
+      router.push('/dashboard');
+      return;
+    }
+  }, [user, router, isElectron]);
 
   // Refresh backups list
   const refreshBackups = useCallback(async () => {
@@ -124,8 +134,11 @@ export default function BackupPage() {
     }
   };
 
-  // Don't render if not admin
+  // Don't render if not admin or not in Electron
   if (user && user.role !== 'admin') {
+    return null;
+  }
+  if (!isElectron) {
     return null;
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { GamerLoader } from '@/components/GamerLoader';
 import { usePurchaseTransactions } from '@/hooks/usePurchaseTransactions';
 import { useTransactionActions } from './hooks/useTransactionActions';
@@ -8,7 +8,11 @@ import { TransactionTable } from './TransactionTable';
 import { PurchasesListPagination } from './PurchasesListPagination';
 import { useDebounce } from '@/hooks/useDebounce';
 
-export const PurchasesList = () => {
+export interface PurchasesListRef {
+  refresh: () => void;
+}
+
+export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -21,7 +25,6 @@ export const PurchasesList = () => {
     currentPage,
     setCurrentPage,
     loadTransactions,
-    refresh,
   } = usePurchaseTransactions(1);
 
   const {
@@ -29,7 +32,18 @@ export const PurchasesList = () => {
     handlePrint,
     handleDownloadPDF,
     handleDelete,
-  } = useTransactionActions({ onRefresh: () => refresh() });
+  } = useTransactionActions({ 
+    onRefresh: async () => {
+      await loadTransactions(currentPage, debouncedSearchTerm || undefined);
+    }
+  });
+
+  // Expose refresh function to parent
+  useImperativeHandle(ref, () => ({
+    refresh: () => {
+      loadTransactions(currentPage, debouncedSearchTerm || undefined);
+    },
+  }), [currentPage, debouncedSearchTerm, loadTransactions]);
 
   // Reset to page 1 when search term changes
   useEffect(() => {
@@ -94,12 +108,6 @@ export const PurchasesList = () => {
                   </span>
                 )}
               </div>
-              <button
-                onClick={refresh}
-                className="px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-              >
-                รีเฟรช
-              </button>
             </div>
           </div>
         </div>
@@ -122,4 +130,6 @@ export const PurchasesList = () => {
       />
     </div>
   );
-};
+});
+
+PurchasesList.displayName = 'PurchasesList';
