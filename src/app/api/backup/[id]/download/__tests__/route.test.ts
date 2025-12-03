@@ -161,7 +161,7 @@ describe('GET /api/backup/[id]/download', () => {
 
       const request = new NextRequest('http://localhost:3000/api/backup/special-id-123/download');
       const response = await GET(request, { params: { id: 'special-id-123' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(404);
       expect(vi.mocked(prisma.backup.findUnique)).toHaveBeenCalledWith({

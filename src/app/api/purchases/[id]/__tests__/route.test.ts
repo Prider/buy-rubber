@@ -178,7 +178,7 @@ describe('DELETE /api/purchases/[id]', () => {
 
       const request = new NextRequest('http://localhost:3000/api/purchases/special-id-123');
       const response = await DELETE(request, { params: { id: 'special-id-123' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(404);
       expect(vi.mocked(prisma.purchase.findUnique)).toHaveBeenCalledWith({

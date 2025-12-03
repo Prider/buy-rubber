@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Check if we're in server environment
 const isServer = typeof window === 'undefined';
 

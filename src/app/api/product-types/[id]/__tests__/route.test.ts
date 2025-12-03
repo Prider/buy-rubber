@@ -92,7 +92,7 @@ describe('PUT /api/product-types/[id]', () => {
       });
 
       const response = await PUT(request, { params: { id: 'product-1' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(200);
       expect(vi.mocked(prisma.productType.update)).toHaveBeenCalledWith({
@@ -179,7 +179,7 @@ describe('PUT /api/product-types/[id]', () => {
       });
 
       const response = await PUT(request, { params: { id: '' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(500);
       expect(vi.mocked(prisma.productType.update)).toHaveBeenCalledWith({
@@ -200,7 +200,7 @@ describe('PUT /api/product-types/[id]', () => {
       });
 
       const response = await PUT(request, { params: { id: uuidId } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(200);
       expect(vi.mocked(prisma.productType.update)).toHaveBeenCalledWith({
@@ -286,7 +286,7 @@ describe('DELETE /api/product-types/[id]', () => {
 
       const request = new NextRequest('http://localhost:3000/api/product-types/');
       const response = await DELETE(request, { params: { id: '' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(500);
       expect(vi.mocked(prisma.productType.delete)).toHaveBeenCalledWith({

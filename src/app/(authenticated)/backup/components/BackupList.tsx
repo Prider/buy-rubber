@@ -61,7 +61,7 @@ export function BackupList({
             ยังไม่มีไฟล์สำรองข้อมูล
           </p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            คลิกปุ่ม "สำรองข้อมูลตอนนี้" เพื่อสร้างไฟล์สำรองแรก
+            คลิกปุ่ม &quot;สำรองข้อมูลตอนนี้&quot; เพื่อสร้างไฟล์สำรองแรก
           </p>
         </div>
       </div>

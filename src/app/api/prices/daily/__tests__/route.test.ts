@@ -83,7 +83,7 @@ describe('GET /api/prices/daily', () => {
 
       const request = new NextRequest('http://localhost:3000/api/prices/daily?date=2024-01-15');
       const response = await GET(request);
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(200);
       expect(vi.mocked(prisma.productPrice.findMany)).toHaveBeenCalled();

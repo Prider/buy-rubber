@@ -503,7 +503,7 @@ describe('DELETE /api/users/[id]', () => {
         },
       });
       const response = await DELETE(request, { params: { id: '' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(404);
       expect(vi.mocked(userStore.deleteUser)).toHaveBeenCalledWith('');

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Application configuration and mode management
 export interface AppConfig {
   mode: 'server' | 'client';

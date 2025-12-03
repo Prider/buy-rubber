@@ -136,7 +136,7 @@ describe('POST /api/backup', () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('auto');
@@ -164,7 +164,7 @@ describe('POST /api/backup', () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual');
@@ -192,7 +192,7 @@ describe('POST /api/backup', () => {
     });
 
     const response = await POST(request);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual');

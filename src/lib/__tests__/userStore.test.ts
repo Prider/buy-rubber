@@ -17,8 +17,8 @@ vi.mock('../prisma', () => ({
 }));
 
 // Mock console methods
-const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+vi.spyOn(console, 'log').mockImplementation(() => {});
+vi.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('userStore', () => {
   beforeEach(() => {

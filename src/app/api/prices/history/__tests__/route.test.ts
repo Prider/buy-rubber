@@ -75,7 +75,7 @@ describe('GET /api/prices/history', () => {
 
       const request = new NextRequest('http://localhost:3000/api/prices/history?days=30');
       const response = await GET(request);
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(200);
       expect(vi.mocked(prisma.productPrice.findMany)).toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('GET /api/prices/history', () => {
       // The route will try to use NaN in date calculation which may cause an error
       const request = new NextRequest('http://localhost:3000/api/prices/history?days=abc');
       const response = await GET(request);
-      const data = await response.json();
+      await response.json();
 
       // The route may fail or handle it differently
       // Let's just verify it doesn't crash

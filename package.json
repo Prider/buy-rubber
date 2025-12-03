@@ -22,7 +22,7 @@
     "electron:build:all": "npm run prepare:build && next build && npx prisma generate && electron-builder --win --mac",
     "setup:local": "bash scripts/setup-local-db.sh",
     "setup:postgres": "bash scripts/setup-postgres-db.sh",
-    "lint": "next lint",
+    "lint": "next lint --quiet",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",

@@ -115,7 +115,7 @@ describe('DELETE /api/expenses/[id]', () => {
 
       const request = new NextRequest('http://localhost:3000/api/expenses/special-id-123');
       const response = await DELETE(request, { params: { id: 'special-id-123' } });
-      const data = await response.json();
+      await response.json();
 
       expect(response.status).toBe(500);
       expect(vi.mocked(prisma.expense.delete)).toHaveBeenCalledWith({
