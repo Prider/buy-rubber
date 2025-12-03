@@ -53,6 +53,16 @@ async function main() {
       isActive: true,
     },
   });
+
+  const adminTwo = await prisma.user.create({
+    data: {
+      username: 'Mayrin',
+      password: simpleHash('Mayrin123'),
+      role: 'admin',
+      isActive: true,
+    },
+  });
+  
   
   const user = await prisma.user.create({
     data: {
@@ -74,6 +84,7 @@ async function main() {
   
   console.log('✅ สร้างผู้ใช้งาน:');
   console.log('   - Admin:', admin.username, '(Full access)');
+  console.log('   - Admin Two:', adminTwo.username, '(Full access)');
   console.log('   - User:', user.username, '(Edit access)');
   console.log('   - Viewer:', viewer.username, '(Read-only)');
 
