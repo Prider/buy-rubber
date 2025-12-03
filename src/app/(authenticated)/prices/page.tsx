@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePriceData } from '@/hooks/usePriceData';
+import GamerLoader from '@/components/GamerLoader';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
 import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
 import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
@@ -31,6 +34,8 @@ interface ProductPrice {
 }
 
 export default function PricesPage() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const { loading, productTypes, loadData, getPriceForDateAndType } = usePriceData();
   
   const [showForm, setShowForm] = useState(false);
@@ -196,6 +201,27 @@ export default function PricesPage() {
   const handleProductTypeFormChange = (field: string, value: string) => {
     setProductTypeForm(prev => ({ ...prev, [field]: value }));
   };
+
+  // Check authentication
+  useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (isLoading) {
+      return;
+    }
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, isLoading, router]);
+
+  // Show loader while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังโหลด..." />
+      </div>
+    );
+  }
 
   return (
     <>

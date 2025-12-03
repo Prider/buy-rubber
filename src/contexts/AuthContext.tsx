@@ -12,22 +12,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check for existing session on mount
     const token = localStorage.getItem('auth_token');
-    if (token) {
+    const savedUser = localStorage.getItem('auth_user');
+    
+    if (token && savedUser) {
       try {
-        const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-        // In a real app, you would verify the token with the server
-        // For now, we'll trust the token
+        // Try to restore user from saved data first (more reliable)
+        const user = JSON.parse(savedUser);
+        setUser(user);
+      } catch (error) {
+        console.error('Invalid saved user data:', error);
+        // Fallback: try to decode from token
+        try {
+          // Use browser-compatible base64 decoding
+          const decoded = JSON.parse(atob(token));
+          setUser({
+            id: decoded.userId,
+            username: decoded.username || 'Unknown',
+            role: decoded.role,
+            createdAt: new Date(decoded.createdAt || Date.now()),
+            updatedAt: new Date(decoded.updatedAt || Date.now()),
+            isActive: decoded.isActive !== undefined ? decoded.isActive : true
+          });
+        } catch (tokenError) {
+          console.error('Invalid token:', tokenError);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+        }
+      }
+    } else if (token) {
+      // Only token exists, try to decode it
+      try {
+        const decoded = JSON.parse(atob(token));
         setUser({
           id: decoded.userId,
           username: decoded.username || 'Unknown',
           role: decoded.role,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isActive: true
+          createdAt: new Date(decoded.createdAt || Date.now()),
+          updatedAt: new Date(decoded.updatedAt || Date.now()),
+          isActive: decoded.isActive !== undefined ? decoded.isActive : true
         });
       } catch (error) {
         console.error('Invalid token:', error);
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
       }
     }
     setIsLoading(false);
@@ -48,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.user && data.token) {
         setUser(data.user);
         localStorage.setItem('auth_token', data.token);
+        // Also save user data for easier restoration on reload
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
         return true;
       } else {
         console.error('Login failed:', data.message);
@@ -69,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
     }
   };
 

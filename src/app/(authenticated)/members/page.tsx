@@ -9,6 +9,7 @@ import { useMemberForm } from '@/hooks/useMemberForm';
 import { useDebounce } from '@/hooks/useDebounce';
 import { MemberFormData } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
+import GamerLoader from '@/components/GamerLoader';
 
 const MemberForm = dynamic(
   () => import('@/components/members/MemberForm').then((mod) => mod.MemberForm),
@@ -34,7 +35,7 @@ const MemberServiceFeeModal = dynamic(
 export default function MembersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,12 +81,16 @@ export default function MembersPage() {
 
   // Load members when page or debounced search changes
   useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (isLoading) {
+      return;
+    }
     if (!user) {
       router.push('/login');
       return;
     }
     loadMembers(currentPage, debouncedSearchTerm);
-  }, [user, router, currentPage, debouncedSearchTerm, loadMembers]);
+  }, [user, isLoading, router, currentPage, debouncedSearchTerm, loadMembers]);
 
   // Reset to page 1 when search term changes
   useEffect(() => {
@@ -179,6 +184,15 @@ export default function MembersPage() {
     setServiceFeeModalOpen(false);
     setSelectedMemberForServiceFees(null);
   };
+
+  // Show loader while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังโหลด..." />
+      </div>
+    );
+  }
 
   return (
     <>

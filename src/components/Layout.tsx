@@ -36,7 +36,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isElectron, setIsElectron] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -47,13 +47,13 @@ export default function Layout({ children }: LayoutProps) {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
   }, []);
 
-  // Redirect to login if username is Unknown
+  // Redirect to login if username is Unknown (but only after auth has finished loading)
   useEffect(() => {
-    if (user?.username === 'Unknown') {
+    if (!isLoading && user?.username === 'Unknown') {
       console.log('Unknown user detected, redirecting to login');
       router.push('/login');
     }
-  }, [user?.username, router]);
+  }, [user?.username, router, isLoading]);
 
   const handleLogout = async () => {
     await logout();

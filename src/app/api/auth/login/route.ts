@@ -74,7 +74,12 @@ export async function POST(request: NextRequest) {
 
     // In a real application, you would generate a JWT token here
     // For now, we'll use a simple session approach
-    const token = Buffer.from(JSON.stringify({ userId: user.id, role: user.role })).toString('base64');
+    // Include username in token for better client-side restoration
+    const token = Buffer.from(JSON.stringify({ 
+      userId: user.id, 
+      username: user.username,
+      role: user.role 
+    })).toString('base64');
 
     logger.info('Token generated successfully', { userId: user.id });
 

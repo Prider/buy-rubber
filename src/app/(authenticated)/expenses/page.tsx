@@ -6,19 +6,24 @@ import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import GamerLoader from '@/components/GamerLoader';
 
 export default function ExpensesPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const { expenses, summary, loading, loadExpenses, createExpense, deleteExpense, pagination, changePage } = useExpenses();
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (isLoading) {
+      return;
+    }
     if (!user) {
       router.push('/login');
       return;
     }
     loadExpenses();
-  }, [user, router, loadExpenses]);
+  }, [user, isLoading, router, loadExpenses]);
 
   const handleAddExpense = async (expenseData: any) => {
     await createExpense(expenseData);
@@ -34,6 +39,15 @@ export default function ExpensesPage() {
   const handlePageChange = (pageNumber: number) => {
     changePage(pageNumber);
   };
+
+  // Show loader while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังโหลด..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">

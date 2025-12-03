@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { useReportData } from '@/hooks/useReportData';
+import GamerLoader from '@/components/GamerLoader';
 import {
   generatePrintPreviewHTML,
   generateDailyPurchaseTableHTML,
@@ -20,6 +22,7 @@ import { PaginationControls } from '@/components/members/history/PaginationContr
 
 export default function ReportsPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [tablePage, setTablePage] = useState(1);
   const PAGE_SIZE = 15;
   const {
@@ -39,12 +42,15 @@ export default function ReportsPage() {
   } = useReportData();
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
+    // Wait for auth to finish loading before checking user
+    if (isLoading) {
+      return;
+    }
+    if (!user) {
       router.push('/login');
       return;
     }
-  }, [router]);
+  }, [user, isLoading, router]);
 
   const totalPages = useMemo(() => {
     if (!data || data.length === 0) {
@@ -129,6 +135,15 @@ export default function ReportsPage() {
       setTablePage(totalPages);
     }
   }, [data, tablePage, totalPages]);
+
+  // Show loader while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังโหลด..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-8">

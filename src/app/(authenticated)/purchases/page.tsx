@@ -10,10 +10,11 @@ import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
 import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
 import { CartTable } from '@/components/purchases/CartTable';
+import GamerLoader from '@/components/GamerLoader';
 
 export default function PurchasesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [showPrintModal, setShowPrintModal] = useState(false);
   
   // Data loading hook
@@ -135,12 +136,25 @@ export default function PurchasesPage() {
 
   // Load data on mount
   useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (isLoading) {
+      return;
+    }
     if (!user) {
       router.push('/login');
       return;
     }
     loadData();
-  }, [user, router, loadData]);
+  }, [user, isLoading, router, loadData]);
+
+  // Show loader while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังโหลด..." />
+      </div>
+    );
+  }
 
   return (
     <>
