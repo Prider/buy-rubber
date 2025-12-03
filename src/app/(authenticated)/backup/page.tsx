@@ -101,7 +101,7 @@ export default function BackupPage() {
 
   // Handle download backup
   const handleDownload = (backup: Backup) => {
-    downloadBackup(backup.id, backup.fileName);
+    downloadBackup(backup.id);
   };
 
   // Handle delete backup
