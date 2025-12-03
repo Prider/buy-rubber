@@ -5,7 +5,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "prisma generate && next dev",
-    "build": "bash scripts/vercel-build.sh",
+    "build": "npm run setup:postgres && bash scripts/vercel-build.sh",
     "start": "next start",
     "vercel-build": "bash scripts/vercel-build.sh",
     "electron:dev": "concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
