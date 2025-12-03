@@ -85,19 +85,31 @@ export default function Layout({ children }: LayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm">
-                <Image
+              <div className="w-10 h-10 overflow-hidden shadow-sm">
+                {/* <Image
                   src={appIcon}
                   alt="Punsook Innotech logo"
                   className="w-full h-full object-cover"
                   priority
-                />
+                /> */}
+                <div className="flex items-end justify-center gap-1.5 h-12">
+                  <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
+                  <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />
+                  <span className="w-3 bg-sky-500 dark:bg-sky-600 rounded-sm animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_14px_rgba(14,165,233,0.75)] dark:shadow-[0_0_14px_rgba(14,165,233,0.4)]" style={{ height: '55%' }} />
+                  <span className="w-3 bg-emerald-500 dark:bg-emerald-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.45s] shadow-[0_0_14px_rgba(16,185,129,0.75)] dark:shadow-[0_0_14px_rgba(16,185,129,0.4)]" style={{ height: '80%' }} />
+                  <span className="w-3 bg-amber-500 dark:bg-amber-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite_0.6s] shadow-[0_0_14px_rgba(245,158,11,0.75)] dark:shadow-[0_0_14px_rgba(245,158,11,0.4)]" style={{ height: '50%' }} />
+                </div>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  Punsook Innotech
+                <h1 className="text-lg font-extrabold tracking-tight">
+                  <span className="text-gray-700 dark:text-gray-300 ml-1.5">Punsook Innotech</span>
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5 tracking-wide">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    v1.0.0
+                  </span>
+                </p>
               </div>
             </div>
             <button

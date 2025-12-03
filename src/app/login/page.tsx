@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
-import appIcon from '../../../electron/icon.png';
 
 interface LoginPageProps {
   onLogin?: () => void;
@@ -57,18 +56,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="px-8 py-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg">
-                  <img
-                    src={appIcon.src}
-                    alt="Punsook Innotech logo"
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="sync"
-                  />
+                <div className="w-12 h-12 overflow-hidden shadow-lg">
+                  <div className="flex items-end justify-center gap-1.5 h-12">
+                    <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
+                    <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />
+                    <span className="w-3 bg-sky-500 dark:bg-sky-600 rounded-sm animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_14px_rgba(14,165,233,0.75)] dark:shadow-[0_0_14px_rgba(14,165,233,0.4)]" style={{ height: '55%' }} />
+                    <span className="w-3 bg-emerald-500 dark:bg-emerald-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.45s] shadow-[0_0_14px_rgba(16,185,129,0.75)] dark:shadow-[0_0_14px_rgba(16,185,129,0.4)]" style={{ height: '80%' }} />
+                    <span className="w-3 bg-amber-500 dark:bg-amber-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite_0.6s] shadow-[0_0_14px_rgba(245,158,11,0.75)] dark:shadow-[0_0_14px_rgba(245,158,11,0.4)]" style={{ height: '50%' }} />
+                  </div>
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Punsook Innotech</h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">ระบบบริหารจัดการรับซื้อยาง</p>
+                  <p className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent drop-shadow-sm">ระบบบริหารจัดการรับซื้อยาง</p>
                 </div>
               </div>
               <DarkModeToggle />
