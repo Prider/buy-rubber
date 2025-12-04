@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
+// Force dynamic rendering - prevent caching in Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/members/next-code
  * 
@@ -64,7 +68,12 @@ export async function GET() {
       if (!existing) {
         // Code is unique and available
         logger.debug('Generated unique member code', { code: nextCode, attempts: attempts + 1 });
-        return NextResponse.json({ code: nextCode });
+        const response = NextResponse.json({ code: nextCode });
+        // Disable caching for this endpoint - each request should generate a new code
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+        return response;
       }
       
       // Code already exists (race condition or gap scenario)
@@ -77,16 +86,20 @@ export async function GET() {
     // Step 6: Error handling - if we've tried too many times, something is wrong
     // This should never happen in normal operation, but provides safety
     logger.error('Failed to generate unique member code after max attempts', { maxAttempts });
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: 'ไม่สามารถสร้างรหัสสมาชิกใหม่ได้ กรุณาลองใหม่อีกครั้ง' },
       { status: 500 }
     );
+    errorResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    return errorResponse;
   } catch (error) {
     // Handle any unexpected errors (database connection, etc.)
     logger.error('Failed to generate next member code', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: 'ไม่สามารถสร้างรหัสสมาชิกใหม่ได้' },
       { status: 500 }
     );
+    errorResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    return errorResponse;
   }
 }
