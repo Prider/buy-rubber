@@ -127,7 +127,6 @@ punsook-innotech/
 │   │   ├── dashboard/    # หน้าแดชบอร์ด
 │   │   ├── purchases/    # ระบบรับซื้อ
 │   │   ├── members/      # จัดการสมาชิก
-│   │   ├── payments/     # ระบบจ่ายเงิน
 │   │   ├── sales/        # ระบบขาย
 │   │   ├── reports/      # รายงาน
 │   │   └── settings/     # ตั้งค่า

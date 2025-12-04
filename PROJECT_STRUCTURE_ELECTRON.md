@@ -18,7 +18,6 @@ punsook-innotech/
 │   │   ├── dashboard/             # Dashboard page
 │   │   ├── login/                 # Login page
 │   │   ├── members/               # Members management
-│   │   ├── payments/              # Payments page
 │   │   ├── purchases/             # Purchases page
 │   │   ├── reports/               # Reports page
 │   │   └── ...                    # Other pages

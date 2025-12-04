@@ -424,7 +424,6 @@ describe('Purchase Flow Integration Test', () => {
 - ✅ Cart operations (add, remove, calculate totals)
 - ✅ Price calculations (dry weight, splits, bonuses)
 - ✅ Purchase number generation
-- ✅ Payment calculations
 
 ### Priority 2: User Interactions
 - ✅ Form validations

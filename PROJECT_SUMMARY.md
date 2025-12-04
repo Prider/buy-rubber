@@ -16,7 +16,6 @@ punsook-innotech/
 │   │   │   ├── members/      # จัดการสมาชิก
 │   │   │   ├── purchases/    # รับซื้อยาง
 │   │   │   ├── prices/       # ตั้งราคา
-│   │   │   ├── payments/     # จ่ายเงิน
 │   │   │   ├── advances/     # เบิกเงินล่วงหน้า
 │   │   │   ├── dashboard/    # ข้อมูลแดชบอร์ด
 │   │   │   └── locations/    # โรงรับซื้อ
@@ -24,7 +23,6 @@ punsook-innotech/
 │   │   ├── members/           # จัดการสมาชิก
 │   │   ├── purchases/         # รับซื้อยาง
 │   │   ├── prices/            # ตั้งราคา
-│   │   ├── payments/          # จ่ายเงิน
 │   │   ├── advances/          # เบิกเงินล่วงหน้า
 │   │   ├── reports/           # รายงาน
 │   │   ├── sales/             # ขายยาง
@@ -54,13 +52,7 @@ punsook-innotech/
 - ✅ Member (สมาชิก/เจ้าของสวน)
 - ✅ ProductType (ประเภทสินค้ายาง)
 - ✅ DailyPrice (ราคาประกาศประจำวัน)
-- ✅ PriceRule (กฎการปรับราคา)
 - ✅ Purchase (การรับซื้อ)
-- ✅ Advance (เบิกเงินล่วงหน้า)
-- ✅ Payment (จ่ายชำระหนี้)
-- ✅ PaymentItem (รายการในการจ่าย)
-- ✅ Sale (การขายยาง)
-- ✅ Dividend (ปันผลสมาชิก)
 - ✅ Setting (ตั้งค่าระบบ)
 
 ### 3. Backend API Routes
@@ -69,11 +61,8 @@ punsook-innotech/
 - ✅ `/api/auth/login` - เข้าสู่ระบบ
 - ✅ `/api/members` - CRUD สมาชิก
 - ✅ `/api/purchases` - CRUD การรับซื้อ
-- ✅ `/api/prices` - CRUD ราคาประกาศ
-- ✅ `/api/payments` - CRUD การจ่ายเงิน
 - ✅ `/api/advances` - CRUD เงินล่วงหน้า
 - ✅ `/api/dashboard` - ข้อมูลแดชบอร์ด
-- ✅ `/api/locations` - ดึงข้อมูลโรงรับซื้อ
 
 ### 4. Frontend Pages
 
