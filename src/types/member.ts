@@ -37,6 +37,7 @@ export interface MemberTableProps {
   members: Member[];
   onEdit: (member: Member) => void;
   onDelete: (member: Member) => void;
+  onReactivate?: (member: Member) => void;
   onViewHistory: (member: Member) => void;
   onViewServiceFees?: (member: Member) => void;
   isLoading: boolean;
@@ -65,4 +66,5 @@ export interface UseMembersReturn {
   createMember: (data: MemberFormData) => Promise<void>;
   updateMember: (id: string, data: MemberFormData) => Promise<void>;
   deleteMember: (id: string) => Promise<DeleteMemberResponse>;
+  reactivateMember: (id: string) => Promise<void>;
 }

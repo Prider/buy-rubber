@@ -267,7 +267,7 @@ async function main() {
     },
     {
       code: 'M009',
-      name: 'นางสมศรี ใจงาม',
+      name: 'นางสมปอง สุขดี',
       phone: '0890123456',
       address: 'สวนยาง ต.จะนะ อ.จะนะ จ.สงขลา',
       ownerPercent: 100,

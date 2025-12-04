@@ -78,14 +78,32 @@ export async function POST(request: NextRequest) {
     logger.info('POST /api/members - Request', { code: data.code, name: data.name });
 
     // ตรวจสอบรหัสซ้ำ
-    const existing = await prisma.member.findUnique({
+    const existingCode = await prisma.member.findUnique({
       where: { code: data.code },
     });
 
-    if (existing) {
+    if (existingCode) {
       logger.warn('POST /api/members - Duplicate code', { code: data.code });
       return NextResponse.json(
         { error: 'รหัสสมาชิกนี้มีอยู่แล้ว' },
+        { status: 400 }
+      );
+    }
+
+    // ตรวจสอบชื่อซ้ำ (case-insensitive)
+    const existingName = await prisma.member.findFirst({
+      where: {
+        name: {
+          equals: data.name,
+          mode: 'insensitive', // Case-insensitive comparison
+        },
+      },
+    });
+
+    if (existingName) {
+      logger.warn('POST /api/members - Duplicate name', { name: data.name, existingCode: existingName.code });
+      return NextResponse.json(
+        { error: `ชื่อ "${data.name}" มีอยู่ในระบบแล้ว (รหัส: ${existingName.code})` },
         { status: 400 }
       );
     }

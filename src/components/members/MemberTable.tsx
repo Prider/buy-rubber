@@ -39,7 +39,6 @@ export const MemberTable: React.FC<MemberTableProps> = ({
               <th>รหัส</th>
               <th>ชื่อ-นามสกุล</th>
               <th>เบอร์โทร</th>
-              <th>สถานะ</th>
               <th>จัดการ</th>
             </tr>
           </thead>
@@ -83,33 +82,35 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
   const isAdmin = user?.role === 'admin';
 
   return (
-    <tr className={member.isActive === false ? 'opacity-60' : ''}>
+    <tr className={`relative transition-all duration-300 ${
+      member.isActive 
+        ? 'bg-white dark:bg-gray-800 border-l-4 border-green-500 hover:border-green-600 hover:shadow-sm' 
+        : 'bg-gray-50 dark:bg-gray-900/50 border-l-4 border-gray-400 opacity-75'
+    }`}>
       <td className="font-medium">
-        {member.code}
+        <div className="flex items-center gap-2.5">
+          {member.isActive ? (
+            <span className="relative flex-shrink-0 w-3 h-3 flex items-center justify-center overflow-visible">
+              <span className="absolute w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></span>
+              <span className="relative w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-md shadow-green-500/50"></span>
+            </span>
+          ) : (
+            <span className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0"></span>
+          )}
+          <span className={member.isActive ? '' : 'line-through text-gray-500 dark:text-gray-500'}>
+            {member.code}
+          </span>
+        </div>
       </td>
-      <td>{member.name}</td>
-      <td>{member.phone || '-'}</td>
       <td>
-        {member.isActive ? (
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105">
-            <span className="relative w-2 h-2 mr-2">
-              <span className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></span>
-              <span className="relative w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            </span>
-            <span className="relative">
-              ใช้งาน
-              <span className="absolute inset-0 bg-green-400/20 rounded blur-sm animate-pulse"></span>
-            </span>
+        <div className="flex items-center space-x-2">
+          <span className={member.isActive ? 'font-medium' : 'line-through text-gray-500 dark:text-gray-500'}>
+            {member.name}
           </span>
-        ) : (
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-100 to-slate-100 dark:from-gray-800/60 dark:to-slate-800/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 shadow-sm transition-all duration-300">
-            <span className="relative w-2 h-2 mr-2">
-              <span className="absolute inset-0 bg-gray-400 rounded-full opacity-50"></span>
-              <span className="relative w-2 h-2 bg-gray-500 rounded-full"></span>
-            </span>
-            <span>ปิดการใช้งาน</span>
-          </span>
-        )}
+        </div>
+      </td>
+      <td className={member.isActive ? '' : 'text-gray-400 dark:text-gray-600'}>
+        {member.phone || '-'}
       </td>
       <td>
         <div className="flex items-center space-x-3">

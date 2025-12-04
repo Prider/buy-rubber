@@ -21,7 +21,6 @@ export const useMembers = (): UseMembersReturn => {
       setError(null);
       
       const params = new URLSearchParams({
-        active: 'true',
         page: page.toString(),
         limit: '30',
       });
@@ -78,6 +77,36 @@ export const useMembers = (): UseMembersReturn => {
     }
   }, [loadMembers]);
 
+  const reactivateMember = useCallback(async (id: string) => {
+    try {
+      setError(null);
+      // Get the member first to preserve all data when updating
+      const memberResponse = await axios.get(`/api/members/${id}`);
+      const member = memberResponse.data;
+      
+      // Update member with isActive = true, preserving all other fields
+      await axios.put(`/api/members/${id}`, {
+        name: member.name,
+        idCard: member.idCard,
+        phone: member.phone,
+        address: member.address,
+        bankAccount: member.bankAccount,
+        bankName: member.bankName,
+        ownerPercent: member.ownerPercent,
+        tapperPercent: member.tapperPercent,
+        tapperId: member.tapperId,
+        tapperName: member.tapperName,
+        isActive: true, // Reactivate the member
+      });
+      
+      await loadMembers(); // Refresh the list
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'ไม่สามารถเปิดการใช้งานสมาชิกได้';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, [loadMembers]);
+
   return {
     members,
     pagination,
@@ -87,5 +116,6 @@ export const useMembers = (): UseMembersReturn => {
     createMember,
     updateMember,
     deleteMember,
+    reactivateMember,
   };
 };

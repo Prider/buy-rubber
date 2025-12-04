@@ -27,7 +27,6 @@ export const useMemberForm = (members: Member[]) => {
     } catch (error) {
       console.error('Failed to fetch next member code, falling back to client-side generation.', error);
     }
-
     setFormData({
       name: '',
       code: newCode,

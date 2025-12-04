@@ -147,7 +147,14 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
 
   // Save cart to database
   const saveCartToDb = useCallback(async () => {
-    logger.debug('saveCartToDb called', { userId: user?.id, cartLength: cart.length });
+    if (!user || !user.id) {
+      const errorMsg = 'ไม่พบข้อมูลผู้ใช้ กรุณาล็อกอินใหม่';
+      logger.error('User not available in saveCartToDb', { user: user ? 'exists but no id' : 'null/undefined' });
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    logger.debug('saveCartToDb called', { userId: user.id, username: user.username, cartLength: cart.length });
     if (!user || cart.length === 0) {
       logger.debug('Early return - no user or empty cart');
       return;
