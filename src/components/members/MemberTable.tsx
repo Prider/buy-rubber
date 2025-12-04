@@ -90,12 +90,12 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       <td className="font-medium">
         <div className="flex items-center gap-2.5">
           {member.isActive ? (
-            <span className="relative flex-shrink-0 w-3 h-3 flex items-center justify-center overflow-visible">
-              <span className="absolute w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></span>
-              <span className="relative w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-md shadow-green-500/50"></span>
+            <span className="relative flex-shrink-0 w-2 h-2 flex items-center justify-center overflow-visible">
+              <span className="absolute w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></span>
+              <span className="relative w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-md shadow-green-500/50"></span>
             </span>
           ) : (
-            <span className="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0"></span>
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0"></span>
           )}
           <span className={member.isActive ? '' : 'line-through text-gray-500 dark:text-gray-500'}>
             {member.code}
