@@ -324,8 +324,15 @@ describe('POST /api/expenses', () => {
     category: 'ค่าน้ำมัน',
     amount: 500,
     description: 'Test expense',
+    userId: 'user-1',
+    userName: 'testuser',
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
+  };
+
+  const mockUser = {
+    id: 'user-1',
+    username: 'testuser',
   };
 
   beforeEach(async () => {
@@ -344,6 +351,8 @@ describe('POST /api/expenses', () => {
         method: 'POST',
         body: JSON.stringify({
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -362,6 +371,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: '   ',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -379,6 +390,8 @@ describe('POST /api/expenses', () => {
         method: 'POST',
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -397,6 +410,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 0,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -415,6 +430,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 'invalid',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -433,6 +450,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: -100,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -452,6 +471,8 @@ describe('POST /api/expenses', () => {
           category: 'ค่าน้ำมัน',
           amount: 500,
           date: 'invalid-date',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -475,6 +496,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -496,6 +519,8 @@ describe('POST /api/expenses', () => {
           category: 'ค่าน้ำมัน',
           amount: 500,
           description: 'Test expense description',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -520,6 +545,8 @@ describe('POST /api/expenses', () => {
           category: 'ค่าน้ำมัน',
           amount: 500,
           date: '2024-01-15',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -543,6 +570,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -567,6 +596,8 @@ describe('POST /api/expenses', () => {
           category: 'ค่าน้ำมัน',
           amount: 500,
           date: '2024-01-15',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -587,6 +618,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: -500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -609,6 +642,8 @@ describe('POST /api/expenses', () => {
           category: '  ค่าน้ำมัน  ',
           amount: 500,
           description: '  Test description  ',
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -633,6 +668,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -659,6 +696,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -682,6 +721,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -702,6 +743,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -724,6 +767,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -734,6 +779,8 @@ describe('POST /api/expenses', () => {
         expect.objectContaining({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         })
       );
     });
@@ -747,6 +794,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 
@@ -757,6 +806,8 @@ describe('POST /api/expenses', () => {
         expect.objectContaining({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         })
       );
     });
@@ -770,6 +821,8 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
+          userId: mockUser.id,
+          userName: mockUser.username,
         }),
       });
 

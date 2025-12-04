@@ -105,7 +105,7 @@ export default function Layout({ children }: LayoutProps) {
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5 tracking-wide">
                   <span className="inline-flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                    v1.0.0
+                    v1.1.0
                   </span>
                 </p>
               </div>

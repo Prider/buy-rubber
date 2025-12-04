@@ -3,6 +3,7 @@
 import React from 'react';
 import { Expense } from '@/hooks/useExpenses';
 import GamerLoader from '@/components/GamerLoader';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ExpenseListTableProps {
   expenses: Expense[];
@@ -23,6 +24,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
   total,
   onPageChange,
 }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'ค่าน้ำมัน':
@@ -132,9 +135,11 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
               <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                 จำนวนเงิน
               </th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                จัดการ
-              </th>
+              {isAdmin && (
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                  จัดการ
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
@@ -171,17 +176,19 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
                 <td className="px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 text-right">
                   {formatCurrency(expense.amount)}
                 </td>
-                <td className="px-4 py-3 text-center">
-                  <button
-                    onClick={() => onDelete(expense.id)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                    title="ลบ"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </td>
+                {isAdmin && (
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => onDelete(expense.id)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                      title="ลบ"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

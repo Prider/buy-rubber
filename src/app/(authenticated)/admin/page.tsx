@@ -15,6 +15,7 @@ export default function AdminSettingsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [isElectron, setIsElectron] = useState(false);
+  const [electronCheckComplete, setElectronCheckComplete] = useState(false);
   
   // Admin settings hook
   const {
@@ -38,13 +39,25 @@ export default function AdminSettingsPage() {
 
   // Check if running in Electron
   useEffect(() => {
-    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
+    const checkElectron = () => {
+      const isElectronEnv = typeof window !== 'undefined' && window.electron?.isElectron === true;
+      setIsElectron(isElectronEnv);
+      setElectronCheckComplete(true);
+    };
+    
+    // Check immediately
+    checkElectron();
+    
+    // Also check after a short delay in case electron object loads asynchronously
+    const timeout = setTimeout(checkElectron, 100);
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   // Redirect if not authenticated or not in Electron
   useEffect(() => {
-    // Wait for auth to finish loading before checking user
-    if (isLoading) {
+    // Wait for auth and Electron check to finish loading before checking
+    if (isLoading || !electronCheckComplete) {
       return;
     }
     if (!user) {
@@ -55,10 +68,10 @@ export default function AdminSettingsPage() {
       router.push('/dashboard');
       return;
     }
-  }, [user, isLoading, router, isElectron]);
+  }, [user, isLoading, router, isElectron, electronCheckComplete]);
 
-  // Show loader while auth is loading
-  if (isLoading) {
+  // Show loader while auth is loading or Electron check not complete
+  if (isLoading || !electronCheckComplete) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังโหลด..." />
