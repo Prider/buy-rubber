@@ -158,7 +158,6 @@ export async function POST(request: NextRequest) {
 
     // คำนวณราคาที่ปรับแล้ว (สำหรับตอนนี้ใช้ราคาพื้นฐาน)
     const adjustedPrice = basePrice;
-    // TODO: Add price adjustment logic based on rubber percent if needed
 
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
@@ -387,10 +386,11 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       const finalPrice = adjustedPrice + (item.bonusPrice || 0);
       const totalAmount = netWeight * finalPrice;
 
-      // Validate foreign keys
-      const [member, productType] = await Promise.all([
+      // Validate foreign keys (member, productType, and user)
+      const [member, productType, user] = await Promise.all([
         prisma.member.findUnique({ where: { id: item.memberId } }),
         prisma.productType.findUnique({ where: { id: item.productTypeId } }),
+        prisma.user.findUnique({ where: { id: userId } }),
       ]);
 
       if (!member) {
@@ -403,6 +403,13 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
       if (!productType) {
         return NextResponse.json(
           { error: 'ไม่พบข้อมูลประเภทสินค้า', details: `ProductType with id ${item.productTypeId} not found` },
+          { status: 404 }
+        );
+      }
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
           { status: 404 }
         );
       }
@@ -456,15 +463,6 @@ async function handleBatchPurchase(data: { items: any[]; userId: string; date?: 
         tapperAmount,
         notes: item.notes || null,
       });
-    }
-
-    // Validate user exists
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      return NextResponse.json(
-        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
-        { status: 404 }
-      );
     }
 
     // Save all purchases in a transaction with the same purchaseNo
