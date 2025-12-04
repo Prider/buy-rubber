@@ -3,151 +3,58 @@ import { generateMemberCode, validateMemberData } from '../memberUtils';
 import { Member } from '@/types/member';
 
 describe('generateMemberCode', () => {
-  it('should generate M001 when no members exist', () => {
-    const members: Member[] = [];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M001');
+  it('should generate a code in M### format', () => {
+    const code = generateMemberCode();
+    expect(code).toMatch(/^M\d{3}$/); // M followed by exactly 3 digits
   });
 
-  it('should generate M002 when M001 exists', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M001',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M002');
-  });
-
-  it('should generate next code based on highest number', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M001',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-2',
-        code: 'M005',
-        name: 'Test Member 2',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-3',
-        code: 'M003',
-        name: 'Test Member 3',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M006');
-  });
-
-  it('should handle large numbers correctly', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M999',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M1000');
-  });
-
-  it('should ignore codes that do not match M### format', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M001',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-2',
-        code: 'ABC123',
-        name: 'Test Member 2',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-3',
-        code: 'M999',
-        name: 'Test Member 3',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M1000');
-  });
-
-  it('should handle members with invalid code format', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'INVALID',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-2',
-        code: 'M001',
-        name: 'Test Member 2',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M002');
-  });
-
-  it('should handle empty code strings', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: '',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-      {
-        id: 'member-2',
-        code: 'M001',
-        name: 'Test Member 2',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M002');
-  });
-
-  it('should pad numbers with zeros correctly', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M001',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M002');
+  it('should generate codes with proper zero padding', () => {
+    const code = generateMemberCode();
     expect(code.length).toBe(4); // M + 3 digits
+    expect(code[0]).toBe('M');
+    expect(code.substring(1)).toMatch(/^\d{3}$/); // Exactly 3 digits
   });
 
-  it('should handle single digit numbers', () => {
-    const members: Member[] = [
-      {
-        id: 'member-1',
-        code: 'M009',
-        name: 'Test Member 1',
-        isActive: true,
-      } as Member,
-    ];
-    const code = generateMemberCode(members);
-    expect(code).toBe('M010');
+  it('should generate codes in the range M001 to M999', () => {
+    const code = generateMemberCode();
+    const number = parseInt(code.substring(1), 10);
+    expect(number).toBeGreaterThanOrEqual(1);
+    expect(number).toBeLessThanOrEqual(999);
+  });
+
+  it('should generate different codes on multiple calls (randomness)', () => {
+    const codes = new Set<string>();
+    // Generate 100 codes and check that we get some variety
+    for (let i = 0; i < 100; i++) {
+      codes.add(generateMemberCode());
+    }
+    // With 100 random calls, we should get at least 10 different codes
+    // (statistically very likely with 999 possible values)
+    expect(codes.size).toBeGreaterThan(10);
+  });
+
+  it('should not require any parameters', () => {
+    const code = generateMemberCode();
+    expect(code).toBeDefined();
+    expect(typeof code).toBe('string');
+  });
+
+  it('should always start with M prefix', () => {
+    for (let i = 0; i < 10; i++) {
+      const code = generateMemberCode();
+      expect(code.startsWith('M')).toBe(true);
+    }
+  });
+
+  it('should generate valid numeric codes', () => {
+    for (let i = 0; i < 10; i++) {
+      const code = generateMemberCode();
+      const numberPart = code.substring(1);
+      const number = parseInt(numberPart, 10);
+      expect(number).toBeGreaterThan(0);
+      expect(number).toBeLessThanOrEqual(999);
+      expect(numberPart).toBe(number.toString().padStart(3, '0'));
+    }
   });
 });
 

@@ -1,19 +1,10 @@
 import { Member } from '@/types/member';
 
-export const generateMemberCode = (members: Member[]): string => {
-  // Extract all existing codes that start with 'M' followed by numbers
-  const existingCodes = members
-    .map(m => m.code)
-    .filter(code => /^M\d+$/.test(code)) // Match format M001, M002, etc.
-    .map(code => parseInt(code.substring(1))) // Extract the number part
-    .filter(num => !isNaN(num)); // Filter out invalid numbers
-
-  // Find the highest number
-  const maxNumber = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
-  
-  // Generate next code with padding (M001, M002, etc.)
-  const nextNumber = maxNumber + 1;
-  return `M${String(nextNumber).padStart(3, '0')}`;
+export const generateMemberCode = (): string => {
+  // Generate a random 3-digit number (001-999)
+  // Format: M001, M002, ..., M999
+  const randomNumber = Math.floor(Math.random() * 999) + 1;
+  return `M${String(randomNumber).padStart(3, '0')}`;
 };
 
 export const validateMemberData = (data: { name: string }, members: Member[], editingMember?: Member | null): string | null => {

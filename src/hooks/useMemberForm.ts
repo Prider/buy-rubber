@@ -17,16 +17,21 @@ export const useMemberForm = (members: Member[]) => {
   });
 
   const openFormForNew = useCallback(async () => {
-    let newCode = generateMemberCode(members);
-
+    let newCode = '';
+    
     try {
       const response = await axios.get('/api/members/next-code');
       if (response.data?.code) {
         newCode = response.data.code;
+      } else {
+        throw new Error('No code returned from API');
       }
     } catch (error) {
-      console.error('Failed to fetch next member code, falling back to client-side generation.', error);
+      console.error('Failed to fetch next member code from server.', error);
+      // Fallback to client-side random generation only if API completely fails
+      newCode = generateMemberCode();
     }
+    
     setFormData({
       name: '',
       code: newCode,
@@ -38,7 +43,7 @@ export const useMemberForm = (members: Member[]) => {
     });
     setEditingMember(null);
     setIsOpen(true);
-  }, [members]);
+  }, []);
 
   const openFormForEdit = useCallback((member: Member) => {
     setFormData({

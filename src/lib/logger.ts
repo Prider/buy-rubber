@@ -2,13 +2,22 @@
 // Check if we're in server environment
 const isServer = typeof window === 'undefined';
 
+// Check if we're in a serverless environment (Vercel, AWS Lambda, etc.)
+// In serverless, file system is read-only except for /tmp, so we skip file logging
+const isServerless = isServer && (
+  process.env.VERCEL === '1' ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
+  process.env.VERCEL_ENV !== undefined ||
+  process.env.NEXT_RUNTIME === 'nodejs' && process.env.VERCEL === '1'
+);
+
 // Lazy-load server-side modules
 let fs: any;
 let path: any;
 let LOG_DIR: string = '';
 
 function getServerModules() {
-  if (!isServer) return { fs: null, path: null, LOG_DIR: '' };
+  if (!isServer || isServerless) return { fs: null, path: null, LOG_DIR: '' };
   
   // Load modules on first use
   if (!fs || !path) {
@@ -43,20 +52,20 @@ function getServerModules() {
 
 // Ensure logs directory exists
 function ensureLogDir() {
-  if (!isServer) return;
+  if (!isServer || isServerless) return;
   try {
     const { fs: fsModule, LOG_DIR: dir } = getServerModules();
     if (fsModule && dir && !fsModule.existsSync(dir)) {
       fsModule.mkdirSync(dir, { recursive: true });
     }
   } catch (_error) {
-    // Ignore errors in browser
+    // Ignore errors in browser or serverless
   }
 }
 
 // Get log file path for today
 function getLogFilePath(level: string = 'app'): string {
-  if (!isServer) return '';
+  if (!isServer || isServerless) return '';
   try {
     ensureLogDir();
     const { path: pathModule, LOG_DIR: dir } = getServerModules();
@@ -97,7 +106,8 @@ interface Logger {
 
 class FileLogger implements Logger {
   private writeToFile(level: string, message: string, data?: any) {
-    if (!isServer) return; // Skip file writing in browser
+    // Skip file writing in browser or serverless environments
+    if (!isServer || isServerless) return;
     
     try {
       const logFile = getLogFilePath('app');
@@ -107,8 +117,9 @@ class FileLogger implements Logger {
         fsModule.appendFileSync(logFile, logEntry);
       }
     } catch (error) {
-      // Fail silently in browser
-      if (isServer) {
+      // Fail silently in browser or serverless
+      // Only log errors in non-serverless server environments
+      if (isServer && !isServerless) {
         console.error('Failed to write log:', error);
       }
     }
@@ -151,7 +162,8 @@ export const log = logger;
 
 // Helper function to clear old logs (older than 30 days)
 export function cleanupOldLogs(daysToKeep: number = 30) {
-  if (!isServer) return; // Skip in browser
+  // Skip in browser or serverless environments
+  if (!isServer || isServerless) return;
   
   try {
     ensureLogDir();
@@ -173,7 +185,7 @@ export function cleanupOldLogs(daysToKeep: number = 30) {
       }
     });
   } catch (error) {
-    if (isServer) {
+    if (isServer && !isServerless) {
       logger.error('Failed to cleanup old logs', error);
     }
   }
