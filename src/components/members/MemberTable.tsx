@@ -7,6 +7,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
   members,
   onEdit,
   onDelete,
+  onReactivate,
   onViewHistory,
   onViewServiceFees,
   isLoading,
@@ -38,6 +39,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
               <th>รหัส</th>
               <th>ชื่อ-นามสกุล</th>
               <th>เบอร์โทร</th>
+              <th>สถานะ</th>
               <th>จัดการ</th>
             </tr>
           </thead>
@@ -48,6 +50,7 @@ export const MemberTable: React.FC<MemberTableProps> = ({
                 member={member}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onReactivate={onReactivate}
                 onViewHistory={onViewHistory}
                 onViewServiceFees={onViewServiceFees}
               />
@@ -63,6 +66,7 @@ interface MemberTableRowProps {
   member: any;
   onEdit: (member: any) => void;
   onDelete: (member: any) => void;
+  onReactivate?: (member: any) => void;
   onViewHistory: (member: any) => void;
   onViewServiceFees?: (member: any) => void;
 }
@@ -71,6 +75,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
   member,
   onEdit,
   onDelete,
+  onReactivate,
   onViewHistory,
   onViewServiceFees,
 }) => {
@@ -78,10 +83,34 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
   const isAdmin = user?.role === 'admin';
 
   return (
-    <tr>
-      <td className="font-medium">{member.code}</td>
+    <tr className={member.isActive === false ? 'opacity-60' : ''}>
+      <td className="font-medium">
+        {member.code}
+      </td>
       <td>{member.name}</td>
       <td>{member.phone || '-'}</td>
+      <td>
+        {member.isActive ? (
+          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105">
+            <span className="relative w-2 h-2 mr-2">
+              <span className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></span>
+              <span className="relative w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            </span>
+            <span className="relative">
+              ใช้งาน
+              <span className="absolute inset-0 bg-green-400/20 rounded blur-sm animate-pulse"></span>
+            </span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-100 to-slate-100 dark:from-gray-800/60 dark:to-slate-800/60 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 shadow-sm transition-all duration-300">
+            <span className="relative w-2 h-2 mr-2">
+              <span className="absolute inset-0 bg-gray-400 rounded-full opacity-50"></span>
+              <span className="relative w-2 h-2 bg-gray-500 rounded-full"></span>
+            </span>
+            <span>ปิดการใช้งาน</span>
+          </span>
+        )}
+      </td>
       <td>
         <div className="flex items-center space-x-3">
           <button
@@ -106,19 +135,37 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
               <span>ค่าบริการ</span>
             </button>
           )}
-          <button
-            onClick={() => onEdit(member)}
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-          >
-            แก้ไข
-          </button>
-          {isAdmin && (
+          {member.isActive && (
             <button
-              onClick={() => onDelete(member)}
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+              onClick={() => onEdit(member)}
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
             >
-              ลบ
+              แก้ไข
             </button>
+          )}
+          {isAdmin && (
+            <>
+              {!member.isActive && onReactivate && (
+                <button
+                  onClick={() => onReactivate(member)}
+                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors flex items-center space-x-1"
+                  title="เปิดการใช้งานสมาชิก"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>เปิดใช้งาน</span>
+                </button>
+              )}
+              {member.isActive && (
+                <button
+                  onClick={() => onDelete(member)}
+                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                >
+                  ลบ
+                </button>
+              )}
+            </>
           )}
         </div>
       </td>
