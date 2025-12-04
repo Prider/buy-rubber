@@ -9,6 +9,8 @@ export interface Expense {
   category: string;
   amount: number;
   description?: string;
+  userId: string;
+  userName: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -3,8 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 
+interface ExpenseFormData {
+  date: string;
+  category: string;
+  amount: number;
+  description?: string;
+}
+
 interface ExpenseEntryCardProps {
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: ExpenseFormData) => Promise<void>;
 }
 
 export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) => {

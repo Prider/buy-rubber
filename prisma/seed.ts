@@ -161,9 +161,14 @@ async function main() {
 
   const expenses = [];
   const expenseCount = 100;
+  
+  // Get users for assigning to expenses (alternate between admin and user)
+  const usersForExpenses = [admin, adminTwo, user];
+  const getUserForExpense = (index: number) => usersForExpenses[index % usersForExpenses.length];
 
   for (let i = 0; i < expenseCount; i++) {
     const categoryInfo = expenseCategories[i % expenseCategories.length];
+    const assignedUser = getUserForExpense(i);
 
     const date = new Date();
     date.setDate(date.getDate() - (i % 45));
@@ -180,6 +185,8 @@ async function main() {
         category: categoryInfo.category,
         amount,
         description: `${categoryInfo.description}${descriptionSuffix}`,
+        userId: assignedUser.id,
+        userName: assignedUser.username,
       },
     });
 

@@ -5,6 +5,25 @@ import { logger } from '@/lib/logger';
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
 
+// Helper function to extract user info from auth token
+function getUserFromToken(request: NextRequest): { userId: string; username: string } | null {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (decoded.userId && decoded.username) {
+      return { userId: decoded.userId, username: decoded.username };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // GET /api/expenses
 export async function GET(request: NextRequest) {
   try {
@@ -136,7 +155,24 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     logger.debug('Expense POST request data', data);
-    const { category, amount, description, date } = data;
+    const { category, amount, description, date, userId: providedUserId, userName: providedUserName } = data;
+
+    // Get user info from token or use provided values
+    const tokenUser = getUserFromToken(request);
+    const userId = providedUserId || tokenUser?.userId;
+    const userName = providedUserName || tokenUser?.username;
+
+    // Validate user info
+    if (!userId || !userName) {
+      return NextResponse.json(
+        { 
+          error: 'ไม่พบข้อมูลผู้ใช้',
+          details: 'userId and userName are required. Please ensure you are logged in.',
+          code: 'AUTH_ERROR'
+        },
+        { status: 401 }
+      );
+    }
 
     // Validate required fields
     if (!category || category.trim() === '') {
@@ -207,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     const expenseNo = `EXP-${year}${month}${day}-${String(count + 1).padStart(3, '0')}`;
 
-    logger.debug('Creating expense', { expenseNo, category, amount: parsedAmount, date: today });
+    logger.debug('Creating expense', { expenseNo, category, amount: parsedAmount, date: today, userId, userName });
 
     const expense = await prisma.expense.create({
       data: {
@@ -216,6 +252,8 @@ export async function POST(request: NextRequest) {
         category: category.trim(),
         amount: Math.abs(parsedAmount), // Ensure positive value
         description: description?.trim() || null,
+        userId,
+        userName,
       },
     });
 

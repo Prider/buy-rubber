@@ -129,11 +129,14 @@ model Expense {
   category    String // ค่าน้ำมัน, ค่าซ่อมรถ, ค่าคนงาน, อื่นๆ
   amount      Float
   description String?
+  userId      String   // ID ของผู้ใช้ที่สร้างรายการ
+  userName    String   // ชื่อผู้ใช้ที่สร้างรายการ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([date])
   @@index([category])
+  @@index([userId])
 }
 
 // ค่าบริการ (Service Fees)

@@ -126,6 +126,9 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                 รายละเอียด
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                บันทึกโดย
+              </th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                 จำนวนเงิน
               </th>
@@ -156,6 +159,14 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                   {expense.description || '-'}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                  <span className="inline-flex items-center space-x-1.5">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="font-medium">{expense.userName || '-'}</span>
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 text-right">
                   {formatCurrency(expense.amount)}

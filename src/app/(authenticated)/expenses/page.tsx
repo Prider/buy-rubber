@@ -25,8 +25,17 @@ export default function ExpensesPage() {
     loadExpenses();
   }, [user, isLoading, router, loadExpenses]);
 
-  const handleAddExpense = async (expenseData: any) => {
-    await createExpense(expenseData);
+  const handleAddExpense = async (expenseData: { date: string; category: string; amount: number; description?: string }) => {
+    // Add userId and userName to the expense data
+    if (user) {
+      await createExpense({
+        ...expenseData,
+        userId: user.id,
+        userName: user.username,
+      });
+    } else {
+      throw new Error('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบอีกครั้ง');
+    }
   };
 
   const handleDeleteExpense = async (id: string) => {
