@@ -91,19 +91,19 @@ export async function POST(request: NextRequest) {
     }
 
     // ตรวจสอบชื่อซ้ำ (case-insensitive)
-    const existingName = await prisma.member.findFirst({
-      where: {
-        name: {
-          equals: data.name,
-          mode: 'insensitive', // Case-insensitive comparison
-        },
-      },
-    });
+    // Use raw query for case-insensitive comparison (SQLite doesn't support mode: 'insensitive')
+    const existingName = await prisma.$queryRaw<Array<{ id: string; code: string; name: string }>>`
+      SELECT id, code, name 
+      FROM "Member" 
+      WHERE LOWER(name) = LOWER(${data.name})
+      LIMIT 1
+    `;
 
-    if (existingName) {
-      logger.warn('POST /api/members - Duplicate name', { name: data.name, existingCode: existingName.code });
+    if (existingName && existingName.length > 0) {
+      const duplicate = existingName[0];
+      logger.warn('POST /api/members - Duplicate name', { name: data.name, existingCode: duplicate.code });
       return NextResponse.json(
-        { error: `ชื่อ "${data.name}" มีอยู่ในระบบแล้ว (รหัส: ${existingName.code})` },
+        { error: `ชื่อ "${data.name}" มีอยู่ในระบบแล้ว (รหัส: ${duplicate.code})` },
         { status: 400 }
       );
     }
