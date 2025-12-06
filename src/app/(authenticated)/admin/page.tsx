@@ -95,7 +95,7 @@ export default function AdminSettingsPage() {
             subtitle="จัดการการตั้งค่าโหมดการทำงานและผู้ใช้งาน"
           />
 
-          <div className="w-full max-w-7xl mx-auto">
+          <div className="w-full mx-auto">
 
             {/* Messages */}
             <MessageDisplay
