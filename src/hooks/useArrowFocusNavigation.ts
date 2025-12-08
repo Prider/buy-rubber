@@ -88,14 +88,10 @@ export const useArrowFocusNavigation = (enabled: boolean = true) => {
 
       const activeElement = document.activeElement as HTMLElement | null;
 
+      // Don't interfere with arrow keys in editable elements
+      // Always allow normal cursor movement, text selection, and input behavior
       if (isEditableElement(activeElement)) {
-        if (!activeElement || activeElement.tagName !== 'INPUT') {
-          return;
-        }
-
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          return;
-        }
+        return;
       }
 
       const focusableElements = getFocusableElements();

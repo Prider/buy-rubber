@@ -200,9 +200,51 @@ export function useAdminSettings() {
   // Copy to clipboard
   const copyToClipboard = useCallback(async (text: string, label: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopySuccess(`${label} คัดลอกเรียบร้อยแล้ว`);
-      setTimeout(() => setCopySuccess(''), 2000);
+      // Ensure window is focused before attempting to copy
+      if (typeof window !== 'undefined' && window.focus) {
+        window.focus();
+      }
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopySuccess(`${label} คัดลอกเรียบร้อยแล้ว`);
+          setTimeout(() => setCopySuccess(''), 2000);
+          return;
+        } catch (clipboardError: unknown) {
+          // If clipboard API fails (e.g., document not focused), use fallback
+          const error = clipboardError as { name?: string; message?: string };
+          if (error.name === 'NotAllowedError' || error.message?.includes('not focused')) {
+            logger.debug('Clipboard API failed, using fallback method', clipboardError);
+            // Fall through to fallback method
+          } else {
+            throw clipboardError;
+          }
+        }
+      }
+      
+      // Fallback method: create temporary textarea and select/copy
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-999999px';
+      textarea.style.top = '-999999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopySuccess(`${label} คัดลอกเรียบร้อยแล้ว`);
+          setTimeout(() => setCopySuccess(''), 2000);
+        } else {
+          throw new Error('execCommand copy failed');
+        }
+      } finally {
+        document.body.removeChild(textarea);
+      }
     } catch (error) {
       logger.error('Failed to copy to clipboard', error);
       setCopySuccess('ไม่สามารถคัดลอกได้');
