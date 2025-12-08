@@ -21,7 +21,7 @@ function debugLog(message) {
 }
 
 function initializeDatabase() {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       debugLog('=== DATABASE INITIALIZATION START ===');
       
@@ -46,10 +46,15 @@ function initializeDatabase() {
       
       // Set DATABASE_URL environment variable for Prisma
       // This ensures Prisma client uses the correct database path
-      const encodedPath = encodeURI(userDbPath);
-      const dbUrl = `file:${encodedPath}`;
+      // Normalize path: convert Windows backslashes to forward slashes
+      const normalizedPath = userDbPath.replace(/\\/g, '/');
+      // For Prisma SQLite, use file: prefix without encoding to avoid issues opening the file
+      // Prisma expects unencoded absolute paths like file:/Users/... or file:C:/Users/...
+      const dbUrl = `file:${normalizedPath}`;
       process.env.DATABASE_URL = dbUrl;
       debugLog('Set DATABASE_URL: ' + dbUrl);
+      debugLog('Normalized path: ' + normalizedPath);
+      debugLog('Original path: ' + userDbPath);
       
       // Also return the database path so it can be passed to the server
       global.databasePath = userDbPath;
@@ -62,11 +67,110 @@ function initializeDatabase() {
         debugLog('Database directory already exists');
       }
 
-      // If database already exists, verify it's valid
+      // If database already exists, ensure schema is up to date
+      // Add missing columns using Prisma's raw SQL (works in packaged apps)
       if (fs.existsSync(userDbPath)) {
         const stats = fs.statSync(userDbPath);
         debugLog(`Database already exists: ${(stats.size / 1024).toFixed(2)} KB`);
-        debugLog('Skipping initialization');
+        debugLog('Ensuring database schema is up to date...');
+        
+        // Use Prisma to check and add missing columns
+        try {
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient({
+            datasources: {
+              db: {
+                url: dbUrl,
+              },
+            },
+          });
+          
+          // Check if Expense table has userId column
+          const columns = await prisma.$queryRaw`
+            SELECT name FROM pragma_table_info('Expense') WHERE name = 'userId'
+          `;
+          
+          if (!columns || columns.length === 0) {
+            debugLog('Adding missing userId and userName columns to Expense table...');
+            
+            // Add userId column if it doesn't exist (SQLite allows adding columns)
+            try {
+              await prisma.$executeRaw`
+                ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''
+              `;
+              debugLog('✅ Added userId column');
+            } catch (e) {
+              // Column might already exist or table doesn't exist
+              if (!e.message.includes('duplicate column')) {
+                debugLog('⚠️  Could not add userId: ' + e.message);
+              }
+            }
+            
+            // Add userName column if it doesn't exist
+            try {
+              await prisma.$executeRaw`
+                ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''
+              `;
+              debugLog('✅ Added userName column');
+            } catch (e) {
+              if (!e.message.includes('duplicate column')) {
+                debugLog('⚠️  Could not add userName: ' + e.message);
+              }
+            }
+            
+            // Update existing rows with default values if needed
+            try {
+              await prisma.$executeRaw`
+                UPDATE Expense SET userId = '' WHERE userId IS NULL
+              `;
+              await prisma.$executeRaw`
+                UPDATE Expense SET userName = '' WHERE userName IS NULL
+              `;
+              debugLog('✅ Updated existing rows');
+            } catch (e) {
+              debugLog('⚠️  Could not update existing rows: ' + e.message);
+            }
+          } else {
+            debugLog('✅ Database schema is up to date');
+          }
+          
+          await prisma.$disconnect();
+        } catch (error) {
+          debugLog('⚠️  Failed to update schema via Prisma: ' + error.message);
+          debugLog('⚠️  Attempting fallback: prisma db push...');
+          
+          // Fallback: try prisma db push
+          try {
+            const { execSync } = require('child_process');
+            const appPath = app.getAppPath();
+            const prismaPath = path.join(appPath, '..', 'node_modules', '.bin', 'prisma');
+            const prismaCliPath = path.join(appPath, '..', 'node_modules', 'prisma', 'build', 'index.js');
+            
+            let prismaCmd = null;
+            if (fs.existsSync(prismaCliPath)) {
+              prismaCmd = `node "${prismaCliPath}" db push --skip-generate --accept-data-loss`;
+            } else if (fs.existsSync(prismaPath)) {
+              prismaCmd = `"${prismaPath}" db push --skip-generate --accept-data-loss`;
+            } else {
+              prismaCmd = 'npx prisma db push --skip-generate --accept-data-loss';
+            }
+            
+            if (prismaCmd) {
+              debugLog('Running: ' + prismaCmd);
+              execSync(prismaCmd, {
+                cwd: path.join(appPath, '..'),
+                env: { ...process.env, DATABASE_URL: dbUrl },
+                stdio: 'pipe',
+              });
+              debugLog('✅ Database schema synchronized via Prisma CLI');
+            }
+          } catch (pushError) {
+            debugLog('⚠️  Prisma CLI fallback also failed: ' + pushError.message);
+            debugLog('⚠️  Database may be missing recent schema changes');
+            debugLog('⚠️  User may need to delete database and restart app');
+          }
+        }
+        
         debugLog('=== DATABASE INITIALIZATION COMPLETE ===');
         resolve(userDbPath);
         return;
@@ -158,8 +262,42 @@ function initializeDatabase() {
       fs.copyFileSync(sourceDbPath, userDbPath);
       
       const stats = fs.statSync(userDbPath);
-      debugLog(`✅ Database initialized successfully: ${(stats.size / 1024).toFixed(2)} KB`);
+      debugLog(`✅ Database copied successfully: ${(stats.size / 1024).toFixed(2)} KB`);
       debugLog('Database location: ' + userDbPath);
+      
+      // Ensure schema is up to date after copying
+      debugLog('Ensuring database schema is up to date...');
+      try {
+        const { execSync } = require('child_process');
+        const appPath = app.getAppPath();
+        const prismaCliPath = path.join(appPath, '..', 'node_modules', 'prisma', 'build', 'index.js');
+        const prismaPath = path.join(appPath, '..', 'node_modules', '.bin', 'prisma');
+        
+        // Try to find prisma executable
+        let prismaCmd = null;
+        if (fs.existsSync(prismaCliPath)) {
+          prismaCmd = `node "${prismaCliPath}" db push --skip-generate`;
+        } else if (fs.existsSync(prismaPath)) {
+          prismaCmd = `"${prismaPath}" db push --skip-generate`;
+        } else {
+          prismaCmd = 'npx prisma db push --skip-generate';
+        }
+        
+        if (prismaCmd) {
+          debugLog('Running: ' + prismaCmd);
+          execSync(prismaCmd, {
+            cwd: path.join(appPath, '..'),
+            env: { ...process.env, DATABASE_URL: dbUrl },
+            stdio: 'pipe',
+          });
+          debugLog('✅ Database schema synchronized');
+        }
+      } catch (error) {
+        debugLog('⚠️  Failed to sync database schema: ' + error.message);
+        debugLog('⚠️  Error details: ' + (error.stdout?.toString() || error.message));
+        // Don't fail - continue with copied database
+      }
+      
       debugLog('=== DATABASE INITIALIZATION COMPLETE ===');
       
       resolve(userDbPath);

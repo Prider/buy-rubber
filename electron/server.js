@@ -165,8 +165,9 @@ const startServer = async (customAppPath = null, databasePath = null) => {
     // URL-encode path to handle spaces (e.g. Application Support) and special chars
     // For Windows, we need to use forward slashes in the URL
     const normalizedPath = databasePath.replace(/\\/g, '/');
-    const encodedPath = encodeURI(normalizedPath);
-    const dbUrl = `file:${encodedPath}`;
+    // Use file: format (Prisma's preferred format for SQLite)
+    // Avoid encodeURI here to prevent SQLite from failing to open paths with spaces
+    const dbUrl = `file:${normalizedPath}`;
     process.env.DATABASE_URL = dbUrl;
     console.log('Set DATABASE_URL in server process:', dbUrl);
   } else {
@@ -185,8 +186,8 @@ const startServer = async (customAppPath = null, databasePath = null) => {
         
         // Normalize path for URL
         const normalizedPath = userDbPath.replace(/\\/g, '/');
-        const encodedPath = encodeURI(normalizedPath);
-        const dbUrl = `file:${encodedPath}`;
+        // Use file: format (Prisma's preferred format for SQLite)
+        const dbUrl = `file:${normalizedPath}`;
         process.env.DATABASE_URL = dbUrl;
         console.log('Set DATABASE_URL from app path:', dbUrl);
       }

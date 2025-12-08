@@ -5,6 +5,8 @@ export interface BackupSettings {
   enabled: boolean;
   frequency: string;
   time: string;
+  weeklyDay: number;
+  monthlyDay: number;
   maxCount: number;
   autoCleanup: boolean;
 }
@@ -19,7 +21,14 @@ export function useBackupSettings() {
       setError(null);
       const response = await fetch('/api/backup/settings');
       const data = await response.json();
-      setSettings(data);
+      setSettings((prev) => ({
+        ...prev,
+        ...data,
+        // Ensure numeric fields are numbers with fallbacks
+        weeklyDay: typeof data.weeklyDay === 'number' ? data.weeklyDay : prev.weeklyDay,
+        monthlyDay: typeof data.monthlyDay === 'number' ? data.monthlyDay : prev.monthlyDay,
+        maxCount: typeof data.maxCount === 'number' ? data.maxCount : prev.maxCount,
+      }));
     } catch (err) {
       console.error('Failed to load settings:', err);
       setError('ไม่สามารถโหลดการตั้งค่าได้');

@@ -9,7 +9,15 @@ export async function GET() {
     const settings = await prisma.setting.findMany({
       where: {
         key: {
-          in: ['backup_enabled', 'backup_frequency', 'backup_time', 'backup_max_count', 'backup_auto_cleanup']
+          in: [
+            'backup_enabled',
+            'backup_frequency',
+            'backup_time',
+            'backup_weekly_day',
+            'backup_monthly_day',
+            'backup_max_count',
+            'backup_auto_cleanup',
+          ]
         }
       }
     });
@@ -19,6 +27,8 @@ export async function GET() {
       enabled: false,
       frequency: 'daily',
       time: '22:00',
+      weeklyDay: 0,
+      monthlyDay: 1,
       maxCount: 30,
       autoCleanup: true,
     };
@@ -40,6 +50,12 @@ export async function GET() {
         case 'backup_auto_cleanup':
           settingsObj.autoCleanup = setting.value === 'true';
           break;
+        case 'backup_weekly_day':
+          settingsObj.weeklyDay = parseInt(setting.value) || 0;
+          break;
+        case 'backup_monthly_day':
+          settingsObj.monthlyDay = parseInt(setting.value) || 1;
+          break;
       }
     });
 
@@ -57,7 +73,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const { enabled, frequency, time, maxCount, autoCleanup } = data;
+    const { enabled, frequency, time, weeklyDay, monthlyDay, maxCount, autoCleanup } = data;
 
     // Update or create settings
     await Promise.all([
@@ -85,6 +101,16 @@ export async function POST(request: NextRequest) {
         where: { key: 'backup_auto_cleanup' },
         update: { value: autoCleanup ? 'true' : 'false' },
         create: { key: 'backup_auto_cleanup', value: autoCleanup ? 'true' : 'false' },
+      }),
+      prisma.setting.upsert({
+        where: { key: 'backup_weekly_day' },
+        update: { value: ((weeklyDay ?? 0) as number).toString() },
+        create: { key: 'backup_weekly_day', value: ((weeklyDay ?? 0) as number).toString() },
+      }),
+      prisma.setting.upsert({
+        where: { key: 'backup_monthly_day' },
+        update: { value: ((monthlyDay ?? 1) as number).toString() },
+        create: { key: 'backup_monthly_day', value: ((monthlyDay ?? 1) as number).toString() },
       }),
     ]);
 

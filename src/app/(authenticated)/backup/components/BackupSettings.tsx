@@ -1,6 +1,6 @@
 import React from 'react';
 import { BackupSettings as Settings } from '../hooks/useBackupSettings';
-import { FREQUENCY_OPTIONS, MAX_BACKUP_COUNT } from '../constants';
+import { FREQUENCY_OPTIONS, MAX_BACKUP_COUNT, WEEKDAY_OPTIONS, MONTH_DAY_OPTIONS } from '../constants';
 
 interface BackupSettingsProps {
   settings: Settings;
@@ -70,17 +70,83 @@ export function BackupSettings({
               </div>
 
               {/* Time */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  เวลาที่จะสำรอง
-                </label>
-                <input
-                  type="time"
-                  value={settings.time}
-                  onChange={(e) => onUpdate({ time: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
-                />
-              </div>
+              {settings.frequency === 'weekly' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      วันในสัปดาห์
+                    </label>
+                    <select
+                      value={settings.weeklyDay ?? 1}
+                      onChange={(e) => onUpdate({ weeklyDay: parseInt(e.target.value, 10) })}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                    >
+                      {WEEKDAY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      เวลาที่จะสำรอง
+                    </label>
+                    <input
+                      type="time"
+                      value={settings.time}
+                      onChange={(e) => onUpdate({ time: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {settings.frequency === 'monthly' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      วันที่ของเดือน
+                    </label>
+                    <select
+                      value={settings.monthlyDay ?? 1}
+                      onChange={(e) => onUpdate({ monthlyDay: parseInt(e.target.value, 10) })}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                    >
+                      {MONTH_DAY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      เวลาที่จะสำรอง
+                    </label>
+                    <input
+                      type="time"
+                      value={settings.time}
+                      onChange={(e) => onUpdate({ time: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {settings.frequency === 'daily' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    เวลาที่จะสำรอง
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.time}
+                    onChange={(e) => onUpdate({ time: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                  />
+                </div>
+              )}
 
               {/* Max Count */}
               <div>

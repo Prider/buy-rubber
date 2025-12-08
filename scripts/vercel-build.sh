@@ -7,6 +7,9 @@ set -e
 
 echo "🔧 Starting Vercel build process..."
 
+# Use WASM SWC to avoid native binary download issues
+export NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1
+
 # Step 1: Generate Prisma Client
 echo "📦 Generating Prisma Client..."
 npx prisma generate
