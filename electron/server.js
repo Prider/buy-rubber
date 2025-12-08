@@ -145,9 +145,13 @@ const startServer = async (customAppPath = null, databasePath = null) => {
   let port = 3000;
   
   // Set DATABASE_URL before starting Next.js server
-  // This ensures Prisma client uses the correct database path
-  if (databasePath) {
-    // Verify database file exists
+  // Check if DATABASE_URL is already set (e.g., PostgreSQL from .env)
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgresql://')) {
+    console.log('✅ Using PostgreSQL connection from environment');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@')); // Mask password
+    // DATABASE_URL is already set, no need to modify it
+  } else if (databasePath) {
+    // SQLite: Verify database file exists
     if (!fs.existsSync(databasePath)) {
       console.error('❌ Database file does not exist at:', databasePath);
       console.error('This is a critical error. The app cannot function without a database.');
@@ -166,7 +170,7 @@ const startServer = async (customAppPath = null, databasePath = null) => {
     process.env.DATABASE_URL = dbUrl;
     console.log('Set DATABASE_URL in server process:', dbUrl);
   } else {
-    // Try to get from global or app path
+    // Try to get from global or app path (SQLite fallback)
     try {
       const { app } = require('electron');
       if (app && app.getPath) {

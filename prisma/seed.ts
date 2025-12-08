@@ -174,7 +174,7 @@ async function main() {
     date.setDate(date.getDate() - (i % 45));
     date.setHours(12, 0, 0, 0);
 
-    const expenseNo = `EXP${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}${(i + 1).toString().padStart(3, '0')}`;
+    const expenseNo = `EXP-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${(i + 1).toString().padStart(3, '0')}`;
     const amount = parseFloat((categoryInfo.baseAmount + ((i % 7) * 37)).toFixed(2));
     const descriptionSuffix = i % 3 === 0 ? ' (รอบเช้า)' : i % 3 === 1 ? ' (รอบบ่าย)' : ' (รอบเย็น)';
 

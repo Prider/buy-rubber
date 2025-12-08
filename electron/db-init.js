@@ -24,6 +24,20 @@ function initializeDatabase() {
   return new Promise((resolve, reject) => {
     try {
       debugLog('=== DATABASE INITIALIZATION START ===');
+      
+      // Check if DATABASE_URL is already set (e.g., from .env file)
+      // If it's a PostgreSQL URL, use it directly
+      if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgresql://')) {
+        debugLog('PostgreSQL DATABASE_URL detected: ' + process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@')); // Mask password
+        debugLog('Using PostgreSQL connection from environment variable');
+        debugLog('=== DATABASE INITIALIZATION COMPLETE (PostgreSQL) ===');
+        global.databasePath = null; // No file path for PostgreSQL
+        resolve(null);
+        return;
+      }
+      
+      // Otherwise, use SQLite file-based database
+      debugLog('Using SQLite file-based database');
       const userDataPath = app.getPath('userData');
       debugLog('userData path: ' + userDataPath);
       const userDbDir = path.join(userDataPath, 'prisma');
