@@ -27,6 +27,19 @@ function getUserFromToken(request: NextRequest): { userId: string; username: str
 // GET /api/expenses
 export async function GET(request: NextRequest) {
   try {
+    // Verify Prisma client is available
+    if (!prisma) {
+      logger.error('Prisma client not initialized');
+      return NextResponse.json(
+        { 
+          error: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าใช้จ่าย',
+          details: 'Database connection not available',
+          code: 'DATABASE_ERROR'
+        },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -141,10 +154,26 @@ export async function GET(request: NextRequest) {
         totalPages,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to get expenses', error);
+    
+    // Log detailed error information for debugging
+    const errorDetails = {
+      message: error?.message || 'Unknown error',
+      code: error?.code || 'UNKNOWN_ERROR',
+      name: error?.name || 'Error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    };
+    
+    logger.error('Expense GET error details', errorDetails);
+    
     return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าใช้จ่าย' },
+      { 
+        error: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าใช้จ่าย',
+        details: errorDetails.message,
+        code: errorDetails.code,
+        ...(process.env.NODE_ENV === 'development' && { stack: errorDetails.stack }),
+      },
       { status: 500 }
     );
   }
