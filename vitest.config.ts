@@ -1,20 +1,14 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
-import path from 'path'
+import { defineConfig } from 'vitest/config'
+import * as path from 'path'
 
 export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
-    // Suppress unhandled rejections for error handling tests
-    // These are expected when testing error scenarios
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',

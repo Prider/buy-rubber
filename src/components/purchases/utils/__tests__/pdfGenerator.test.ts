@@ -24,7 +24,7 @@ vi.mock('jspdf', () => {
   };
 
   // Create a proper constructor function
-  function MockjsPDF(options?: any) {
+  function MockjsPDF(_?: any) {
     return mockDoc;
   }
 
