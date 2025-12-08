@@ -74,12 +74,17 @@ export async function GET(request: NextRequest) {
     const currentPage = Math.min(page, totalPages);
     const skip = total === 0 ? 0 : (currentPage - 1) * pageSize;
 
-    // Get expenses
+    // Get expenses - sorted by date (newest first), then by createdAt (most recently added first)
     const expenses = await prisma.expense.findMany({
       where,
-      orderBy: {
-        date: 'desc',
-      },
+      orderBy: [
+        {
+          date: 'desc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
       skip,
       take: pageSize,
     });

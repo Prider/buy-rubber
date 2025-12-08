@@ -289,9 +289,14 @@ describe('GET /api/expenses', () => {
 
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: {
-            date: 'desc',
-          },
+          orderBy: [
+            {
+              date: 'desc',
+            },
+            {
+              createdAt: 'desc',
+            },
+          ],
         })
       );
     });

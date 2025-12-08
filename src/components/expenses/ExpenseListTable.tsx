@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Expense } from '@/hooks/useExpenses';
 import GamerLoader from '@/components/GamerLoader';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +61,24 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
       maximumFractionDigits: 2,
     });
   };
+
+  // Sort expenses by date (newest first), then by createdAt if dates are equal
+  const sortedExpenses = useMemo(() => {
+    return [...expenses].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      
+      // First sort by date (newest first)
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      
+      // If dates are equal, sort by createdAt (most recently added first)
+      const createdAtA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdAtB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdAtB - createdAtA;
+    });
+  }, [expenses]);
 
   const totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
   const currentPage = Math.min(page, totalPages);
@@ -143,7 +161,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {expenses.map((expense, index) => (
+            {sortedExpenses.map((expense, index) => (
               <tr
                 key={expense.id}
                 className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${

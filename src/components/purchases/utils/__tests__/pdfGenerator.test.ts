@@ -17,14 +17,19 @@ vi.mock('../slipGenerator', () => ({
 // Mock jsPDF
 vi.mock('jspdf', () => {
   const mockDoc = {
-    setFillColor: vi.fn(),
-    rect: vi.fn(),
-    addImage: vi.fn(),
-    save: vi.fn(),
+    setFillColor: vi.fn().mockReturnThis(),
+    rect: vi.fn().mockReturnThis(),
+    addImage: vi.fn().mockReturnThis(),
+    save: vi.fn().mockReturnThis(),
   };
 
+  // Create a proper constructor function
+  function MockjsPDF(options?: any) {
+    return mockDoc;
+  }
+
   return {
-    jsPDF: vi.fn(() => mockDoc),
+    jsPDF: MockjsPDF,
   };
 });
 

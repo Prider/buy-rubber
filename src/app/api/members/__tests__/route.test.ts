@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       count: vi.fn(),
     },
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -349,7 +350,7 @@ describe('POST /api/members', () => {
   describe('Successful creation', () => {
     it('should create a member with all required fields', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       vi.mocked(prisma.member.create).mockResolvedValue(mockMember);
 
       const request = new NextRequest('http://localhost:3000/api/members', {
@@ -376,7 +377,7 @@ describe('POST /api/members', () => {
 
     it('should use default values for ownerPercent and tapperPercent', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       vi.mocked(prisma.member.create).mockResolvedValue(mockMember);
 
       const request = new NextRequest('http://localhost:3000/api/members', {
@@ -401,7 +402,7 @@ describe('POST /api/members', () => {
 
     it('should create a member with custom ownerPercent and tapperPercent', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       const memberWithSplit = {
         ...mockMember,
         ownerPercent: 70,
@@ -433,7 +434,7 @@ describe('POST /api/members', () => {
 
     it('should create a member with tapper information', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       const memberWithTapper = {
         ...mockMember,
         tapperId: 'tapper-1',
@@ -465,7 +466,7 @@ describe('POST /api/members', () => {
 
     it('should create a member with all optional fields', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       vi.mocked(prisma.member.create).mockResolvedValue(mockMember);
 
       const request = new NextRequest('http://localhost:3000/api/members', {
@@ -521,7 +522,7 @@ describe('POST /api/members', () => {
   describe('Error handling', () => {
     it('should return 500 when database create fails', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       const dbError = new Error('Database connection failed');
       vi.mocked(prisma.member.create).mockRejectedValue(dbError);
 
@@ -565,7 +566,7 @@ describe('POST /api/members', () => {
   describe('Logging', () => {
     it('should log the POST request', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       vi.mocked(prisma.member.create).mockResolvedValue(mockMember);
 
       const request = new NextRequest('http://localhost:3000/api/members', {
@@ -589,7 +590,7 @@ describe('POST /api/members', () => {
 
     it('should log successful member creation', async () => {
       vi.mocked(prisma.member.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.member.findFirst).mockResolvedValue(null); // No duplicate name
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]); // No duplicate name
       vi.mocked(prisma.member.create).mockResolvedValue(mockMember);
 
       const request = new NextRequest('http://localhost:3000/api/members', {
