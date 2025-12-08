@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { GamerLoader } from '@/components/GamerLoader';
 import { usePurchaseTransactions } from '@/hooks/usePurchaseTransactions';
 import { useTransactionActions } from './hooks/useTransactionActions';
@@ -27,15 +27,18 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
     loadTransactions,
   } = usePurchaseTransactions(1);
 
+  // Memoize refresh callback to prevent unnecessary re-renders
+  const handleRefresh = useCallback(async () => {
+    await loadTransactions(currentPage, debouncedSearchTerm || undefined);
+  }, [currentPage, debouncedSearchTerm, loadTransactions]);
+
   const {
     isAdmin,
     handlePrint,
     handleDownloadPDF,
     handleDelete,
   } = useTransactionActions({ 
-    onRefresh: async () => {
-      await loadTransactions(currentPage, debouncedSearchTerm || undefined);
-    }
+    onRefresh: handleRefresh
   });
 
   // Expose refresh function to parent
@@ -44,6 +47,11 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
       loadTransactions(currentPage, debouncedSearchTerm || undefined);
     },
   }), [currentPage, debouncedSearchTerm, loadTransactions]);
+
+  // Memoize page change handler
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   // Reset to page 1 when search term changes
   useEffect(() => {
@@ -126,7 +134,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
       <PurchasesListPagination
         pagination={pagination}
         loading={loading}
-        onPageChange={(page) => setCurrentPage(page)}
+        onPageChange={handlePageChange}
       />
     </div>
   );

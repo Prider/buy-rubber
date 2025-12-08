@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiClient } from '@/lib/apiClient';
 import { logger } from '@/lib/logger';
 
@@ -39,22 +39,50 @@ interface UseDashboardDataReturn {
 export function useDashboardData(): UseDashboardDataReturn {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const mountedRef = useRef(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    if (!mountedRef.current) return;
+    
     try {
+      setLoading(true);
       const apiClient = getApiClient();
-      const response = await apiClient.getDashboard();
-      setData(response as DashboardData);
+      
+      // Add a timeout wrapper to ensure we don't hang forever
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Dashboard request timeout after 30 seconds')), 30000);
+      });
+      
+      const response = await Promise.race([
+        apiClient.getDashboard(),
+        timeoutPromise,
+      ]) as DashboardData;
+      
+      // Only update state if component is still mounted
+      if (mountedRef.current) {
+        setData(response);
+        setLoading(false);
+      }
     } catch (error) {
       logger.error('Failed to load dashboard', error);
-    } finally {
-      setLoading(false);
+      // Always set loading to false on error if still mounted
+      if (mountedRef.current) {
+        setLoading(false);
+        // Set empty data to prevent infinite loading
+        setData(null);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadData();
-  }, []);
+    
+    // Cleanup on unmount
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [loadData]);
 
   const defaultStats: DashboardStats = {
     todayPurchases: 0,

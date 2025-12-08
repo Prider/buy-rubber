@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import axios, { CancelTokenSource } from 'axios';
 import { logger } from '@/lib/logger';
 
 export interface Expense {
@@ -66,8 +66,28 @@ export const useExpenses = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use ref to store cancel token for cleanup
+  const cancelTokenRef = useRef<CancelTokenSource | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (cancelTokenRef.current) {
+        cancelTokenRef.current.cancel('Component unmounted');
+      }
+    };
+  }, []);
 
   const loadExpenses = useCallback(async (options: LoadExpensesOptions = {}) => {
+    // Cancel previous request if it exists
+    if (cancelTokenRef.current) {
+      cancelTokenRef.current.cancel('New request initiated');
+    }
+    
+    const cancelToken = axios.CancelToken.source();
+    cancelTokenRef.current = cancelToken;
+    
     try {
       setLoading(true);
       setError(null);
@@ -90,7 +110,12 @@ export const useExpenses = () => {
         params.category = options.category;
       }
 
-      const response = await axios.get('/api/expenses', { params });
+      const response = await axios.get('/api/expenses', { 
+        params,
+        cancelToken: cancelToken.token,
+      });
+      
+      // Only update state if request wasn't cancelled
       setExpenses(response.data.expenses || []);
       setSummary(response.data.summary || {
         todayTotal: 0,
@@ -119,10 +144,17 @@ export const useExpenses = () => {
         });
       }
     } catch (err: any) {
+      if (axios.isCancel(err)) {
+        logger.debug('Expenses load cancelled');
+        return;
+      }
       setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลค่าใช้จ่าย');
       logger.error('Failed to load expenses', err);
     } finally {
       setLoading(false);
+      if (cancelTokenRef.current === cancelToken) {
+        cancelTokenRef.current = null;
+      }
     }
   }, []);
 

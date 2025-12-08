@@ -28,16 +28,16 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 describe('GET /api/backup/settings', () => {
-  let prisma: any;
-  let logger: any;
+  let prisma: { setting: { findMany: ReturnType<typeof vi.fn> } };
+  let logger: { error: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     vi.clearAllMocks();
     
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
-    prisma = prismaModule.prisma;
-    logger = loggerModule.logger;
+    prisma = prismaModule.prisma as unknown as typeof prisma;
+    logger = loggerModule.logger as unknown as typeof logger;
   });
 
   it('should return default settings when no settings exist', async () => {
@@ -50,6 +50,8 @@ describe('GET /api/backup/settings', () => {
     expect(data.enabled).toBe(false);
     expect(data.frequency).toBe('daily');
     expect(data.time).toBe('22:00');
+    expect(data.weeklyDay).toBe(0);
+    expect(data.monthlyDay).toBe(1);
     expect(data.maxCount).toBe(30);
     expect(data.autoCleanup).toBe(true);
   });
@@ -59,6 +61,8 @@ describe('GET /api/backup/settings', () => {
       { key: 'backup_enabled', value: 'true' },
       { key: 'backup_frequency', value: 'weekly' },
       { key: 'backup_time', value: '23:00' },
+      { key: 'backup_weekly_day', value: '3' },
+      { key: 'backup_monthly_day', value: '10' },
       { key: 'backup_max_count', value: '50' },
       { key: 'backup_auto_cleanup', value: 'false' },
     ];
@@ -72,6 +76,8 @@ describe('GET /api/backup/settings', () => {
     expect(data.enabled).toBe(true);
     expect(data.frequency).toBe('weekly');
     expect(data.time).toBe('23:00');
+    expect(data.weeklyDay).toBe(3);
+    expect(data.monthlyDay).toBe(10);
     expect(data.maxCount).toBe(50);
     expect(data.autoCleanup).toBe(false);
   });
@@ -91,6 +97,8 @@ describe('GET /api/backup/settings', () => {
     expect(data.enabled).toBe(true);
     expect(data.frequency).toBe('monthly');
     expect(data.time).toBe('22:00'); // Default
+    expect(data.weeklyDay).toBe(0); // Default
+    expect(data.monthlyDay).toBe(1); // Default
     expect(data.maxCount).toBe(30); // Default
     expect(data.autoCleanup).toBe(true); // Default
   });
@@ -123,9 +131,9 @@ describe('GET /api/backup/settings', () => {
 });
 
 describe('POST /api/backup/settings', () => {
-  let prisma: any;
-  let backupScheduler: any;
-  let logger: any;
+  let prisma: { setting: { upsert: ReturnType<typeof vi.fn> } };
+  let backupScheduler: { restartAutoBackup: ReturnType<typeof vi.fn> };
+  let logger: { error: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -133,9 +141,9 @@ describe('POST /api/backup/settings', () => {
     const prismaModule = await import('@/lib/prisma');
     const backupSchedulerModule = await import('@/lib/backupScheduler');
     const loggerModule = await import('@/lib/logger');
-    prisma = prismaModule.prisma;
-    backupScheduler = backupSchedulerModule;
-    logger = loggerModule.logger;
+    prisma = prismaModule.prisma as unknown as typeof prisma;
+    backupScheduler = backupSchedulerModule as unknown as typeof backupScheduler;
+    logger = loggerModule.logger as unknown as typeof logger;
   });
 
   it('should save all settings', async () => {
@@ -159,7 +167,7 @@ describe('POST /api/backup/settings', () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.message).toBe('บันทึกการตั้งค่าเรียบร้อย');
-    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledTimes(5);
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledTimes(7);
     expect(vi.mocked(backupScheduler.restartAutoBackup)).toHaveBeenCalled();
   });
 
@@ -184,6 +192,20 @@ describe('POST /api/backup/settings', () => {
         where: { key: 'backup_frequency' },
         update: { value: 'daily' },
         create: { key: 'backup_frequency', value: 'daily' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_weekly_day' },
+        update: { value: '0' },
+        create: { key: 'backup_weekly_day', value: '0' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_monthly_day' },
+        update: { value: '1' },
+        create: { key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -217,6 +239,20 @@ describe('POST /api/backup/settings', () => {
         create: { key: 'backup_auto_cleanup', value: 'false' },
       })
     );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_weekly_day' },
+        update: { value: '0' },
+        create: { key: 'backup_weekly_day', value: '0' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_monthly_day' },
+        update: { value: '1' },
+        create: { key: 'backup_monthly_day', value: '1' },
+      })
+    );
   });
 
   it('should convert maxCount to string', async () => {
@@ -239,6 +275,20 @@ describe('POST /api/backup/settings', () => {
         create: { key: 'backup_max_count', value: '100' },
       })
     );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_weekly_day' },
+        update: { value: '0' },
+        create: { key: 'backup_weekly_day', value: '0' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_monthly_day' },
+        update: { value: '1' },
+        create: { key: 'backup_monthly_day', value: '1' },
+      })
+    );
   });
 
   it('should handle null/undefined maxCount', async () => {
@@ -259,6 +309,20 @@ describe('POST /api/backup/settings', () => {
         where: { key: 'backup_max_count' },
         update: { value: '30' },
         create: { key: 'backup_max_count', value: '30' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_weekly_day' },
+        update: { value: '0' },
+        create: { key: 'backup_weekly_day', value: '0' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_monthly_day' },
+        update: { value: '1' },
+        create: { key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -300,6 +364,21 @@ describe('POST /api/backup/settings', () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
     expect(vi.mocked(logger.error)).toHaveBeenCalled();
+    // Ensure weekly/monthly defaults are attempted
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_weekly_day' },
+        update: { value: '0' },
+        create: { key: 'backup_weekly_day', value: '0' },
+      })
+    );
+    expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'backup_monthly_day' },
+        update: { value: '1' },
+        create: { key: 'backup_monthly_day', value: '1' },
+      })
+    );
   });
 });
 

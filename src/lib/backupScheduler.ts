@@ -6,16 +6,18 @@ import { logger } from './logger';
 let scheduledTask: cron.ScheduledTask | null = null;
 
 // Convert time to cron format
-function getCronExpression(time: string, frequency: string): string {
+function getCronExpression(time: string, frequency: string, weeklyDay?: number, monthlyDay?: number): string {
   const [hours, minutes] = time.split(':').map(Number);
   
   switch (frequency) {
     case 'daily':
       return `${minutes} ${hours} * * *`;
     case 'weekly':
-      return `${minutes} ${hours} * * 0`; // Sunday
+      // default to Sunday if not provided
+      return `${minutes} ${hours} * * ${weeklyDay ?? 0}`;
     case 'monthly':
-      return `${minutes} ${hours} 1 * *`; // First day of month
+      // default to 1st of month if not provided
+      return `${minutes} ${hours} ${monthlyDay ?? 1} * *`;
     default:
       return `${minutes} ${hours} * * *`; // Daily as default
   }
@@ -38,7 +40,7 @@ export async function startAutoBackup() {
     }
 
     // Get cron expression based on settings
-    const cronExpression = getCronExpression(settings.time, settings.frequency);
+    const cronExpression = getCronExpression(settings.time, settings.frequency, settings.weeklyDay, settings.monthlyDay);
     
     scheduledTask = cron.schedule(cronExpression, async () => {
       logger.info('Running scheduled backup...');
@@ -56,7 +58,7 @@ async function getBackupSettings() {
   const settings = await prisma.setting.findMany({
     where: {
       key: {
-        in: ['backup_enabled', 'backup_frequency', 'backup_time']
+        in: ['backup_enabled', 'backup_frequency', 'backup_time', 'backup_weekly_day', 'backup_monthly_day']
       }
     }
   });
@@ -65,6 +67,8 @@ async function getBackupSettings() {
     enabled: false,
     frequency: 'daily',
     time: '22:00',
+    weeklyDay: 0,
+    monthlyDay: 1,
   };
 
   settings.forEach(setting => {
@@ -77,6 +81,12 @@ async function getBackupSettings() {
         break;
       case 'backup_time':
         settingsObj.time = setting.value;
+        break;
+      case 'backup_weekly_day':
+        settingsObj.weeklyDay = parseInt(setting.value, 10);
+        break;
+      case 'backup_monthly_day':
+        settingsObj.monthlyDay = parseInt(setting.value, 10);
         break;
     }
   });

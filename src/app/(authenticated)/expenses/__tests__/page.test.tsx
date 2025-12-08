@@ -98,6 +98,12 @@ describe('ExpensesPage Integration Tests', () => {
     // Mock window.confirm
     global.confirm = vi.fn(() => true);
     
+    // Mock axios cancel token utilities used in the hook
+    mockedAxios.CancelToken = {
+      source: vi.fn(() => ({ token: 'cancel-token', cancel: vi.fn() })),
+    };
+    mockedAxios.isCancel = vi.fn(() => false);
+    
     // Default mock for GET /api/expenses
     mockedAxios.get.mockResolvedValue({
       data: mockExpensesResponse,
@@ -123,9 +129,12 @@ describe('ExpensesPage Integration Tests', () => {
       render(<ExpensesPage />);
 
       await waitFor(() => {
-        expect(mockedAxios.get).toHaveBeenCalledWith('/api/expenses', {
-          params: { page: 1, pageSize: 10 },
-        });
+        expect(mockedAxios.get).toHaveBeenCalledWith(
+          '/api/expenses',
+          expect.objectContaining({
+            params: { page: 1, pageSize: 10 },
+          })
+        );
       });
 
       await waitFor(() => {

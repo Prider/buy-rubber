@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import axios, { CancelTokenSource } from 'axios';
 import { PurchaseTransaction, PaginationInfo } from '@/components/purchases/types';
 
 const ITEMS_PER_PAGE = 20;
@@ -27,14 +27,37 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Use ref to store cancel token for cleanup
+  const cancelTokenRef = useRef<CancelTokenSource | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (cancelTokenRef.current) {
+        cancelTokenRef.current.cancel('Component unmounted');
+      }
+    };
+  }, []);
 
   const loadTransactions = useCallback(async (page: number = 1, searchTerm?: string) => {
+    // Cancel previous request if it exists
+    if (cancelTokenRef.current) {
+      cancelTokenRef.current.cancel('New request initiated');
+    }
+    
+    const cancelToken = axios.CancelToken.source();
+    cancelTokenRef.current = cancelToken;
+    
     try {
       setLoading(true);
       setError('');
       const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
-      const response = await axios.get(`/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}${searchParam}`);
+      const response = await axios.get(`/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}${searchParam}`, {
+        cancelToken: cancelToken.token,
+      });
       
+      // Only update state if request wasn't cancelled
       // Handle both old format (array) and new format (object with transactions and pagination)
       if (Array.isArray(response.data)) {
         setTransactions(response.data);
@@ -55,6 +78,9 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
         }
       }
     } catch (err: unknown) {
+      if (axios.isCancel(err)) {
+        return; // Request was cancelled, don't update state
+      }
       const errorMessage = err instanceof Error 
         ? err.message 
         : (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
@@ -62,6 +88,9 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
       console.error('Failed to load transactions:', err);
     } finally {
       setLoading(false);
+      if (cancelTokenRef.current === cancelToken) {
+        cancelTokenRef.current = null;
+      }
     }
   }, []);
 

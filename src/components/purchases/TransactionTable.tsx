@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { PurchaseTransaction } from './types';
 import { TransactionActionButtons } from './TransactionActionButtons';
@@ -13,7 +13,7 @@ interface TransactionTableProps {
   onDelete: (transaction: PurchaseTransaction) => void;
 }
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({
+export const TransactionTable: React.FC<TransactionTableProps> = memo(({
   transactions,
   isAdmin,
   onPrint,
@@ -120,6 +120,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TransactionTable.displayName = 'TransactionTable';
 
 
