@@ -397,7 +397,7 @@ describe('GET /api/purchases/transactions', () => {
       expect(data.pagination.hasMore).toBe(false);
     });
 
-    it('should sort transactions by date (oldest first)', async () => {
+    it('should sort transactions by date (newest first)', async () => {
       const purchaseOld = {
         ...mockPurchase1,
         id: 'purchase-old',
@@ -422,8 +422,9 @@ describe('GET /api/purchases/transactions', () => {
 
       expect(response.status).toBe(200);
       expect(data.transactions).toHaveLength(2);
-      expect(data.transactions[0].purchaseNo).toBe('PUR-202401-0001');
-      expect(data.transactions[1].purchaseNo).toBe('PUR-202401-0002');
+      // Transactions are sorted by newest first (date and createdAt descending)
+      expect(data.transactions[0].purchaseNo).toBe('PUR-202401-0002'); // Newer date (2024-01-16)
+      expect(data.transactions[1].purchaseNo).toBe('PUR-202401-0001'); // Older date (2024-01-15)
     });
 
     it('should use most recent createdAt when grouping purchases with same purchaseNo', async () => {

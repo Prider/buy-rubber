@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { PurchaseTransaction } from './types';
 import { TransactionActionButtons } from './TransactionActionButtons';
@@ -19,7 +20,29 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   onDownloadPDF,
   onDelete,
 }) => {
-  if (transactions.length === 0) {
+  // Sort transactions by date (newest first) and then by createdAt (newest first)
+  const sortedTransactions = React.useMemo(() => {
+    return [...transactions].sort((a, b) => {
+      // Priority 1: Sort by createdAt if available (newest first)
+      const createdAtA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdAtB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (createdAtA !== createdAtB) {
+        return createdAtB - createdAtA; // Newest first
+      }
+      
+      // Priority 2: Sort by date (newest first)
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) {
+        return dateB - dateA; // Newest first
+      }
+      
+      // Priority 3: Sort by purchaseNo (descending) as tiebreaker
+      return b.purchaseNo.localeCompare(a.purchaseNo);
+    });
+  }, [transactions]);
+
+  if (sortedTransactions.length === 0) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 text-center">
         <p className="text-gray-600 dark:text-gray-400">ไม่มีข้อมูลการรับซื้อ</p>
@@ -54,7 +77,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {transactions.map((transaction, index) => (
+            {sortedTransactions.map((transaction, index) => (
               <tr
                 key={transaction.purchaseNo}
                 className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${

@@ -1,6 +1,5 @@
-/// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
-import * as path from 'path'
+import path from 'path'
 
 export default defineConfig({
   test: {
@@ -15,14 +14,14 @@ export default defineConfig({
         'dist/',
         '.next/',
         'electron/',
-        '**/*.config.{ts,js}',
+        '**/*.config.{ts,js,mjs}',
         '**/types/**',
       ],
     },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(process.cwd(), './src'),
     },
   },
 })

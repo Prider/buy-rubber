@@ -120,9 +120,9 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Sort by date and time (oldest first) - ALWAYS sort regardless of search
+    // Sort by date and time (newest first) - ALWAYS sort regardless of search
     allTransactions = allTransactions.sort((a, b) => {
-      // Priority 1: Sort by createdAt or date (oldest first)
+      // Priority 1: Sort by createdAt or date (newest first)
       // Use createdAt if available (has timestamp), otherwise use date
       const aTime = a.createdAt 
         ? new Date(a.createdAt).getTime() 
@@ -132,19 +132,19 @@ export async function GET(request: NextRequest) {
         : new Date(b.date).getTime();
       
       if (aTime !== bTime) {
-        return aTime - bTime; // Ascending: oldest first
+        return bTime - aTime; // Descending: newest first
       }
       
-      // Priority 2: If times are equal, sort by date (oldest first)
+      // Priority 2: If times are equal, sort by date (newest first)
       const aDate = new Date(a.date).getTime();
       const bDate = new Date(b.date).getTime();
       
       if (aDate !== bDate) {
-        return aDate - bDate; // Ascending: oldest first
+        return bDate - aDate; // Descending: newest first
       }
       
-      // Priority 3: Sort by purchaseNo (ascending) as tiebreaker
-      return a.purchaseNo.localeCompare(b.purchaseNo);
+      // Priority 3: Sort by purchaseNo (descending) as tiebreaker
+      return b.purchaseNo.localeCompare(a.purchaseNo);
     });
 
     // Calculate pagination
