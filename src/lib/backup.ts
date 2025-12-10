@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import { prisma } from './prisma';
 import { logger } from './logger';
@@ -104,10 +105,13 @@ function getBackupDirectory(): string {
 }
 
 // สร้างโฟลเดอร์สำรองข้อมูล (ถ้ายังไม่มี)
-export function ensureBackupDirectory() {
+export async function ensureBackupDirectory() {
   const backupDir = getBackupDirectory();
-  if (!fs.existsSync(backupDir)) {
-    fs.mkdirSync(backupDir, { recursive: true });
+  try {
+    await fsPromises.access(backupDir);
+  } catch {
+    // Directory doesn't exist, create it
+    await fsPromises.mkdir(backupDir, { recursive: true });
   }
   return backupDir;
 }
@@ -116,7 +120,7 @@ export function ensureBackupDirectory() {
 export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
   try {
     logger.info('Starting backup creation', { type: backupType });
-    const backupDir = ensureBackupDirectory();
+    const backupDir = await ensureBackupDirectory();
 
     // สร้างชื่อไฟล์ (timestamp)
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
@@ -125,15 +129,11 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
 
     // Get database path dynamically
     const dbPath = getDatabasePath();
-    logger.info('Creating backup', { 
-      dbPath, 
-      exists: fs.existsSync(dbPath),
-      DATABASE_URL: process.env.DATABASE_URL,
-      cwd: process.cwd()
-    });
     
-    // สำรองไฟล์ฐานข้อมูล
-    if (!fs.existsSync(dbPath)) {
+    // Check if database file exists (async)
+    try {
+      await fsPromises.access(dbPath);
+    } catch {
       // Try to get the actual database path from Prisma if available
       try {
         // Try to query Prisma to get the actual connection info
@@ -153,10 +153,17 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
       throw new Error(`Database file not found at: ${dbPath}. DATABASE_URL: ${process.env.DATABASE_URL || 'not set'}. Please ensure the database file exists.`);
     }
 
-    fs.copyFileSync(dbPath, backupPath);
+    logger.info('Creating backup', { 
+      dbPath, 
+      DATABASE_URL: process.env.DATABASE_URL,
+      cwd: process.cwd()
+    });
 
-    // ตรวจสอบขนาดไฟล์
-    const stats = fs.statSync(backupPath);
+    // สำรองไฟล์ฐานข้อมูล (async - non-blocking)
+    await fsPromises.copyFile(dbPath, backupPath);
+
+    // ตรวจสอบขนาดไฟล์ (async)
+    const stats = await fsPromises.stat(backupPath);
     const fileSize = stats.size;
 
     // บันทึกข้อมูลการสำรองลงฐานข้อมูล
@@ -199,8 +206,10 @@ export async function restoreBackup(backupId: string) {
       throw new Error('Backup not found');
     }
 
-    // ตรวจสอบว่าไฟล์สำรองมีอยู่จริง
-    if (!fs.existsSync(backup.filePath)) {
+    // ตรวจสอบว่าไฟล์สำรองมีอยู่จริง (async)
+    try {
+      await fsPromises.access(backup.filePath);
+    } catch {
       throw new Error('Backup file not found');
     }
 
@@ -211,9 +220,29 @@ export async function restoreBackup(backupId: string) {
     // Get database path dynamically
     const dbPath = getDatabasePath();
     
-    // Verify paths
-    const backupExists = fs.existsSync(backup.filePath);
-    const dbExists = fs.existsSync(dbPath);
+    // Verify paths (async)
+    let backupExists = false;
+    let dbExists = false;
+    let backupSize = 0;
+    let dbSize = 0;
+    
+    try {
+      await fsPromises.access(backup.filePath);
+      backupExists = true;
+      const backupStats = await fsPromises.stat(backup.filePath);
+      backupSize = backupStats.size;
+    } catch {
+      backupExists = false;
+    }
+    
+    try {
+      await fsPromises.access(dbPath);
+      dbExists = true;
+      const dbStats = await fsPromises.stat(dbPath);
+      dbSize = dbStats.size;
+    } catch {
+      dbExists = false;
+    }
     
     logger.info('Preparing to restore backup', { 
       backupId,
@@ -222,8 +251,8 @@ export async function restoreBackup(backupId: string) {
       targetDbPath: dbPath,
       backupExists,
       dbExists,
-      backupSize: backupExists ? fs.statSync(backup.filePath).size : 0,
-      dbSize: dbExists ? fs.statSync(dbPath).size : 0,
+      backupSize,
+      dbSize,
     });
     
     console.log('========== RESTORE DEBUG ==========');
@@ -244,26 +273,35 @@ export async function restoreBackup(backupId: string) {
     // Small delay to ensure connections are closed
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    // เรียกคืนข้อมูล - replace the database file
+    // เรียกคืนข้อมูล - replace the database file (async)
     logger.info('Copying backup file to database location');
     try {
-      const beforeSize = fs.existsSync(dbPath) ? fs.statSync(dbPath).size : 0;
-      fs.copyFileSync(backup.filePath, dbPath);
-      const afterSize = fs.statSync(dbPath).size;
-      const backupSize = fs.statSync(backup.filePath).size;
+      let beforeSize = 0;
+      try {
+        const beforeStats = await fsPromises.stat(dbPath);
+        beforeSize = beforeStats.size;
+      } catch {
+        beforeSize = 0;
+      }
+      
+      await fsPromises.copyFile(backup.filePath, dbPath);
+      
+      const afterStats = await fsPromises.stat(dbPath);
+      const afterSize = afterStats.size;
+      const finalBackupSize = backupSize;
       
       logger.info('Database file replaced successfully', {
         beforeSize,
         afterSize,
-        backupSize,
-        sizesMatch: afterSize === backupSize
+        backupSize: finalBackupSize,
+        sizesMatch: afterSize === finalBackupSize
       });
       
       console.log(backup.filePath,'========== COPY SUCCESS ==========', dbPath);
       console.log('Before size:', beforeSize);
       console.log('After size:', afterSize);
-      console.log('Backup size:', backupSize);
-      console.log('Sizes match:', afterSize === backupSize);
+      console.log('Backup size:', finalBackupSize);
+      console.log('Sizes match:', afterSize === finalBackupSize);
       console.log('==================================');
     } catch (copyError) {
       logger.error('Failed to copy backup file', copyError);
@@ -331,9 +369,12 @@ export async function deleteBackup(backupId: string) {
       throw new Error('Backup not found');
     }
 
-    // ลบไฟล์
-    if (fs.existsSync(backup.filePath)) {
-      fs.unlinkSync(backup.filePath);
+    // ลบไฟล์ (async)
+    try {
+      await fsPromises.access(backup.filePath);
+      await fsPromises.unlink(backup.filePath);
+    } catch {
+      // File doesn't exist or already deleted, continue
     }
 
     // ลบข้อมูลจากฐานข้อมูล
@@ -376,9 +417,12 @@ export async function cleanupOldBackups() {
       const toDelete = backups.slice(0, backups.length - maxBackups);
       
       for (const backup of toDelete) {
-        // ลบไฟล์
-        if (fs.existsSync(backup.filePath)) {
-          fs.unlinkSync(backup.filePath);
+        // ลบไฟล์ (async)
+        try {
+          await fsPromises.access(backup.filePath);
+          await fsPromises.unlink(backup.filePath);
+        } catch {
+          // File doesn't exist or already deleted, continue
         }
         // ลบข้อมูลจากฐานข้อมูล
         await prisma.backup.delete({

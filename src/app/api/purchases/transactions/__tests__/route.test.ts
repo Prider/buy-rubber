@@ -7,8 +7,12 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     purchase: {
       findMany: vi.fn(),
+      groupBy: vi.fn(),
     },
     serviceFee: {
+      findMany: vi.fn(),
+    },
+    member: {
       findMany: vi.fn(),
     },
   },
@@ -161,10 +165,40 @@ describe('GET /api/purchases/transactions', () => {
     const loggerModule = await import('@/lib/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    
+    // Default mock for member.findMany
+    vi.mocked(prisma.member.findMany).mockResolvedValue([mockMember]);
   });
 
   describe('Successful retrieval', () => {
     it('should return all transactions when no filters are provided', async () => {
+      // Mock groupBy to return grouped purchaseNos
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T11:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 14250,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
+      // Mock findMany for purchases (called with purchaseNo filter)
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -182,6 +216,21 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should group purchases by purchaseNo', async () => {
+      // Mock groupBy to return one grouped purchaseNo
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T11:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 14250, // 4750 + 9500
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase2]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -197,6 +246,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should subtract service fees from totalAmount', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([mockServiceFee1, mockServiceFee2]);
 
@@ -211,6 +274,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should filter transactions by startDate', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase3]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -218,7 +295,7 @@ describe('GET /api/purchases/transactions', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+      expect(vi.mocked(prisma.purchase.groupBy)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             date: expect.objectContaining({
@@ -230,6 +307,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should filter transactions by endDate', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -237,7 +328,7 @@ describe('GET /api/purchases/transactions', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+      expect(vi.mocked(prisma.purchase.groupBy)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             date: expect.objectContaining({
@@ -249,6 +340,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should filter transactions by date range', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -256,7 +361,7 @@ describe('GET /api/purchases/transactions', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+      expect(vi.mocked(prisma.purchase.groupBy)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             date: expect.objectContaining({
@@ -269,6 +374,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should filter transactions by memberId', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -276,7 +395,7 @@ describe('GET /api/purchases/transactions', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+      expect(vi.mocked(prisma.purchase.groupBy)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             memberId: 'member-1',
@@ -286,7 +405,32 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should search transactions by purchaseNo', async () => {
-      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?search=0001');
@@ -299,6 +443,31 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should search transactions by member name', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -314,6 +483,31 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should search transactions by member code', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -329,12 +523,33 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should paginate transactions correctly', async () => {
-      const purchases = Array.from({ length: 25 }, (_, i) => ({
-        ...mockPurchase1,
-        id: `purchase-${i}`,
+      // Mock groupBy to return 25 distinct purchaseNos
+      // They will be sorted by date/createdAt descending, then by purchaseNo descending
+      // So the first page will have the newest purchaseNos (which are the higher numbers if dates are same)
+      const purchaseNoGroups = Array.from({ length: 25 }, (_, i) => ({
         purchaseNo: `PUR-202401-${String(i + 1).padStart(4, '0')}`,
-        date: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}`),
-        createdAt: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}T10:00:00`),
+        memberId: 'member-1',
+        _max: {
+          // Use same date for all to test purchaseNo sorting
+          createdAt: new Date('2024-01-15T10:00:00'),
+          date: new Date('2024-01-15'),
+        },
+        _sum: {
+          totalAmount: 4750,
+        },
+      }));
+      
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue(purchaseNoGroups);
+      
+      // After sorting, purchaseNos will be in descending order (25, 24, 23, ...)
+      // So page 1 will have purchaseNos 25, 24, 23, 22, 21, 20, 19, 18, 17, 16
+      // Mock findMany to return purchases for those purchaseNos
+      const purchases = Array.from({ length: 10 }, (_, i) => ({
+        ...mockPurchase1,
+        id: `purchase-${24 - i}`,
+        purchaseNo: `PUR-202401-${String(25 - i).padStart(4, '0')}`, // 25, 24, 23, ..., 16
+        date: new Date('2024-01-15'),
+        createdAt: new Date('2024-01-15T10:00:00'),
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
@@ -345,7 +560,8 @@ describe('GET /api/purchases/transactions', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.transactions).toHaveLength(10);
+      // Each purchaseNo should create one transaction
+      expect(data.transactions.length).toBe(10);
       expect(data.pagination.page).toBe(1);
       expect(data.pagination.limit).toBe(10);
       expect(data.pagination.total).toBe(25);
@@ -354,12 +570,30 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle pagination on second page', async () => {
-      const purchases = Array.from({ length: 25 }, (_, i) => ({
-        ...mockPurchase1,
-        id: `purchase-${i}`,
+      const purchaseNoGroups = Array.from({ length: 25 }, (_, i) => ({
         purchaseNo: `PUR-202401-${String(i + 1).padStart(4, '0')}`,
-        date: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}`),
-        createdAt: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}T10:00:00`),
+        memberId: 'member-1',
+        _max: {
+          // Use same date for all to test purchaseNo sorting
+          createdAt: new Date('2024-01-15T10:00:00'),
+          date: new Date('2024-01-15'),
+        },
+        _sum: {
+          totalAmount: 4750,
+        },
+      }));
+      
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue(purchaseNoGroups);
+      
+      // After sorting, purchaseNos will be in descending order (25, 24, 23, ...)
+      // So page 2 will have purchaseNos 15, 14, 13, 12, 11, 10, 9, 8, 7, 6
+      // Mock findMany to return purchases for those purchaseNos
+      const purchases = Array.from({ length: 10 }, (_, i) => ({
+        ...mockPurchase1,
+        id: `purchase-${14 - i}`,
+        purchaseNo: `PUR-202401-${String(15 - i).padStart(4, '0')}`, // 15, 14, 13, ..., 6
+        date: new Date('2024-01-15'),
+        createdAt: new Date('2024-01-15T10:00:00'),
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
@@ -370,18 +604,37 @@ describe('GET /api/purchases/transactions', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.transactions).toHaveLength(10);
+      // Each purchaseNo should create one transaction
+      expect(data.transactions.length).toBe(10);
       expect(data.pagination.page).toBe(2);
       expect(data.pagination.hasMore).toBe(true);
     });
 
     it('should handle pagination on last page', async () => {
-      const purchases = Array.from({ length: 25 }, (_, i) => ({
-        ...mockPurchase1,
-        id: `purchase-${i}`,
+      const purchaseNoGroups = Array.from({ length: 25 }, (_, i) => ({
         purchaseNo: `PUR-202401-${String(i + 1).padStart(4, '0')}`,
-        date: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}`),
-        createdAt: new Date(`2024-01-${String(15 + (i % 10)).padStart(2, '0')}T10:00:00`),
+        memberId: 'member-1',
+        _max: {
+          // Use same date for all to test purchaseNo sorting
+          createdAt: new Date('2024-01-15T10:00:00'),
+          date: new Date('2024-01-15'),
+        },
+        _sum: {
+          totalAmount: 4750,
+        },
+      }));
+      
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue(purchaseNoGroups);
+      
+      // After sorting, purchaseNos will be in descending order (25, 24, 23, ...)
+      // So page 3 will have purchaseNos 5, 4, 3, 2, 1 (last 5)
+      // Mock findMany to return purchases for those purchaseNos
+      const purchases = Array.from({ length: 5 }, (_, i) => ({
+        ...mockPurchase1,
+        id: `purchase-${4 - i}`,
+        purchaseNo: `PUR-202401-${String(5 - i).padStart(4, '0')}`, // 5, 4, 3, 2, 1
+        date: new Date('2024-01-15'),
+        createdAt: new Date('2024-01-15T10:00:00'),
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
@@ -392,12 +645,38 @@ describe('GET /api/purchases/transactions', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.transactions).toHaveLength(5);
+      // Each purchaseNo should create one transaction
+      expect(data.transactions.length).toBe(5);
       expect(data.pagination.page).toBe(3);
       expect(data.pagination.hasMore).toBe(false);
     });
 
     it('should sort transactions by date (newest first)', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       const purchaseOld = {
         ...mockPurchase1,
         id: 'purchase-old',
@@ -428,6 +707,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should use most recent createdAt when grouping purchases with same purchaseNo', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T11:00:00'), // More recent
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 14250,
+          },
+        },
+      ]);
+      
       const purchase1 = {
         ...mockPurchase1,
         date: new Date('2024-01-15'),
@@ -454,6 +747,7 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle empty purchases array', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -468,6 +762,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle purchases with no service fees', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -482,6 +790,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should combine multiple filters', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -491,7 +813,7 @@ describe('GET /api/purchases/transactions', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+      expect(vi.mocked(prisma.purchase.groupBy)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             memberId: 'member-1',
@@ -508,7 +830,7 @@ describe('GET /api/purchases/transactions', () => {
   describe('Error handling', () => {
     it('should return 500 when database query fails', async () => {
       const dbError = new Error('Database connection failed');
-      vi.mocked(prisma.purchase.findMany).mockRejectedValue(dbError);
+      vi.mocked(prisma.purchase.groupBy).mockRejectedValue(dbError);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -520,6 +842,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should return 500 when service fee query fails', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       const dbError = new Error('Service fee query failed');
       vi.mocked(prisma.serviceFee.findMany).mockRejectedValue(dbError);
@@ -536,6 +872,7 @@ describe('GET /api/purchases/transactions', () => {
 
   describe('Logging', () => {
     it('should log the GET request with parameters', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -554,6 +891,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should log success with count and pagination', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -579,6 +930,20 @@ describe('GET /api/purchases/transactions', () => {
 
   describe('Edge cases', () => {
     it('should handle default pagination values when not provided', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -592,6 +957,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle invalid page number', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -606,6 +985,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle invalid limit number', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
       vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
@@ -620,6 +1013,20 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle purchases without createdAt', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: null,
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+      ]);
+      
       const purchaseWithoutCreatedAt = {
         ...mockPurchase1,
         createdAt: null as any,
@@ -638,6 +1045,31 @@ describe('GET /api/purchases/transactions', () => {
     });
 
     it('should handle service fees for multiple purchaseNos', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: {
+            totalAmount: 4750,
+          },
+        },
+        {
+          purchaseNo: 'PUR-202401-0002',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-16T10:00:00'),
+            date: new Date('2024-01-16'),
+          },
+          _sum: {
+            totalAmount: 7250,
+          },
+        },
+      ]);
+      
       const purchase1 = { ...mockPurchase1, purchaseNo: 'PUR-202401-0001' };
       const purchase2 = { ...mockPurchase3, purchaseNo: 'PUR-202401-0002' };
       const serviceFee1 = { ...mockServiceFee1, purchaseNo: 'PUR-202401-0001' };
