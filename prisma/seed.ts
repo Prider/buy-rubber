@@ -198,10 +198,10 @@ async function main() {
   }
   console.log('✅ สร้างค่าใช้จ่าย:', expenses.length, 'รายการ');
 
-  // สร้างสมาชิกตัวอย่าง (10 ราย)
-  console.log('👥 สร้างสมาชิกตัวอย่าง...');
-  
-  const memberData = [
+  // สร้างสมาชิกตัวอย่าง (1000 ราย)
+  console.log('👥 สร้างสมาชิกตัวอย่าง (1000 ราย)...');
+
+  const baseMembers = [
     {
       code: 'M001',
       name: 'นายสมชาย ใจดี',
@@ -291,9 +291,49 @@ async function main() {
     },
   ];
 
+  const ownerPercentOptions = [70, 80, 60, 90, 65, 75, 85, 100];
+  const districts = [
+    'บ้านใหม่',
+    'ท่าช้าง',
+    'คลองแห',
+    'คลองอู่ตะเภา',
+    'คลองหอยโข่ง',
+    'ควนเนียง',
+    'รัตภูมิ',
+    'สะเดา',
+    'จะนะ',
+    'นาทวี',
+  ];
+
+  const totalMembers = 1000;
+  const memberData = Array.from({ length: totalMembers }, (_value, idx) => {
+    if (idx < baseMembers.length) {
+      return baseMembers[idx];
+    }
+
+    const codeNumber = idx + 1; // 1-based
+    const code = `M${codeNumber.toString().padStart(4, '0')}`;
+    const ownerPercent = ownerPercentOptions[idx % ownerPercentOptions.length];
+    const tapperPercent = Math.max(0, 100 - ownerPercent);
+    const phone = `08${(10000000 + idx).toString().slice(-8)}`;
+    const district = districts[idx % districts.length];
+    const address = `บ้านเลขที่ ${idx + 1} หมู่ ${(idx % 10) + 1} ต.${district} อ.เมือง จ.สงขลา`;
+    const tapperName = `นายคนตัด ${(idx % 200 + 1).toString().padStart(3, '0')}`;
+
+    return {
+      code,
+      name: `สมาชิกทดสอบ ${code}`,
+      phone,
+      address,
+      ownerPercent,
+      tapperPercent,
+      tapperName,
+    };
+  });
+
   // Create members in batches to avoid overwhelming the database
   const members = [];
-  const batchSize = 20;
+  const batchSize = 100;
   
   for (let i = 0; i < memberData.length; i += batchSize) {
     const batch = memberData.slice(i, i + batchSize);
@@ -316,7 +356,7 @@ async function main() {
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
   const purchases = [];
-  const purchaseCount = 150; // Create enough purchases to link service fees
+  const purchaseCount = 10000; // Create enough purchases to link service fees
   
   for (let i = 0; i < purchaseCount; i++) {
     const member = members[i % members.length];

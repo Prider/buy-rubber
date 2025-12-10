@@ -30,6 +30,9 @@ export default function ReportFilterCard({
   onGenerate,
   productTypes = [],
 }: ReportFilterCardProps) {
+  const isDateRangeInvalid =
+    startDate && endDate ? new Date(startDate) > new Date(endDate) : false;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
@@ -53,7 +56,7 @@ export default function ReportFilterCard({
               <select
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value as ReportType)}
-                className="input w-full pl-4 pr-10 py-3 appearance-none bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="input w-full pl-4 pr-4 py-3 appearance-none bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
               >
                 <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
                 {productTypes.map((pt) => (
@@ -64,7 +67,7 @@ export default function ReportFilterCard({
                 <option value="member_summary">👥 สรุปรายสมาชิก</option>
                 <option value="expense_summary">💸 รายงานค่าใช้จ่าย</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -81,7 +84,11 @@ export default function ReportFilterCard({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="input w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className={`input w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm ${
+                  isDateRangeInvalid
+                    ? 'border-red-400 focus:border-red-500 dark:border-red-500'
+                    : 'border-gray-200 dark:border-gray-600 focus:border-indigo-500'
+                }`}
               />
             </div>
           </div>
@@ -95,7 +102,11 @@ export default function ReportFilterCard({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="input w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className={`input w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm ${
+                  isDateRangeInvalid
+                    ? 'border-red-400 focus:border-red-500 dark:border-red-500'
+                    : 'border-gray-200 dark:border-gray-600 focus:border-indigo-500'
+                }`}
               />
             </div>
           </div>
@@ -103,7 +114,7 @@ export default function ReportFilterCard({
           <div className="flex items-end">
             <button
               onClick={onGenerate}
-              disabled={loading}
+              disabled={loading || isDateRangeInvalid}
               className="group w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 dark:from-indigo-500 dark:to-indigo-600 dark:hover:from-indigo-600 dark:hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:cursor-not-allowed transform hover:-translate-y-0.5 disabled:transform-none disabled:shadow-none"
             >
               {loading ? (
