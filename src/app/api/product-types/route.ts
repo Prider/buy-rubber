@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cache, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -10,9 +11,20 @@ export async function GET(_request: NextRequest) {
   try {
     logger.info('GET /api/product-types');
     
+    // Check cache first
+    const cachedProductTypes = cache.get(CACHE_KEYS.PRODUCT_TYPES);
+    if (cachedProductTypes) {
+      logger.info('GET /api/product-types - Cache hit');
+      return NextResponse.json(cachedProductTypes);
+    }
+    
+    logger.info('GET /api/product-types - Cache miss, fetching from database');
     const productTypes = await prisma.productType.findMany({
       orderBy: { code: 'asc' },
     });
+
+    // Cache the response for 30 minutes (product types don't change often)
+    cache.set(CACHE_KEYS.PRODUCT_TYPES, productTypes, CACHE_TTL.PRODUCT_TYPES);
 
     logger.info('GET /api/product-types - Success', { count: productTypes.length });
     return NextResponse.json(productTypes);
@@ -61,6 +73,10 @@ export async function POST(request: NextRequest) {
         description: description || null,
       },
     });
+
+    // Invalidate product types cache when a new product type is created
+    cache.delete(CACHE_KEYS.PRODUCT_TYPES);
+    logger.info('POST /api/product-types - Cache invalidated');
 
     logger.info('POST /api/product-types - Success', { id: productType.id, code });
     return NextResponse.json(productType, { status: 201 });

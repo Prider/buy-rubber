@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cache, CACHE_KEYS } from '@/lib/cache';
 
 // GET /api/members/[id]
 export async function GET(
@@ -73,6 +74,10 @@ export async function PUT(
       },
     });
 
+    // Invalidate members cache and dashboard cache when a member is updated
+    cache.deletePattern('^members:');
+    cache.delete(CACHE_KEYS.DASHBOARD);
+
     return NextResponse.json(member);
   } catch (error) {
     console.error('Update member error:', error);
@@ -111,6 +116,10 @@ export async function DELETE(
         data: { isActive: false },
       });
 
+      // Invalidate members cache and dashboard cache when a member is soft deleted
+      cache.deletePattern('^members:');
+      cache.delete(CACHE_KEYS.DASHBOARD);
+
       const notes = [];
       if (purchaseCount > 0) {
         notes.push(`ประวัติการรับซื้อ ${purchaseCount} รายการ`);
@@ -130,6 +139,10 @@ export async function DELETE(
         where: { id: params.id },
       });
 
+      // Invalidate members cache and dashboard cache when a member is deleted
+      cache.deletePattern('^members:');
+      cache.delete(CACHE_KEYS.DASHBOARD);
+
       logger.info('Hard deleted member', { memberId: params.id });
       return NextResponse.json({
         message: 'ลบสมาชิกเรียบร้อยแล้ว',
@@ -147,6 +160,10 @@ export async function DELETE(
           where: { id: params.id },
           data: { isActive: false },
         });
+
+        // Invalidate members cache and dashboard cache when a member is soft deleted
+        cache.deletePattern('^members:');
+        cache.delete(CACHE_KEYS.DASHBOARD);
 
         return NextResponse.json({ 
           message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',

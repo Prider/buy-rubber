@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 
 interface Member {
@@ -34,8 +34,16 @@ interface UsePurchaseFormProps {
 }
 
 export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurchaseFormProps) => {
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
   const [formData, setFormData] = useState<PurchaseFormData>({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     memberId: '',
     productTypeId: '',
     grossWeight: '',
@@ -45,6 +53,13 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     bonusPrice: '',
     notes: '',
   });
+
+  // Ensure date is always set to today if empty
+  useEffect(() => {
+    if (!formData.date) {
+      setFormData(prev => ({ ...prev, date: getTodayDate() }));
+    }
+  }, [formData.date]);
 
   const [error, setError] = useState('');
   
@@ -116,7 +131,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setShowProductTypeDropdown(false);
     
     // Trigger price fetch and recent purchases fetch
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     let priceForProductType = dailyPrices.find(price => {
       if (!price.date) return false;
       const priceDate = new Date(price.date).toISOString().split('T')[0];
@@ -172,7 +187,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     
     // If product type is selected, automatically set the price from daily prices
     if (name === 'productTypeId' && value) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDate();
       
       // Try to find exact date match first (compare date strings, handle timezone)
       let priceForProductType = dailyPrices.find(price => {
@@ -287,7 +302,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Reset form (keeping member selection for quick multiple entries)
   const resetForm = useCallback(() => {
     setFormData(prev => ({
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDate(),
       memberId: prev.memberId, // Keep member selection
       productTypeId: '',
       grossWeight: '',
@@ -309,7 +324,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Reset ALL fields including member (for Reset button)
   const resetAllFields = useCallback(() => {
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDate(),
       memberId: '',
       productTypeId: '',
       grossWeight: '',

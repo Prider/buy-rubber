@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cache, CACHE_KEYS } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
         });
       })
     );
+
+    // Invalidate dashboard cache when prices are updated (dashboard shows today's prices)
+    cache.delete(CACHE_KEYS.DASHBOARD);
 
     logger.info('POST /api/prices/daily - Success', { count: createdPrices.length });
 

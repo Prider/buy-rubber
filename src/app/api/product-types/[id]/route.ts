@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cache, CACHE_KEYS } from '@/lib/cache';
 
 // PUT /api/product-types/[id] - Update product type
 export async function PUT(
@@ -25,6 +26,9 @@ export async function PUT(
       },
     });
 
+    // Invalidate product types cache when a product type is updated
+    cache.delete(CACHE_KEYS.PRODUCT_TYPES);
+
     return NextResponse.json(productType);
   } catch (error) {
     console.error('Update product type error:', error);
@@ -44,6 +48,9 @@ export async function DELETE(
     await prisma.productType.delete({
       where: { id: params.id },
     });
+
+    // Invalidate product types cache when a product type is deleted
+    cache.delete(CACHE_KEYS.PRODUCT_TYPES);
 
     return NextResponse.json({ success: true });
   } catch (error) {

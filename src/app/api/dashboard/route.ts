@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cache, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -9,6 +10,15 @@ export const runtime = 'nodejs';
 export async function GET(_request: NextRequest) {
   try {
     logger.info('GET /api/dashboard - Request received');
+    
+    // Check cache first
+    const cachedData = cache.get(CACHE_KEYS.DASHBOARD);
+    if (cachedData) {
+      logger.info('GET /api/dashboard - Cache hit');
+      return NextResponse.json(cachedData);
+    }
+    
+    logger.info('GET /api/dashboard - Cache miss, fetching from database');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -33,6 +43,7 @@ export async function GET(_request: NextRequest) {
       todayExpenses,
       monthExpenses,
       recentExpenses,
+      todayPurchasesByProductType,
     ] = await Promise.all([
       // รายการรับซื้อวันนี้
       prisma.purchase.aggregate({
@@ -163,6 +174,21 @@ export async function GET(_request: NextRequest) {
         take: 5,
         orderBy: { date: 'desc' },
       }),
+      // รายการรับซื้อวันนี้แยกตามประเภทสินค้า
+      prisma.purchase.groupBy({
+        by: ['productTypeId'],
+        where: {
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+        _count: true,
+        _sum: {
+          totalAmount: true,
+          dryWeight: true,
+        },
+      }),
     ]);
 
     // Batch 2: Fetch member details for top members (depends on topMembers from batch 1)
@@ -179,12 +205,29 @@ export async function GET(_request: NextRequest) {
       })
     );
 
+    // Batch 3: Enrich todayPurchasesByProductType with product type details
+    const todayPurchasesByProductTypeWithDetails = await Promise.all(
+      todayPurchasesByProductType.map(async (pt) => {
+        const productType = await prisma.productType.findUnique({
+          where: { id: pt.productTypeId || '' },
+        });
+        return {
+          productTypeId: pt.productTypeId,
+          productTypeName: productType?.name || 'ไม่ระบุ',
+          productTypeCode: productType?.code || '',
+          count: pt._count,
+          totalAmount: pt._sum.totalAmount || 0,
+          totalWeight: pt._sum.dryWeight || 0,
+        };
+      })
+    );
+
     logger.info('GET /api/dashboard - Success', {
       todayPurchases: todayPurchases._count,
       monthPurchases: monthPurchases._count
     });
     
-    return NextResponse.json({
+    const responseData = {
       stats: {
         todayPurchases: todayPurchases._count,
         todayAmount: todayPurchases._sum.totalAmount || 0,
@@ -198,13 +241,19 @@ export async function GET(_request: NextRequest) {
         todayExpenseAmount: todayExpenses._sum.amount || 0,
         monthExpenses: monthExpenses._count,
         monthExpenseAmount: monthExpenses._sum.amount || 0,
+        todayPurchasesByProductType: todayPurchasesByProductTypeWithDetails,
       },
       recentPurchases,
       topMembers: topMembersWithDetails,
       todayPrices,
       productTypes,
       recentExpenses,
-    });
+    };
+    
+    // Cache the response for 5 minutes
+    cache.set(CACHE_KEYS.DASHBOARD, responseData, CACHE_TTL.DASHBOARD);
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     logger.error('GET /api/dashboard - Failed', error);
     return NextResponse.json(

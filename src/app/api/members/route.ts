@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { cache, CACHE_KEYS, CACHE_TTL, generateCacheKey } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -25,6 +26,22 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     logger.info('GET /api/members', { search, active, page, limit });
+    
+    // Generate cache key based on request parameters
+    // Only cache if no search query (search results shouldn't be cached)
+    const cacheKey = search 
+      ? null 
+      : generateCacheKey('members', { active, page: page.toString(), limit: limit.toString() });
+    
+    // Check cache first (only for non-search queries)
+    if (cacheKey) {
+      const cachedData = cache.get(cacheKey);
+      if (cachedData) {
+        logger.info('GET /api/members - Cache hit', { cacheKey });
+        return NextResponse.json(cachedData);
+      }
+      logger.info('GET /api/members - Cache miss, fetching from database', { cacheKey });
+    }
 
     // Build where clause
     const where: any = {};
@@ -58,8 +75,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Return members with pagination info
-    logger.info('GET /api/members - Success', { count: members.length, total, page });
-    return NextResponse.json({
+    const responseData = {
       members,
       pagination: {
         page,
@@ -68,7 +84,15 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
         hasMore: skip + members.length < total,
       }
-    });
+    };
+    
+    // Cache the response (only for non-search queries)
+    if (cacheKey) {
+      cache.set(cacheKey, responseData, CACHE_TTL.MEMBERS);
+    }
+    
+    logger.info('GET /api/members - Success', { count: members.length, total, page });
+    return NextResponse.json(responseData);
   } catch (error) {
     logger.error('GET /api/members - Failed', error);
     return NextResponse.json(
@@ -130,6 +154,10 @@ export async function POST(request: NextRequest) {
         tapperName: data.tapperName,
       },
     });
+
+    // Invalidate members cache when a new member is created
+    cache.deletePattern('^members:');
+    logger.info('POST /api/members - Cache invalidated');
 
     logger.info('POST /api/members - Success', { memberId: member.id, code: member.code });
     return NextResponse.json(member, { status: 201 });

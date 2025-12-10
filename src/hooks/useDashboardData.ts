@@ -2,6 +2,15 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getApiClient } from '@/lib/apiClient';
 import { logger } from '@/lib/logger';
 
+export interface TodayPurchaseByProductType {
+  productTypeId: string | null;
+  productTypeName: string;
+  productTypeCode: string;
+  count: number;
+  totalAmount: number;
+  totalWeight: number;
+}
+
 export interface DashboardStats {
   todayPurchases: number;
   todayAmount: number;
@@ -13,6 +22,7 @@ export interface DashboardStats {
   todayExpenseAmount: number;
   monthExpenses: number;
   monthExpenseAmount: number;
+  todayPurchasesByProductType?: TodayPurchaseByProductType[];
 }
 
 export interface DashboardData {
