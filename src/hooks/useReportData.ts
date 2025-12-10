@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
 
-export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary';
+export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string; // string for product-type-specific reports like 'daily_purchase:productTypeId'
 
 interface ExpenseCategorySummary {
   category: string;
@@ -10,13 +10,36 @@ interface ExpenseCategorySummary {
   count: number;
 }
 
+interface ProductType {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+}
+
 export function useReportData() {
   const [loading, setLoading] = useState(false);
   const [reportType, setReportType] = useState<ReportType>('daily_purchase');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  const [data, setData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [data, setData] = useState<any[] | null>(null);
   const [expenseSummary, setExpenseSummary] = useState<ExpenseCategorySummary[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+
+  // Load product types on mount
+  useEffect(() => {
+    const loadProductTypes = async () => {
+      try {
+        const response = await axios.get('/api/product-types');
+        const activeTypes = response.data.filter((pt: ProductType) => pt.isActive);
+        setProductTypes(activeTypes);
+      } catch (error) {
+        logger.error('Failed to load product types', error);
+      }
+    };
+    loadProductTypes();
+  }, []);
 
   const clearReportData = () => {
     setData(null);
@@ -42,19 +65,27 @@ export function useReportData() {
     setLoading(true);
     try {
       let response;
+      
+      // Check if this is a product-type-specific daily purchase report
+      const isProductTypeSpecific = reportType.startsWith('daily_purchase:');
+      const productTypeId = isProductTypeSpecific ? reportType.split(':')[1] : null;
+      
+      if (reportType === 'daily_purchase' || isProductTypeSpecific) {
+        const params: { startDate: string; endDate: string; productTypeId?: string } = { startDate, endDate };
+        if (productTypeId) {
+          params.productTypeId = productTypeId;
+        }
+        response = await axios.get('/api/purchases', { params });
+        setData(response.data);
+        setExpenseSummary([]);
+      } else {
       switch (reportType) {
-        case 'daily_purchase':
-          response = await axios.get('/api/purchases', {
-            params: { startDate, endDate },
-          });
-          setData(response.data);
-          setExpenseSummary([]);
-          break;
         case 'member_summary':
           response = await axios.get('/api/purchases', {
             params: { startDate, endDate },
           });
           // Group by member
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const grouped = response.data.reduce((acc: any, p: any) => {
             const key = p.memberId;
             if (!acc[key]) {
@@ -84,6 +115,7 @@ export function useReportData() {
           });
           setData(response.data.expenses || []);
           if (response.data.expenses) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const categorySummary = response.data.expenses.reduce((acc: Record<string, ExpenseCategorySummary>, expense: any) => {
               if (!acc[expense.category]) {
                 acc[expense.category] = {
@@ -104,6 +136,7 @@ export function useReportData() {
         default:
           break;
       }
+      }
     } catch (error) {
       logger.error('Failed to generate report', error);
     } finally {
@@ -112,28 +145,45 @@ export function useReportData() {
   };
 
   const getTotalAmount = () => {
-    if (!data) return 0;
-    if (reportType === 'daily_purchase') {
-      return data.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
+    if (!data || !Array.isArray(data)) return 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
+    if (isDailyPurchase) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
     } else if (reportType === 'member_summary') {
-      return data.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
     } else if (reportType === 'expense_summary') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
     }
     return 0;
   };
 
   const getTotalWeight = () => {
-    if (!data) return 0;
-    if (reportType === 'daily_purchase') {
-      return data.reduce((sum: number, item: any) => sum + item.dryWeight, 0);
+    if (!data || !Array.isArray(data)) return 0;
+    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
+    if (isDailyPurchase) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.reduce((sum: number, item: any) => sum + (item.dryWeight || 0), 0);
     } else if (reportType === 'member_summary') {
-      return data.reduce((sum: number, item: any) => sum + item.totalWeight, 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data.reduce((sum: number, item: any) => sum + (item.totalWeight || 0), 0);
     }
     return 0;
   };
 
   const getReportTitle = () => {
+    if (reportType.startsWith('daily_purchase:')) {
+      const productTypeId = reportType.split(':')[1];
+      const productType = productTypes.find(pt => pt.id === productTypeId);
+      if (productType) {
+        return `รายงานรับซื้อประจำวัน - ${productType.name}`;
+      }
+      return 'รายงานรับซื้อประจำวัน';
+    }
+    
     switch (reportType) {
       case 'daily_purchase':
         return 'รายงานรับซื้อประจำวัน';
@@ -156,6 +206,7 @@ export function useReportData() {
     setEndDate: handleSetEndDate,
     data,
     expenseSummary,
+    productTypes,
     generateReport,
     getTotalAmount,
     getTotalWeight,

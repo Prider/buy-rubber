@@ -156,6 +156,7 @@ export function generateDailyPurchaseTableHTML(data: any[]): string {
           <th>วันที่</th>
           <th>เลขที่</th>
           <th>สมาชิก</th>
+          <th>ประเภทสินค้า</th>
           <th>น้ำหนัก (กก.)</th>
           <th>ยอดเงิน</th>
         </tr>
@@ -166,6 +167,7 @@ export function generateDailyPurchaseTableHTML(data: any[]): string {
             <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
             <td>${item.purchaseNo}</td>
             <td>${item.member?.name || '-'}</td>
+            <td>${item.productType?.name || '-'}</td>
             <td>${formatNumber(item.dryWeight)}</td>
             <td>${formatCurrency(item.totalAmount)}</td>
           </tr>

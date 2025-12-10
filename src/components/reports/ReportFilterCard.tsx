@@ -1,5 +1,12 @@
 import { ReportType } from '@/hooks/useReportData';
 
+interface ProductType {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface ReportFilterCardProps {
   reportType: ReportType;
   setReportType: (type: ReportType) => void;
@@ -9,6 +16,7 @@ interface ReportFilterCardProps {
   setEndDate: (date: string) => void;
   loading: boolean;
   onGenerate: () => void;
+  productTypes?: ProductType[];
 }
 
 export default function ReportFilterCard({
@@ -20,6 +28,7 @@ export default function ReportFilterCard({
   setEndDate,
   loading,
   onGenerate,
+  productTypes = [],
 }: ReportFilterCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -35,8 +44,8 @@ export default function ReportFilterCard({
       </div>
       
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+          <div className="lg:col-span-3">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               ประเภทรายงาน
             </label>
@@ -46,7 +55,12 @@ export default function ReportFilterCard({
                 onChange={(e) => setReportType(e.target.value as ReportType)}
                 className="input w-full pl-4 pr-10 py-3 appearance-none bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
               >
-                <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน</option>
+                <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
+                {productTypes.map((pt) => (
+                  <option key={pt.id} value={`daily_purchase:${pt.id}`}>
+                    📊 รายงานรับซื้อประจำวัน - {pt.name}
+                  </option>
+                ))}
                 <option value="member_summary">👥 สรุปรายสมาชิก</option>
                 <option value="expense_summary">💸 รายงานค่าใช้จ่าย</option>
               </select>

@@ -20,6 +20,9 @@ export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTa
             <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               สมาชิก
             </th>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              ประเภทสินค้า
+            </th>
             <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               น้ำหนัก (กก.)
             </th>
@@ -55,6 +58,11 @@ export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTa
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                 {item.member?.name}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200">
+                  {item.productType?.name || '-'}
+                </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-purple-600 dark:text-purple-400">
                 {formatNumber(item.dryWeight)}

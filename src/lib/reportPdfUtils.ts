@@ -25,7 +25,8 @@ interface DownloadReportPDFParams {
 const ROWS_PER_PAGE = 15;
 
 const renderTableRows = (reportType: ReportType, rows: any[]) => {
-  if (reportType === 'daily_purchase') {
+  const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
+  if (isDailyPurchase) {
     return rows
       .map(
         (item) => `
@@ -33,6 +34,7 @@ const renderTableRows = (reportType: ReportType, rows: any[]) => {
             <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
             <td>${item.purchaseNo || '-'}</td>
             <td>${item.member?.name || '-'}</td>
+            <td>${item.productType?.name || '-'}</td>
             <td class=\"number\">${formatNumber(item.dryWeight)}</td>
             <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
           </tr>
@@ -72,12 +74,14 @@ const renderTableRows = (reportType: ReportType, rows: any[]) => {
 };
 
 const renderTableHeaders = (reportType: ReportType) => {
-  if (reportType === 'daily_purchase') {
+  const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
+  if (isDailyPurchase) {
     return `
       <tr>
         <th>วันที่</th>
         <th>เลขที่</th>
         <th>สมาชิก</th>
+        <th>ประเภทสินค้า</th>
         <th>น้ำหนัก (กก.)</th>
         <th>ยอดเงิน</th>
       </tr>

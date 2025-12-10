@@ -35,6 +35,7 @@ export default function ReportsPage() {
     setEndDate,
     data,
     expenseSummary,
+    productTypes,
     generateReport,
     getTotalAmount,
     getTotalWeight,
@@ -94,7 +95,8 @@ export default function ReportsPage() {
     const dateRange = dateRangeLabel;
 
     let tableContent = '';
-    if (reportType === 'daily_purchase') {
+    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
+    if (isDailyPurchase) {
       tableContent = generateDailyPurchaseTableHTML(data);
     } else if (reportType === 'member_summary') {
       tableContent = generateMemberSummaryTableHTML(data);
@@ -163,6 +165,7 @@ export default function ReportsPage() {
         setEndDate={setEndDate}
         loading={loading}
         onGenerate={generateReport}
+        productTypes={productTypes}
       />
 
       {/* Report Result */}
@@ -234,7 +237,9 @@ export default function ReportsPage() {
             </div>
             
             <div className="p-6">
-              {reportType === 'daily_purchase' && <DailyPurchaseTable data={paginatedData} offset={rowOffset} />}
+              {(reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:')) && (
+                <DailyPurchaseTable data={paginatedData} offset={rowOffset} />
+              )}
               {reportType === 'member_summary' && <MemberSummaryTable data={paginatedData} offset={rowOffset} />}
               {reportType === 'expense_summary' && (
                 <ExpenseReportTable data={paginatedData} categorySummary={expenseSummary} totalAmount={getTotalAmount()} />
