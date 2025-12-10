@@ -1,9 +1,11 @@
-import React from 'react';
+'use client';
+
+import React, { memo, useMemo, useCallback } from 'react';
 import { MemberTableProps } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 
-export const MemberTable: React.FC<MemberTableProps> = ({
+export const MemberTable: React.FC<MemberTableProps> = memo(({
   members,
   onEdit,
   onDelete,
@@ -59,7 +61,9 @@ export const MemberTable: React.FC<MemberTableProps> = ({
       </div>
     </div>
   );
-};
+});
+
+MemberTable.displayName = 'MemberTable';
 
 interface MemberTableRowProps {
   member: any;
@@ -70,7 +74,7 @@ interface MemberTableRowProps {
   onViewServiceFees?: (member: any) => void;
 }
 
-const MemberTableRow: React.FC<MemberTableRowProps> = ({
+const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   member,
   onEdit,
   onDelete,
@@ -81,12 +85,49 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  return (
-    <tr className={`relative transition-all duration-300 ${
+  // Memoize row class
+  const rowClassName = useMemo(
+    () => `relative transition-all duration-300 ${
       member.isActive 
         ? 'bg-white dark:bg-gray-800 border-l-4 border-green-500 hover:border-green-600 hover:shadow-sm' 
         : 'bg-gray-50 dark:bg-gray-900/50 border-l-4 border-gray-400 opacity-75'
-    }`}>
+    }`,
+    [member.isActive]
+  );
+
+  // Memoize callbacks
+  const handleEdit = useCallback(() => {
+    onEdit(member);
+  }, [member, onEdit]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(member);
+  }, [member, onDelete]);
+
+  const handleReactivate = useCallback(() => {
+    if (onReactivate) {
+      onReactivate(member);
+    }
+  }, [member, onReactivate]);
+
+  const handleViewHistory = useCallback(() => {
+    onViewHistory(member);
+  }, [member, onViewHistory]);
+
+  const handleViewServiceFees = useCallback(() => {
+    if (onViewServiceFees) {
+      onViewServiceFees(member);
+    }
+  }, [member, onViewServiceFees]);
+
+  // Memoize display values
+  const phoneDisplay = useMemo(
+    () => member.phone || '-',
+    [member.phone]
+  );
+
+  return (
+    <tr className={rowClassName}>
       <td className="font-medium">
         <div className="flex items-center gap-2.5">
           {member.isActive ? (
@@ -110,12 +151,12 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
         </div>
       </td>
       <td className={member.isActive ? '' : 'text-gray-400 dark:text-gray-600'}>
-        {member.phone || '-'}
+        {phoneDisplay}
       </td>
       <td>
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => onViewHistory(member)}
+            onClick={handleViewHistory}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
             title="ดูประวัติการรับซื้อ"
           >
@@ -126,7 +167,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
           </button>
           {onViewServiceFees && (
             <button
-              onClick={() => onViewServiceFees(member)}
+              onClick={handleViewServiceFees}
               className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center space-x-1"
               title="ดูค่าบริการ"
             >
@@ -138,7 +179,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
           )}
           {member.isActive && (
             <button
-              onClick={() => onEdit(member)}
+              onClick={handleEdit}
               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
             >
               แก้ไข
@@ -148,7 +189,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
             <>
               {!member.isActive && onReactivate && (
                 <button
-                  onClick={() => onReactivate(member)}
+                  onClick={handleReactivate}
                   className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors flex items-center space-x-1"
                   title="เปิดการใช้งานสมาชิก"
                 >
@@ -160,7 +201,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
               )}
               {member.isActive && (
                 <button
-                  onClick={() => onDelete(member)}
+                  onClick={handleDelete}
                   className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
                 >
                   ลบ
@@ -172,4 +213,6 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       </td>
     </tr>
   );
-};
+});
+
+MemberTableRow.displayName = 'MemberTableRow';

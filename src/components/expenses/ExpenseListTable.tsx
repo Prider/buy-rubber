@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo, useCallback } from 'react';
 import { Expense } from '@/hooks/useExpenses';
 import GamerLoader from '@/components/GamerLoader';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,7 +15,7 @@ interface ExpenseListTableProps {
   onPageChange: (page: number) => void | Promise<void>;
 }
 
-export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
+export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   expenses,
   loading,
   onDelete,
@@ -26,7 +26,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
 }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const getCategoryIcon = (category: string) => {
+  // Memoize category icon function
+  const getCategoryIcon = useCallback((category: string) => {
     switch (category) {
       case 'ค่าน้ำมัน':
         return '⛽';
@@ -39,9 +40,17 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
       default:
         return '💰';
     }
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
+  // Memoize format functions
+  const formatCurrencyMemo = useCallback((amount: number) => {
+    return amount.toLocaleString('th-TH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, []);
+
+  const formatDateMemo = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const dateStr = date.toLocaleDateString('th-TH', {
       year: 'numeric',
@@ -53,14 +62,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
       minute: '2-digit',
     });
     return `${dateStr} ${timeStr}`;
-  };
-
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('th-TH', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+  }, []);
 
   // Sort expenses by date (newest first), then by createdAt if dates are equal
   const sortedExpenses = useMemo(() => {
@@ -87,12 +89,107 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
   const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = total === 0 ? 0 : Math.min(currentPage * pageSize, total);
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = useCallback((newPage: number) => {
     if (newPage < 1 || newPage > totalPages || newPage === currentPage) {
       return;
     }
     onPageChange(newPage);
-  };
+  }, [totalPages, currentPage, onPageChange]);
+
+  // Memoized row component
+  interface ExpenseRowProps {
+    expense: Expense;
+    index: number;
+    isAdmin: boolean;
+    onDelete: (id: string) => Promise<void>;
+  }
+
+  const ExpenseRow = memo<ExpenseRowProps>(({ expense, index, isAdmin, onDelete }) => {
+    // Memoize formatted values
+    const formattedDate = useMemo(
+      () => formatDateMemo(expense.date),
+      [expense.date, formatDateMemo]
+    );
+
+    const formattedAmount = useMemo(
+      () => formatCurrencyMemo(expense.amount),
+      [expense.amount, formatCurrencyMemo]
+    );
+
+    const categoryIcon = useMemo(
+      () => getCategoryIcon(expense.category),
+      [expense.category]
+    );
+
+    const description = useMemo(
+      () => expense.description || '-',
+      [expense.description]
+    );
+
+    const userName = useMemo(
+      () => expense.userName || '-',
+      [expense.userName]
+    );
+
+    // Memoize row class
+    const rowClassName = useMemo(
+      () => `hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+        index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+      }`,
+      [index]
+    );
+
+    // Memoize delete handler
+    const handleDelete = useCallback(() => {
+      onDelete(expense.id);
+    }, [expense.id, onDelete]);
+
+    return (
+      <tr className={rowClassName}>
+        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+          {expense.expenseNo}
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+          {formattedDate}
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+          <span className="inline-flex items-center space-x-1">
+            <span>{categoryIcon}</span>
+            <span>{expense.category}</span>
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+          {description}
+        </td>
+        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+          <span className="inline-flex items-center space-x-1.5">
+            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="font-medium">{userName}</span>
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 text-right">
+          {formattedAmount}
+        </td>
+        {isAdmin && (
+          <td className="px-4 py-3 text-center">
+            <button
+              onClick={handleDelete}
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+              title="ลบ"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </td>
+        )}
+      </tr>
+    );
+  });
+
+  ExpenseRow.displayName = 'ExpenseRow';
 
   if (loading) {
     return (
@@ -162,52 +259,13 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
             {sortedExpenses.map((expense, index) => (
-              <tr
+              <ExpenseRow
                 key={expense.id}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                  index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
-                }`}
-              >
-                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {expense.expenseNo}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                  {formatDate(expense.date)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                  <span className="inline-flex items-center space-x-1">
-                    <span>{getCategoryIcon(expense.category)}</span>
-                    <span>{expense.category}</span>
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                  {expense.description || '-'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                  <span className="inline-flex items-center space-x-1.5">
-                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="font-medium">{expense.userName || '-'}</span>
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 text-right">
-                  {formatCurrency(expense.amount)}
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => onDelete(expense.id)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                      title="ลบ"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </td>
-                )}
-              </tr>
+                expense={expense}
+                index={index}
+                isAdmin={isAdmin}
+                onDelete={onDelete}
+              />
             ))}
           </tbody>
         </table>
@@ -251,6 +309,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ExpenseListTable.displayName = 'ExpenseListTable';
 
 

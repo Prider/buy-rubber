@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getApiClient } from '@/lib/apiClient';
 import { logger } from '@/lib/logger';
 
@@ -84,7 +84,8 @@ export function useDashboardData(): UseDashboardDataReturn {
     };
   }, [loadData]);
 
-  const defaultStats: DashboardStats = {
+  // Memoize default stats to prevent object recreation on every render
+  const defaultStats: DashboardStats = useMemo(() => ({
     todayPurchases: 0,
     todayAmount: 0,
     monthPurchases: 0,
@@ -95,17 +96,29 @@ export function useDashboardData(): UseDashboardDataReturn {
     todayExpenseAmount: 0,
     monthExpenses: 0,
     monthExpenseAmount: 0,
-  };
+  }), []);
+
+  // Memoize stats to prevent unnecessary re-renders
+  const stats = useMemo(() => {
+    return data?.stats || defaultStats;
+  }, [data?.stats, defaultStats]);
+
+  // Memoize arrays to prevent unnecessary re-renders
+  const todayPrices = useMemo(() => data?.todayPrices || [], [data?.todayPrices]);
+  const productTypes = useMemo(() => data?.productTypes || [], [data?.productTypes]);
+  const recentPurchases = useMemo(() => data?.recentPurchases || [], [data?.recentPurchases]);
+  const topMembers = useMemo(() => data?.topMembers || [], [data?.topMembers]);
+  const recentExpenses = useMemo(() => data?.recentExpenses || [], [data?.recentExpenses]);
 
   return {
     loading,
     data,
-    stats: data?.stats || defaultStats,
-    todayPrices: data?.todayPrices || [],
-    productTypes: data?.productTypes || [],
-    recentPurchases: data?.recentPurchases || [],
-    topMembers: data?.topMembers || [],
-    recentExpenses: data?.recentExpenses || [],
+    stats,
+    todayPrices,
+    productTypes,
+    recentPurchases,
+    topMembers,
+    recentExpenses,
     reload: loadData,
   };
 }

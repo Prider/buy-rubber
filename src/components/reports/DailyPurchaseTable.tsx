@@ -1,13 +1,43 @@
+import { memo, useMemo, useState } from 'react';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
+interface DailyPurchaseRow {
+  id: string;
+  date: string | Date;
+  purchaseNo: string;
+  member?: { name?: string };
+  productType?: { name?: string };
+  dryWeight: number;
+  totalAmount: number;
+}
+
 interface DailyPurchaseTableProps {
-  data: any[];
+  data: DailyPurchaseRow[];
   offset?: number;
 }
 
-export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTableProps) {
+const PAGE_SIZE = 100;
+
+function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTableProps) {
+  const [page, setPage] = useState(1);
+
+  const { pagedData, totalPages, pageStartIndex } = useMemo(() => {
+    const totalPagesCalc = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+    const currentPage = Math.min(page, totalPagesCalc);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return {
+      pagedData: data.slice(start, end),
+      totalPages: totalPagesCalc,
+      pageStartIndex: start,
+    };
+  }, [data, page]);
+
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+  const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto space-y-3">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-700/50">
           <tr>
@@ -32,8 +62,8 @@ export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTa
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {data.map((item: any, idx: number) => {
-            const displayIndex = offset + idx + 1;
+          {pagedData.map((item: DailyPurchaseRow, idx: number) => {
+            const displayIndex = offset + pageStartIndex + idx + 1;
             return (
             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
@@ -75,7 +105,31 @@ export default function DailyPurchaseTable({ data, offset = 0 }: DailyPurchaseTa
           })}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 pb-2 text-sm text-gray-600 dark:text-gray-300">
+          <button
+            onClick={handlePrev}
+            disabled={page === 1}
+            className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed hover:border-indigo-300 dark:hover:border-indigo-600 transition"
+          >
+            ก่อนหน้า
+          </button>
+          <div className="font-medium">
+            หน้า {page} / {totalPages} • แสดง {pagedData.length} จาก {data.length} รายการ
+          </div>
+          <button
+            onClick={handleNext}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed hover:border-indigo-300 dark:hover:border-indigo-600 transition"
+          >
+            ถัดไป
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
+export const DailyPurchaseTable = memo(DailyPurchaseTableComponent);
+export default DailyPurchaseTable;
 

@@ -74,7 +74,7 @@ describe('GET /api/members', () => {
       expect(data.pagination).toBeDefined();
       expect(data.pagination.total).toBe(1);
       expect(data.pagination.page).toBe(1);
-      expect(data.pagination.limit).toBe(50);
+      expect(data.pagination.limit).toBe(25);
     });
 
     it('should filter members by search term (code)', async () => {
@@ -209,7 +209,7 @@ describe('GET /api/members', () => {
 
       expect(response.status).toBe(200);
       expect(data.pagination.page).toBe(1);
-      expect(data.pagination.limit).toBe(50);
+      expect(data.pagination.limit).toBe(25);
     });
 
     it('should combine search and active filters', async () => {

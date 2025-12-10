@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { PurchaseTransaction } from './types';
 
 interface TransactionActionButtonsProps {
@@ -11,18 +11,30 @@ interface TransactionActionButtonsProps {
   onDelete: (transaction: PurchaseTransaction) => void;
 }
 
-export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
+export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = memo(({
   transaction,
   isAdmin,
   onPrint,
   onDownloadPDF,
   onDelete,
 }) => {
+  // Memoize callbacks to prevent unnecessary re-renders
+  const handlePrint = useCallback(() => {
+    onPrint(transaction);
+  }, [transaction, onPrint]);
+
+  const handleDownloadPDF = useCallback(() => {
+    onDownloadPDF(transaction);
+  }, [transaction, onDownloadPDF]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(transaction);
+  }, [transaction, onDelete]);
   return (
     <div className="flex items-center justify-center gap-2">
       {/* Print Button */}
       <button
-        onClick={() => onPrint(transaction)}
+        onClick={handlePrint}
         className="group relative flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all duration-200 text-xs font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
         title="พิมพ์"
       >
@@ -44,7 +56,7 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
 
       {/* PDF Download Button */}
       <button
-        onClick={() => onDownloadPDF(transaction)}
+        onClick={handleDownloadPDF}
         className="group relative flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 dark:hover:from-emerald-700 dark:hover:to-emerald-800 transition-all duration-200 text-xs font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
         title="ดาวน์โหลด PDF"
       >
@@ -67,7 +79,7 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
       {/* Delete Button (Admin Only) */}
       {isAdmin && (
         <button
-          onClick={() => onDelete(transaction)}
+          onClick={handleDelete}
           className="group relative flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white rounded-xl hover:from-red-600 hover:to-red-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 text-xs font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
           title="ลบ"
         >
@@ -89,5 +101,7 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
       )}
     </div>
   );
-};
+});
+
+TransactionActionButtons.displayName = 'TransactionActionButtons';
 
