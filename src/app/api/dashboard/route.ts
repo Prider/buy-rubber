@@ -17,89 +17,155 @@ export async function GET(_request: NextRequest) {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const firstDayOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
 
-    // รายการรับซื้อวันนี้
-    const todayPurchases = await prisma.purchase.aggregate({
-      where: {
-        date: {
-          gte: today,
-          lt: tomorrow,
+    // Batch 1: Execute all independent queries in parallel
+    // This reduces 12+ sequential queries to 1 parallel batch
+    const [
+      todayPurchases,
+      monthPurchases,
+      totalMembers,
+      activeMembers,
+      totalAdvanceResult,
+      unpaidAmount,
+      recentPurchases,
+      topMembers,
+      todayPrices,
+      productTypes,
+      todayExpenses,
+      monthExpenses,
+      recentExpenses,
+    ] = await Promise.all([
+      // รายการรับซื้อวันนี้
+      prisma.purchase.aggregate({
+        where: {
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
         },
-      },
-      _count: true,
-      _sum: {
-        totalAmount: true,
-      },
-    });
-
-    // รายการรับซื้อเดือนนี้
-    const monthPurchases = await prisma.purchase.aggregate({
-      where: {
-        date: {
-          gte: firstDayOfMonth,
-          lt: firstDayOfNextMonth,
-        },
-      },
-      _count: true,
-      _sum: {
-        totalAmount: true,
-      },
-    });
-
-    // จำนวนสมาชิก
-    const totalMembers = await prisma.member.count();
-    const activeMembers = await prisma.member.count({
-      where: { isActive: true },
-    });
-
-    // ยอดเงินล่วงหน้ารวม
-    const totalAdvanceResult = await prisma.member.aggregate({
-      _sum: {
-        advanceBalance: true,
-      },
-    });
-
-    // ยอดค้างจ่าย
-    const unpaidAmount = await prisma.purchase.aggregate({
-      where: {
-        isPaid: false,
-      },
-      _sum: {
-        totalAmount: true,
-      },
-    });
-
-    // รายการรับซื้อล่าสุด 10 รายการ
-    const recentPurchases = await prisma.purchase.findMany({
-      take: 10,
-      orderBy: { date: 'desc' },
-      include: {
-        member: true,
-        productType: true,
-      },
-    });
-
-    // สมาชิกที่รับซื้อมากที่สุด (เดือนนี้)
-    const topMembers = await prisma.purchase.groupBy({
-      by: ['memberId'],
-      where: {
-        date: {
-          gte: firstDayOfMonth,
-          lt: firstDayOfNextMonth,
-        },
-      },
-      _sum: {
-        totalAmount: true,
-        dryWeight: true,
-      },
-      orderBy: {
+        _count: true,
         _sum: {
-          totalAmount: 'desc',
+          totalAmount: true,
         },
-      },
-      take: 5,
-    });
+      }),
+      // รายการรับซื้อเดือนนี้
+      prisma.purchase.aggregate({
+        where: {
+          date: {
+            gte: firstDayOfMonth,
+            lt: firstDayOfNextMonth,
+          },
+        },
+        _count: true,
+        _sum: {
+          totalAmount: true,
+        },
+      }),
+      // จำนวนสมาชิกทั้งหมด
+      prisma.member.count(),
+      // จำนวนสมาชิกที่ใช้งาน
+      prisma.member.count({
+        where: { isActive: true },
+      }),
+      // ยอดเงินล่วงหน้ารวม
+      prisma.member.aggregate({
+        _sum: {
+          advanceBalance: true,
+        },
+      }),
+      // ยอดค้างจ่าย
+      prisma.purchase.aggregate({
+        where: {
+          isPaid: false,
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      }),
+      // รายการรับซื้อล่าสุด 10 รายการ
+      prisma.purchase.findMany({
+        take: 10,
+        orderBy: { date: 'desc' },
+        include: {
+          member: true,
+          productType: true,
+        },
+      }),
+      // สมาชิกที่รับซื้อมากที่สุด (เดือนนี้)
+      prisma.purchase.groupBy({
+        by: ['memberId'],
+        where: {
+          date: {
+            gte: firstDayOfMonth,
+            lt: firstDayOfNextMonth,
+          },
+        },
+        _sum: {
+          totalAmount: true,
+          dryWeight: true,
+        },
+        orderBy: {
+          _sum: {
+            totalAmount: 'desc',
+          },
+        },
+        take: 5,
+      }),
+      // ดึงข้อมูลราคาวันนี้
+      prisma.productPrice.findMany({
+        where: {
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+        include: {
+          productType: true,
+        },
+        orderBy: {
+          productType: {
+            name: 'asc',
+          },
+        },
+      }),
+      // ดึงข้อมูลประเภทสินค้าทั้งหมด
+      prisma.productType.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+      }),
+      // ดึงข้อมูลค่าใช้จ่ายวันนี้
+      prisma.expense.aggregate({
+        where: {
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+        _count: true,
+        _sum: {
+          amount: true,
+        },
+      }),
+      // ดึงข้อมูลค่าใช้จ่ายเดือนนี้
+      prisma.expense.aggregate({
+        where: {
+          date: {
+            gte: firstDayOfMonth,
+            lt: firstDayOfNextMonth,
+          },
+        },
+        _count: true,
+        _sum: {
+          amount: true,
+        },
+      }),
+      // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
+      prisma.expense.findMany({
+        take: 5,
+        orderBy: { date: 'desc' },
+      }),
+    ]);
 
-    // ดึงข้อมูลสมาชิก
+    // Batch 2: Fetch member details for top members (depends on topMembers from batch 1)
     const topMembersWithDetails = await Promise.all(
       topMembers.map(async (tm) => {
         const member = await prisma.member.findUnique({
@@ -112,64 +178,6 @@ export async function GET(_request: NextRequest) {
         };
       })
     );
-
-    // ดึงข้อมูลราคาวันนี้
-    const todayPrices = await prisma.productPrice.findMany({
-      where: {
-        date: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-      include: {
-        productType: true,
-      },
-      orderBy: {
-        productType: {
-          name: 'asc',
-        },
-      },
-    });
-
-    // ดึงข้อมูลประเภทสินค้าทั้งหมด
-    const productTypes = await prisma.productType.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-    });
-
-    // ดึงข้อมูลค่าใช้จ่ายวันนี้
-    const todayExpenses = await prisma.expense.aggregate({
-      where: {
-        date: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-      _count: true,
-      _sum: {
-        amount: true,
-      },
-    });
-
-    // ดึงข้อมูลค่าใช้จ่ายเดือนนี้
-    const monthExpenses = await prisma.expense.aggregate({
-      where: {
-        date: {
-          gte: firstDayOfMonth,
-          lt: firstDayOfNextMonth,
-        },
-      },
-      _count: true,
-      _sum: {
-        amount: true,
-      },
-    });
-
-    // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
-    const recentExpenses = await prisma.expense.findMany({
-      take: 5,
-      orderBy: { date: 'desc' },
-    });
 
     logger.info('GET /api/dashboard - Success', {
       todayPurchases: todayPurchases._count,

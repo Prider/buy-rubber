@@ -5,6 +5,9 @@ import { logger } from '@/lib/logger';
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
 
+const DEFAULT_LIMIT = 25; // lower default to reduce initial payloads
+const MAX_LIMIT = 100;
+
 // GET /api/members - ดึงรายการสมาชิกทั้งหมด (with pagination)
 export async function GET(request: NextRequest) {
   try {
@@ -13,8 +16,12 @@ export async function GET(request: NextRequest) {
     const active = searchParams.get('active');
     
     // Pagination parameters
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const pageParam = parseInt(searchParams.get('page') || '1', 10);
+    const limitParam = parseInt(searchParams.get('limit') || `${DEFAULT_LIMIT}`, 10);
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    const limit = Number.isNaN(limitParam) || limitParam < 1
+      ? DEFAULT_LIMIT
+      : Math.min(limitParam, MAX_LIMIT);
     const skip = (page - 1) * limit;
 
     logger.info('GET /api/members', { search, active, page, limit });
