@@ -305,7 +305,7 @@ async function main() {
     'นาทวี',
   ];
 
-  const totalMembers = 1000;
+  const totalMembers = 1;
   const memberData = Array.from({ length: totalMembers }, (_value, idx) => {
     if (idx < baseMembers.length) {
       return baseMembers[idx];

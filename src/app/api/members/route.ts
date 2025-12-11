@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: total === 0 ? 1 : Math.ceil(total / limit), // Always show at least 1 page
         hasMore: skip + members.length < total,
       }
     };

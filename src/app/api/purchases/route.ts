@@ -129,23 +129,36 @@ export async function POST(request: NextRequest) {
       dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
     }
 
-    // ดึงราคาประกาศสำหรับประเภทสินค้านี้ (ถ้ามี)
-    logger.debug('Looking for product price', {
+    // ดึงราคาประกาศและตรวจสอบ foreign keys แบบ parallel เพื่อลดเวลา
+    logger.debug('Looking for product price and validating foreign keys', {
       date: data.date,
       productTypeId: data.productTypeId
     });
     
-    const productPrice = await prisma.productPrice.findFirst({
-      where: {
-        date: {
-          gte: new Date(data.date + 'T00:00:00'),
-          lte: new Date(data.date + 'T23:59:59'),
+    // Run product price lookup and foreign key validation in parallel
+    const [productPrice, member, productType, user] = await Promise.all([
+      // ดึงราคาประกาศสำหรับประเภทสินค้านี้ (ถ้ามี)
+      prisma.productPrice.findFirst({
+        where: {
+          date: {
+            gte: new Date(data.date + 'T00:00:00'),
+            lte: new Date(data.date + 'T23:59:59'),
+          },
+          productTypeId: data.productTypeId,
         },
-        productTypeId: data.productTypeId,
-      },
-    });
+      }),
+      // Validate all foreign keys exist
+      prisma.member.findUnique({ where: { id: data.memberId } }),
+      prisma.productType.findUnique({ where: { id: data.productTypeId } }),
+      prisma.user.findUnique({ where: { id: data.userId } }),
+    ]);
 
-    logger.debug('Found product price', { price: productPrice?.price });
+    logger.debug('Found product price and validated foreign keys', { 
+      price: productPrice?.price,
+      member: !!member,
+      productType: !!productType,
+      user: !!user
+    });
 
     // ใช้ราคาจากฟอร์ม หรือราคาประกาศ (ถ้ามี)
     const basePrice = data.pricePerUnit || productPrice?.price || 0;
@@ -163,19 +176,6 @@ export async function POST(request: NextRequest) {
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
     const totalAmount = netWeight * finalPrice;
-
-    // Validate all foreign keys exist
-    const [member, productType, user] = await Promise.all([
-      prisma.member.findUnique({ where: { id: data.memberId } }),
-      prisma.productType.findUnique({ where: { id: data.productTypeId } }),
-      prisma.user.findUnique({ where: { id: data.userId } }),
-    ]);
-
-    logger.debug('Foreign key validation', {
-      member: !!member,
-      productType: !!productType,
-      user: !!user
-    });
 
     if (!member) {
       return NextResponse.json(
