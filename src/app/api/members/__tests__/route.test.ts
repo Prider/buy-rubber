@@ -56,7 +56,6 @@ vi.mock('@/lib/cache', () => {
 describe('GET /api/members', () => {
   let prisma: any;
   let logger: any;
-  let mockCache: any;
 
   const mockMember = {
     id: 'member-1',

@@ -1,24 +1,17 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-import path from 'path';
 // Import type only; does not load runtime
 import type { PrismaClient as PrismaClientType } from '@prisma/client';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClientType | undefined };
 
-// Configure Prisma to use WASM engine BEFORE requiring @prisma/client
-try {
-	if (!process.env.PRISMA_CLIENT_ENGINE_TYPE) {
-		process.env.PRISMA_CLIENT_ENGINE_TYPE = 'wasm';
-	}
-	if (!process.env.PRISMA_WASM_QUERY_ENGINE_BASE_URL) {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const runtimeIndexPath = require.resolve('@prisma/client/runtime/index.js');
-		const runtimeDir = path.dirname(runtimeIndexPath);
-		process.env.PRISMA_WASM_QUERY_ENGINE_BASE_URL = `file://${runtimeDir}/`;
-	}
-} catch (e) {
-	console.warn('[Prisma] Could not configure WASM engine base URL:', (e as Error).message);
+// Configure Prisma to use WASM engine for Vercel/serverless environments
+// Only set if not already configured - let Prisma handle runtime resolution automatically
+if (!process.env.PRISMA_CLIENT_ENGINE_TYPE) {
+	// Use WASM engine for better compatibility with serverless/Vercel
+	process.env.PRISMA_CLIENT_ENGINE_TYPE = 'wasm';
 }
+// Don't manually set PRISMA_WASM_QUERY_ENGINE_BASE_URL - let Prisma resolve it automatically
+// This avoids build-time resolution issues in Vercel
 
 function getOrCreatePrismaSync(): PrismaClientType {
 	// Log DATABASE_URL for debugging (without exposing full path in production)

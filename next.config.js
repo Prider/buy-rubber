@@ -24,6 +24,12 @@ const nextConfig = {
         buffer: false,
         electron: false,
       };
+    } else {
+      // For server-side, ensure Prisma client is properly resolved
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@prisma/client': require.resolve('@prisma/client'),
+      };
     }
     return config;
   },
