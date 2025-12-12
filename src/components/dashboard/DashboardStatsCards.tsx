@@ -129,46 +129,20 @@ MembersCard.displayName = 'MembersCard';
 // Special Today Purchases Card with Product Type Breakdown
 interface TodayPurchasesCardProps {
   stats: DashboardStats;
-  icon: React.ReactNode;
 }
 
-const TodayPurchasesCard = memo<TodayPurchasesCardProps>(({ stats, icon }) => {
-  const formattedAmount = useMemo(
-    () => formatCurrency(stats?.todayAmount ?? 0),
-    [stats?.todayAmount]
-  );
-
+const TodayPurchasesCardByProductType = memo<TodayPurchasesCardProps>(({ stats }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-200 border border-primary-200/50 dark:border-primary-800/30 lg:col-span-2">
-      <div className="relative z-10 p-6">
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl shadow-sm">
-              {icon}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
-                รับซื้อวันนี้
-              </p>
-              <div className="space-y-1 mt-1">
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">
-                  {stats?.todayPurchases ?? 0}
-                </p>
-                <p className="text-base font-semibold text-primary-700 dark:text-primary-300">
-                  {formattedAmount}
-                </p>
-              </div>
-            </div>
-          </div>
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 dark:bg-primary-500 text-white">
-            วันนี้
-          </span>
+    <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-200 border border-primary-200/50 dark:border-primary-800/30 lg:col-span-5 sm:col-span-2 col-span-1">
+      <div className="relative z-10 p-1">
+        <div className="flex items-center justify-between mb-3 px-3 pt-3">
+          <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+            รับซื้อวันนี้ แบ่งตามประเภทสินค้า
+          </p>
         </div>
-
         {stats.todayPurchasesByProductType && stats.todayPurchasesByProductType.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-primary-200/50 dark:border-primary-700/50">
-            <div className="space-y-2.5">
+          <div className="dark:border-primary-700/50 px-3 pb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {stats.todayPurchasesByProductType.map((pt, index) => {
                 const formattedPtAmount = formatCurrency(pt.totalAmount || 0);
                 return (
@@ -180,6 +154,9 @@ const TodayPurchasesCard = memo<TodayPurchasesCardProps>(({ stats, icon }) => {
                       <div className="w-2.5 h-2.5 rounded-full bg-primary-500 flex-shrink-0"></div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {pt.productTypeName}
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {pt.productTypeCode}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         ({pt.count || 0} รายการ)
@@ -197,13 +174,11 @@ const TodayPurchasesCard = memo<TodayPurchasesCardProps>(({ stats, icon }) => {
           </div>
         )}
       </div>
-      {/* Decorative element */}
-      <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary-200/20 dark:bg-primary-700/10 rounded-full opacity-20"></div>
     </div>
   );
 });
 
-TodayPurchasesCard.displayName = 'TodayPurchasesCard';
+TodayPurchasesCardByProductType.displayName = 'TodayPurchasesCard';
 
 function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   // Memoize icons to prevent recreation
@@ -246,11 +221,20 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
     <div className="space-y-6">
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {/* Today Purchases Card with Product Type Breakdown */}
-        <TodayPurchasesCard
-          stats={stats}
-          icon={todayPurchaseIcon}
-        />
+      
+      {/* Today Purchases Card */}
+      <StatCard
+        title="รับซื้อ"
+        value={stats.todayPurchases || 0}
+        amount={stats.todayAmount || 0}
+        label="วันนี้"
+        icon={todayPurchaseIcon}
+        gradientFrom="from-primary-50"
+        gradientTo="to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10"
+        borderColor="border-primary-200/50 dark:border-primary-800/30"
+        textColor="text-primary-700 dark:text-primary-300"
+        badgeBg="bg-primary-600 dark:bg-primary-500"
+      />
 
       {/* Month Purchases Card */}
       <StatCard
@@ -300,6 +284,8 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           totalMembers={stats.totalMembers || 0}
           icon={membersIcon}
         />
+
+        <TodayPurchasesCardByProductType stats={stats} />
       </div>
     </div>
   );

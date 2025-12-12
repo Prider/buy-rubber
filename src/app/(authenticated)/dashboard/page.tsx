@@ -43,9 +43,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Today's Prices */}
-      <div className="flex-shrink-0">
+      {/* <div className="flex-shrink-0">
         <TodayPricesCard productTypes={productTypes} todayPrices={todayPrices} />
-      </div>
+      </div> */}
 
       {/* Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
