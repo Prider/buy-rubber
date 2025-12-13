@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { NextRequest } from 'next/server';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -82,5 +83,24 @@ export async function generateDocumentNumber(
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
   
   return `${prefix}-${year}${month}-${random}`;
+}
+
+// Helper function to extract user info from auth token
+export function getUserFromToken(request: NextRequest): { userId: string; username: string } | null {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (decoded.userId && decoded.username) {
+      return { userId: decoded.userId, username: decoded.username };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
