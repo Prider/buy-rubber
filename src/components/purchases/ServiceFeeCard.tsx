@@ -14,6 +14,7 @@ interface ServiceFeeCardProps {
   isFormValid: boolean;
   resetForm: () => void;
   addToCart: () => void;
+  submitting?: boolean;
 }
 
 export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
@@ -23,6 +24,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   isFormValid,
   resetForm,
   addToCart,
+  submitting = false,
 }) => {
   const categoryInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +96,9 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                   onChange={handleInputChange}
                   onKeyDown={(e) => handleKeyDown(e, amountInputRef)}
                   placeholder="ระบุประเภท..."
-                  className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm"
+                  className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   required
+                  disabled={submitting}
                 />
               </div>
               <div className="space-y-1.5">
@@ -121,7 +124,8 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                       }
                     }}
                     required
-                    className="w-full px-3 py-1.5 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm"
+                    disabled={submitting}
+                    className="w-full px-3 py-1.5 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -136,14 +140,15 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400"
+              disabled={submitting}
+              className="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               รีเซ็ต
             </button>
             <button
               ref={submitButtonRef}
               type="submit"
-              disabled={!isFormValid}
+              disabled={!isFormValid || submitting}
               className="px-5 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 text-white rounded-md text-xs font-semibold hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-1 focus:ring-orange-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center space-x-1.5">

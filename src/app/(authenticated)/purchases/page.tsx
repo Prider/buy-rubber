@@ -203,6 +203,7 @@ export default function PurchasesPage() {
               handleProductTypeSearchChange={handleProductTypeSearchChange}
               clearProductTypeSearch={clearProductTypeSearch}
               setShowProductTypeDropdown={setShowProductTypeDropdown}
+              submitting={submitting}
             />
           </div>
 
@@ -227,6 +228,7 @@ export default function PurchasesPage() {
                   isFormValid={isServiceFeeFormValid()}
                   resetForm={resetServiceFeeForm}
                   addToCart={handleAddServiceFeeToCart}
+                  submitting={submitting}
                 />
               }
             />

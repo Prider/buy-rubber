@@ -21,15 +21,15 @@ export const TodayPurchasesCardByProductType = memo<TodayPurchasesCardByProductT
               </svg>
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
                 รับซื้อวันนี้
               </h3>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 แบ่งตามประเภทสินค้า
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-600 dark:bg-primary-500 text-white">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-600 dark:bg-primary-500 text-white">
             วันนี้
           </span>
         </div>
@@ -50,22 +50,22 @@ export const TodayPurchasesCardByProductType = memo<TodayPurchasesCardByProductT
                   <div className="pl-2.5">
                     {/* Product Type Info */}
                     <div className="flex items-center gap-1.5 mb-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
                         {pt.productTypeCode}
                       </span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                         {pt.count || 0} รายการ
                       </span>
                     </div>
                     
                     {/* Product Type Name */}
-                    <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-1.5 truncate" title={pt.productTypeName}>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5 truncate" title={pt.productTypeName}>
                       {pt.productTypeName}
                     </h4>
                     
                     {/* Amount */}
                     <div className="flex items-baseline gap-1">
-                      <p className="text-sm font-bold text-primary-700 dark:text-primary-300">
+                      <p className="text-base font-bold text-primary-700 dark:text-primary-300">
                         {formattedPtAmount}
                       </p>
                     </div>
@@ -81,7 +81,7 @@ export const TodayPurchasesCardByProductType = memo<TodayPurchasesCardByProductT
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">ยังไม่มีรายการรับซื้อวันนี้</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">ยังไม่มีรายการรับซื้อวันนี้</p>
           </div>
         )}
       </div>
