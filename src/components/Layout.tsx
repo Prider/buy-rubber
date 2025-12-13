@@ -21,7 +21,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
-  { name: 'ตั้งประเภทสินค้า', href: '/prices', icon: '📦' },
+  { name: 'ประเภทสินค้า', href: '/prices', icon: '📦' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true, electronOnly: true },

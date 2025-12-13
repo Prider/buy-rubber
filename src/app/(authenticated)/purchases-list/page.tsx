@@ -14,13 +14,20 @@ export default function PurchasesListPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-            รายการรับซื้อทั้งหมด
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            ดูและจัดการประวัติการรับซื้อทั้งหมด
-          </p>
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+              รายการรับซื้อทั้งหมด
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              ดูและจัดการประวัติการรับซื้อทั้งหมด
+            </p>
+          </div>
         </div>
         <button
           onClick={handleRefresh}

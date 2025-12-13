@@ -160,64 +160,78 @@ export default function PurchasesPage() {
     <>
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">รับซื้อยาง</h1>
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">รับซื้อยาง</h1>
+          </div>
         </div>
 
-        {/* Purchase Entry Card */}
-        <PurchaseEntryCard
-          formData={formData}
-          error={formError}
-          members={members}
-          productTypes={productTypes}
-          memberSearchTerm={memberSearchTerm}
-          showMemberDropdown={showMemberDropdown}
-          selectedMember={selectedMember}
-          filteredMembers={filteredMembers}
-          recentPurchases={recentPurchases}
-          isFormValid={isFormValid()}
-          calculateTotalAmount={calculateTotalAmount}
-          handleInputChange={handleInputChange}
-          handleMemberSearchChange={handleMemberSearchChange}
-          handleMemberSelect={handleMemberSelect}
-          clearMemberSearch={clearMemberSearch}
-          applySuggestedPrice={applySuggestedPrice}
-          setShowMemberDropdown={setShowMemberDropdown}
-          resetForm={resetAllFields}
-          addToCart={handleAddToCart}
-          productTypeSearchTerm={productTypeSearchTerm}
-          showProductTypeDropdown={showProductTypeDropdown}
-          selectedProductType={selectedProductType}
-          filteredProductTypes={filteredProductTypes}
-          handleProductTypeSelect={handleProductTypeSelect}
-          handleProductTypeSearchChange={handleProductTypeSearchChange}
-          clearProductTypeSearch={clearProductTypeSearch}
-          setShowProductTypeDropdown={setShowProductTypeDropdown}
-        />
-
-        {/* Cart Table */}
-        <CartTable
-          cart={cart}
-          submitting={submitting}
-          totalAmount={totalAmount}
-          printCart={printCart}
-          saveCartToDb={handleSaveCart}
-          removeFromCart={removeFromCart}
-          onShowPrintModal={handleShowPrintModal}
-          clearCart={clearCart}
-          error={cartError}
-          setError={setCartError}
-          serviceFeeCard={
-            <ServiceFeeCard
-              formData={serviceFeeFormData}
-              error={serviceFeeFormError}
-              handleInputChange={handleServiceFeeInputChange}
-              isFormValid={isServiceFeeFormValid()}
-              resetForm={resetServiceFeeForm}
-              addToCart={handleAddServiceFeeToCart}
+        {/* Main Content - Side by Side Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left Side - Purchase Entry Card */}
+          <div className="lg:col-span-2">
+            <PurchaseEntryCard
+              formData={formData}
+              error={formError}
+              members={members}
+              productTypes={productTypes}
+              memberSearchTerm={memberSearchTerm}
+              showMemberDropdown={showMemberDropdown}
+              selectedMember={selectedMember}
+              filteredMembers={filteredMembers}
+              recentPurchases={recentPurchases}
+              isFormValid={isFormValid()}
+              calculateTotalAmount={calculateTotalAmount}
+              handleInputChange={handleInputChange}
+              handleMemberSearchChange={handleMemberSearchChange}
+              handleMemberSelect={handleMemberSelect}
+              clearMemberSearch={clearMemberSearch}
+              applySuggestedPrice={applySuggestedPrice}
+              setShowMemberDropdown={setShowMemberDropdown}
+              resetForm={resetAllFields}
+              addToCart={handleAddToCart}
+              productTypeSearchTerm={productTypeSearchTerm}
+              showProductTypeDropdown={showProductTypeDropdown}
+              selectedProductType={selectedProductType}
+              filteredProductTypes={filteredProductTypes}
+              handleProductTypeSelect={handleProductTypeSelect}
+              handleProductTypeSearchChange={handleProductTypeSearchChange}
+              clearProductTypeSearch={clearProductTypeSearch}
+              setShowProductTypeDropdown={setShowProductTypeDropdown}
             />
-          }
-        />
+          </div>
+
+          {/* Right Side - Cart Table (Wider) */}
+          <div className="lg:col-span-3">
+            <CartTable
+              cart={cart}
+              submitting={submitting}
+              totalAmount={totalAmount}
+              printCart={printCart}
+              saveCartToDb={handleSaveCart}
+              removeFromCart={removeFromCart}
+              onShowPrintModal={handleShowPrintModal}
+              clearCart={clearCart}
+              error={cartError}
+              setError={setCartError}
+              serviceFeeCard={
+                <ServiceFeeCard
+                  formData={serviceFeeFormData}
+                  error={serviceFeeFormError}
+                  handleInputChange={handleServiceFeeInputChange}
+                  isFormValid={isServiceFeeFormValid()}
+                  resetForm={resetServiceFeeForm}
+                  addToCart={handleAddServiceFeeToCart}
+                />
+              }
+            />
+          </div>
+        </div>
       </div>
 
       {/* Print Confirmation Modal */}
