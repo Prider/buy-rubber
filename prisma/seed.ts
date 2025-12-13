@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { generateDocumentNumber as generateDocumentNumberUtil } from '@/lib/utils';
 
 const prisma = new PrismaClient();
 
@@ -160,7 +161,7 @@ async function main() {
   ];
 
   const expenses = [];
-  const expenseCount = 100;
+  const expenseCount = 500;
   
   // Get users for assigning to expenses (alternate between admin and user)
   const usersForExpenses = [admin, adminTwo, user];
@@ -182,6 +183,7 @@ async function main() {
       data: {
         expenseNo,
         date,
+        createdAt: date,
         category: categoryInfo.category,
         amount,
         description: `${categoryInfo.description}${descriptionSuffix}`,
@@ -305,7 +307,7 @@ async function main() {
     'นาทวี',
   ];
 
-  const totalMembers = 1;
+  const totalMembers = 200;
   const memberData = Array.from({ length: totalMembers }, (_value, idx) => {
     if (idx < baseMembers.length) {
       return baseMembers[idx];
@@ -345,18 +347,12 @@ async function main() {
   }
   console.log('✅ สร้างสมาชิก:', members.length, 'ราย');
 
-  // Helper function to generate document number
-  const generateDocumentNumber = (prefix: string, date: Date): string => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `${prefix}-${year}${month}-${random}`;
-  };
+  // Helper function to generate document number with counter to avoid duplicates
 
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
   const purchases = [];
-  const purchaseCount = 10000; // Create enough purchases to link service fees
+  const purchaseCount = 5000; // Create enough purchases to link service fees
   
   for (let i = 0; i < purchaseCount; i++) {
     const member = members[i % members.length];
@@ -377,13 +373,14 @@ async function main() {
     const ownerAmount = (totalAmount * member.ownerPercent) / 100;
     const tapperAmount = (totalAmount * member.tapperPercent) / 100;
     
-    const purchaseNo = generateDocumentNumber('PUR', date);
+    const purchaseNo = await generateDocumentNumberUtil('PUR', date);
     
     try {
       const purchase = await prisma.purchase.create({
         data: {
           purchaseNo,
           date,
+          createdAt: date,
           memberId: member.id,
           productTypeId: productType.id,
           userId: randomUser.id,
@@ -426,7 +423,7 @@ async function main() {
   ];
   
   const serviceFees = [];
-  const serviceFeeCount = 120; // Create 120 service fees for testing
+  const serviceFeeCount = 5000; // Create 120 service fees for testing
   
   for (let i = 0; i < serviceFeeCount; i++) {
     const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];
@@ -439,7 +436,7 @@ async function main() {
     const minute = (i * 17) % 60;
     date.setHours(hour, minute, (i * 23) % 60, (i * 37) % 1000);
     
-    const serviceFeeNo = generateDocumentNumber('SVC', date);
+    const serviceFeeNo = await generateDocumentNumberUtil('SVC', date);
     
     // Link 100% to purchases - always use actual purchaseNo from created purchases
     let purchaseNo: string | null = null;
@@ -459,6 +456,7 @@ async function main() {
           serviceFeeNo,
           purchaseNo: purchaseNo, // Use actual purchaseNo from created purchase, or null
           date,
+          createdAt: date,
           category: categoryInfo.category,
           amount,
           notes,
@@ -486,6 +484,10 @@ async function main() {
   console.log('  👤 Admin Account (Full access):');
   console.log('     Username: admin');
   console.log('     Password: admin123');
+  console.log('');
+  console.log('  👤 Admin Account (Full access):');
+  console.log('     Username: mayrin');
+  console.log('     Password: mayrin123');
   console.log('');
   console.log('  👤 User Account (Edit access):');
   console.log('     Username: user');
