@@ -71,8 +71,10 @@ export default function ExpensesPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  บันทึกค่าใช้จ่าย
+                <h1 className="text-3xl font-bold">
+                  <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                    บันทึกค่าใช้จ่าย
+                  </span>
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   จัดการค่าใช้จ่ายประจำวันของกิจการ

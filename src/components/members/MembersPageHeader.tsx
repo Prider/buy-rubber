@@ -23,8 +23,10 @@ export const MembersPageHeader = ({ totalMembers, onAddMember }: MembersPageHead
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                จัดการสมาชิก
+              <h1 className="text-3xl font-bold">
+                <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                  จัดการสมาชิก
+                </span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 ทั้งหมด {totalMembers} สมาชิก

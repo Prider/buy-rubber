@@ -84,12 +84,6 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 overflow-hidden">
-                {/* <Image
-                  src={appIcon}
-                  alt="Punsook Innotech logo"
-                  className="w-full h-full object-cover"
-                  priority
-                /> */}
                 <div className="flex items-end justify-center gap-1.5 h-12">
                   <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
                   <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />
@@ -100,7 +94,9 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div>
                 <h1 className="text-lg font-extrabold tracking-tight">
-                  <span className="text-gray-700 dark:text-white ml-1.5">Punsook Innotech</span>
+                  <span className="text-gray-700 dark:text-white ml-1.5">
+                    Punsook Innotech
+                  </span>
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5 tracking-wide">
                   <span className="inline-flex items-center gap-1">
@@ -170,8 +166,10 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                  {user?.username || 'ผู้ใช้งาน'}
+                <p className="text-sm font-semibold truncate">
+                  <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                    {user?.username || 'ผู้ใช้งาน'}
+                  </span>
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
                   {user?.role || 'User'}

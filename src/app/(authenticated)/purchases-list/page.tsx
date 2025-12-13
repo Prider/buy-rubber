@@ -21,8 +21,10 @@ export default function PurchasesListPage() {
             </svg>
           </div>
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-              รายการรับซื้อทั้งหมด
+            <h1 className="text-4xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                รายการรับซื้อทั้งหมด
+              </span>
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
               ดูและจัดการประวัติการรับซื้อทั้งหมด
