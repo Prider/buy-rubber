@@ -3,6 +3,7 @@
 import { memo, useMemo } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { DashboardStats } from '@/hooks/useDashboardData';
+import { TodayPurchasesCardByProductType } from './TodayPurchasesCardByProductType';
 
 interface DashboardStatsCardsProps {
   stats: DashboardStats;
@@ -125,60 +126,6 @@ const MembersCard = memo<MembersCardProps>(({ activeMembers, totalMembers, icon 
 });
 
 MembersCard.displayName = 'MembersCard';
-
-// Special Today Purchases Card with Product Type Breakdown
-interface TodayPurchasesCardProps {
-  stats: DashboardStats;
-}
-
-const TodayPurchasesCardByProductType = memo<TodayPurchasesCardProps>(({ stats }) => {
-  return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-200 border border-primary-200/50 dark:border-primary-800/30 lg:col-span-5 sm:col-span-2 col-span-1">
-      <div className="relative z-10 p-1">
-        <div className="flex items-center justify-between mb-3 px-3 pt-3">
-          <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
-            รับซื้อวันนี้ แบ่งตามประเภทสินค้า
-          </p>
-        </div>
-        {stats.todayPurchasesByProductType && stats.todayPurchasesByProductType.length > 0 && (
-          <div className="dark:border-primary-700/50 px-3 pb-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {stats.todayPurchasesByProductType.map((pt, index) => {
-                const formattedPtAmount = formatCurrency(pt.totalAmount || 0);
-                return (
-                  <div
-                    key={pt.productTypeId || `pt-${index}`}
-                    className="flex items-center justify-between px-4 py-3 bg-white/60 dark:bg-gray-800/40 rounded-lg border border-primary-100/50 dark:border-primary-800/20 hover:bg-white/80 dark:hover:bg-gray-800/60 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary-500 flex-shrink-0"></div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {pt.productTypeName}
-                      </p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {pt.productTypeCode}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        ({pt.count || 0} รายการ)
-                      </p>
-                    </div>
-                    <div className="text-right ml-3 flex-shrink-0">
-                      <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
-                        {formattedPtAmount}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-TodayPurchasesCardByProductType.displayName = 'TodayPurchasesCard';
 
 function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   // Memoize icons to prevent recreation
