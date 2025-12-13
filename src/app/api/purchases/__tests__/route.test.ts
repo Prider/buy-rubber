@@ -36,6 +36,18 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+// Mock cache
+vi.mock('@/lib/cache', () => ({
+  cache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  },
+  CACHE_KEYS: {
+    DASHBOARD: 'dashboard',
+  },
+}));
+
 // Mock utility functions
 vi.mock('@/lib/utils', () => ({
   calculateDryWeight: vi.fn((netWeight: number, rubberPercent: number) => 
@@ -46,6 +58,7 @@ vi.mock('@/lib/utils', () => ({
     ownerAmount: (totalAmount * ownerPercent) / 100,
     tapperAmount: (totalAmount * tapperPercent) / 100,
   })),
+  getUserFromToken: vi.fn(() => null),
   generateDocumentNumber: vi.fn(async (prefix: string, date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -399,19 +412,30 @@ describe('POST /api/purchases', () => {
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
     const utilsModule = await import('@/lib/utils');
+    const cacheModule = await import('@/lib/cache');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
     utils = utilsModule;
+    
+    // Mock getUserFromToken to return null by default (no auth)
+    // The mock is already set up in vi.mock above, but we can override it per test
+    if (utilsModule.getUserFromToken) {
+      vi.mocked(utilsModule.getUserFromToken).mockReturnValue(null);
+    }
+    
+    // Clear cache before each test
+    vi.mocked(cacheModule.cache.get).mockReturnValue(null);
   });
 
   describe('Single purchase creation', () => {
     describe('Validation errors', () => {
       it('should return 400 when memberId is missing', async () => {
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
+        
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
             productTypeId: 'product-1',
-            userId: 'user-1',
             date: '2024-01-15',
             grossWeight: 100,
           }),
@@ -426,11 +450,12 @@ describe('POST /api/purchases', () => {
       });
 
       it('should return 400 when productTypeId is missing', async () => {
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
+        
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
             memberId: 'member-1',
-            userId: 'user-1',
             date: '2024-01-15',
             grossWeight: 100,
           }),
@@ -443,7 +468,7 @@ describe('POST /api/purchases', () => {
         expect(data.error).toBe('กรุณาเลือกประเภทสินค้า');
       });
 
-      it('should return 400 when userId is missing', async () => {
+      it('should return 401 when userId is missing', async () => {
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
@@ -457,17 +482,18 @@ describe('POST /api/purchases', () => {
         const response = await POST(request);
         const data = await response.json();
 
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(401);
         expect(data.error).toBe('ไม่พบข้อมูลผู้ใช้');
       });
 
       it('should return 400 when date is missing', async () => {
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
+        
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
             memberId: 'member-1',
             productTypeId: 'product-1',
-            userId: 'user-1',
             grossWeight: 100,
           }),
         });
@@ -480,12 +506,13 @@ describe('POST /api/purchases', () => {
       });
 
       it('should return 400 when grossWeight is missing or invalid', async () => {
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
+        
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
             memberId: 'member-1',
             productTypeId: 'product-1',
-            userId: 'user-1',
             date: '2024-01-15',
             grossWeight: 0,
           }),
@@ -499,6 +526,7 @@ describe('POST /api/purchases', () => {
       });
 
       it('should return 400 when price is missing', async () => {
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
         vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
         vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
         vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
@@ -509,7 +537,6 @@ describe('POST /api/purchases', () => {
           body: JSON.stringify({
             memberId: 'member-1',
             productTypeId: 'product-1',
-            userId: 'user-1',
             date: '2024-01-15',
             grossWeight: 100,
           }),
@@ -604,13 +631,13 @@ describe('POST /api/purchases', () => {
         vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
         vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
         vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+        vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
 
         const request = new NextRequest('http://localhost:3000/api/purchases', {
           method: 'POST',
           body: JSON.stringify({
             memberId: 'member-1',
             productTypeId: 'product-1',
-            userId: 'user-1',
             date: '2024-01-15',
             grossWeight: 100,
             containerWeight: 5,
@@ -823,7 +850,7 @@ describe('POST /api/purchases', () => {
   });
 
   describe('Batch purchase creation', () => {
-    it('should return 400 when userId is missing', async () => {
+    it('should return 401 when userId is missing', async () => {
       const request = new NextRequest('http://localhost:3000/api/purchases', {
         method: 'POST',
         body: JSON.stringify({
@@ -840,7 +867,7 @@ describe('POST /api/purchases', () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
       expect(data.error).toBe('ไม่พบข้อมูลผู้ใช้');
     });
 

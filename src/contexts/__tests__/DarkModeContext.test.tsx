@@ -283,9 +283,14 @@ describe('DarkModeContext', () => {
     it('should throw error when used outside provider', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      expect(() => {
+      // React errors are thrown asynchronously, so we need to catch them properly
+      try {
         render(<TestComponent />);
-      }).toThrow('useDarkMode must be used within a DarkModeProvider');
+        // If we get here, the error wasn't thrown - fail the test
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.message).toContain('useDarkMode must be used within a DarkModeProvider');
+      }
 
       consoleErrorSpy.mockRestore();
     });

@@ -23,9 +23,25 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+// Mock cache
+vi.mock('@/lib/cache', () => ({
+  cache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  },
+  CACHE_KEYS: {
+    PRODUCT_TYPES: 'product-types',
+  },
+  CACHE_TTL: {
+    PRODUCT_TYPES: 1800000,
+  },
+}));
+
 describe('GET /api/product-types', () => {
   let prisma: any;
   let logger: any;
+  let cache: any;
 
   const mockProductType = {
     id: 'product-1',

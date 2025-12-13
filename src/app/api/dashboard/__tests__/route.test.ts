@@ -20,6 +20,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     productType: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
     expense: {
       aggregate: vi.fn(),
@@ -38,9 +39,25 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+// Mock cache
+vi.mock('@/lib/cache', () => ({
+  cache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  },
+  CACHE_KEYS: {
+    DASHBOARD: 'dashboard',
+  },
+  CACHE_TTL: {
+    DASHBOARD: 300000,
+  },
+}));
+
 describe('GET /api/dashboard', () => {
   let prisma: any;
   let logger: any;
+  let cache: any;
 
   const mockMember = {
     id: 'member-1',
@@ -90,8 +107,13 @@ describe('GET /api/dashboard', () => {
     
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
+    const cacheModule = await import('@/lib/cache');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    cache = cacheModule.cache;
+    
+    // Clear cache before each test
+    vi.mocked(cache.get).mockReturnValue(null);
   });
 
   describe('Successful retrieval', () => {
@@ -112,15 +134,18 @@ describe('GET /api/dashboard', () => {
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase]);
 
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
-        { memberId: 'member-1', _sum: { totalAmount: 10000, dryWeight: 200 } },
-      ]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([
+          { memberId: 'member-1', _sum: { totalAmount: 10000, dryWeight: 200 } },
+        ])
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
 
       vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
 
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([mockProductPrice]);
 
       vi.mocked(prisma.productType.findMany).mockResolvedValue([mockProductType]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 3, _sum: { amount: 1500 } }) // Today expenses
@@ -156,9 +181,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 5, _sum: { amount: 2500 } })
@@ -200,9 +228,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: null } })
@@ -274,10 +305,12 @@ describe('GET /api/dashboard', () => {
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
 
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
-        { memberId: 'member-1', _sum: { totalAmount: 15000, dryWeight: 300 } },
-        { memberId: 'member-2', _sum: { totalAmount: 10000, dryWeight: 200 } },
-      ]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([
+          { memberId: 'member-1', _sum: { totalAmount: 15000, dryWeight: 300 } },
+          { memberId: 'member-2', _sum: { totalAmount: 10000, dryWeight: 200 } },
+        ])
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
 
       vi.mocked(prisma.member.findUnique)
         .mockResolvedValueOnce(mockMember)
@@ -319,11 +352,14 @@ describe('GET /api/dashboard', () => {
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
 
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([
-        { memberId: 'member-1', _sum: { totalAmount: null, dryWeight: null } },
-      ]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([
+          { memberId: 'member-1', _sum: { totalAmount: null, dryWeight: null } },
+        ])
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
 
       vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
@@ -433,9 +469,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
@@ -472,9 +511,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
@@ -507,9 +549,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
@@ -572,9 +617,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
@@ -603,9 +651,12 @@ describe('GET /api/dashboard', () => {
       });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([]) // topMembers
+        .mockResolvedValueOnce([]); // todayPurchasesByProductType
       vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
 
       vi.mocked(prisma.expense.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
