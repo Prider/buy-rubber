@@ -7,12 +7,11 @@ import DashboardStatsCards from '@/components/dashboard/DashboardStatsCards';
 import RecentPurchasesList from '@/components/dashboard/RecentPurchasesList';
 import TopMembersList from '@/components/dashboard/TopMembersList';
 import RecentExpensesList from '@/components/dashboard/RecentExpensesList';
-import TodayPricesCard from '@/components/dashboard/TodayPricesCard';
 import GamerLoader from '@/components/GamerLoader';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { loading, stats, todayPrices, productTypes, recentPurchases, topMembers, recentExpenses } = useDashboardData();
+  const { loading, stats, recentPurchases, topMembers, recentExpenses } = useDashboardData();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
