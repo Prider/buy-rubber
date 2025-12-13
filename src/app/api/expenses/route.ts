@@ -2,28 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
+import { getUserFromToken } from '@/lib/utils';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
-
-// Helper function to extract user info from auth token
-function getUserFromToken(request: NextRequest): { userId: string; username: string } | null {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  try {
-    const token = authHeader.substring(7);
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (decoded.userId && decoded.username) {
-      return { userId: decoded.userId, username: decoded.username };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 // GET /api/expenses
 export async function GET(request: NextRequest) {

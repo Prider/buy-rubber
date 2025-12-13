@@ -5,7 +5,8 @@ import { cache, CACHE_KEYS } from '@/lib/cache';
 import { 
   calculateDryWeight, 
   calculateSplit,
-  generateDocumentNumber
+  generateDocumentNumber,
+  getUserFromToken
 } from '@/lib/utils';
 
 // Force Node.js runtime for Prisma support
@@ -81,9 +82,21 @@ export async function POST(request: NextRequest) {
       itemCount: data.items?.length || 1 
     });
 
+    // Get user info from token or use provided values
+    const tokenUser = getUserFromToken(request);
+    const userId = data.userId || tokenUser?.userId;
+
+    // Validate user info
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required. Please ensure you are logged in.' },
+        { status: 401 }
+      );
+    }
+
     // Check if this is a batch request (array of purchases)
     if (Array.isArray(data.items)) {
-      return handleBatchPurchase(data);
+      return handleBatchPurchase({ ...data, userId }, request);
     }
 
     // Single purchase (existing logic)
@@ -98,12 +111,6 @@ export async function POST(request: NextRequest) {
     if (!data.productTypeId) {
       return NextResponse.json(
         { error: 'กรุณาเลือกประเภทสินค้า', details: 'productTypeId is required' },
-        { status: 400 }
-      );
-    }
-    if (!data.userId) {
-      return NextResponse.json(
-        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required' },
         { status: 400 }
       );
     }
@@ -150,7 +157,7 @@ export async function POST(request: NextRequest) {
       // Validate all foreign keys exist
       prisma.member.findUnique({ where: { id: data.memberId } }),
       prisma.productType.findUnique({ where: { id: data.productTypeId } }),
-      prisma.user.findUnique({ where: { id: data.userId } }),
+      prisma.user.findUnique({ where: { id: userId } }),
     ]);
 
     logger.debug('Found product price and validated foreign keys', { 
@@ -193,7 +200,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${data.userId} not found. Please log out and log in again.` },
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found. Please log out and log in again.` },
         { status: 404 }
       );
     }
@@ -249,7 +256,7 @@ export async function POST(request: NextRequest) {
         date: purchaseDate,
         memberId: data.memberId,
         productTypeId: data.productTypeId,
-        userId: data.userId,
+        userId: userId,
         grossWeight: data.grossWeight,
         containerWeight: data.containerWeight || 0,
         netWeight,
@@ -302,16 +309,20 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle batch purchase creation with same purchaseNo
-async function handleBatchPurchase(data: { items: any[]; userId: string; date?: string }) {
+async function handleBatchPurchase(data: { items: any[]; userId?: string; date?: string }, request: NextRequest) {
   try {
-    const { items, userId, date } = data;
+    // Get user info from token or use provided values
+    const tokenUser = getUserFromToken(request);
+    const userId = data.userId || tokenUser?.userId;
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required' },
-        { status: 400 }
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required. Please ensure you are logged in.' },
+        { status: 401 }
       );
     }
+
+    const { items, date } = data;
 
     if (!items || items.length === 0) {
       return NextResponse.json(
