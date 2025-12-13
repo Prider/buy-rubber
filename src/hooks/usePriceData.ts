@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
@@ -15,16 +15,7 @@ export function usePriceData() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [priceHistory, setPriceHistory] = useState<any[]>([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    loadData();
-  }, [router]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [productTypesRes, pricesRes] = await Promise.all([
         axios.get('/api/product-types'),
@@ -48,7 +39,16 @@ export function usePriceData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    loadData();
+  }, [router, loadData]);
 
   const getPriceForDateAndType = (date: string, productTypeId: string) => {
     const record = priceHistory.find(

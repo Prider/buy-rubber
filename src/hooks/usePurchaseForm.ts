@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { logger } from '@/lib/logger';
 
 interface Member {
@@ -41,9 +41,12 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // Memoize today's date to prevent unnecessary recalculations
+  const todayDate = useMemo(() => getTodayDate(), []);
   
   const [formData, setFormData] = useState<PurchaseFormData>({
-    date: getTodayDate(),
+    date: todayDate,
     memberId: '',
     productTypeId: '',
     grossWeight: '',
@@ -57,9 +60,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Ensure date is always set to today if empty
   useEffect(() => {
     if (!formData.date) {
-      setFormData(prev => ({ ...prev, date: getTodayDate() }));
+      setFormData(prev => ({ ...prev, date: todayDate }));
     }
-  }, [formData.date]);
+  }, [formData.date, todayDate]);
 
   const [error, setError] = useState('');
   
@@ -131,7 +134,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setShowProductTypeDropdown(false);
     
     // Trigger price fetch and recent purchases fetch
-    const today = getTodayDate();
+    const today = todayDate;
     let priceForProductType = dailyPrices.find(price => {
       if (!price.date) return false;
       const priceDate = new Date(price.date).toISOString().split('T')[0];
@@ -187,7 +190,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     
     // If product type is selected, automatically set the price from daily prices
     if (name === 'productTypeId' && value) {
-      const today = getTodayDate();
+      const today = todayDate;
       
       // Try to find exact date match first (compare date strings, handle timezone)
       let priceForProductType = dailyPrices.find(price => {
@@ -302,7 +305,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Reset form (keeping member selection for quick multiple entries)
   const resetForm = useCallback(() => {
     setFormData(prev => ({
-      date: getTodayDate(),
+      date: todayDate,
       memberId: prev.memberId, // Keep member selection
       productTypeId: '',
       grossWeight: '',
@@ -319,12 +322,12 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setProductTypeSearchTerm('');
     setSelectedProductType(null);
     setShowProductTypeDropdown(false);
-  }, []);
+  }, [todayDate]);
 
   // Reset ALL fields including member (for Reset button)
   const resetAllFields = useCallback(() => {
     setFormData({
-      date: getTodayDate(),
+      date: todayDate,
       memberId: '',
       productTypeId: '',
       grossWeight: '',
@@ -342,7 +345,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setProductTypeSearchTerm('');
     setSelectedProductType(null);
     setShowProductTypeDropdown(false);
-  }, []);
+  }, [todayDate]);
 
   // Clear member search
   const clearMemberSearch = useCallback(() => {

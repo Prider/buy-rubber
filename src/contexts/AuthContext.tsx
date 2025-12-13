@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { AuthContextType, User, UserRole, ROLE_PERMISSIONS, Permission } from '@/types/user';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -86,9 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Login error:', error);
       return false;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
@@ -100,17 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
     }
-  };
+  }, []);
 
-  const hasRole = (role: UserRole): boolean => {
+  const hasRole = useCallback((role: UserRole): boolean => {
     return user?.role === role;
-  };
+  }, [user?.role]);
 
-  const hasAnyRole = (roles: UserRole[]): boolean => {
+  const hasAnyRole = useCallback((roles: UserRole[]): boolean => {
     return user ? roles.includes(user.role) : false;
-  };
+  }, [user]);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     hasRole,
     hasAnyRole,
-  };
+  }), [user, isLoading, login, logout, hasRole, hasAnyRole]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -70,6 +70,10 @@ export const useExpenses = () => {
   // Use ref to store cancel token for cleanup
   const cancelTokenRef = useRef<CancelTokenSource | null>(null);
 
+  // Extract pagination values to avoid object recreation issues
+  const currentPage = pagination.page;
+  const pageSize = pagination.pageSize;
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -162,29 +166,29 @@ export const useExpenses = () => {
     try {
       setError(null);
       await axios.post('/api/expenses', expenseData);
-      await loadExpenses({ page: 1, pageSize: pagination.pageSize });
+      await loadExpenses({ page: 1, pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [loadExpenses, pagination.pageSize]);
+  }, [loadExpenses, pageSize]);
 
   const deleteExpense = useCallback(async (id: string) => {
     try {
       setError(null);
       await axios.delete(`/api/expenses/${id}`);
-      await loadExpenses({ page: pagination.page, pageSize: pagination.pageSize });
+      await loadExpenses({ page: currentPage, pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบค่าใช้จ่าย';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [loadExpenses, pagination.page, pagination.pageSize]);
+  }, [loadExpenses, currentPage, pageSize]);
 
   const changePage = useCallback(async (page: number) => {
-    await loadExpenses({ page, pageSize: pagination.pageSize });
-  }, [loadExpenses, pagination.pageSize]);
+    await loadExpenses({ page, pageSize });
+  }, [loadExpenses, pageSize]);
 
   const changePageSize = useCallback(async (pageSize: number) => {
     await loadExpenses({ page: 1, pageSize });
