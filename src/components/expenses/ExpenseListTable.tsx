@@ -236,7 +236,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
                 รหัส
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                วันที่และเวลา
+                วันที่
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                 ประเภท

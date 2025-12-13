@@ -201,8 +201,16 @@ export async function GET(request: NextRequest) {
 
     // Step 9: Convert to array and maintain sort order from summaries
     const transactions = paginatedSummaries
-      .map(summary => transactionsMap.get(summary.purchaseNo))
+      .map(summary => {
+        const tx = transactionsMap.get(summary.purchaseNo);
+        if (!tx) return undefined;
+        return {
+          ...tx,
+          sortTime: summary.sortTime,
+        };
+      })
       .filter((t): t is NonNullable<typeof t> => t !== undefined);
+
 
     const pagination = {
       page,

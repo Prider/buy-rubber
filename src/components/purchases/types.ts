@@ -3,6 +3,7 @@ export interface PurchaseTransaction {
   purchaseNo: string;
   date: string;
   createdAt: string;
+  sortTime?: number;
   purchases: Array<{
     id: string;
     purchaseNo: string;

@@ -126,27 +126,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
   onDownloadPDF,
   onDelete,
 }) => {
-  // Sort transactions by date (newest first) and then by createdAt (newest first)
-  const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => {
-      // Priority 1: Sort by createdAt if available (newest first)
-      const createdAtA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const createdAtB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      if (createdAtA !== createdAtB) {
-        return createdAtB - createdAtA; // Newest first
-      }
-      
-      // Priority 2: Sort by date (newest first)
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      if (dateA !== dateB) {
-        return dateB - dateA; // Newest first
-      }
-      
-      // Priority 3: Sort by purchaseNo (descending) as tiebreaker
-      return b.purchaseNo.localeCompare(a.purchaseNo);
-    });
-  }, [transactions]);
+  // Data is already sorted by the API; keep the incoming order
+  const sortedTransactions = useMemo(() => transactions, [transactions]);
 
   // Memoize empty state
   const emptyState = useMemo(() => (
