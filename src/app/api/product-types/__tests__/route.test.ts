@@ -41,7 +41,6 @@ vi.mock('@/lib/cache', () => ({
 describe('GET /api/product-types', () => {
   let prisma: any;
   let logger: any;
-  let cache: any;
 
   const mockProductType = {
     id: 'product-1',

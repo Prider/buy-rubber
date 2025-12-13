@@ -115,40 +115,40 @@ async function main() {
   ]);
   console.log('✅ สร้างประเภทสินค้า:', productTypes.length, 'ประเภท');
 
-  // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด รวมวันนี้)
-  const productPrices = [];
+  // // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด รวมวันนี้)
+  // const productPrices = [];
   
-  // Get today's date at noon to avoid timezone issues
-  const now = new Date();
-  console.log(`System time: ${now.toISOString()}, Local date: ${now.toLocaleDateString()}`);
+  // // Get today's date at noon to avoid timezone issues
+  // const now = new Date();
+  // console.log(`System time: ${now.toISOString()}, Local date: ${now.toLocaleDateString()}`);
   
-  for (let i = 0; i < 3; i++) {
-    // Create date at noon local time to avoid timezone conversion issues
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    date.setHours(12, 0, 0, 0); // Set to noon instead of midnight
+  // for (let i = 0; i < 2; i++) {
+  //   // Create date at noon local time to avoid timezone conversion issues
+  //   const date = new Date();
+  //   date.setDate(date.getDate() - i);
+  //   date.setHours(12, 0, 0, 0); // Set to noon instead of midnight
     
-    const dateStr = date.toISOString().split('T')[0];
-    console.log(`Creating prices for day ${i} (${dateStr}):`);
+  //   const dateStr = date.toISOString().split('T')[0];
+  //   console.log(`Creating prices for day ${i} (${dateStr}):`);
     
-    // สร้างราคาสำหรับแต่ละประเภทสินค้า
-    for (const productType of productTypes) {
-      const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
-      const priceVariation = i * 0.5; // ราคาลดลงทุกวัน
+  //   // สร้างราคาสำหรับแต่ละประเภทสินค้า
+  //   for (const productType of productTypes) {
+  //     const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
+  //     const priceVariation = i * 0.5; // ราคาลดลงทุกวัน
       
-      const priceRecord = await prisma.productPrice.create({
-        data: {
-          date: date,
-          productTypeId: productType.id,
-          price: basePrice - priceVariation,
-        },
-      });
+  //     const priceRecord = await prisma.productPrice.create({
+  //       data: {
+  //         date: date,
+  //         productTypeId: productType.id,
+  //         price: basePrice - priceVariation,
+  //       },
+  //     });
       
-      console.log(`  ✓ ${productType.code}: ${priceRecord.price} บาท (date: ${priceRecord.date.toISOString()})`);
-      productPrices.push(priceRecord);
-    }
-  }
-  console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');
+  //     console.log(`  ✓ ${productType.code}: ${priceRecord.price} บาท (date: ${priceRecord.date.toISOString()})`);
+  //     productPrices.push(priceRecord);
+  //   }
+  // }
+  // console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');
 
   // สร้างค่าใช้จ่ายตัวอย่าง
   console.log('💸 สร้างข้อมูลค่าใช้จ่าย...');
@@ -161,7 +161,7 @@ async function main() {
   ];
 
   const expenses = [];
-  const expenseCount = 500;
+  const expenseCount = 20;
   
   // Get users for assigning to expenses (alternate between admin and user)
   const usersForExpenses = [admin, adminTwo, user];
@@ -201,12 +201,12 @@ async function main() {
   console.log('✅ สร้างค่าใช้จ่าย:', expenses.length, 'รายการ');
 
   // สร้างสมาชิกตัวอย่าง (1000 ราย)
-  console.log('👥 สร้างสมาชิกตัวอย่าง (1000 ราย)...');
+  console.log('👥 สร้างสมาชิกตัวอย่าง (100 ราย)...');
 
   const baseMembers = [
     {
       code: 'M001',
-      name: 'นายสมชาย ใจดี',
+      name: 'นายสมชาย ใจดี ตัวอย่างที่ 1',
       phone: '0812345678',
       address: 'สวนยาง ต.บ้านใหม่ อ.เมือง จ.สงขลา',
       ownerPercent: 70,
@@ -215,7 +215,7 @@ async function main() {
     },
     {
       code: 'M002',
-      name: 'นางสาวสมหญิง รักษ์ดี',
+      name: 'นางสาวสมหญิง รักษ์ดี ตัวอย่างที่ 2',
       phone: '0823456789',
       address: 'สวนยาง ต.ท่าช้าง อ.เมือง จ.สงขลา',
       ownerPercent: 100,
@@ -223,7 +223,7 @@ async function main() {
     },
     {
       code: 'M003',
-      name: 'นายประยุทธ์ ขยัน',
+      name: 'นายประยุทธ์ ขยัน ตัวอย่างที่ 3',
       phone: '0834567890',
       address: 'สวนยาง ต.คลองแห อ.หาดใหญ่ จ.สงขลา',
       ownerPercent: 60,
@@ -232,7 +232,7 @@ async function main() {
     },
     {
       code: 'M004',
-      name: 'นายวิศาล สมบูรณ์',
+      name: 'นายวิศาล สมบูรณ์ ตัวอย่างที่ 4',
       phone: '0845678901',
       address: 'สวนยาง ต.คลองอู่ตะเภา อ.หาดใหญ่ จ.สงขลา',
       ownerPercent: 80,
@@ -241,7 +241,7 @@ async function main() {
     },
     {
       code: 'M005',
-      name: 'นางสมศรี ใจงาม',
+      name: 'นางสมศรี ใจงาม ตัวอย่างที่ 5',
       phone: '0856789012',
       address: 'สวนยาง ต.คลองหอยโข่ง อ.คลองหอยโข่ง จ.สงขลา',
       ownerPercent: 100,
@@ -249,7 +249,7 @@ async function main() {
     },
     {
       code: 'M006',
-      name: 'นายสมศักดิ์ รักษ์ดี',
+      name: 'นายสมศักดิ์ รักษ์ดี ตัวอย่างที่ 6',
       phone: '0867890123',
       address: 'สวนยาง ต.ควนเนียง อ.ควนเนียง จ.สงขลา',
       ownerPercent: 65,
@@ -258,7 +258,7 @@ async function main() {
     },
     {
       code: 'M007',
-      name: 'นางสาวสมพร ใจดี',
+      name: 'นางสาวสมพร ใจดี ตัวอย่างที่ 7',
       phone: '0878901234',
       address: 'สวนยาง ต.รัตภูมิ อ.รัตภูมิ จ.สงขลา',
       ownerPercent: 75,
@@ -267,7 +267,7 @@ async function main() {
     },
     {
       code: 'M008',
-      name: 'นายสมชาย รักษ์ดี',
+      name: 'นายสมชาย รักษ์ดี ตัวอย่างที่ 8',
       phone: '0889012345',
       address: 'สวนยาง ต.สะเดา อ.สะเดา จ.สงขลา',
       ownerPercent: 90,
@@ -276,7 +276,7 @@ async function main() {
     },
     {
       code: 'M009',
-      name: 'นางสมปอง สุขดี',
+      name: 'นางสมปอง สุขดี ตัวอย่างที่ 9',
       phone: '0890123456',
       address: 'สวนยาง ต.จะนะ อ.จะนะ จ.สงขลา',
       ownerPercent: 100,
@@ -284,7 +284,7 @@ async function main() {
     },
     {
       code: 'M010',
-      name: 'นายสมศักดิ์ ขยัน',
+      name: 'นายสมศักดิ์ ขยัน ตัวอย่างที่ 10',
       phone: '0901234567',
       address: 'สวนยาง ต.นาทวี อ.นาทวี จ.สงขลา',
       ownerPercent: 70,
@@ -352,7 +352,7 @@ async function main() {
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
   const purchases = [];
-  const purchaseCount = 5000; // Create enough purchases to link service fees
+  const purchaseCount = 50; // Create enough purchases to link service fees
   
   for (let i = 0; i < purchaseCount; i++) {
     const member = members[i % members.length];
@@ -423,7 +423,7 @@ async function main() {
   ];
   
   const serviceFees = [];
-  const serviceFeeCount = 5000; // Create 120 service fees for testing
+  const serviceFeeCount = 50; // Create 120 service fees for testing
   
   for (let i = 0; i < serviceFeeCount; i++) {
     const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];
