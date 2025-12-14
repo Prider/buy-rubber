@@ -110,9 +110,16 @@ export default function PurchasesPage() {
 
   // Handle saving cart with form reset
   const handleSaveCart = async () => {
-    await saveCartToDb();
-    // Reset all form fields including member selection after successful save
-    resetAllFields();
+    try {
+      await saveCartToDb();
+      // Reset all form fields including member selection after successful save
+      // Note: Modal is shown by CartTable's handleSaveAndAskPrint on success
+      resetAllFields();
+    } catch (error) {
+      // Error is already handled by useCart hook (setError)
+      // Don't show modal on error
+      console.error('Failed to save cart:', error);
+    }
   };
 
   // Modal handlers
@@ -241,7 +248,7 @@ export default function PurchasesPage() {
       </div>
 
       {/* Print Confirmation Modal */}
-      {showPrintModal && (
+      {showPrintModal && cartError === null && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-md w-full mx-auto">
             <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-b border-gray-200 dark:border-gray-600 rounded-t-2xl">

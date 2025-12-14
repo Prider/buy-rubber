@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
 
@@ -41,27 +41,30 @@ export function useReportData() {
     loadProductTypes();
   }, []);
 
-  const clearReportData = () => {
+  const clearReportData = useCallback(() => {
     setData(null);
     setExpenseSummary([]);
-  };
+  }, []);
 
-  const handleSetReportType = (type: ReportType) => {
+  const handleSetReportType = useCallback((type: ReportType) => {
     setReportType(type);
-    clearReportData();
-  };
+    setData(null);
+    setExpenseSummary([]);
+  }, []);
 
-  const handleSetStartDate = (date: string) => {
+  const handleSetStartDate = useCallback((date: string) => {
     setStartDate(date);
-    clearReportData();
-  };
+    setData(null);
+    setExpenseSummary([]);
+  }, []);
 
-  const handleSetEndDate = (date: string) => {
+  const handleSetEndDate = useCallback((date: string) => {
     setEndDate(date);
-    clearReportData();
-  };
+    setData(null);
+    setExpenseSummary([]);
+  }, []);
 
-  const generateReport = async () => {
+  const generateReport = useCallback(async () => {
     setLoading(true);
     try {
       let response;
@@ -142,9 +145,9 @@ export function useReportData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportType, startDate, endDate]);
 
-  const getTotalAmount = () => {
+  const getTotalAmount = useCallback(() => {
     if (!data || !Array.isArray(data)) return 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
@@ -159,9 +162,9 @@ export function useReportData() {
       return data.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
     }
     return 0;
-  };
+  }, [data, reportType]);
 
-  const getTotalWeight = () => {
+  const getTotalWeight = useCallback(() => {
     if (!data || !Array.isArray(data)) return 0;
     const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
     if (isDailyPurchase) {
@@ -172,9 +175,9 @@ export function useReportData() {
       return data.reduce((sum: number, item: any) => sum + (item.totalWeight || 0), 0);
     }
     return 0;
-  };
+  }, [data, reportType]);
 
-  const getReportTitle = () => {
+  const getReportTitle = useCallback(() => {
     if (reportType.startsWith('daily_purchase:')) {
       const productTypeId = reportType.split(':')[1];
       const productType = productTypes.find(pt => pt.id === productTypeId);
@@ -194,7 +197,7 @@ export function useReportData() {
       default:
         return 'รายงาน';
     }
-  };
+  }, [reportType, productTypes]);
 
   return {
     loading,

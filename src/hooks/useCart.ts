@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 import { generatePDFFromHTML, printHTML } from '@/components/purchases/utils/pdfGenerator';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -71,6 +72,7 @@ interface UseCartProps {
 }
 
 export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartProps) => {
+  const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [lastPrintedCart, setLastPrintedCart] = useState<CartItem[]>([]);
   const [lastPurchaseNo, setLastPurchaseNo] = useState<string | null>(null);
@@ -225,6 +227,16 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             ? `${errorData.error}: ${errorData.details}`
             : errorData.error || 'เกิดข้อผิดพลาดในการบันทึกการรับซื้อ';
           logger.error('Batch purchase API error details', undefined, errorData);
+          
+          // Check if user not found error - redirect to login
+          if (errorData.error === 'ไม่พบข้อมูลผู้ใช้') {
+            logger.warn('User not found, redirecting to login');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            router.push('/login');
+            throw new Error('Session expired. Please login again.');
+          }
+          
           throw new Error(errorMessage);
         }
         
@@ -268,6 +280,16 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
             ? `${errorData.error}: ${errorData.details}`
             : errorData.error || 'เกิดข้อผิดพลาดในการบันทึกค่าบริการ';
           logger.error('ServiceFee API error details', undefined, errorData);
+          
+          // Check if user not found error - redirect to login
+          if (errorData.error === 'ไม่พบข้อมูลผู้ใช้') {
+            logger.warn('User not found, redirecting to login');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            router.push('/login');
+            throw new Error('Session expired. Please login again.');
+          }
+          
           throw new Error(errorMessage);
         }
         
@@ -285,6 +307,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     } catch (err: any) {
       logger.error('Failed to save cart', err);
       setError(err.message || 'เกิดข้อผิดพลาดในการบันทึก');
+      
     } finally {
       setSubmitting(false);
     }

@@ -63,9 +63,11 @@ export const CartTable: React.FC<CartTableProps> = ({
       logger.debug('Calling saveCartToDb');
       await saveCartToDb();
       logger.debug('saveCartToDb completed successfully');
+      // Only show modal if save was successful
       onShowPrintModal();
     } catch (error) {
       logger.error('Error saving cart', error);
+      // Don't show modal on error - error is already displayed via setError
     }
   };
   return (

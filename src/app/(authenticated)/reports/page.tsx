@@ -20,11 +20,12 @@ import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
 
+const PAGE_SIZE = 15;
+
 export default function ReportsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [tablePage, setTablePage] = useState(1);
-  const PAGE_SIZE = 15;
   const {
     loading,
     reportType,
@@ -58,7 +59,7 @@ export default function ReportsPage() {
       return 1;
     }
     return Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  }, [PAGE_SIZE, data]);
+  }, [data]);
 
   const hasData = useMemo(() => Array.isArray(data) && data.length > 0, [data]);
 
@@ -74,9 +75,9 @@ export default function ReportsPage() {
     }
     const startIndex = (tablePage - 1) * PAGE_SIZE;
     return data.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [PAGE_SIZE, data, tablePage]);
+  }, [data, tablePage]);
 
-  const rowOffset = useMemo(() => (tablePage - 1) * PAGE_SIZE, [PAGE_SIZE, tablePage]);
+  const rowOffset = useMemo(() => (tablePage - 1) * PAGE_SIZE, [tablePage]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -128,15 +129,21 @@ export default function ReportsPage() {
     setTablePage(1);
   }, [reportType, startDate, endDate]);
 
+  // Adjust tablePage when data or totalPages changes, but avoid infinite loop
   useEffect(() => {
     if (!data || data.length === 0) {
       setTablePage(1);
       return;
     }
-    if (tablePage > totalPages) {
-      setTablePage(totalPages);
-    }
-  }, [data, tablePage, totalPages]);
+    // Only adjust if current page is out of bounds
+    const maxPage = Math.max(1, totalPages);
+    setTablePage((currentPage) => {
+      if (currentPage > maxPage) {
+        return maxPage;
+      }
+      return currentPage;
+    });
+  }, [data, totalPages]);
 
   // Show loader while auth is loading
   if (isLoading) {
