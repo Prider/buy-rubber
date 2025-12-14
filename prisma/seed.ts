@@ -93,23 +93,37 @@ async function main() {
   const productTypes = await Promise.all([
     prisma.productType.create({
       data: {
-        code: 'FRESH',
-        name: 'น้ำยางสด',
-        description: 'น้ำยางสดจากต้นยางพารา',
+        code: 'RUBER1',
+        name: 'ยางจอก',
+        description: 'ยางจอก',
       },
     }),
     prisma.productType.create({
       data: {
-        code: 'DRY',
-        name: 'ยางแห้ง',
-        description: 'ยางแผ่นดิบ',
+        code: 'RUBER2',
+        name: 'ยางก้อน',
+        description: 'ยางก้อน',
       },
     }),
     prisma.productType.create({
       data: {
-        code: 'SCRAP',
-        name: 'เศษยาง',
-        description: 'เศษยางคละ',
+        code: 'RUBER3',
+        name: 'ยางพรก',
+        description: 'ยางพรก',
+      },
+    }),
+    prisma.productType.create({
+      data: {
+        code: 'RUBER4',
+        name: 'ยางเส้น',
+        description: 'ยางเส้น',
+      },
+    }),
+    prisma.productType.create({
+      data: {
+        code: 'RUBER5',
+        name: 'ยางแผ่น',
+        description: 'ยางแผ่น',
       },
     }),
   ]);
@@ -153,15 +167,15 @@ async function main() {
   // สร้างค่าใช้จ่ายตัวอย่าง
   console.log('💸 สร้างข้อมูลค่าใช้จ่าย...');
   const expenseCategories = [
-    { category: 'ค่าน้ำมัน', description: 'ค่าน้ำมันรถรับซื้อยาง', baseAmount: 1200 },
-    { category: 'ค่าซ่อมบำรุง', description: 'ค่าบำรุงรักษารถและเครื่องมือ', baseAmount: 850 },
-    { category: 'ค่าคนงาน', description: 'ค่าแรงทีมงานประจำวัน', baseAmount: 1500 },
-    { category: 'ค่าไฟฟ้า', description: 'ค่าไฟฟ้าโรงรับซื้อ', baseAmount: 600 },
-    { category: 'ค่าเดินทาง', description: 'ค่าเดินทางไปตรวจสวนยาง', baseAmount: 700 },
+    { category: 'ค่าน้ำมัน', description: 'ทดสอบ ค่าน้ำมันรถรับซื้อยาง', baseAmount: 1200 },
+    { category: 'ค่าซ่อมบำรุง', description: 'ทดสอบ ค่าบำรุงรักษารถและเครื่องมือ', baseAmount: 850 },
+    { category: 'ค่าคนงาน', description: 'ทดสอบ ค่าแรงทีมงานประจำวัน', baseAmount: 1500 },
+    { category: 'ค่าไฟฟ้า', description: 'ทดสอบ ค่าไฟฟ้าโรงรับซื้อยาง', baseAmount: 600 },
+    { category: 'ค่าเดินทาง', description: 'ทดสอบ ค่าเดินทางไปตรวจสวนยาง', baseAmount: 700 },
   ];
 
   const expenses = [];
-  const expenseCount = 20;
+  const expenseCount = 5;
   
   // Get users for assigning to expenses (alternate between admin and user)
   const usersForExpenses = [admin, adminTwo, user];
@@ -201,7 +215,7 @@ async function main() {
   console.log('✅ สร้างค่าใช้จ่าย:', expenses.length, 'รายการ');
 
   // สร้างสมาชิกตัวอย่าง (1000 ราย)
-  console.log('👥 สร้างสมาชิกตัวอย่าง (100 ราย)...');
+  console.log('👥 สร้างสมาชิกตัวอย่าง (10 ราย)...');
 
   const baseMembers = [
     {
@@ -307,7 +321,7 @@ async function main() {
     'นาทวี',
   ];
 
-  const totalMembers = 200;
+  const totalMembers = 10;
   const memberData = Array.from({ length: totalMembers }, (_value, idx) => {
     if (idx < baseMembers.length) {
       return baseMembers[idx];
@@ -352,7 +366,7 @@ async function main() {
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
   const purchases = [];
-  const purchaseCount = 50; // Create enough purchases to link service fees
+  const purchaseCount = 10; // Create enough purchases to link service fees
   
   for (let i = 0; i < purchaseCount; i++) {
     const member = members[i % members.length];
@@ -423,7 +437,7 @@ async function main() {
   ];
   
   const serviceFees = [];
-  const serviceFeeCount = 50; // Create 120 service fees for testing
+  const serviceFeeCount = 10; // Create 120 service fees for testing
   
   for (let i = 0; i < serviceFeeCount; i++) {
     const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];

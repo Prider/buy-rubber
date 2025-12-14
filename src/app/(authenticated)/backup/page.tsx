@@ -4,11 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
-import { useBackupSettings } from './hooks/useBackupSettings';
+// import { useBackupSettings } from './hooks/useBackupSettings';
 import { showRestoreSuccessMessage } from './utils';
 import { BACKUP_PAGE_SIZE } from './constants';
 import { BackupHeader } from './components/BackupHeader';
-import { BackupSettings } from './components/BackupSettings';
+// import { BackupSettings } from './components/BackupSettings';
 import { BackupList } from './components/BackupList';
 import GamerLoader from '@/components/GamerLoader';
 
@@ -26,12 +26,12 @@ export default function BackupPage() {
     downloadBackup,
   } = useBackup();
   
-  const {
-    settings,
-    loading: settingsLoading,
-    updateSettings,
-    saveSettings,
-  } = useBackupSettings();
+  // const {
+  //   settings,
+  //   loading: settingsLoading,
+  //   updateSettings,
+  //   saveSettings,
+  // } = useBackupSettings();
 
   const [backups, setBackups] = useState<Backup[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
@@ -181,12 +181,12 @@ export default function BackupPage() {
       )}
 
       {/* Auto Backup Settings */}
-      <BackupSettings
+      {/* <BackupSettings
         settings={settings}
         loading={settingsLoading}
         onUpdate={updateSettings}
         onSave={saveSettings}
-      />
+      /> */}
 
       {/* Backups List */}
       <BackupList

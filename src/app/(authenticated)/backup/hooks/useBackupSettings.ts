@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { DEFAULT_BACKUP_SETTINGS } from '../constants';
 
 export interface BackupSettings {
@@ -15,6 +15,12 @@ export function useBackupSettings() {
   const [settings, setSettings] = useState<BackupSettings>(DEFAULT_BACKUP_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const settingsRef = useRef(settings);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -39,10 +45,12 @@ export function useBackupSettings() {
     setLoading(true);
     setError(null);
     try {
+      // Use ref to get the latest settings value without depending on it
+      const currentSettings = settingsRef.current;
       const response = await fetch('/api/backup/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(currentSettings),
       });
       const result = await response.json();
       if (result.success) {
@@ -59,7 +67,7 @@ export function useBackupSettings() {
     } finally {
       setLoading(false);
     }
-  }, [settings]);
+  }, []);
 
   const updateSettings = useCallback((updates: Partial<BackupSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));

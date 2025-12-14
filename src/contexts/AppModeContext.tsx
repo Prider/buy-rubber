@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo } from 'react';
 import { AppConfig, DEFAULT_SERVER_CONFIG, CONFIG_KEYS } from '@/lib/config';
 
 interface AppModeContextType {
@@ -22,11 +22,7 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = () => {
+  const loadConfig = useCallback(() => {
     try {
       const savedMode = localStorage.getItem(CONFIG_KEYS.APP_MODE) || 'server';
       const savedServerUrl = localStorage.getItem(CONFIG_KEYS.SERVER_URL) || '';
@@ -47,32 +43,39 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateConfig = (newConfig: Partial<AppConfig>) => {
-    const updatedConfig = { ...config, ...newConfig };
-    setConfig(updatedConfig);
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
-    // Save to localStorage
-    try {
-      if (newConfig.mode !== undefined) {
-        localStorage.setItem(CONFIG_KEYS.APP_MODE, newConfig.mode);
-      }
-      if (newConfig.serverUrl !== undefined) {
-        localStorage.setItem(CONFIG_KEYS.SERVER_URL, newConfig.serverUrl);
-      }
-      if (newConfig.serverPort !== undefined) {
-        localStorage.setItem(CONFIG_KEYS.SERVER_PORT, newConfig.serverPort.toString());
-      }
-      if (newConfig.clientPort !== undefined) {
-        localStorage.setItem(CONFIG_KEYS.CLIENT_PORT, newConfig.clientPort.toString());
-      }
-    } catch (error) {
-      console.error('Error saving config:', error);
-    }
-  };
+  const updateConfig = useCallback((newConfig: Partial<AppConfig>) => {
+    setConfig((prevConfig) => {
+      const updatedConfig = { ...prevConfig, ...newConfig };
 
-  const switchMode = (mode: 'server' | 'client', serverUrl?: string) => {
+      // Save to localStorage
+      try {
+        if (newConfig.mode !== undefined) {
+          localStorage.setItem(CONFIG_KEYS.APP_MODE, newConfig.mode);
+        }
+        if (newConfig.serverUrl !== undefined) {
+          localStorage.setItem(CONFIG_KEYS.SERVER_URL, newConfig.serverUrl);
+        }
+        if (newConfig.serverPort !== undefined) {
+          localStorage.setItem(CONFIG_KEYS.SERVER_PORT, newConfig.serverPort.toString());
+        }
+        if (newConfig.clientPort !== undefined) {
+          localStorage.setItem(CONFIG_KEYS.CLIENT_PORT, newConfig.clientPort.toString());
+        }
+      } catch (error) {
+        console.error('Error saving config:', error);
+      }
+
+      return updatedConfig;
+    });
+  }, []);
+
+  const switchMode = useCallback((mode: 'server' | 'client', serverUrl?: string) => {
     const newConfig: AppConfig = {
       mode,
       serverUrl: mode === 'client' ? serverUrl : undefined,
@@ -80,22 +83,25 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
       clientPort: 3000,
     };
     updateConfig(newConfig);
-  };
+  }, [updateConfig]);
 
   const isServerMode = config.mode === 'server';
   const isClientMode = config.mode === 'client';
 
+  const contextValue = useMemo(
+    () => ({
+      config,
+      isServerMode,
+      isClientMode,
+      updateConfig,
+      switchMode,
+      loading,
+    }),
+    [config, isServerMode, isClientMode, updateConfig, switchMode, loading]
+  );
+
   return (
-    <AppModeContext.Provider
-      value={{
-        config,
-        isServerMode,
-        isClientMode,
-        updateConfig,
-        switchMode,
-        loading,
-      }}
-    >
+    <AppModeContext.Provider value={contextValue}>
       {children}
     </AppModeContext.Provider>
   );
