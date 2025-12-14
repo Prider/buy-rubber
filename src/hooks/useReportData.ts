@@ -41,11 +41,6 @@ export function useReportData() {
     loadProductTypes();
   }, []);
 
-  const clearReportData = useCallback(() => {
-    setData(null);
-    setExpenseSummary([]);
-  }, []);
-
   const handleSetReportType = useCallback((type: ReportType) => {
     setReportType(type);
     setData(null);
@@ -191,12 +186,12 @@ export function useReportData() {
       case 'daily_purchase':
         return 'รายงานรับซื้อประจำวัน';
       case 'member_summary':
-        return 'สรุปรายสมาชิก';
+        return 'สรุปรายสมาชิกที่รับซื้อยาง';
       case 'expense_summary':
-        return 'รายงานค่าใช้จ่าย';
+        return 'รายงานค่าใช้จ่ายที่เกิดขึ้น';
       default:
         return 'รายงาน';
-    }
+    } 
   }, [reportType, productTypes]);
 
   return {
