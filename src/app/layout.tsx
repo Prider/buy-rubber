@@ -3,6 +3,7 @@ import './globals.css';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AlertProvider } from '@/contexts/AlertContext';
 
 export const metadata: Metadata = {
   title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อยาง',
@@ -38,7 +39,9 @@ export default function RootLayout({
         <AuthProvider>
           <AppModeProvider>
             <DarkModeProvider>
-              {children}
+              <AlertProvider>
+                {children}
+              </AlertProvider>
             </DarkModeProvider>
           </AppModeProvider>
         </AuthProvider>

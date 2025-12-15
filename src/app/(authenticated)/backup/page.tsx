@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
+import { useAlert } from '@/hooks/useAlert';
 // import { useBackupSettings } from './hooks/useBackupSettings';
 import { showRestoreSuccessMessage } from './utils';
 import { BACKUP_PAGE_SIZE } from './constants';
@@ -15,10 +16,11 @@ import GamerLoader from '@/components/GamerLoader';
 export default function BackupPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { showSuccess, showError } = useAlert();
   const [isElectron, setIsElectron] = useState(false);
   const {
     loading,
-    error,
+    // error,
     loadBackups,
     createBackup,
     restoreBackup,
@@ -94,12 +96,15 @@ export default function BackupPage() {
     try {
       const result = await createBackup('manual');
       if (result.success) {
-        alert('สำรองข้อมูลเรียบร้อย!');
+        // Refresh backups first
         await refreshBackups();
+        // Show success message (non-blocking)
+        showSuccess('สำรองข้อมูลเรียบร้อย', 'การสำรองข้อมูลเสร็จสมบูรณ์แล้ว', { autoClose: true, autoCloseDelay: 3000 });
       }
     } catch (err) {
       console.error('Failed to create backup:', err);
-      alert('❌ เกิดข้อผิดพลาดในการสำรองข้อมูล');
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสำรองข้อมูล';
+      showError('เกิดข้อผิดพลาด', errorMessage);
     } finally {
       setActionLoading(false);
     }
@@ -118,12 +123,15 @@ export default function BackupPage() {
     try {
       const result = await restoreBackup(backup.id);
       if (result) {
+        setActionLoading(false);
         showRestoreSuccessMessage();
+      } else {
+        setActionLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to restore backup:', err);
-      alert('❌ เกิดข้อผิดพลาด:\n' + (err?.message || 'ไม่สามารถเรียกคืนข้อมูลได้'));
-    } finally {
+      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถเรียกคืนข้อมูลได้';
+      showError('เกิดข้อผิดพลาด', errorMessage);
       setActionLoading(false);
     }
   };
@@ -143,12 +151,16 @@ export default function BackupPage() {
     try {
       const result = await deleteBackup(backup.id);
       if (result) {
+        // Refresh backups first, then reset loading
         await refreshBackups();
+        setActionLoading(false);
+      } else {
+        setActionLoading(false);
       }
     } catch (err) {
       console.error('Failed to delete backup:', err);
-      alert('❌ เกิดข้อผิดพลาดในการลบไฟล์สำรอง');
-    } finally {
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการลบไฟล์สำรอง';
+      showError('เกิดข้อผิดพลาด', errorMessage);
       setActionLoading(false);
     }
   };
@@ -174,11 +186,11 @@ export default function BackupPage() {
       <BackupHeader onCreateBackup={handleCreateBackup} loading={actionLoading} />
 
       {/* Error Message */}
-      {error && (
+      {/* {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
           <p className="text-red-700 dark:text-red-400">{error}</p>
         </div>
-      )}
+      )} */}
 
       {/* Auto Backup Settings */}
       {/* <BackupSettings
@@ -191,7 +203,7 @@ export default function BackupPage() {
       {/* Backups List */}
       <BackupList
         backups={backups}
-        loading={loading}
+        loading={loading && !actionLoading}
         actionLoading={actionLoading}
         currentPage={currentPage}
         pageSize={BACKUP_PAGE_SIZE}
