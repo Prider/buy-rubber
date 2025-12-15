@@ -91,13 +91,41 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     type.code.toLowerCase().includes(productTypeSearchTerm.toLowerCase())
   );
 
+  // Fetch recent purchases for a product type and member
+  const fetchRecentPurchases = useCallback(async (productTypeId: string, memberId?: string) => {
+    if (!memberId) {
+      setRecentPurchases([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/purchases?productTypeId=${productTypeId}&memberId=${memberId}&limit=3`);
+      if (response.ok) {
+        const purchases = await response.json();
+        setRecentPurchases(purchases.slice(0, 3)); // Max 3 purchases
+      } else {
+        setRecentPurchases([]);
+      }
+    } catch (error) {
+      logger.error('Failed to fetch recent purchases', error);
+      setRecentPurchases([]);
+    }
+  }, []);
+
   // Handle member selection
   const handleMemberSelect = useCallback((member: Member) => {
     setSelectedMember(member);
     setMemberSearchTerm(`${member.code} - ${member.name}`);
     setFormData(prev => ({ ...prev, memberId: member.id }));
     setShowMemberDropdown(false);
-  }, []);
+
+    // If a product type is already selected, refetch recent purchases for this member + product type
+    if (formData.productTypeId && member.id) {
+      fetchRecentPurchases(formData.productTypeId, member.id);
+    } else {
+      setRecentPurchases([]);
+    }
+  }, [formData.productTypeId, fetchRecentPurchases]);
 
   // Handle member search input change
   const handleMemberSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,22 +137,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     if (selectedMember && !value.includes(selectedMember.code)) {
       setSelectedMember(null);
       setFormData(prev => ({ ...prev, memberId: '' }));
-    }
-  }, [selectedMember]);
-
-  // Fetch recent purchases for a product type
-  const fetchRecentPurchases = useCallback(async (productTypeId: string) => {
-    try {
-      const response = await fetch(`/api/purchases?productTypeId=${productTypeId}&limit=3`);
-      if (response.ok) {
-        const purchases = await response.json();
-        setRecentPurchases(purchases.slice(0, 3)); // Max 3 purchases
-      }
-    } catch (error) {
-      logger.error('Failed to fetch recent purchases', error);
       setRecentPurchases([]);
     }
-  }, []);
+  }, [selectedMember]);
 
   // Handle product type selection
   const handleProductTypeSelect = useCallback((productType: ProductType) => {
@@ -151,7 +166,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         })[0];
     }
     
-    fetchRecentPurchases(productType.id);
+    fetchRecentPurchases(productType.id, formData.memberId);
     
     if (priceForProductType) {
       setFormData(prev => ({
@@ -160,7 +175,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         pricePerUnit: priceForProductType.price.toString(),
       }));
     }
-  }, [dailyPrices, fetchRecentPurchases]);
+  }, [dailyPrices, fetchRecentPurchases, formData.memberId, todayDate]);
 
   // Handle product type search input change
   const handleProductTypeSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,7 +226,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       }
       
       // Fetch recent purchases for this product type
-      fetchRecentPurchases(value);
+      fetchRecentPurchases(value, formData.memberId);
       
       setFormData(prev => ({
         ...prev,
@@ -260,7 +275,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         [name]: value,
       }));
     }
-  }, [dailyPrices, fetchRecentPurchases]);
+  }, [dailyPrices, fetchRecentPurchases, formData.memberId, todayDate]);
 
   // Calculate total amount
   const calculateTotalAmount = useCallback(() => {
