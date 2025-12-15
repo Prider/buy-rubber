@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useAlert } from '@/hooks/useAlert';
 import { Member, MemberFormData, DeleteMemberResponse } from '@/types/member';
 
 interface UseMemberActionsProps {
@@ -22,8 +23,19 @@ export const useMemberActions = ({
   validateForm,
   closeForm,
 }: UseMemberActionsProps) => {
+  const { showSuccess, showError, showConfirm } = useAlert();
   const handleDelete = useCallback(async (member: Member) => {
-    if (!confirm(`คุณต้องการลบสมาชิก "${member.name}" (${member.code}) หรือไม่?\n\nหมายเหตุ: หากสมาชิกมีประวัติการรับซื้อ ระบบจะปิดการใช้งานแทนการลบ`)) {
+    const confirmed = await showConfirm(
+      'ยืนยันการลบสมาชิก',
+      `คุณต้องการลบสมาชิก "${member.name}" (${member.code}) หรือไม่?\n\nหมายเหตุ: หากสมาชิกมีประวัติการรับซื้อ ระบบจะปิดการใช้งานแทนการลบ`,
+      {
+        confirmText: 'ลบ',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -32,27 +44,39 @@ export const useMemberActions = ({
       
       // Show appropriate message based on the response
       if (result.note) {
-        alert(`✓ ${result.message}\n\n${result.note}`);
+        showSuccess('ลบสมาชิกสำเร็จ', `${result.message}\n\n${result.note}`, { autoClose: true, autoCloseDelay: 5000 });
       } else {
-        alert(`✓ ${result.message}`);
+        showSuccess('ลบสมาชิกสำเร็จ', result.message, { autoClose: true, autoCloseDelay: 3000 });
       }
-    } catch (error: any) {
-      alert(`❌ ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการลบสมาชิก';
+      showError('เกิดข้อผิดพลาด', errorMessage);
     }
-  }, [deleteMember]);
+  }, [deleteMember, showSuccess, showError, showConfirm]);
 
   const handleReactivate = useCallback(async (member: Member) => {
-    if (!confirm(`คุณต้องการเปิดการใช้งานสมาชิก "${member.name}" (${member.code}) หรือไม่?`)) {
+    const confirmed = await showConfirm(
+      'ยืนยันการเปิดการใช้งาน',
+      `คุณต้องการเปิดการใช้งานสมาชิก "${member.name}" (${member.code}) หรือไม่?`,
+      {
+        confirmText: 'เปิดใช้งาน',
+        cancelText: 'ยกเลิก',
+        variant: 'info',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
     try {
       await reactivateMember(member.id);
-      alert(`✓ เปิดการใช้งานสมาชิก "${member.name}" เรียบร้อยแล้ว`);
-    } catch (error: any) {
-      alert(`❌ ${error.message}`);
+      showSuccess('เปิดการใช้งานสำเร็จ', `เปิดการใช้งานสมาชิก "${member.name}" เรียบร้อยแล้ว`, { autoClose: true, autoCloseDelay: 3000 });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการเปิดการใช้งานสมาชิก';
+      showError('เกิดข้อผิดพลาด', errorMessage);
     }
-  }, [reactivateMember]);
+  }, [reactivateMember, showSuccess, showError, showConfirm]);
 
   const handleSubmit = useCallback(async (data: MemberFormData, editingMember: Member | null) => {
     const validationError = validateForm();

@@ -76,6 +76,26 @@ Generic method to show any type of alert.
 showAlert('success', 'สำเร็จ', 'การดำเนินการเสร็จสมบูรณ์');
 ```
 
+### `showConfirm(title, message, options?)`
+Shows a confirmation modal and returns a Promise<boolean>. Returns `true` if user confirms, `false` if cancelled.
+
+```typescript
+const confirmed = await showConfirm(
+  'ยืนยันการลบ',
+  'คุณต้องการลบข้อมูลนี้หรือไม่?',
+  {
+    confirmText: 'ลบ',
+    cancelText: 'ยกเลิก',
+    variant: 'danger', // 'danger' | 'warning' | 'info'
+  }
+);
+
+if (confirmed) {
+  // User confirmed, proceed with action
+  await deleteItem();
+}
+```
+
 ## Options
 
 All methods accept an optional `options` parameter:
@@ -106,9 +126,9 @@ showSuccess(
 - ✅ Beautiful design - matches the app's design system
 - ✅ Dark mode support
 
-## Migration from `alert()`
+## Migration from `alert()` and `confirm()`
 
-### Before:
+### Before (alert):
 ```typescript
 try {
   await saveData();
@@ -118,7 +138,7 @@ try {
 }
 ```
 
-### After:
+### After (alert):
 ```typescript
 const { showSuccess, showError } = useAlert();
 
@@ -127,6 +147,28 @@ try {
   showSuccess('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย');
 } catch (error) {
   showError('เกิดข้อผิดพลาด', error.message);
+}
+```
+
+### Before (confirm):
+```typescript
+if (window.confirm('ต้องการล้างตะกร้าหรือไม่?')) {
+  clearCart();
+}
+```
+
+### After (confirm):
+```typescript
+const { showConfirm } = useAlert();
+
+const confirmed = await showConfirm(
+  'ยืนยันการล้างตะกร้า',
+  'ต้องการล้างตะกร้าหรือไม่?',
+  { variant: 'warning' }
+);
+
+if (confirmed) {
+  clearCart();
 }
 ```
 
@@ -170,10 +212,35 @@ const handleAction = () => {
 };
 ```
 
+### Example 4: Confirmation Dialog
+```typescript
+const { showConfirm } = useAlert();
+
+const handleDelete = async () => {
+  const confirmed = await showConfirm(
+    'ยืนยันการลบ',
+    'คุณต้องการลบข้อมูลนี้หรือไม่?\nการกระทำนี้ไม่สามารถยกเลิกได้',
+    {
+      confirmText: 'ลบ',
+      cancelText: 'ยกเลิก',
+      variant: 'danger',
+    }
+  );
+
+  if (confirmed) {
+    await deleteItem();
+    showSuccess('ลบสำเร็จ', 'ลบข้อมูลเรียบร้อยแล้ว');
+  }
+};
+```
+
 ## Notes
 
 - The modal is non-blocking, so the UI remains responsive
 - Users can close the modal by clicking the backdrop, the close button, or pressing Escape
 - Auto-close is optional and can be configured per alert
 - The modal supports multi-line messages (use `\n` for line breaks)
+- `showConfirm` returns a Promise<boolean>, so use `await` or `.then()` to handle the result
+- Confirmation modals support three variants: 'danger' (red), 'warning' (yellow), 'info' (blue)
+- Custom button text can be provided for confirm and cancel buttons
 

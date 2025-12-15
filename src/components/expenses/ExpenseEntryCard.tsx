@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useAlert } from '@/hooks/useAlert';
 
 interface ExpenseFormData {
   date: string;
@@ -16,6 +17,7 @@ interface ExpenseEntryCardProps {
 
 export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) => {
   const { categories, expenses } = useExpenses();
+  const { showWarning, showError } = useAlert();
   // Helper function to get current datetime in local time format
   const getCurrentDateTimeLocal = () => {
     const now = new Date();
@@ -118,7 +120,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
     e.preventDefault();
 
     if (!expenseData.category || !expenseData.amount) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+      showWarning('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกประเภทและจำนวนเงินให้ครบถ้วน');
       return;
     }
 
@@ -138,8 +140,9 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
       });
       setSuggestions([]);
       setShowSuggestions(false);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
+      showError('เกิดข้อผิดพลาด', errorMessage);
     } finally {
       setSubmitting(false);
     }

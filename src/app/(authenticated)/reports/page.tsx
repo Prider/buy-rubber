@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReportData } from '@/hooks/useReportData';
+import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import {
   generatePrintPreviewHTML,
@@ -25,6 +26,7 @@ const PAGE_SIZE = 15;
 export default function ReportsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { showWarning } = useAlert();
   const [tablePage, setTablePage] = useState(1);
   const {
     loading,
@@ -88,7 +90,7 @@ export default function ReportsPage() {
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('กรุณาอนุญาตให้เปิดหน้าต่างใหม่เพื่อดูตัวอย่างการพิมพ์');
+      showWarning('ไม่สามารถเปิดหน้าต่างใหม่ได้', 'กรุณาอนุญาตให้เปิดหน้าต่างใหม่เพื่อดูตัวอย่างการพิมพ์\n\nหากใช้เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตสำหรับเว็บไซต์นี้');
       return;
     }
 
@@ -108,7 +110,7 @@ export default function ReportsPage() {
     const htmlContent = generatePrintPreviewHTML(reportTitle, dateRange, tableContent, data.length);
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-  }, [data, dateRangeLabel, expenseSummary, getReportTitle, hasData, reportType]);
+  }, [data, dateRangeLabel, expenseSummary, getReportTitle, hasData, reportType, showWarning]);
 
   const handleDownloadPDF = useCallback(() => {
     if (!hasData || !data) return;

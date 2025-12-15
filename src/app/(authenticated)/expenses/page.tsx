@@ -5,12 +5,14 @@ import { ExpenseEntryCard } from '@/components/expenses/ExpenseEntryCard';
 import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 import { useRouter } from 'next/navigation';
 import GamerLoader from '@/components/GamerLoader';
 
 export default function ExpensesPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const { showConfirm } = useAlert();
   const { expenses, summary, loading, loadExpenses, createExpense, deleteExpense, pagination, changePage } = useExpenses();
 
   useEffect(() => {
@@ -39,9 +41,20 @@ export default function ExpensesPage() {
   };
 
   const handleDeleteExpense = async (id: string) => {
-    if (!confirm('คุณต้องการลบค่าใช้จ่ายนี้หรือไม่?')) {
+    const confirmed = await showConfirm(
+      'ยืนยันการลบค่าใช้จ่าย',
+      'คุณต้องการลบค่าใช้จ่ายนี้หรือไม่?',
+      {
+        confirmText: 'ลบ',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
+
     await deleteExpense(id);
   };
 

@@ -16,7 +16,7 @@ import GamerLoader from '@/components/GamerLoader';
 export default function BackupPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { showSuccess, showError } = useAlert();
+  const { showSuccess, showError, showConfirm } = useAlert();
   const [isElectron, setIsElectron] = useState(false);
   const {
     loading,
@@ -112,10 +112,17 @@ export default function BackupPage() {
 
   // Handle restore backup
   const handleRestore = async (backup: Backup) => {
-    if (!confirm(
-      `คุณต้องการเรียกคืนข้อมูลจาก:\n${backup.fileName}\n\n` +
-      'การกระทำนี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด'
-    )) {
+    const confirmed = await showConfirm(
+      'ยืนยันการเรียกคืนข้อมูล',
+      `คุณต้องการเรียกคืนข้อมูลจาก:\n${backup.fileName}\n\nการกระทำนี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด`,
+      {
+        confirmText: 'เรียกคืนข้อมูล',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -124,7 +131,7 @@ export default function BackupPage() {
       const result = await restoreBackup(backup.id);
       if (result) {
         setActionLoading(false);
-        showRestoreSuccessMessage();
+        showRestoreSuccessMessage(showSuccess);
       } else {
         setActionLoading(false);
       }
@@ -143,7 +150,17 @@ export default function BackupPage() {
 
   // Handle delete backup
   const handleDelete = async (backup: Backup) => {
-    if (!confirm(`คุณต้องการลบไฟล์สำรอง:\n${backup.fileName}?`)) {
+    const confirmed = await showConfirm(
+      'ยืนยันการลบไฟล์สำรอง',
+      `คุณต้องการลบไฟล์สำรอง:\n${backup.fileName}?`,
+      {
+        confirmText: 'ลบ',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 

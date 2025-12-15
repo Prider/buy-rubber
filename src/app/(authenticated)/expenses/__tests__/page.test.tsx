@@ -42,6 +42,13 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
+// Mock useAlert (showConfirm resolves to true)
+vi.mock('@/hooks/useAlert', () => ({
+  useAlert: () => ({
+    showConfirm: vi.fn().mockResolvedValue(true),
+  }),
+}));
+
 // Mock logger
 vi.mock('@/lib/logger', () => ({
   logger: {

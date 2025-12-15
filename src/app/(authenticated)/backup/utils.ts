@@ -42,20 +42,24 @@ export function isElectronEnvironment(): boolean {
 
 /**
  * Show success message based on environment
+ * @param showSuccess - Function to show success alert (from useAlert hook)
  */
-export function showRestoreSuccessMessage(): void {
+export function showRestoreSuccessMessage(showSuccess: (title: string, message: string, options?: { autoClose?: boolean; autoCloseDelay?: number }) => void): void {
   if (isElectronEnvironment()) {
-    alert(
-      '✅ เรียกคืนข้อมูลสำเร็จ!\n\n' +
-      'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\n' +
-      'เพื่อให้ข้อมูลที่เรียกคืนมาแสดงผลอย่างถูกต้อง\n\n' +
-      '(กด Cmd+Q หรือปิดหน้าต่างแอป)'
+    showSuccess(
+      '✅ เรียกคืนข้อมูลสำเร็จ',
+      'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\nเพื่อให้ข้อมูลที่เรียกคืนมาแสดงผลอย่างถูกต้อง\n\n(กด Cmd+Q หรือปิดหน้าต่างแอป)',
+      { autoClose: false }
     );
   } else {
-    alert('✅ เรียกคืนข้อมูลเรียบร้อย!\n\nหน้าเว็บจะรีโหลดอัตโนมัติ...');
+    showSuccess(
+      '✅ เรียกคืนข้อมูลเรียบร้อย',
+      'หน้าเว็บจะรีโหลดอัตโนมัติ...',
+      { autoClose: false }
+    );
     setTimeout(() => {
       window.location.reload();
-    }, 1000);
+    }, 2000);
   }
 }
 

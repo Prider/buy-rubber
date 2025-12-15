@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, CreateUserRequest, UpdateUserRequest } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 import { logger } from '@/lib/logger';
 import {
   AUTO_DISMISS_MS,
@@ -23,6 +24,7 @@ interface UserManagementProps {
 
 export default function UserManagement({ className = '' }: UserManagementProps) {
   const { user: currentUser } = useAuth();
+  const { showConfirm } = useAlert();
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -148,7 +150,17 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('คุณต้องการลบผู้ใช้งานคนนี้หรือไม่?')) return;
+    const confirmed = await showConfirm(
+      'ยืนยันการลบผู้ใช้งาน',
+      'คุณต้องการลบผู้ใช้งานคนนี้หรือไม่?',
+      {
+        confirmText: 'ลบ',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem('auth_token');

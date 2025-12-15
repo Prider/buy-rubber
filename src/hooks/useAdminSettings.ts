@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppMode } from '@/contexts/AppModeContext';
+import { useAlert } from '@/hooks/useAlert';
 import { getLocalIPAddress, validateServerUrl, formatServerUrl } from '@/lib/config';
 import { updateApiClient } from '@/lib/apiClient';
 import { logger } from '@/lib/logger';
@@ -34,6 +35,7 @@ export interface AdminSettingsActions {
 
 export function useAdminSettings() {
   const { config, updateConfig, isServerMode, isClientMode } = useAppMode();
+  const { showConfirm } = useAlert();
   
   // State
   const [serverUrl, setServerUrl] = useState(config.serverUrl || '');
@@ -63,27 +65,6 @@ export function useAdminSettings() {
     
     fetchLocalIP();
   }, []);
-
-  // Quick switch mode
-  const quickSwitchMode = useCallback(() => {
-    const currentMode = isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์';
-    const targetMode = isServerMode ? 'ไคลเอนต์' : 'เซิร์ฟเวอร์';
-    
-    logger.debug('quickSwitchMode called', { isServerMode, serverPort, serverUrl });
-    
-    if (confirm(`คุณต้องการสลับจากโหมด${currentMode} เป็นโหมด${targetMode} หรือไม่?`)) {
-      if (isServerMode) {
-        // Switch to client mode - use localhost as default
-        const defaultServerUrl = `http://localhost:${serverPort}`;
-        logger.debug('Switching to client mode', { url: defaultServerUrl });
-        handleClientMode(defaultServerUrl, true); // Skip connection test when switching modes
-      } else {
-        // Switch to server mode
-        logger.debug('Switching to server mode');
-        handleServerMode();
-      }
-    }
-  }, [isServerMode, serverPort, serverUrl]);
 
   // Handle server mode
   const handleServerMode = useCallback(async () => {
@@ -191,6 +172,39 @@ export function useAdminSettings() {
     }
   }, [serverUrl, updateConfig]);
 
+  // Quick switch mode
+  const quickSwitchMode = useCallback(async () => {
+    const currentMode = isServerMode ? 'เซิร์ฟเวอร์' : 'ไคลเอนต์';
+    const targetMode = isServerMode ? 'ไคลเอนต์' : 'เซิร์ฟเวอร์';
+    
+    logger.debug('quickSwitchMode called', { isServerMode, serverPort, serverUrl });
+    
+    const confirmed = await showConfirm(
+      'ยืนยันการสลับโหมด',
+      `คุณต้องการสลับจากโหมด${currentMode} เป็นโหมด${targetMode} หรือไม่?`,
+      {
+        confirmText: 'สลับโหมด',
+        cancelText: 'ยกเลิก',
+        variant: 'warning',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    if (isServerMode) {
+      // Switch to client mode - use localhost as default
+      const defaultServerUrl = `http://localhost:${serverPort}`;
+      logger.debug('Switching to client mode', { url: defaultServerUrl });
+      handleClientMode(defaultServerUrl, true); // Skip connection test when switching modes
+    } else {
+      // Switch to server mode
+      logger.debug('Switching to server mode');
+      handleServerMode();
+    }
+  }, [isServerMode, serverPort, serverUrl, showConfirm, handleClientMode, handleServerMode]);
+
   // Handle quick connect
   const handleQuickConnect = useCallback((ip: string) => {
     const url = formatServerUrl(ip, serverPort);
@@ -253,15 +267,27 @@ export function useAdminSettings() {
   }, []);
 
   // Reset settings
-  const resetSettings = useCallback(() => {
-    if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตการตั้งค่า?')) {
-      localStorage.removeItem('app_mode');
-      localStorage.removeItem('server_url');
-      localStorage.removeItem('server_port');
-      localStorage.removeItem('client_port');
-      window.location.reload();
+  const resetSettings = useCallback(async () => {
+    const confirmed = await showConfirm(
+      'ยืนยันการรีเซ็ตการตั้งค่า',
+      'คุณแน่ใจหรือไม่ที่จะรีเซ็ตการตั้งค่า?',
+      {
+        confirmText: 'รีเซ็ต',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
+      return;
     }
-  }, []);
+
+    localStorage.removeItem('app_mode');
+    localStorage.removeItem('server_url');
+    localStorage.removeItem('server_port');
+    localStorage.removeItem('client_port');
+    window.location.reload();
+  }, [showConfirm]);
 
   return {
     // State

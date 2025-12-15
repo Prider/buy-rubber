@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/hooks/useAlert';
 import axios from 'axios';
 import { PurchaseTransaction } from '../types';
 import { printTransactionSlip, generateTransactionPDF } from '../utils/pdfGenerator';
@@ -10,6 +11,7 @@ interface UseTransactionActionsProps {
 
 export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps) => {
   const { user } = useAuth();
+  const { showWarning, showSuccess, showError, showConfirm } = useAlert();
   const isAdmin = user?.role === 'admin';
 
   const handlePrint = useCallback((transaction: PurchaseTransaction) => {
@@ -22,11 +24,21 @@ export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps)
 
   const handleDelete = useCallback(async (transaction: PurchaseTransaction) => {
     if (!isAdmin) {
-      alert('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบข้อมูลได้');
+      showWarning('ไม่มีสิทธิ์', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบข้อมูลได้');
       return;
     }
 
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการ ${transaction.purchaseNo}?`)) {
+    const confirmed = await showConfirm(
+      'ยืนยันการลบรายการ',
+      `คุณแน่ใจหรือไม่ว่าต้องการลบรายการ ${transaction.purchaseNo}?`,
+      {
+        confirmText: 'ลบ',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -42,15 +54,15 @@ export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps)
       }
 
       await onRefresh();
-      alert('ลบข้อมูลเรียบร้อยแล้ว');
+      showSuccess('ลบข้อมูลเรียบร้อย', `ลบรายการ ${transaction.purchaseNo} เรียบร้อยแล้ว`, { autoClose: true, autoCloseDelay: 3000 });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error
         ? err.message
         : (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'เกิดข้อผิดพลาดในการลบข้อมูล';
-      alert(errorMessage);
+      showError('เกิดข้อผิดพลาด', errorMessage);
       console.error('Failed to delete transaction:', err);
     }
-  }, [isAdmin, onRefresh]);
+  }, [isAdmin, onRefresh, showWarning, showSuccess, showError, showConfirm]);
 
   return {
     isAdmin,

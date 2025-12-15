@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAlert } from '@/hooks/useAlert';
 import { DEFAULT_BACKUP_SETTINGS } from '../constants';
 
 export interface BackupSettings {
@@ -12,6 +13,7 @@ export interface BackupSettings {
 }
 
 export function useBackupSettings() {
+  const { showSuccess, showError } = useAlert();
   const [settings, setSettings] = useState<BackupSettings>(DEFAULT_BACKUP_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,20 +56,21 @@ export function useBackupSettings() {
       });
       const result = await response.json();
       if (result.success) {
-        alert('บันทึกการตั้งค่าเรียบร้อย!');
+        showSuccess('บันทึกการตั้งค่าเรียบร้อย', 'การตั้งค่าถูกบันทึกเรียบร้อยแล้ว', { autoClose: true, autoCloseDelay: 3000 });
         return true;
       } else {
         throw new Error(result.error || 'Failed to save settings');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save settings:', err);
-      setError(err?.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
-      alert('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
+      const errorMessage = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า';
+      setError(errorMessage);
+      showError('เกิดข้อผิดพลาด', errorMessage);
       return false;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showSuccess, showError]);
 
   const updateSettings = useCallback((updates: Partial<BackupSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));

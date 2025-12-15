@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useAlert } from '@/hooks/useAlert';
 import axios from 'axios';
 
 export interface Backup {
@@ -11,6 +12,7 @@ export interface Backup {
 }
 
 export const useBackup = () => {
+  const { showConfirm } = useAlert();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +67,18 @@ export const useBackup = () => {
       setLoading(true);
       setError(null);
       
-      if (!confirm('คุณต้องการลบไฟล์สำรองนี้หรือไม่?')) {
+      const confirmed = await showConfirm(
+        'ยืนยันการลบไฟล์สำรอง',
+        'คุณต้องการลบไฟล์สำรองนี้หรือไม่?',
+        {
+          confirmText: 'ลบ',
+          cancelText: 'ยกเลิก',
+          variant: 'danger',
+        }
+      );
+
+      if (!confirmed) {
+        setLoading(false);
         return null;
       }
 
@@ -78,7 +91,7 @@ export const useBackup = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showConfirm]);
 
   const downloadBackup = useCallback((id: string) => {
     window.open(`/api/backup/${id}/download`, '_blank');

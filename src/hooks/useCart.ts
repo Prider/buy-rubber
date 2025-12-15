@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAlert } from '@/hooks/useAlert';
 import { logger } from '@/lib/logger';
 import { generatePDFFromHTML, printHTML } from '@/components/purchases/utils/pdfGenerator';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -73,6 +74,7 @@ interface UseCartProps {
 
 export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartProps) => {
   const router = useRouter();
+  const { showWarning } = useAlert();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [lastPrintedCart, setLastPrintedCart] = useState<CartItem[]>([]);
   const [lastPurchaseNo, setLastPurchaseNo] = useState<string | null>(null);
@@ -311,7 +313,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     } finally {
       setSubmitting(false);
     }
-  }, [user, cart, loadPurchases]);
+  }, [user, cart, loadPurchases, router]);
 
   // Generate HTML for printing/downloading
   const generateCartHTML = useCallback((data: CartItem[]) => {
@@ -322,19 +324,19 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
   const printCart = useCallback(() => {
     const data = cart.length > 0 ? cart : lastPrintedCart;
     if (data.length === 0) {
-      window.alert('ไม่มีข้อมูลในตะกร้าให้พิมพ์');
+      showWarning('ไม่มีข้อมูล', 'ไม่มีข้อมูลในตะกร้าให้พิมพ์');
       return;
     }
 
     const html = generateCartHTML(data);
     if (!html) return;
     printHTML(html);
-  }, [cart, lastPrintedCart, generateCartHTML]);
+  }, [cart, lastPrintedCart, generateCartHTML, showWarning]);
 
   const previewCart = useCallback(() => {
     const data = cart.length > 0 ? cart : lastPrintedCart;
     if (data.length === 0) {
-      window.alert('ไม่มีข้อมูลในตะกร้าให้ดูตัวอย่าง');
+      showWarning('ไม่มีข้อมูล', 'ไม่มีข้อมูลในตะกร้าให้ดูตัวอย่าง');
       return;
     }
 
@@ -346,13 +348,13 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     const html = generateCartHTML(data);
     previewWindow.document.write(html);
     previewWindow.document.close();
-  }, [cart, lastPrintedCart, generateCartHTML]);
+  }, [cart, lastPrintedCart, generateCartHTML, showWarning]);
 
   // Download cart as PDF
   const downloadPDF = useCallback(async () => {
     const data = cart.length > 0 ? cart : lastPrintedCart;
     if (data.length === 0) {
-      window.alert('ไม่มีข้อมูลในตะกร้าให้ดาวน์โหลด');
+      showWarning('ไม่มีข้อมูล', 'ไม่มีข้อมูลในตะกร้าให้ดาวน์โหลด');
       return;
     }
 
@@ -363,7 +365,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       : `รายการรับซื้อ_${dateStr}.pdf`;
 
     await generatePDFFromHTML(html, fileName);
-  }, [cart, lastPrintedCart, lastPurchaseNo, generateCartHTML]);
+  }, [cart, lastPrintedCart, lastPurchaseNo, generateCartHTML, showWarning]);
 
   // Calculate total amount
   const totalAmount = cart.reduce((sum, item) => sum + item.totalAmount, 0);

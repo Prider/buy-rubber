@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAlert } from '@/hooks/useAlert';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 
@@ -57,6 +58,7 @@ export const CartTable: React.FC<CartTableProps> = ({
   error,
   setError,
 }) => {
+  const { showConfirm } = useAlert();
   const handleSaveAndAskPrint = async () => {
     logger.debug('Save button clicked', { cartItems: cart });
     try {
@@ -260,8 +262,17 @@ export const CartTable: React.FC<CartTableProps> = ({
                     <div className="flex items-center justify-end gap-3 w-full">
                       <button
                         type="button"
-                        onClick={() => {
-                          if (window.confirm('ต้องการล้างตะกร้าทั้งหมดหรือไม่?')) {
+                        onClick={async () => {
+                          const confirmed = await showConfirm(
+                            'ยืนยันการล้างตะกร้า',
+                            'ต้องการล้างตะกร้าทั้งหมดหรือไม่?',
+                            {
+                              confirmText: 'ล้างตะกร้า',
+                              cancelText: 'ยกเลิก',
+                              variant: 'warning',
+                            }
+                          );
+                          if (confirmed) {
                             clearCart?.();
                             setError?.('');
                           }
