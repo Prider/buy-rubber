@@ -374,8 +374,8 @@ async function main() {
     const randomUser = [admin, user][i % 2]; // Alternate between admin and user
     
     const date = new Date();
-    date.setDate(date.getDate() - Math.floor(i / 5)); // Spread across days
-    date.setHours(8 + (i % 12), (i * 7) % 60, 0, 0); // Vary times
+    date.setDate(date.getDate() - (1 + Math.floor(i / 5))); // Always in the past, spread across days
+    date.setHours(8 + (i % 12), (i * 7) % 60, 0, 0); // Vary times within the day
     
     const grossWeight = 50 + Math.random() * 100;
     const containerWeight = 2 + Math.random() * 5;
