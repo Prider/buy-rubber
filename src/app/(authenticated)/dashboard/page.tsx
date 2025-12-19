@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import DashboardStatsCards from '@/components/dashboard/DashboardStatsCards';
@@ -11,7 +11,7 @@ import GamerLoader from '@/components/GamerLoader';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { loading, stats, recentPurchases, topMembers, recentExpenses } = useDashboardData();
+  const { loading, stats, recentPurchases, topMembers, recentExpenses, reload } = useDashboardData();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -20,6 +20,43 @@ export default function DashboardPage() {
       return;
     }
   }, [router]);
+
+  // Refresh dashboard data when page becomes visible (e.g., user navigates back from expenses page)
+  const lastRefreshTimeRef = useRef<number>(Date.now());
+  
+  useEffect(() => {
+    const MIN_REFRESH_INTERVAL = 2000; // Minimum 2 seconds between refreshes
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        // Only refresh if enough time has passed since last refresh
+        if (now - lastRefreshTimeRef.current > MIN_REFRESH_INTERVAL) {
+          lastRefreshTimeRef.current = now;
+          reload();
+        }
+      }
+    };
+
+    const handleFocus = () => {
+      const now = Date.now();
+      // Only refresh if enough time has passed since last refresh
+      if (now - lastRefreshTimeRef.current > MIN_REFRESH_INTERVAL) {
+        lastRefreshTimeRef.current = now;
+        reload();
+      }
+    };
+
+    // Listen for visibility changes (tab switching)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Listen for window focus (user switches back to the tab/window)
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [reload]);
 
   if (loading) {
     return (
