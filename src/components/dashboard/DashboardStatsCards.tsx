@@ -112,13 +112,13 @@ const MembersCard = memo<MembersCardProps>(({ activeMembers, totalMembers, icon 
           </span>
         </div>
         <div className="space-y-2">
-          <p className="text-sm font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
+          <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
             active สมาชิก
           </p>
-          <p className="text-3xl font-bold bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
+          <p className="text-5xl font-bold bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
            {activeMembers}
           </p>
-          <p className="text-base font-medium text-gray-600 dark:text-gray-400">
+          <p className="text-xl font-medium text-gray-600 dark:text-gray-400">
             จากทั้งหมด <span className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">{totalMembers}</span> ราย
           </p>
         </div>
