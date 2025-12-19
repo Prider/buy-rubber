@@ -98,29 +98,34 @@ interface MembersCardProps {
 
 const MembersCard = memo<MembersCardProps>(({ activeMembers, totalMembers, icon }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-200 border border-blue-200/50 dark:border-blue-800/30 lg:col-span-1">
+    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-blue-200/50 dark:border-blue-800/30 lg:col-span-1">
+      {/* Animated gradient background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-indigo-400/20 to-purple-400/20 dark:from-blue-500/10 dark:via-indigo-500/10 dark:to-purple-500/10 animate-gradient opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+      
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
-          <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl shadow-sm">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
             {icon}
           </div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-600 text-white dark:bg-blue-500">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-500 dark:via-indigo-500 dark:to-purple-500 text-white shadow-md">
             สมาชิก
           </span>
         </div>
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
-            จำนวนสมาชิก
+          <p className="text-sm font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
+            active สมาชิก
           </p>
-          <p className="text-4xl font-bold text-gray-900 dark:text-white">
-            {activeMembers}
+          <p className="text-3xl font-bold bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
+           {activeMembers}
           </p>
           <p className="text-base font-medium text-gray-600 dark:text-gray-400">
-            จากทั้งหมด <span className="font-semibold text-blue-600 dark:text-blue-400">{totalMembers}</span> ราย
+            จากทั้งหมด <span className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">{totalMembers}</span> ราย
           </p>
         </div>
       </div>
-      <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-200/20 dark:bg-blue-700/10 rounded-full opacity-20"></div>
+      {/* Animated decorative gradient circles */}
+      <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-gradient-to-br from-blue-400/30 via-indigo-400/30 to-purple-400/30 dark:from-blue-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 rounded-full opacity-20 animate-pulse"></div>
+      <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 dark:from-indigo-500/15 dark:to-purple-500/15 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
     </div>
   );
 });
