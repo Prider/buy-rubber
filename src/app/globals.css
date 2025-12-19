@@ -85,5 +85,25 @@
     animation: gradient 3s ease infinite;
     background-size: 200% auto;
   }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-8px) translateY(-50%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) translateY(-50%);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 

@@ -22,6 +22,25 @@ module.exports = {
           900: '#0c4a6e',
         },
       },
+      keyframes: {
+        slideIn: {
+          '0%': { transform: 'translateX(8px) translateY(-50%)', opacity: '0' },
+          '100%': { transform: 'translateX(0) translateY(-50%)', opacity: '1' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeInUp: {
+          '0%': { transform: 'translateY(8px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        slideIn: 'slideIn 0.3s ease-out',
+        fadeIn: 'fadeIn 0.3s ease-out',
+        fadeInUp: 'fadeInUp 0.4s ease-out forwards',
+      },
     },
   },
   plugins: [],

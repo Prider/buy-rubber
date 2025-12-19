@@ -127,34 +127,60 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  data-nav-link={item.href}
-                  className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 font-semibold shadow-sm border border-blue-200/50 dark:border-blue-700/50'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-blue-100 dark:bg-blue-800/50' 
-                      : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
-                  }`}>
-                    <span className="text-lg">{item.icon}</span>
-                  </div>
-                  <span className="ml-3 text-sm font-medium">{item.name}</span>
-                  {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                  )}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 px-2 py-3 overflow-y-auto">
+            <div className="space-y-1">
+              {navigation.map((item, index) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-nav-link={item.href}
+                    className={`group relative flex items-center px-3 py-2.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
+                      isActive
+                        ? 'text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                    }`}
+                    style={{
+                      animationDelay: `${index * 40}ms`,
+                    }}
+                  >
+                    {/* Active indicator - animated right border */}
+                    {isActive && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-l-full shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 animate-slideIn" />
+                    )}
+                    
+                    {/* Background glow on active */}
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-900/20 dark:to-transparent rounded-lg -z-0 animate-fadeIn" />
+                    )}
+
+                    {/* Icon container */}
+                    <div className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-300 ${
+                      isActive
+                        ? 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 scale-110 shadow-sm shadow-blue-200/50 dark:shadow-blue-900/30'
+                        : 'bg-transparent group-hover:bg-gray-100/50 dark:group-hover:bg-gray-700/30 group-hover:scale-105'
+                    }`}>
+                      <span className={`text-lg transition-transform duration-300 ${
+                        isActive ? 'scale-110' : 'group-hover:scale-110'
+                      }`}>
+                        {item.icon}
+                      </span>
+                    </div>
+
+                    {/* Label */}
+                    <span className={`relative z-10 ml-3 text-sm font-medium transition-all duration-300 ${
+                      isActive ? 'font-semibold' : 'font-normal'
+                    }`}>
+                      {item.name}
+                    </span>
+
+                    {/* Hover effect - subtle background */}
+                    <div className="absolute inset-0 bg-gray-50/50 dark:bg-gray-700/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0" />
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
 
           {/* User info */}
