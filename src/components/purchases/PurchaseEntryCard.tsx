@@ -477,7 +477,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
 
           {/* Weight Information */}
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-0.5">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -647,9 +647,9 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">กก.</span>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                {/* <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                   คำนวณอัตโนมัติ: น้ำหนักรวมภาชนะ - น้ำหนักภาชนะ
-                </p>
+                </p> */}
               </div>
             </div>
           </div>
@@ -744,9 +744,9 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">บาท</span>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                {/* <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                   คำนวณอัตโนมัติ: น้ำหนักสุทธิ x ราคาต่อหน่วย
-                </p>
+                </p> */}
               </div>
             </div>
           </div>

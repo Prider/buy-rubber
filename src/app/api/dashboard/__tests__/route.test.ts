@@ -121,16 +121,11 @@ describe('GET /api/dashboard', () => {
       // Mock all Prisma calls
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 5, _sum: { totalAmount: 25000 } }) // Today purchases
-        .mockResolvedValueOnce({ _count: 50, _sum: { totalAmount: 250000 } }) // Month purchases
-        .mockResolvedValueOnce({ _sum: { totalAmount: 10000 } }); // Unpaid amount
+        .mockResolvedValueOnce({ _count: 50, _sum: { totalAmount: 250000 } }); // Month purchases
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(100) // Total members
         .mockResolvedValueOnce(80); // Active members
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 5000 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase]);
 
@@ -169,16 +164,11 @@ describe('GET /api/dashboard', () => {
     it('should return correct statistics', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 10, _sum: { totalAmount: 50000 } })
-        .mockResolvedValueOnce({ _count: 100, _sum: { totalAmount: 500000 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 20000 } });
+        .mockResolvedValueOnce({ _count: 100, _sum: { totalAmount: 500000 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(150)
         .mockResolvedValueOnce(120);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 10000 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -205,8 +195,6 @@ describe('GET /api/dashboard', () => {
       expect(data.stats.monthAmount).toBe(500000);
       expect(data.stats.totalMembers).toBe(150);
       expect(data.stats.activeMembers).toBe(120);
-      expect(data.stats.totalAdvance).toBe(10000);
-      expect(data.stats.unpaidAmount).toBe(20000);
       expect(data.stats.todayExpenses).toBe(5);
       expect(data.stats.todayExpenseAmount).toBe(2500);
       expect(data.stats.monthExpenses).toBe(50);
@@ -216,16 +204,11 @@ describe('GET /api/dashboard', () => {
     it('should handle null sum values', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: null } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: null } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: null } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: null } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: null },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -248,8 +231,6 @@ describe('GET /api/dashboard', () => {
       expect(response.status).toBe(200);
       expect(data.stats.todayAmount).toBe(0);
       expect(data.stats.monthAmount).toBe(0);
-      expect(data.stats.totalAdvance).toBe(0);
-      expect(data.stats.unpaidAmount).toBe(0);
       expect(data.stats.todayExpenseAmount).toBe(0);
       expect(data.stats.monthExpenseAmount).toBe(0);
     });
@@ -257,16 +238,11 @@ describe('GET /api/dashboard', () => {
     it('should return recent purchases with member and productType', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase]);
       vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
@@ -292,16 +268,11 @@ describe('GET /api/dashboard', () => {
     it('should return top members with details', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
 
@@ -339,16 +310,11 @@ describe('GET /api/dashboard', () => {
     it('should handle top members with null sums', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
 
@@ -382,16 +348,11 @@ describe('GET /api/dashboard', () => {
     it('should return today prices with productType', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
@@ -418,16 +379,11 @@ describe('GET /api/dashboard', () => {
     it('should return active product types', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
@@ -457,16 +413,11 @@ describe('GET /api/dashboard', () => {
     it('should return recent expenses', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -499,16 +450,11 @@ describe('GET /api/dashboard', () => {
     it('should limit recent purchases to 10', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -537,16 +483,11 @@ describe('GET /api/dashboard', () => {
     it('should limit top members to 5', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -584,11 +525,13 @@ describe('GET /api/dashboard', () => {
 
       expect(response.status).toBe(500);
       expect(data.error).toBe('เกิดข้อผิดพลาดในการดึงข้อมูล');
-      expect(vi.mocked(logger.error)).toHaveBeenCalledWith('GET /api/dashboard - Failed', dbError);
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith('GET /api/dashboard - Failed', expect.any(Error));
     });
 
     it('should return 500 when member query fails', async () => {
-      vi.mocked(prisma.purchase.aggregate).mockResolvedValue({ _count: 0, _sum: { totalAmount: 0 } });
+      vi.mocked(prisma.purchase.aggregate)
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
       const dbError = new Error('Database connection failed');
       vi.mocked(prisma.member.count).mockRejectedValue(dbError);
 
@@ -605,16 +548,11 @@ describe('GET /api/dashboard', () => {
     it('should log the GET request', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)
@@ -639,16 +577,11 @@ describe('GET /api/dashboard', () => {
     it('should log success with purchase counts', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 10, _sum: { totalAmount: 50000 } })
-        .mockResolvedValueOnce({ _count: 100, _sum: { totalAmount: 500000 } })
-        .mockResolvedValueOnce({ _sum: { totalAmount: 0 } });
+        .mockResolvedValueOnce({ _count: 100, _sum: { totalAmount: 500000 } });
 
       vi.mocked(prisma.member.count)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-
-      vi.mocked(prisma.member.aggregate).mockResolvedValue({
-        _sum: { advanceBalance: 0 },
-      });
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
       vi.mocked(prisma.purchase.groupBy)

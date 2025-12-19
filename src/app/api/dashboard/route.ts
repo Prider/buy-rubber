@@ -34,8 +34,6 @@ export async function GET(_request: NextRequest) {
       monthPurchases,
       totalMembers,
       activeMembers,
-      totalAdvanceResult,
-      unpaidAmount,
       recentPurchases,
       topMembers,
       todayPrices,
@@ -76,21 +74,6 @@ export async function GET(_request: NextRequest) {
       // จำนวนสมาชิกที่ใช้งาน
       prisma.member.count({
         where: { isActive: true },
-      }),
-      // ยอดเงินล่วงหน้ารวม
-      prisma.member.aggregate({
-        _sum: {
-          advanceBalance: true,
-        },
-      }),
-      // ยอดค้างจ่าย
-      prisma.purchase.aggregate({
-        where: {
-          isPaid: false,
-        },
-        _sum: {
-          totalAmount: true,
-        },
       }),
       // รายการรับซื้อล่าสุด 10 รายการ
       prisma.purchase.findMany({
@@ -235,8 +218,6 @@ export async function GET(_request: NextRequest) {
         monthAmount: monthPurchases._sum.totalAmount || 0,
         totalMembers,
         activeMembers,
-        totalAdvance: totalAdvanceResult._sum.advanceBalance || 0,
-        unpaidAmount: unpaidAmount._sum.totalAmount || 0,
         todayExpenses: todayExpenses._count,
         todayExpenseAmount: todayExpenses._sum.amount || 0,
         monthExpenses: monthExpenses._count,
