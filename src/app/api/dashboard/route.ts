@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -11,14 +10,6 @@ export async function GET(_request: NextRequest) {
   try {
     logger.info('GET /api/dashboard - Request received');
     
-    // Check cache first
-    const cachedData = cache.get(CACHE_KEYS.DASHBOARD);
-    if (cachedData) {
-      logger.info('GET /api/dashboard - Cache hit');
-      return NextResponse.json(cachedData);
-    }
-    
-    logger.info('GET /api/dashboard - Cache miss, fetching from database');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -231,10 +222,13 @@ export async function GET(_request: NextRequest) {
       recentExpenses,
     };
     
-    // Cache the response for 5 minutes
-    cache.set(CACHE_KEYS.DASHBOARD, responseData, CACHE_TTL.DASHBOARD);
-    
-    return NextResponse.json(responseData);
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     logger.error('GET /api/dashboard - Failed', error);
     return NextResponse.json(
