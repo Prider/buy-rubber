@@ -179,93 +179,91 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   return (
     <div className="space-y-6">
       {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
-      
-      {/* Today Purchases Card */}
-      <StatCard
-        title="รับซื้อ"
-        value={stats.todayPurchases || 0}
-        amount={stats.todayAmount || 0}
-        label="วันนี้"
-        icon={todayPurchaseIcon}
-        gradientFrom="from-primary-50"
-        gradientTo="to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10"
-        borderColor="border-primary-200/50 dark:border-primary-800/30"
-        textColor="text-primary-700 dark:text-primary-300"
-        badgeBg="bg-primary-600 dark:bg-primary-500"
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+        
+        {/* Today Purchases Card */}
+        <StatCard
+          title="รับซื้อ"
+          value={stats.todayPurchases || 0}
+          amount={stats.todayAmount || 0}
+          label="วันนี้"
+          icon={todayPurchaseIcon}
+          gradientFrom="from-primary-50"
+          gradientTo="to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10"
+          borderColor="border-primary-200/50 dark:border-primary-800/30"
+          textColor="text-primary-700 dark:text-primary-300"
+          badgeBg="bg-primary-600 dark:bg-primary-500"
+        />
 
-      {/* Month Purchases Card */}
-      <StatCard
-        title="รับซื้อเดือนนี้"
-        value={stats.monthPurchases || 0}
-        amount={stats.monthAmount || 0}
-        label="เดือนนี้"
-        icon={monthPurchaseIcon}
-        gradientFrom="from-blue-50"
-        gradientTo="to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10"
-        borderColor="border-blue-200/50 dark:border-blue-800/30"
-        textColor="text-blue-700 dark:text-blue-300"
-        badgeBg="bg-blue-600 dark:bg-blue-500"
-      />
+        {/* Month Purchases Card */}
+        <StatCard
+          title="รับซื้อเดือนนี้"
+          value={stats.monthPurchases || 0}
+          amount={stats.monthAmount || 0}
+          label="เดือนนี้"
+          icon={monthPurchaseIcon}
+          gradientFrom="from-blue-50"
+          gradientTo="to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10"
+          borderColor="border-blue-200/50 dark:border-blue-800/30"
+          textColor="text-blue-700 dark:text-blue-300"
+          badgeBg="bg-blue-600 dark:bg-blue-500"
+        />
 
-      {/* Today Service Fees Card */}
-      <StatCard
-        title="ค่าบริการวันนี้"
-        value={stats.todayServiceFees || 0}
-        amount={stats.todayServiceFeeAmount || 0}
-        label="วันนี้"
-        icon={todayServiceFeeIcon}
-        gradientFrom="from-yellow-50"
-        gradientTo="to-amber-100 dark:from-yellow-900/20 dark:to-amber-800/10"
-        borderColor="border-yellow-200/50 dark:border-yellow-800/30"
-        textColor="text-yellow-700 dark:text-yellow-300"
-        badgeBg="bg-yellow-600 dark:bg-yellow-500"
-      />
+        {/* Today Service Fees Card */}
+        <StatCard
+          title="ค่าบริการวันนี้"
+          value={stats.todayServiceFees || 0}
+          amount={stats.todayServiceFeeAmount || 0}
+          label="วันนี้"
+          icon={todayServiceFeeIcon}
+          gradientFrom="from-yellow-50"
+          gradientTo="to-amber-100 dark:from-yellow-900/20 dark:to-amber-800/10"
+          borderColor="border-yellow-200/50 dark:border-yellow-800/30"
+          textColor="text-yellow-700 dark:text-yellow-300"
+          badgeBg="bg-yellow-600 dark:bg-yellow-500"
+        />
 
-      {/* Month Service Fees Card */}
-      <StatCard
-        title="ค่าบริการเดือนนี้"
-        value={stats.monthServiceFees || 0}
-        amount={stats.monthServiceFeeAmount || 0}
-        label="เดือนนี้"
-        icon={monthServiceFeeIcon}
-        gradientFrom="from-amber-50"
-        gradientTo="to-orange-100 dark:from-amber-900/20 dark:to-orange-800/10"
-        borderColor="border-amber-200/50 dark:border-amber-800/30"
-        textColor="text-amber-700 dark:text-amber-300"
-        badgeBg="bg-amber-600 dark:bg-amber-500"
-      />
+        {/* Month Service Fees Card */}
+        <StatCard
+          title="ค่าบริการเดือนนี้"
+          value={stats.monthServiceFees || 0}
+          amount={stats.monthServiceFeeAmount || 0}
+          label="เดือนนี้"
+          icon={monthServiceFeeIcon}
+          gradientFrom="from-amber-50"
+          gradientTo="to-orange-100 dark:from-amber-900/20 dark:to-orange-800/10"
+          borderColor="border-amber-200/50 dark:border-amber-800/30"
+          textColor="text-amber-700 dark:text-amber-300"
+          badgeBg="bg-amber-600 dark:bg-amber-500"
+        />
 
-      {/* Today Expenses Card */}
-      <StatCard
-        title="ค่าใช้จ่ายวันนี้"
-        value={stats.todayExpenses || 0}
-        amount={stats.todayExpenseAmount || 0}
-        label="วันนี้"
-        icon={todayExpenseIcon}
-        gradientFrom="from-red-50"
-        gradientTo="to-orange-100 dark:from-red-900/20 dark:to-orange-800/10"
-        borderColor="border-red-200/50 dark:border-red-800/30"
-        textColor="text-red-700 dark:text-red-300"
-        badgeBg="bg-red-600 dark:bg-red-500"
-      />
+        {/* Today Expenses Card */}
+        <StatCard
+          title="ค่าใช้จ่ายวันนี้"
+          value={stats.todayExpenses || 0}
+          amount={stats.todayExpenseAmount || 0}
+          label="วันนี้"
+          icon={todayExpenseIcon}
+          gradientFrom="from-red-50"
+          gradientTo="to-orange-100 dark:from-red-900/20 dark:to-orange-800/10"
+          borderColor="border-red-200/50 dark:border-red-800/30"
+          textColor="text-red-700 dark:text-red-300"
+          badgeBg="bg-red-600 dark:bg-red-500"
+        />
 
-      {/* Month Expenses Card */}
-      <StatCard
-        title="ค่าใช้จ่ายเดือนนี้"
-        value={stats.monthExpenses || 0}
-        amount={stats.monthExpenseAmount || 0}
-        label="เดือนนี้"
-        icon={monthExpenseIcon}
-        gradientFrom="from-red-50"
-        gradientTo="to-rose-100 dark:from-red-900/20 dark:to-rose-800/10"
-        borderColor="border-red-200/50 dark:border-red-800/30"
-        textColor="text-red-700 dark:text-red-300"
-        badgeBg="bg-red-600 dark:bg-red-500"
-      />
-
-
+        {/* Month Expenses Card */}
+        <StatCard
+          title="ค่าใช้จ่ายเดือนนี้"
+          value={stats.monthExpenses || 0}
+          amount={stats.monthExpenseAmount || 0}
+          label="เดือนนี้"
+          icon={monthExpenseIcon}
+          gradientFrom="from-red-50"
+          gradientTo="to-rose-100 dark:from-red-900/20 dark:to-rose-800/10"
+          borderColor="border-red-200/50 dark:border-red-800/30"
+          textColor="text-red-700 dark:text-red-300"
+          badgeBg="bg-red-600 dark:bg-red-500"
+        />
       </div>
 
       {/* Members Card and Today Purchases by Product Type - Same Row */}
