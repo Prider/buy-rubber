@@ -50,7 +50,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     memberId: '',
     productTypeId: '',
     grossWeight: '',
-    containerWeight: '0',
+    containerWeight: '',
     netWeight: '',
     pricePerUnit: '',
     bonusPrice: '',

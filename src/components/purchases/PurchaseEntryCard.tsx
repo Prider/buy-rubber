@@ -388,7 +388,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onFocus={handleMemberSearchFocus}
                     onBlur={scheduleDropdownHide}
                     onKeyDown={handleMemberSearchKeyDown}
-                    placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส..."
+                    placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส"
                     className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                     disabled={submitting}
@@ -431,17 +431,14 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                               <div className="font-medium text-gray-900 dark:text-gray-100">
                                 {member.code} - {member.name}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                เจ้าของ {member.ownerPercent}% | คนตัด {member.tapperPercent}%
-                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            {/* <div className="flex items-center space-x-2">
                               <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                                 <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                               </div>
-                            </div>
+                            </div> */}
                           </div>
                         </button>
                       ))}
