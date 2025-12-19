@@ -51,16 +51,24 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   }, []);
 
   const formatDateMemo = useCallback((dateString: string) => {
+    // Parse the date string from the database
+    // PostgreSQL stores dates in UTC, and when serialized to JSON they're ISO strings
     const date = new Date(dateString);
+    
+    // Format using browser's local timezone
+    // This will correctly convert UTC times to the user's local timezone
     const dateStr = date.toLocaleDateString('th-TH', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
+    
     const timeStr = date.toLocaleTimeString('th-TH', {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     });
+    
     return `${dateStr} ${timeStr}`;
   }, []);
 

@@ -24,6 +24,23 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+// Mock utils
+vi.mock('@/lib/utils', () => ({
+  getUserFromToken: vi.fn(),
+}));
+
+// Mock cache
+vi.mock('@/lib/cache', () => ({
+  cache: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+  },
+  CACHE_KEYS: {
+    DASHBOARD: 'dashboard',
+  },
+}));
+
 describe('GET /api/expenses', () => {
   let prisma: any;
   let logger: any;
@@ -321,6 +338,7 @@ describe('GET /api/expenses', () => {
 describe('POST /api/expenses', () => {
   let prisma: any;
   let logger: any;
+  let getUserFromToken: any;
 
   const mockExpense = {
     id: 'expense-1',
@@ -346,8 +364,13 @@ describe('POST /api/expenses', () => {
     
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
+    const utilsModule = await import('@/lib/utils');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    getUserFromToken = utilsModule.getUserFromToken;
+    
+    // Default mock: return null (user info should be provided in request)
+    vi.mocked(getUserFromToken).mockReturnValue(null);
   });
 
   describe('Validation errors', () => {
@@ -493,7 +516,6 @@ describe('POST /api/expenses', () => {
 
   describe('Successful creation', () => {
     it('should create an expense with all required fields', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -515,7 +537,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should create an expense with optional description', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -541,7 +562,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should create an expense with custom date', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -549,7 +569,7 @@ describe('POST /api/expenses', () => {
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
-          date: '2024-01-15',
+          date: '2024-01-15T10:00',
           userId: mockUser.id,
           userName: mockUser.username,
         }),
@@ -567,7 +587,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should use current date when date is not provided', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -592,26 +611,36 @@ describe('POST /api/expenses', () => {
     });
 
     it('should generate expense number based on date and count', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(5);
-      vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
+      // Mock the create to return an expense with the generated expense number
+      vi.mocked(prisma.expense.create).mockImplementation((args: any) => {
+        return Promise.resolve({
+          ...mockExpense,
+          expenseNo: args.data.expenseNo,
+        });
+      });
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
         method: 'POST',
         body: JSON.stringify({
           category: 'ค่าน้ำมัน',
           amount: 500,
-          date: '2024-01-15',
+          date: '2024-01-15T10:00',
           userId: mockUser.id,
           userName: mockUser.username,
         }),
       });
 
-      await POST(request);
+      const response = await POST(request);
+      const data = await response.json();
 
+      expect(response.status).toBe(200);
+      expect(vi.mocked(prisma.expense.create)).toHaveBeenCalled();
+      expect(data.expenseNo).toMatch(/^EXP-20240115-[A-Z0-9]{6}$/);
+      // Verify the expense number format was passed to create
       expect(vi.mocked(prisma.expense.create)).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            expenseNo: expect.stringMatching(/^EXP-\d{8}-\d{3}$/),
+            expenseNo: expect.stringMatching(/^EXP-20240115-[A-Z0-9]{6}$/),
           }),
         })
       );
@@ -638,7 +667,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should trim category and description', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -665,7 +693,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should set description to null when not provided', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -692,7 +719,6 @@ describe('POST /api/expenses', () => {
 
   describe('Error handling', () => {
     it('should return 500 when database create fails', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       const dbError = new Error('Database connection failed');
       vi.mocked(prisma.expense.create).mockRejectedValue(dbError);
 
@@ -716,7 +742,6 @@ describe('POST /api/expenses', () => {
 
     it('should include stack trace in development mode', async () => {
       vi.stubEnv('NODE_ENV', 'development');
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       const dbError = new Error('Database connection failed');
       dbError.stack = 'Error stack trace';
       vi.mocked(prisma.expense.create).mockRejectedValue(dbError);
@@ -741,7 +766,7 @@ describe('POST /api/expenses', () => {
 
     it('should return 500 when count query fails', async () => {
       const dbError = new Error('Database connection failed');
-      vi.mocked(prisma.expense.count).mockRejectedValue(dbError);
+      vi.mocked(prisma.expense.create).mockRejectedValue(dbError);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
         method: 'POST',
@@ -764,7 +789,6 @@ describe('POST /api/expenses', () => {
 
   describe('Logging', () => {
     it('should log the POST request', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -791,7 +815,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should log expense creation', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
@@ -818,7 +841,6 @@ describe('POST /api/expenses', () => {
     });
 
     it('should log successful expense creation', async () => {
-      vi.mocked(prisma.expense.count).mockResolvedValue(0);
       vi.mocked(prisma.expense.create).mockResolvedValue(mockExpense);
 
       const request = new NextRequest('http://localhost:3000/api/expenses', {
