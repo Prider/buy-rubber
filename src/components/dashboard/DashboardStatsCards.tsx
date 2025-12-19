@@ -136,7 +136,7 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   ), []);
 
   const monthPurchaseIcon = useMemo(() => (
-    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
   ), []);
@@ -148,8 +148,20 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   ), []);
 
   const monthExpenseIcon = useMemo(() => (
-    <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ), []);
+
+  const todayServiceFeeIcon = useMemo(() => (
+    <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ), []);
+
+  const monthServiceFeeIcon = useMemo(() => (
+    <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2v7m0 0v5a2 2 0 11-4 0v-5m4 0h-2.5M4 15h2.5m13 0h-2.5" />
     </svg>
   ), []);
 
@@ -167,7 +179,7 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   return (
     <div className="space-y-6">
       {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
       
       {/* Today Purchases Card */}
       <StatCard
@@ -190,11 +202,39 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
         amount={stats.monthAmount || 0}
         label="เดือนนี้"
         icon={monthPurchaseIcon}
-        gradientFrom="from-green-50"
-        gradientTo="to-emerald-100 dark:from-green-900/20 dark:to-emerald-800/10"
-        borderColor="border-green-200/50 dark:border-green-800/30"
-        textColor="text-green-700 dark:text-green-300"
-        badgeBg="bg-green-600 dark:bg-green-500"
+        gradientFrom="from-blue-50"
+        gradientTo="to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10"
+        borderColor="border-blue-200/50 dark:border-blue-800/30"
+        textColor="text-blue-700 dark:text-blue-300"
+        badgeBg="bg-blue-600 dark:bg-blue-500"
+      />
+
+      {/* Today Service Fees Card */}
+      <StatCard
+        title="ค่าบริการวันนี้"
+        value={stats.todayServiceFees || 0}
+        amount={stats.todayServiceFeeAmount || 0}
+        label="วันนี้"
+        icon={todayServiceFeeIcon}
+        gradientFrom="from-yellow-50"
+        gradientTo="to-amber-100 dark:from-yellow-900/20 dark:to-amber-800/10"
+        borderColor="border-yellow-200/50 dark:border-yellow-800/30"
+        textColor="text-yellow-700 dark:text-yellow-300"
+        badgeBg="bg-yellow-600 dark:bg-yellow-500"
+      />
+
+      {/* Month Service Fees Card */}
+      <StatCard
+        title="ค่าบริการเดือนนี้"
+        value={stats.monthServiceFees || 0}
+        amount={stats.monthServiceFeeAmount || 0}
+        label="เดือนนี้"
+        icon={monthServiceFeeIcon}
+        gradientFrom="from-amber-50"
+        gradientTo="to-orange-100 dark:from-amber-900/20 dark:to-orange-800/10"
+        borderColor="border-amber-200/50 dark:border-amber-800/30"
+        textColor="text-amber-700 dark:text-amber-300"
+        badgeBg="bg-amber-600 dark:bg-amber-500"
       />
 
       {/* Today Expenses Card */}
@@ -218,21 +258,25 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
         amount={stats.monthExpenseAmount || 0}
         label="เดือนนี้"
         icon={monthExpenseIcon}
-        gradientFrom="from-purple-50"
-        gradientTo="to-pink-100 dark:from-purple-900/20 dark:to-pink-800/10"
-        borderColor="border-purple-200/50 dark:border-purple-800/30"
-        textColor="text-purple-700 dark:text-purple-300"
-        badgeBg="bg-purple-600 dark:bg-purple-500"
+        gradientFrom="from-red-50"
+        gradientTo="to-rose-100 dark:from-red-900/20 dark:to-rose-800/10"
+        borderColor="border-red-200/50 dark:border-red-800/30"
+        textColor="text-red-700 dark:text-red-300"
+        badgeBg="bg-red-600 dark:bg-red-500"
       />
 
+
+      </div>
+
+      {/* Members Card and Today Purchases by Product Type - Same Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
         {/* Members Card - Special handling for the additional text */}
+        <TodayPurchasesCardByProductType stats={stats} />
         <MembersCard
           activeMembers={stats.activeMembers || 0}
           totalMembers={stats.totalMembers || 0}
           icon={membersIcon}
         />
-
-        <TodayPurchasesCardByProductType stats={stats} />
       </div>
     </div>
   );

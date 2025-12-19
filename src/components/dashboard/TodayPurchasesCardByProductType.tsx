@@ -10,7 +10,7 @@ interface TodayPurchasesCardByProductTypeProps {
 
 export const TodayPurchasesCardByProductType = memo<TodayPurchasesCardByProductTypeProps>(({ stats }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-shadow duration-200 border border-primary-200/50 dark:border-primary-800/30 lg:col-span-5 sm:col-span-2 col-span-1">
+    <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-shadow duration-200 border border-primary-200/50 dark:border-primary-800/30 lg:col-span-6 sm:col-span-2 col-span-1">
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

@@ -22,6 +22,10 @@ export interface DashboardStats {
   todayExpenseAmount: number;
   monthExpenses: number;
   monthExpenseAmount: number;
+  todayServiceFees: number;
+  todayServiceFeeAmount: number;
+  monthServiceFees: number;
+  monthServiceFeeAmount: number;
   todayPurchasesByProductType?: TodayPurchaseByProductType[];
 }
 
@@ -106,6 +110,10 @@ export function useDashboardData(): UseDashboardDataReturn {
     todayExpenseAmount: 0,
     monthExpenses: 0,
     monthExpenseAmount: 0,
+    todayServiceFees: 0,
+    todayServiceFeeAmount: 0,
+    monthServiceFees: 0,
+    monthServiceFeeAmount: 0,
   }), []);
 
   // Memoize stats to prevent unnecessary re-renders

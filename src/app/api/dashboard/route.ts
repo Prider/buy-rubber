@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest) {
     firstDayOfNextMonth.setTime(firstDayOfNextMonth.getTime() - thailandOffset);
 
     // Batch 1: Execute all independent queries in parallel
-    // This reduces 12+ sequential queries to 1 parallel batch
+    // This reduces 14+ sequential queries to 1 parallel batch
     const [
       todayPurchases,
       monthPurchases,
@@ -65,6 +65,8 @@ export async function GET(_request: NextRequest) {
       monthExpenses,
       recentExpenses,
       todayPurchasesByProductType,
+      todayServiceFees,
+      monthServiceFees,
     ] = await Promise.all([
       // รายการรับซื้อวันนี้
       prisma.purchase.aggregate({
@@ -195,6 +197,32 @@ export async function GET(_request: NextRequest) {
           dryWeight: true,
         },
       }),
+      // ดึงข้อมูลค่าบริการวันนี้
+      prisma.serviceFee.aggregate({
+        where: {
+          date: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+        _count: true,
+        _sum: {
+          amount: true,
+        },
+      }),
+      // ดึงข้อมูลค่าบริการเดือนนี้
+      prisma.serviceFee.aggregate({
+        where: {
+          date: {
+            gte: thailandMonthStart,
+            lt: firstDayOfNextMonth,
+          },
+        },
+        _count: true,
+        _sum: {
+          amount: true,
+        },
+      }),
     ]);
 
     // Batch 2: Fetch member details for top members (depends on topMembers from batch 1)
@@ -245,6 +273,10 @@ export async function GET(_request: NextRequest) {
         todayExpenseAmount: todayExpenses._sum.amount || 0,
         monthExpenses: monthExpenses._count,
         monthExpenseAmount: monthExpenses._sum.amount || 0,
+        todayServiceFees: todayServiceFees._count,
+        todayServiceFeeAmount: todayServiceFees._sum.amount || 0,
+        monthServiceFees: monthServiceFees._count,
+        monthServiceFeeAmount: monthServiceFees._sum.amount || 0,
         todayPurchasesByProductType: todayPurchasesByProductTypeWithDetails,
       },
       recentPurchases,
