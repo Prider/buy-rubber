@@ -271,15 +271,20 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
         />
       </div>
 
-      {/* Members Card and Today Purchases by Product Type - Same Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
-        {/* Members Card - Special handling for the additional text */}
-        <TodayPurchasesCardByProductType stats={stats} />
-        <MembersCard
-          activeMembers={stats.activeMembers || 0}
-          totalMembers={stats.totalMembers || 0}
-          icon={membersIcon}
-        />
+      {/* Members Card and Today Purchases by Product Type - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Bigger */}
+        <div className="lg:col-span-2">
+          <TodayPurchasesCardByProductType stats={stats} />
+        </div>
+        {/* Right Column - Smaller */}
+        <div className="lg:col-span-1">
+          <MembersCard
+            activeMembers={stats.activeMembers || 0}
+            totalMembers={stats.totalMembers || 0}
+            icon={membersIcon}
+          />
+        </div>
       </div>
     </div>
   );
