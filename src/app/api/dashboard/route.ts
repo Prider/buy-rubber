@@ -4,19 +4,51 @@ import { logger } from '@/lib/logger';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
+// Force dynamic rendering - prevent caching in Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
 export async function GET(_request: NextRequest) {
   try {
     logger.info('GET /api/dashboard - Request received');
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Calculate "today" in Thailand timezone (UTC+7) to match expense calculations
+    // This ensures consistency between dashboard and expenses pages
+    const now = new Date();
+    // Get current time in Thailand (UTC+7)
+    const thailandOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+    const thailandTime = new Date(now.getTime() + thailandOffset);
+    
+    // Set to start of day in Thailand timezone
+    const today = new Date(Date.UTC(
+      thailandTime.getUTCFullYear(),
+      thailandTime.getUTCMonth(),
+      thailandTime.getUTCDate(),
+      0, 0, 0, 0
+    ));
+    // Convert back to UTC for database queries
+    today.setTime(today.getTime() - thailandOffset);
+    
     const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setTime(tomorrow.getTime() + 24 * 60 * 60 * 1000);
 
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const firstDayOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    // Calculate month boundaries in Thailand timezone
+    const thailandMonthStart = new Date(Date.UTC(
+      thailandTime.getUTCFullYear(),
+      thailandTime.getUTCMonth(),
+      1,
+      0, 0, 0, 0
+    ));
+    thailandMonthStart.setTime(thailandMonthStart.getTime() - thailandOffset);
+    
+    const firstDayOfNextMonth = new Date(Date.UTC(
+      thailandTime.getUTCFullYear(),
+      thailandTime.getUTCMonth() + 1,
+      1,
+      0, 0, 0, 0
+    ));
+    firstDayOfNextMonth.setTime(firstDayOfNextMonth.getTime() - thailandOffset);
 
     // Batch 1: Execute all independent queries in parallel
     // This reduces 12+ sequential queries to 1 parallel batch
@@ -51,7 +83,7 @@ export async function GET(_request: NextRequest) {
       prisma.purchase.aggregate({
         where: {
           date: {
-            gte: firstDayOfMonth,
+            gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
           },
         },
@@ -80,7 +112,7 @@ export async function GET(_request: NextRequest) {
         by: ['memberId'],
         where: {
           date: {
-            gte: firstDayOfMonth,
+            gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
           },
         },
@@ -134,7 +166,7 @@ export async function GET(_request: NextRequest) {
       prisma.expense.aggregate({
         where: {
           date: {
-            gte: firstDayOfMonth,
+            gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
           },
         },

@@ -113,16 +113,42 @@ function buildWhereClause(params: {
 
 /**
  * Calculates expense summary statistics
+ * Uses Thailand timezone (UTC+7) to ensure consistency with expense creation dates
  */
 async function calculateExpenseSummary(): Promise<ExpenseSummary> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+  // Calculate "today" in Thailand timezone (UTC+7)
+  const now = new Date();
+  const thailandOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+  const thailandTime = new Date(now.getTime() + thailandOffset);
+  
+  // Set to start of day in Thailand timezone, then convert to UTC for database queries
+  const today = new Date(Date.UTC(
+    thailandTime.getUTCFullYear(),
+    thailandTime.getUTCMonth(),
+    thailandTime.getUTCDate(),
+    0, 0, 0, 0
+  ));
+  today.setTime(today.getTime() - thailandOffset);
+  
+  const tomorrow = new Date(today);
+  tomorrow.setTime(tomorrow.getTime() + 24 * 60 * 60 * 1000);
 
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  // Calculate month boundaries in Thailand timezone
+  const monthStart = new Date(Date.UTC(
+    thailandTime.getUTCFullYear(),
+    thailandTime.getUTCMonth(),
+    1,
+    0, 0, 0, 0
+  ));
+  monthStart.setTime(monthStart.getTime() - thailandOffset);
+  
+  const monthEnd = new Date(Date.UTC(
+    thailandTime.getUTCFullYear(),
+    thailandTime.getUTCMonth() + 1,
+    1,
+    0, 0, 0, 0
+  ));
+  monthEnd.setTime(monthEnd.getTime() - thailandOffset);
 
   const [todayExpenses, monthExpenses] = await Promise.all([
     prisma.expense.aggregate({
@@ -147,7 +173,7 @@ async function calculateExpenseSummary(): Promise<ExpenseSummary> {
     }),
   ]);
 
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(thailandTime.getUTCFullYear(), thailandTime.getUTCMonth() + 1, 0).getDate();
   const monthTotal = monthExpenses._sum.amount || 0;
   const monthCount = monthExpenses._count.id || 0;
   
