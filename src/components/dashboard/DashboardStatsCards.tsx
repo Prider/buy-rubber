@@ -108,12 +108,12 @@ const MembersCard = memo<MembersCardProps>(({ activeMembers, totalMembers, icon 
             {icon}
           </div>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-500 dark:via-indigo-500 dark:to-purple-500 text-white shadow-md">
-            สมาชิก
+            สมาชิกที่มีการซื้อยาง
           </span>
         </div>
         <div className="space-y-2 text-center">
           <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
-            active สมาชิก
+            สมาชิกทั้งหมด
           </p>
           <p className="text-5xl font-bold bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
            {activeMembers}
