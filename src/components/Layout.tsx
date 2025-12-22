@@ -45,6 +45,8 @@ export default function Layout({ children }: LayoutProps) {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
   }, []);
 
+
+
   // Redirect to login if username is Unknown (but only after auth has finished loading)
   useEffect(() => {
     if (!isLoading && user?.username === 'Unknown') {
@@ -75,43 +77,67 @@ export default function Layout({ children }: LayoutProps) {
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-48 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 overflow-hidden">
-                <div className="flex items-end justify-center gap-1.5 h-12">
-                  <span className="w-3 bg-fuchsia-500 dark:bg-fuchsia-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(217,70,239,0.75)] dark:shadow-[0_0_14px_rgba(217,70,239,0.4)]" style={{ height: '40%' }} />
-                  <span className="w-3 bg-violet-500 dark:bg-violet-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(139,92,246,0.75)] dark:shadow-[0_0_14px_rgba(139,92,246,0.4)]" style={{ height: '70%' }} />
-                  <span className="w-3 bg-sky-500 dark:bg-sky-600 rounded-sm animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_14px_rgba(14,165,233,0.75)] dark:shadow-[0_0_14px_rgba(14,165,233,0.4)]" style={{ height: '55%' }} />
-                  <span className="w-3 bg-emerald-500 dark:bg-emerald-600 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.45s] shadow-[0_0_14px_rgba(16,185,129,0.75)] dark:shadow-[0_0_14px_rgba(16,185,129,0.4)]" style={{ height: '80%' }} />
-                  <span className="w-3 bg-amber-500 dark:bg-amber-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite_0.6s] shadow-[0_0_14px_rgba(245,158,11,0.75)] dark:shadow-[0_0_14px_rgba(245,158,11,0.4)]" style={{ height: '50%' }} />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-lg font-extrabold tracking-tight">
-                  <span className="text-gray-700 dark:text-white ml-1.5">
-                    Punsook Innotech
-                  </span>
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5 tracking-wide">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                    v1.4.5
-                  </span>
-                </p>
-              </div>
-            </div>
+          <div className="flex items-center justify-center relative px-4 py-4 pb-2border-b border-gray-200/50 dark:border-gray-700/50">
+            <Link href="/dashboard" className="flex flex-col items-center justify-center space-y-2 group">
+              {/* Graph/Chart Icon */}
+              <svg 
+                className="w-10 h-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                style={{ overflow: 'visible' }}
+              >
+                {/* Chart bars */}
+                <g>
+                  <rect 
+                    x="2" 
+                    y="11" 
+                    width="4" 
+                    height="7" 
+                    fill="#ec4899" 
+                    rx="1.5"
+                  />
+                  <rect 
+                    x="7" 
+                    y="7" 
+                    width="4" 
+                    height="11" 
+                    fill="#a855f7" 
+                    rx="1.5"
+                  />
+                  <rect 
+                    x="12" 
+                    y="5" 
+                    width="4" 
+                    height="13" 
+                    fill="#3b82f6" 
+                    rx="1.5"
+                  />
+                  <rect 
+                    x="17" 
+                    y="9" 
+                    width="4" 
+                    height="9" 
+                    fill="#10b981" 
+                    rx="1.5"
+                  />
+                </g>
+              </svg>
+
+            </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+              className="lg:hidden absolute right-5 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors duration-150"
+              aria-label="Close sidebar"
             >
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -127,8 +153,8 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-2 py-3 overflow-y-auto">
-            <div className="space-y-1">
+          <nav className="flex-1 px-2 py-2 overflow-y-auto">
+            <div className="space-y-0.5">
               {navigation.map((item, index) => {
                 const isActive = pathname === item.href;
                 return (
@@ -136,7 +162,7 @@ export default function Layout({ children }: LayoutProps) {
                     key={item.href}
                     href={item.href}
                     data-nav-link={item.href}
-                    className={`group relative flex items-center px-3 py-2.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
+                    className={`group relative flex items-center px-2 py-1.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
                       isActive
                         ? 'text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
@@ -147,7 +173,7 @@ export default function Layout({ children }: LayoutProps) {
                   >
                     {/* Active indicator - animated right border */}
                     {isActive && (
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-l-full shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 animate-slideIn" />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-l-full shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 animate-slideIn" />
                     )}
                     
                     {/* Background glow on active */}
@@ -156,12 +182,12 @@ export default function Layout({ children }: LayoutProps) {
                     )}
 
                     {/* Icon container */}
-                    <div className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-300 ${
+                    <div className={`relative z-10 flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-300 ${
                       isActive
                         ? 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 scale-110 shadow-sm shadow-blue-200/50 dark:shadow-blue-900/30'
                         : 'bg-transparent group-hover:bg-gray-100/50 dark:group-hover:bg-gray-700/30 group-hover:scale-105'
                     }`}>
-                      <span className={`text-lg transition-transform duration-300 ${
+                      <span className={`text-base transition-transform duration-300 ${
                         isActive ? 'scale-110' : 'group-hover:scale-110'
                       }`}>
                         {item.icon}
@@ -169,7 +195,7 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
 
                     {/* Label */}
-                    <span className={`relative z-10 ml-3 text-sm font-medium transition-all duration-300 ${
+                    <span className={`relative z-10 ml-2 text-sm font-medium transition-all duration-300 ${
                       isActive ? 'font-semibold' : 'font-normal'
                     }`}>
                       {item.name}
@@ -228,7 +254,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <div
         className={`transition-all duration-200 ${
-          sidebarOpen ? 'lg:pl-64' : ''
+          sidebarOpen ? 'lg:pl-48' : ''
         }`}
       >
         {/* Top bar */}

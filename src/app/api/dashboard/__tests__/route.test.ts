@@ -26,6 +26,9 @@ vi.mock('@/lib/prisma', () => ({
       aggregate: vi.fn(),
       findMany: vi.fn(),
     },
+    serviceFee: {
+      aggregate: vi.fn(),
+    },
   },
 }));
 
@@ -114,6 +117,7 @@ describe('GET /api/dashboard', () => {
     
     // Clear cache before each test
     vi.mocked(cache.get).mockReturnValue(null);
+    vi.mocked(prisma.serviceFee.aggregate).mockResolvedValue({ _count: 0, _sum: { amount: 0 } });
   });
 
   describe('Successful retrieval', () => {

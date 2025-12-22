@@ -20,13 +20,13 @@ export default function PurchasesListPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                 รายการรับซื้อทั้งหมด
               </span>
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               ดูและจัดการประวัติการรับซื้อทั้งหมด
             </p>
           </div>

@@ -54,7 +54,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
           {/* Header */}
           <div className="px-8 py-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 overflow-hidden">
                   <div className="flex items-end justify-center gap-1.5 h-12">

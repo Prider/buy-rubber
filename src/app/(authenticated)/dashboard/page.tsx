@@ -76,13 +76,13 @@ export default function DashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                 แดชบอร์ด
               </span>
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">ภาพรวมกิจการรับซื้อยาง</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">ภาพรวมกิจการรับซื้อยาง</p>
           </div>
         </div>
       </div>
