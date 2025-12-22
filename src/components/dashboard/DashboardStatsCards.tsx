@@ -193,9 +193,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.todayAmount || 0}
           label="วันนี้"
           icon={todayPurchaseIcon}
-          gradientFrom="from-primary-50"
-          gradientTo="to-primary-100 dark:from-primary-900/20 dark:to-primary-800/10"
-          borderColor="border-primary-200/50 dark:border-primary-800/30"
+          gradientFrom="from-primary-50 dark:from-primary-900/50"
+          gradientTo="to-primary-100 dark:to-primary-800/40"
+          borderColor="border-primary-200/50 dark:border-primary-800/50"
           textColor="text-primary-700 dark:text-primary-300"
           badgeBg="bg-primary-600 dark:bg-primary-500"
         />
@@ -207,9 +207,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.monthAmount || 0}
           label="เดือนนี้"
           icon={monthPurchaseIcon}
-          gradientFrom="from-blue-50"
-          gradientTo="to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/10"
-          borderColor="border-blue-200/50 dark:border-blue-800/30"
+          gradientFrom="from-blue-50 dark:from-blue-900/50"
+          gradientTo="to-indigo-100 dark:to-indigo-800/40"
+          borderColor="border-blue-200/50 dark:border-blue-800/50"
           textColor="text-blue-700 dark:text-blue-300"
           badgeBg="bg-blue-600 dark:bg-blue-500"
         />
@@ -221,9 +221,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.todayServiceFeeAmount || 0}
           label="วันนี้"
           icon={todayServiceFeeIcon}
-          gradientFrom="from-yellow-50"
-          gradientTo="to-amber-100 dark:from-yellow-900/20 dark:to-amber-800/10"
-          borderColor="border-yellow-200/50 dark:border-yellow-800/30"
+          gradientFrom="from-yellow-50 dark:from-yellow-900/50"
+          gradientTo="to-amber-100 dark:to-amber-800/40"
+          borderColor="border-yellow-200/50 dark:border-yellow-800/50"
           textColor="text-yellow-700 dark:text-yellow-300"
           badgeBg="bg-yellow-600 dark:bg-yellow-500"
         />
@@ -235,9 +235,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.monthServiceFeeAmount || 0}
           label="เดือนนี้"
           icon={monthServiceFeeIcon}
-          gradientFrom="from-amber-50"
-          gradientTo="to-orange-100 dark:from-amber-900/20 dark:to-orange-800/10"
-          borderColor="border-amber-200/50 dark:border-amber-800/30"
+          gradientFrom="from-amber-50 dark:from-amber-900/50"
+          gradientTo="to-orange-100 dark:to-orange-800/40"
+          borderColor="border-amber-200/50 dark:border-amber-800/50"
           textColor="text-amber-700 dark:text-amber-300"
           badgeBg="bg-amber-600 dark:bg-amber-500"
         />
@@ -249,9 +249,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.todayExpenseAmount || 0}
           label="วันนี้"
           icon={todayExpenseIcon}
-          gradientFrom="from-red-50"
-          gradientTo="to-orange-100 dark:from-red-900/20 dark:to-orange-800/10"
-          borderColor="border-red-200/50 dark:border-red-800/30"
+          gradientFrom="from-red-50 dark:from-red-900/50"
+          gradientTo="to-orange-100 dark:to-orange-800/40"
+          borderColor="border-red-200/50 dark:border-red-800/50"
           textColor="text-red-700 dark:text-red-300"
           badgeBg="bg-red-600 dark:bg-red-500"
         />
@@ -263,9 +263,9 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
           amount={stats.monthExpenseAmount || 0}
           label="เดือนนี้"
           icon={monthExpenseIcon}
-          gradientFrom="from-red-50"
-          gradientTo="to-rose-100 dark:from-red-900/20 dark:to-rose-800/10"
-          borderColor="border-red-200/50 dark:border-red-800/30"
+          gradientFrom="from-red-50 dark:from-red-900/50"
+          gradientTo="to-rose-100 dark:to-rose-800/40"
+          borderColor="border-red-200/50 dark:border-red-800/50"
           textColor="text-red-700 dark:text-red-300"
           badgeBg="bg-red-600 dark:bg-red-500"
         />
