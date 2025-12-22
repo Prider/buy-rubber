@@ -37,12 +37,12 @@ export default function ReportFilterCard({
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
             <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">ตัวกรองรายงาน</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">ตัวกรองรายงาน</h2>
         </div>
       </div>
       
@@ -111,7 +111,10 @@ export default function ReportFilterCard({
             </div>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex flex-col">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 opacity-0 pointer-events-none">
+              &nbsp;
+            </label>
             <button
               onClick={onGenerate}
               disabled={loading || isDateRangeInvalid}
