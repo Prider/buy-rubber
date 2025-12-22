@@ -39,8 +39,10 @@ export default function ProductTypeManagement({
               <span className="text-white text-lg">📦</span>
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
-                ประเภทสินค้า
+              <h2 className="text-xl text-base font-bold text-gray-900 dark:text-gray-100">
+                <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-600 bg-clip-text text-transparent animate-gradient">
+                  ประเภทสินค้า
+                </span>
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 {productTypes.length} รายการ

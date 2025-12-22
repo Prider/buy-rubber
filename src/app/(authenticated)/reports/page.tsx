@@ -240,8 +240,10 @@ export default function ReportsPage() {
             <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {getReportTitle()}
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-600 bg-clip-text text-transparent animate-gradient">
+                      {getReportTitle()}
+                    </span>
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {dateRangeLabel}
