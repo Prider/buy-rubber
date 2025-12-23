@@ -154,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 px-2 py-2 overflow-y-auto">
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {navigation.map((item, index) => {
                 const isActive = pathname === item.href;
                 return (
@@ -162,7 +162,7 @@ export default function Layout({ children }: LayoutProps) {
                     key={item.href}
                     href={item.href}
                     data-nav-link={item.href}
-                    className={`group relative flex items-center px-2 py-1.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
+                    className={`group relative flex items-center px-2 py-2.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
                       isActive
                         ? 'text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
@@ -173,7 +173,7 @@ export default function Layout({ children }: LayoutProps) {
                   >
                     {/* Active indicator - animated right border */}
                     {isActive && (
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-l-full shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 animate-slideIn" />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-l-full shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 animate-slideIn" />
                     )}
                     
                     {/* Background glow on active */}
@@ -182,7 +182,7 @@ export default function Layout({ children }: LayoutProps) {
                     )}
 
                     {/* Icon container */}
-                    <div className={`relative z-10 flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-300 ${
+                    <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 ${
                       isActive
                         ? 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 scale-110 shadow-sm shadow-blue-200/50 dark:shadow-blue-900/30'
                         : 'bg-transparent group-hover:bg-gray-100/50 dark:group-hover:bg-gray-700/30 group-hover:scale-105'
@@ -285,8 +285,8 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Center - Company name */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Punsook Innotech
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent">
+                Punsook <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">Innotech</span>
               </h1>
             </div>
 

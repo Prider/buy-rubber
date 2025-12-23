@@ -324,7 +324,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">บันทึกการรับซื้อ</h2>
+            <h2 className="text-xl font-bold">
+              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                บันทึกการรับซื้อ
+              </span>
+            </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">กรอกข้อมูลการรับซื้อน้ำยางและเพิ่มลงตะกร้า</p>
           </div>
         </div>

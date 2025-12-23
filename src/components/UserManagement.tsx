@@ -241,7 +241,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
         </div>
         <button
           onClick={handleOpenCreateModal}
-          className={`btn btn-primary ${isAtUserLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className="group relative flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
           disabled={isAtUserLimit}
           title={isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
         >

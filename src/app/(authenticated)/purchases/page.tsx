@@ -166,24 +166,6 @@ export default function PurchasesPage() {
   return (
     <>
       <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
-        {/* Header Section */}
-        <div className="flex-shrink-0 mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                  รับซื้อยาง
-                </span>
-              </h1>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content - Side by Side Layout */}
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
           {/* Left Side - Purchase Entry Card */}
