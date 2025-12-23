@@ -134,7 +134,7 @@ export default function MembersPage() {
   return (
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="px-4 sm:px-4 lg:px-4 py-4">
+        <div>
           {/* Page Header */}
           <MembersPageHeader
             totalMembers={pagination.total}

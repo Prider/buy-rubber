@@ -77,7 +77,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 w-48 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-44 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -254,7 +254,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <div
         className={`transition-all duration-200 ${
-          sidebarOpen ? 'lg:pl-48' : ''
+          sidebarOpen ? 'lg:pl-44' : ''
         }`}
       >
         {/* Top bar */}
