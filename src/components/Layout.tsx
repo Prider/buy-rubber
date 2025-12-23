@@ -259,7 +259,7 @@ export default function Layout({ children }: LayoutProps) {
       >
         {/* Top bar */}
         <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-3">
+          <div className="relative flex items-center justify-between px-6 py-3">
             {/* Left side - Menu button */}
             <div className="flex items-center space-x-4">
               <button
@@ -281,6 +281,13 @@ export default function Layout({ children }: LayoutProps) {
                 </svg>
               </button>
               
+            </div>
+
+            {/* Center - Company name */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                Punsook Innotech
+              </h1>
             </div>
 
             {/* Right side - Controls */}
