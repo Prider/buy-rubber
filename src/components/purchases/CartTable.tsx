@@ -40,7 +40,6 @@ interface CartTableProps {
   saveCartToDb: () => Promise<void>;
   removeFromCart: (id: string) => void;
   onShowPrintModal: () => void;
-  serviceFeeCard?: React.ReactNode;
   clearCart: () => void;
   error?: string;
   setError?: (error: string) => void;
@@ -53,7 +52,6 @@ export const CartTable: React.FC<CartTableProps> = ({
   saveCartToDb,
   removeFromCart,
   onShowPrintModal,
-  serviceFeeCard,
   clearCart,
   error,
   setError,
@@ -73,7 +71,7 @@ export const CartTable: React.FC<CartTableProps> = ({
     }
   };
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
       <div className="px-6 py-4 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
         <div className="flex items-center justify-between">
@@ -143,21 +141,22 @@ export const CartTable: React.FC<CartTableProps> = ({
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">ประเภท</th>
-              <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">รายละเอียด</th>
-              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักรวมภาชนะ (กก.)</th>
-              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักภาชนะ (กก.)</th>
-              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">น้ำหนักสุทธิ (กก.)</th>
-              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">ราคา/กก.</th>
-              <th className="px-6 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">จำนวนเงิน</th>
-              <th className="px-6 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
+              <tr className="border-b border-gray-200 dark:border-gray-600">
+                <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ประเภท</th>
+                <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">รายละเอียด</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักรวมภาชนะ (กก.)</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักภาชนะ (กก.)</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักสุทธิ (กก.)</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ราคา/กก.</th>
+                <th className="px-6 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จำนวนเงิน</th>
+                <th className="px-6 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
             {cart.length > 0 ? (
               cart.map((item, index) => (
                 <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
@@ -233,81 +232,77 @@ export const CartTable: React.FC<CartTableProps> = ({
                 </td>
               </tr>
             )}
-          </tbody>
-          {cart.length > 0 && (
-            <tfoot>
-              <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-t-2 border-gray-200 dark:border-gray-500">
-                <td colSpan={6} className="px-4 py-2 text-right text-base font-bold text-gray-900 dark:text-white">
-                  รวมทั้งหมด
-                </td>
-                <td className={`px-4 py-2 text-right text-base font-bold ${
-                  totalAmount >= 0 
-                    ? 'text-green-600 dark:text-green-400' 
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {formatCurrency(totalAmount)}
-                </td>
-                <td className="px-4 py-2"></td>
-              </tr>
-              <tr>
-                {serviceFeeCard && (
-                  <td colSpan={4} className="px-4 py-2">
-                    <div className="w-full">{serviceFeeCard}</div>
-                  </td>
-                )}
-                <td colSpan={8} className="px-4 py-2">
-                  <div className="flex flex-col lg:flex-row gap-2 lg:items-start lg:justify-between">
-                    <div className="flex items-center justify-end gap-2 w-full">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const confirmed = await showConfirm(
-                            'ยืนยันการล้างตะกร้า',
-                            'ต้องการล้างตะกร้าทั้งหมดหรือไม่?',
-                            {
-                              confirmText: 'ล้างตะกร้า',
-                              cancelText: 'ยกเลิก',
-                              variant: 'warning',
-                            }
-                          );
-                          if (confirmed) {
-                            clearCart?.();
-                            setError?.('');
-                          }
-                        }}
-                        disabled={submitting || cart.length === 0}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        รีเซ็ตตะกร้า
-                      </button>
-                      <button
-                        onClick={handleSaveAndAskPrint}
-                        disabled={submitting}
-                        className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-xs shadow-md hover:shadow-lg disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
-                      >
-                        {submitting ? (
-                          <div className="flex items-center space-x-1.5">
-                            <svg className="animate-spin w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            <span>กำลังบันทึก...</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-1.5">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>บันทึกข้อมูล</span>
-                          </div>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          )}
-        </table>
+            </tbody>
+          </table>
+        </div>
+        <div className={`flex-shrink-0 border-t-2 border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600">
+            <div className="grid grid-cols-8 gap-0">
+              <div className="col-span-6 px-4 py-2 text-right text-base font-bold text-gray-900 dark:text-white">
+                รวมทั้งหมด
+              </div>
+              <div className={`col-span-1 px-4 py-2 text-right text-base font-bold ${
+                totalAmount >= 0 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-red-600 dark:text-red-400'
+              }`}>
+                {formatCurrency(totalAmount)}
+              </div>
+              <div className="col-span-1 px-4 py-2"></div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800">
+            <div className="px-4 py-3">
+              <div className="flex flex-col lg:flex-row gap-2 lg:items-start lg:justify-between">
+                <div className="flex items-center justify-end gap-2 w-full">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = await showConfirm(
+                        'ยืนยันการล้างตะกร้า',
+                        'ต้องการล้างตะกร้าทั้งหมดหรือไม่?',
+                        {
+                          confirmText: 'ล้างตะกร้า',
+                          cancelText: 'ยกเลิก',
+                          variant: 'warning',
+                        }
+                      );
+                      if (confirmed) {
+                        clearCart?.();
+                        setError?.('');
+                      }
+                    }}
+                    disabled={submitting || cart.length === 0}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    รีเซ็ตตะกร้า
+                  </button>
+                  <button
+                    onClick={handleSaveAndAskPrint}
+                    disabled={submitting || cart.length === 0}
+                    className="px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-xs shadow-md hover:shadow-lg disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
+                  >
+                    {submitting ? (
+                      <div className="flex items-center space-x-1.5">
+                        <svg className="animate-spin w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>กำลังบันทึก...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>บันทึกข้อมูล</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

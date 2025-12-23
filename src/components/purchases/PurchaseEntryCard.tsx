@@ -58,6 +58,7 @@ interface PurchaseEntryCardProps {
   clearProductTypeSearch: () => void;
   setShowProductTypeDropdown: (show: boolean) => void;
   submitting?: boolean;
+  serviceFeeCard?: React.ReactNode;
 }
 
 export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
@@ -85,6 +86,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   clearProductTypeSearch,
   setShowProductTypeDropdown,
   submitting = false,
+  serviceFeeCard,
 }) => {
   const router = useRouter();
 
@@ -312,7 +314,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
       {/* Header */}
       <div className="px-6 py-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
         <div className="flex items-center space-x-3">
@@ -329,7 +331,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex-1 min-h-0 overflow-y-auto">
         {error && (
           <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center space-x-1.5">
@@ -770,6 +772,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
         </form>
       </div>
+      {serviceFeeCard && (
+        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+          {serviceFeeCard}
+        </div>
+      )}
     </div>
   );
 };

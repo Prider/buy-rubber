@@ -48,7 +48,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
       <div className="p-4 space-y-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
@@ -80,7 +80,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">ข้อมูลค่าใช้จ่าย</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">บันทึกค่าบริการ</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
