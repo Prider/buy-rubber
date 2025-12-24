@@ -50,7 +50,6 @@ export default function Layout({ children }: LayoutProps) {
   // Redirect to login if username is Unknown (but only after auth has finished loading)
   useEffect(() => {
     if (!isLoading && user?.username === 'Unknown') {
-      console.log('Unknown user detected, redirecting to login');
       router.push('/login');
     }
   }, [user?.username, router, isLoading]);
@@ -77,13 +76,17 @@ export default function Layout({ children }: LayoutProps) {
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 w-44 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out ${
+          sidebarOpen 
+            ? 'w-44 translate-x-0' 
+            : 'lg:w-16 lg:translate-x-0 -translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center relative px-4 py-4 pb-2border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className={`flex items-center justify-center relative border-b border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
+            sidebarOpen ? 'px-4 py-4' : 'px-2 py-4'
+          }`}>
             <Link href="/dashboard" className="flex flex-col items-center justify-center space-y-2 group">
               {/* Graph/Chart Icon */}
               <svg 
@@ -162,7 +165,9 @@ export default function Layout({ children }: LayoutProps) {
                     key={item.href}
                     href={item.href}
                     data-nav-link={item.href}
-                    className={`group relative flex items-center px-2 py-2.5 rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
+                    className={`group relative flex items-center rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
+                      sidebarOpen ? 'px-2 py-2.5' : 'px-2 py-2.5 justify-center'
+                    } ${
                       isActive
                         ? 'text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
@@ -170,6 +175,7 @@ export default function Layout({ children }: LayoutProps) {
                     style={{
                       animationDelay: `${index * 40}ms`,
                     }}
+                    title={!sidebarOpen ? item.name : undefined}
                   >
                     {/* Active indicator - animated right border */}
                     {isActive && (
@@ -195,7 +201,9 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
 
                     {/* Label */}
-                    <span className={`relative z-10 ml-2 text-sm font-medium transition-all duration-300 ${
+                    <span className={`relative z-10 text-sm font-medium transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                      sidebarOpen ? 'ml-2 opacity-100' : 'ml-0 w-0 opacity-0'
+                    } ${
                       isActive ? 'font-semibold' : 'font-normal'
                     }`}>
                       {item.name}
@@ -210,14 +218,20 @@ export default function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* User info */}
-          <div className="border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-4">
-            <div className="flex items-center space-x-3">
+          <div className={`border-t border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
+            sidebarOpen ? 'px-3 py-4' : 'px-2 py-4'
+          }`}>
+            <div className={`flex items-center transition-all duration-200 ${
+              sidebarOpen ? 'space-x-3' : 'justify-center'
+            }`}>
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
                   {user?.username?.charAt(0) || 'A'}
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
+              <div className={`flex-1 min-w-0 transition-all duration-200 overflow-hidden ${
+                sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+              }`}>
                 <p className="text-sm font-semibold truncate">
                   <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                     {user?.username || 'ผู้ใช้งาน'}
@@ -229,7 +243,9 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0"
+                className={`p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0 ${
+                  sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 p-0 overflow-hidden'
+                }`}
                 title="ออกจากระบบ"
               >
                 <svg
@@ -254,7 +270,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <div
         className={`transition-all duration-200 ${
-          sidebarOpen ? 'lg:pl-44' : ''
+          sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
         }`}
       >
         {/* Top bar */}
