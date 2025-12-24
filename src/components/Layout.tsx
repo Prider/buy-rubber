@@ -219,7 +219,7 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* User info */}
           <div className={`border-t border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
-            sidebarOpen ? 'px-3 py-4' : 'px-2 py-4'
+            sidebarOpen ? 'px-3 py-4' : 'px-0 py-4'
           }`}>
             <div className={`flex items-center transition-all duration-200 ${
               sidebarOpen ? 'space-x-3' : 'justify-center'
@@ -229,39 +229,39 @@ export default function Layout({ children }: LayoutProps) {
                   {user?.username?.charAt(0) || 'A'}
                 </div>
               </div>
-              <div className={`flex-1 min-w-0 transition-all duration-200 overflow-hidden ${
-                sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
-              }`}>
-                <p className="text-sm font-semibold truncate">
-                  <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                    {user?.username || 'ผู้ใช้งาน'}
-                  </span>
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
-                  {user?.role || 'User'}
-                </p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className={`p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0 ${
-                  sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 p-0 overflow-hidden'
-                }`}
-                title="ออกจากระบบ"
-              >
-                <svg
-                  className="w-4 h-4 group-hover:scale-110 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {sidebarOpen && (
+                <div className="flex-1 min-w-0 transition-all duration-200 overflow-hidden">
+                  <p className="text-sm font-semibold truncate">
+                    <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                      {user?.username || 'ผู้ใช้งาน'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
+                    {user?.role || 'User'}
+                  </p>
+                </div>
+              )}
+              {sidebarOpen && (
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0"
+                  title="ออกจากระบบ"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-4 h-4 group-hover:scale-110 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -281,28 +281,52 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group"
+                aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
               >
-                <svg
-                  className="w-5 h-5 group-hover:scale-110 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
+                {sidebarOpen ? (
+                  <svg
+                    className="w-5 h-5 group-hover:scale-110 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5 group-hover:scale-110 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                )}
               </button>
               
             </div>
 
             {/* Center - Company name */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent">
-                Punsook <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">Innotech</span>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent"> 
+                <span className="text-fuchsia-500 dark:text-fuchsia-400">P</span>
+                <span className="text-violet-500 dark:text-violet-400">u</span>
+                <span className="text-violet-500 dark:text-sky-400">n</span>
+                <span className="text-emerald-500 dark:text-emerald-400">s</span>
+                <span className="text-amber-500 dark:text-amber-400">o</span>
+                <span className="text-fuchsia-500 dark:text-amber-400">o</span>
+                <span className="text-violet-500 dark:text-violet-400">k</span>
+                <span className="dark:text-white">  Innotech</span>
               </h1>
             </div>
 
