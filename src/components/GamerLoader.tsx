@@ -26,7 +26,7 @@ export function GamerLoader({ fullScreen = false, message = ' กำลังโ
           <span className="text-fuchsia-500 dark:text-fuchsia-400 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)] dark:drop-shadow-[0_0_6px_rgba(236,72,153,0.3)]">o</span>
           <span className="text-violet-500 dark:text-violet-400 drop-shadow-[0_0_6px_rgba(139,92,246,0.6)] dark:drop-shadow-[0_0_6px_rgba(139,92,246,0.3)]">k</span>
           <span className="mx-2 text-gray-400 dark:text-gray-500">•</span>
-          <span className="text-sky-500 dark:text-sky-400 drop-shadow-[0_0_6px_rgba(14,165,233,0.6)] dark:drop-shadow-[0_0_6px_rgba(14,165,233,0.3)]">Innotech</span>
+          <span className="text-sky-500 dark:text-white">Innotech</span>
           <span className="ml-2 dark:text-gray-300">• {message}</span>
         </p>
       </div>
