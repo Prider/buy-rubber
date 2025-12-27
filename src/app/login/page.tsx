@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
@@ -18,8 +18,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isElectron, setIsElectron] = useState(false);
 
   useArrowFocusNavigation();
+
+  // Check if running in Electron
+  useEffect(() => {
+    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
+    
+    // Pre-fill demo credentials on web only
+    if (typeof window !== 'undefined' && !window.electron?.isElectron) {
+      setUsername('demo');
+      setPassword('demo@123');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +61,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900 dark:via-indigo-900 dark:to-purple-900 p-4">
       <div className="max-w-md w-full">
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
           {/* Header */}
@@ -77,6 +89,27 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Form */}
           <div className="px-8 py-8">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Demo Credentials - Only show on Web */}
+              {!isElectron && (
+                <div className="p-[1.5px] bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 dark:from-blue-500 dark:via-indigo-500 dark:to-purple-500 rounded-lg">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-2.5">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 flex items-center gap-2 text-xs flex-wrap">
+                        <span className="text-blue-700 dark:text-blue-400 font-medium">Username:</span>
+                        <code className="px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded text-blue-900 dark:text-blue-100 font-mono text-xs border border-blue-200 dark:border-blue-700">demo</code>
+                        <span className="text-blue-700 dark:text-blue-400 font-medium ml-1">Password:</span>
+                        <code className="px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded text-blue-900 dark:text-blue-100 font-mono text-xs border border-blue-200 dark:border-blue-700">demo@123</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
                   <div className="flex items-center space-x-3">

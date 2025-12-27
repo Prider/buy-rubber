@@ -76,8 +76,8 @@ async function main() {
   
   const viewer = await prisma.user.create({
     data: {
-      username: 'viewer',
-      password: simpleHash('viewer123'),
+      username: 'demo',
+      password: simpleHash('demo@123'),
       role: 'viewer',
       isActive: true,
     },
