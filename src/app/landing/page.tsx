@@ -535,26 +535,45 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12">
-          คุณสมบัติหลัก
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            คุณสมบัติหลัก
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-400 dark:to-green-300 mx-auto rounded-full"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200"
+              className="group relative bg-gradient-to-br from-white to-green-50/30 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-gray-200/50 dark:border-gray-700/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2"
             >
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                {feature.title}
-              </h3>
-              <ul className="space-y-2">
-                {feature.items.map((item, itemIndex) => (
-                  <li key={itemIndex} className="flex items-start text-sm text-gray-600 dark:text-gray-300">
-                    <span className="text-green-500 mr-2 mt-1">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* Glow effect */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-green-600 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
+              
+              {/* Content */}
+              <div className="relative">
+                {/* Icon/Number Badge */}
+                
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                
+                <ul className="space-y-3">
+                  {feature.items.map((item, itemIndex) => (
+                    <li 
+                      key={itemIndex} 
+                      className="flex items-start text-sm text-gray-600 dark:text-gray-300 group/item"
+                      style={{ animationDelay: `${itemIndex * 50}ms` }}
+                    >
+                      <span className="text-green-500 mr-3 mt-1 flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-xs font-bold group-hover/item:scale-110 transition-transform duration-300">✓</span>
+                      <span className="group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors duration-300">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* Decorative corner */}
+              <div className="absolute top-0 right-0 w-20 h-20 border-t-2 border-r-2 border-green-400/30 dark:border-green-500/30 rounded-tr-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ))}
         </div>
