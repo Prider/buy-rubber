@@ -288,70 +288,93 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section id="hero" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            ระบบบริหารจัดการ
-            <span className="bg-gradient-to-r from-green-600 via-green-500 to-green-600 dark:from-green-400 dark:via-green-300 dark:to-green-400 bg-clip-text text-transparent">
-              {' '}รับซื้อยางพารา
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Rubber Purchasing Management System ที่ทันสมัยและมีประสิทธิภาพ
-          </p>
-          
-          {/* Images Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-5xl mx-auto">
-            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
-              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Image
-                src="/นำยาง.png"
-                alt="น้ำยาง"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                priority
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
-                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">น้ำยาง</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Side - Text Content */}
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              <div className="block">ระบบบริหารจัดการ</div>
+              <div className="pt-4 bg-gradient-to-r from-green-600 via-green-500 to-green-600 dark:from-green-400 dark:via-green-300 dark:to-green-400 bg-clip-text text-transparent">
+                รับซื้อยางพารา
               </div>
-            </div>
-            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
-              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Image
-                src="/ยางก้อนถ้วยที่เตรียมขาย.png"
-                alt="ยางก้อนถ้วยที่เตรียมขาย"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                priority
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
-                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">ยางก้อนถ้วย</p>
-              </div>
-            </div>
-            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
-              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Image
-                src="/ยางแผ่น.jpg"
-                alt="ยางแผ่น"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                priority
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
-                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">ยางแผ่น</p>
-              </div>
+            </h1>
+            <p className="text-lg md:text-xl lg:text-2xl text-gray-600 dark:text-gray-300 mb-8">
+              Rubber Purchasing Management System ที่ทันสมัยและมีประสิทธิภาพ
+            </p>
+            
+            <div className="flex flex-col items-start gap-4">
+              <Link
+                href="/login"
+                className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                เริ่มใช้งาน
+              </Link>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                เวอร์ชัน 1.4.5
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-4">
-            <Link
-              href="/login"
-              className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          {/* Right Side - Images Swiper */}
+          <div className="w-full">
+            <Swiper
+              modules={[Navigation, Pagination, Autoplay]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation
+              pagination={{ clickable: true }}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              loop
+              className="h-[300px] md:h-[350px] rounded-2xl"
             >
-              เริ่มใช้งาน
-            </Link>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              เวอร์ชัน 1.4.5
-            </p>
+              <SwiperSlide>
+                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <Image
+                    src="/นำยาง.png"
+                    alt="น้ำยาง"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    priority
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
+                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">น้ำยาง</p>
+                  </div>
+                </div>
+              </SwiperSlide>
+              <SwiperSlide>
+                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <Image
+                    src="/ยางก้อนถ้วยที่เตรียมขาย.png"
+                    alt="ยางก้อนถ้วยที่เตรียมขาย"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    priority
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
+                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">ยางก้อนถ้วย</p>
+                  </div>
+                </div>
+              </SwiperSlide>
+              <SwiperSlide>
+                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <Image
+                    src="/ยางแผ่น.jpg"
+                    alt="ยางแผ่น"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    priority
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
+                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">ยางแผ่น</p>
+                  </div>
+                </div>
+              </SwiperSlide>
+            </Swiper>
           </div>
         </div>
       </section>
