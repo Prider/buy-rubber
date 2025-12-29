@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 export default function LandingPage() {
   const features = [
@@ -173,6 +178,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+
       {/* Stats Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -202,6 +208,129 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Showcase Gallery Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12">
+          ภาพรวมระบบ
+        </h2>
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={30}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{
+            delay: 4000,
+            disableOnInteraction: false,
+          }}
+          loop
+          className="pb-12"
+        >
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/dashboard.png"
+                alt="Dashboard"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+                priority
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">Dashboard</p>
+              </div>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/purchase.png"
+                alt="การรับซื้อน้ำยาง"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">การรับซื้อน้ำยาง</p>
+              </div>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/member.png"
+                alt="การจัดการสมาชิก"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">การจัดการสมาชิก</p>
+              </div>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/expense.png"
+                alt="ระบบการเงิน"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
+              </div>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/report.png"
+                alt="รายงานและวิเคราะห์"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">รายงานและวิเคราะห์</p>
+              </div>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Image
+                src="/landing/backup.png"
+                alt="การจัดการระบบ"
+                width={1920}
+                height={1080}
+                className="object-contain w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-white font-semibold text-xl">การจัดการระบบ</p>
+              </div>
+            </div>
+          </SwiperSlide>
+        </Swiper>
+      </section>
+
+      {/* Expense Image Section */}
+      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
+          ระบบการเงิน
+        </h2>
+        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <Image
+            src="/landing/expense.png"
+            alt="ระบบการเงิน"
+            width={1920}
+            height={1080}
+            className="object-contain w-full h-auto"
+            priority
+          />
+        </div>
+      </section> */}
 
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -336,179 +465,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            แพ็คเกจ
-          </h2>
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            เลือกแพ็คเกจที่เหมาะกับคุณ
-          </h3>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            ราคาที่เหมาะสมกับทุกขนาดธุรกิจ ไม่มีค่าธรรมเนียมแอบแฝง
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Package 1 - Starter */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="text-center mb-6">
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                แพ็คเกจเริ่มต้น
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                เหมาะสำหรับธุรกิจขนาดเล็ก
-              </p>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-green-600 dark:text-green-400">ฟรี</span>
-              </div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รองรับสมาชิกไม่เกิน 50 คน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>บันทึกรายการรับซื้อไม่จำกัด</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รายงานพื้นฐาน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ผู้ใช้งาน 1 คน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>สำรองข้อมูลด้วยตนเอง</span>
-              </li>
-            </ul>
-            <Link
-              href="/login"
-              className="block w-full text-center px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 font-semibold"
-            >
-              เริ่มใช้งานฟรี
-            </Link>
-          </div>
-
-          {/* Package 2 - Standard (Recommended) */}
-          <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-2 border-green-500 dark:border-green-400 hover:shadow-2xl transition-all duration-200 transform scale-105 relative">
-            <div className="absolute top-0 right-0 bg-green-500 dark:bg-green-600 text-white px-4 py-1 rounded-bl-lg rounded-tr-2xl text-sm font-semibold">
-              แนะนำ
-            </div>
-            <div className="text-center mb-6">
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                แพ็คเกจมาตรฐาน
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                เหมาะสำหรับธุรกิจขนาดกลาง
-              </p>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-green-600 dark:text-green-400">฿999</span>
-                <span className="text-gray-600 dark:text-gray-400">/เดือน</span>
-              </div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รองรับสมาชิกไม่จำกัด</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>บันทึกรายการรับซื้อไม่จำกัด</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รายงานครบทุกประเภท</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ผู้ใช้งานได้ 3 คน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>สำรองข้อมูลอัตโนมัติ</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>Dashboard แบบ Real-time</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>จัดการค่าบริการ</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รองรับหลายสาขา</span>
-              </li>
-            </ul>
-            <Link
-              href="/login"
-              className="block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
-            >
-              เลือกแพ็คเกจนี้
-            </Link>
-          </div>
-
-          {/* Package 3 - Enterprise */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="text-center mb-6">
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                แพ็คเกจองค์กร
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                เหมาะสำหรับธุรกิจขนาดใหญ่
-              </p>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-green-600 dark:text-green-400">฿2,499</span>
-                <span className="text-gray-600 dark:text-gray-400">/เดือน</span>
-              </div>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ทุกอย่างในแพ็คเกจมาตรฐาน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ผู้ใช้งานไม่จำกัด</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รองรับหลายสาขาไม่จำกัด</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>API Integration</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>รายงานขั้นสูงและการวิเคราะห์</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ฝึกอบรมการใช้งาน</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ปรับแต่งตามความต้องการ</span>
-              </li>
-              <li className="flex items-start text-gray-700 dark:text-gray-300">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>บริการดูแลพิเศษ 24/7</span>
-              </li>
-            </ul>
-            <Link
-              href="/login"
-              className="block w-full text-center px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 font-semibold"
-            >
-              ติดต่อเรา
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Platforms Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
