@@ -10,7 +10,7 @@ export default function LandingPage() {
       title: 'การจัดการราคาและประเภทสินค้า',
       items: [
         'บันทึกราคาประกาศน้ำยางประจำวัน',
-        'จัดการประเภทสินค้ายาง (น้ำยางสด, ยางแห้ง, เศษยาง)',
+        'จัดการประเภทสินค้ายาง (น้ำยางสด, ยางแห้ง, เศษยาง) เพิ่มประเภทสินค้าได้ไม่จำกัด',
         'กำหนดเงื่อนไขการให้ราคาเพิ่ม/ลดตาม %ยาง',
         'ให้ราคาบวกเพิ่มพิเศษได้',
         'ดูประวัติราคาย้อนหลัง',
@@ -118,42 +118,57 @@ export default function LandingPage() {
           
           {/* Images Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-5xl mx-auto">
-            <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
+              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Image
                 src="/นำยาง.png"
                 alt="น้ำยาง"
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
                 priority
               />
+              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">น้ำยาง</p>
+              </div>
             </div>
-            <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
+              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Image
                 src="/ยางก้อนถ้วยที่เตรียมขาย.png"
                 alt="ยางก้อนถ้วยที่เตรียมขาย"
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
                 priority
               />
+              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">ยางก้อนถ้วย</p>
+              </div>
             </div>
-            <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="group relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300 transform hover:scale-105 hover:shadow-green-500/20">
+              <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Image
                 src="/ยางแผ่น.jpg"
                 alt="ยางแผ่น"
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
                 priority
               />
+              <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+                <p className="text-white font-semibold text-sm md:text-base drop-shadow-lg">ยางแผ่น</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col items-center gap-4">
             <Link
               href="/login"
               className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               เริ่มใช้งาน
             </Link>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              เวอร์ชัน 1.4.5
+            </p>
           </div>
         </div>
       </section>
@@ -871,7 +886,8 @@ export default function LandingPage() {
             </h2>
             <div className="inline-block bg-green-100 dark:bg-green-900/50 rounded-full px-6 py-2 mb-4">
               <span className="text-2xl font-bold text-green-600 dark:text-green-400">ลองใช้งานฟรี</span>
-              <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 ml-2">30 วัน</span>
+              <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 ml-2 line-through">30 วัน</span>
+              <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 ml-2">90 วัน</span>
             </div>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
               ไม่ต้องใช้บัตรเครดิต ติดตั้งง่าย ใช้งานได้ทันที
@@ -881,7 +897,7 @@ export default function LandingPage() {
                 href="/login"
                 className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                ทดลองใช้ฟรี 30 วัน
+                ทดลองใช้ฟรี
               </Link>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-8">
