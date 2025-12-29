@@ -8,8 +8,10 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { useState } from 'react';
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const features = [
     {
       title: 'การจัดการราคาและประเภทสินค้า',
@@ -96,7 +98,7 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* Navigation Menu */}
+            {/* Navigation Menu - Desktop */}
             <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
               <a 
                 href="#features" 
@@ -170,16 +172,117 @@ export default function LandingPage() {
               </a>
             </nav>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               <DarkModeToggle />
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
               <Link
                 href="/login"
-                className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-medium text-sm shadow-md hover:shadow-lg"
+                className="px-3 md:px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-medium text-xs md:text-sm shadow-md hover:shadow-lg"
               >
                 ทดลองใช้ฟรี
               </Link>
             </div>
           </div>
+          
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200/50 dark:border-gray-700/50 py-4">
+              <nav className="flex flex-col space-y-2">
+                <a 
+                  href="#features" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  คุณสมบัติ
+                </a>
+                <a 
+                  href="#benefits" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  ประโยชน์
+                </a>
+                <a 
+                  href="#gallery" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  ภาพรวมระบบ
+                </a>
+                <a 
+                  href="#platforms" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  แพลตฟอร์ม
+                </a>
+                <a 
+                  href="#reviews" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  รีวิว
+                </a>
+                <a 
+                  href="#faq" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  FAQ
+                </a>
+                <a 
+                  href="#contact" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
+                >
+                  ติดต่อเรา
+                </a>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
