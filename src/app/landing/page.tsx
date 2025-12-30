@@ -8,11 +8,10 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 
-export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const features = [
+// Move features array outside component to prevent recreation on every render
+const features = [
     {
       title: 'การจัดการราคาและประเภทสินค้า',
       items: [
@@ -32,6 +31,7 @@ export default function LandingPage() {
         'คำนวณน้ำหนักสุทธิ (หักภาชนะ)',
         'เพิ่มค่าบริการ (Service Fees) ในรายการรับซื้อ',
         'ดูรายการรับซื้อทั้งหมด',
+        'พิมพ์สลิปการรับซื้อได้ทันที',
       ],
     },
     {
@@ -75,7 +75,32 @@ export default function LandingPage() {
         'Dark Mode Support',
       ],
     },
-  ];
+];
+
+function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Read dark mode directly from DOM without subscribing to context
+  // This state is only for the gallery toggle, not for page theme
+  // Don't sync automatically - let user control via toggle buttons
+  const [showDarkMode, setShowDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return true;
+  });
+
+  // Memoize Swiper modules and configs to prevent recreation
+  const swiperModules = useMemo(() => [Navigation, Pagination, Autoplay], []);
+  const swiperPagination = useMemo(() => ({ clickable: true }), []);
+  const swiperAutoplayFast = useMemo(() => ({
+    delay: 3000,
+    disableOnInteraction: false,
+  }), []);
+  const swiperAutoplaySlow = useMemo(() => ({
+    delay: 4000,
+    disableOnInteraction: false,
+  }), []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 dark:from-green-900 dark:via-gray-900 dark:to-green-950">
@@ -317,15 +342,12 @@ export default function LandingPage() {
           {/* Right Side - Images Swiper */}
           <div className="w-full">
             <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
+              modules={swiperModules}
               spaceBetween={20}
               slidesPerView={1}
               navigation
-              pagination={{ clickable: true }}
-              autoplay={{
-                delay: 3000,
-                disableOnInteraction: false,
-              }}
+              pagination={swiperPagination}
+              autoplay={swiperAutoplayFast}
               loop
               className="h-[300px] md:h-[350px] rounded-2xl"
             >
@@ -410,129 +432,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Showcase Gallery Section */}
-      <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12">
-          ภาพรวมระบบ
-        </h2>
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={30}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          autoplay={{
-            delay: 4000,
-            disableOnInteraction: false,
-          }}
-          loop
-          className="pb-12"
-        >
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/dashboard.png"
-                alt="Dashboard"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-                priority
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">Dashboard</p>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/purchase.png"
-                alt="การรับซื้อน้ำยาง"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">การรับซื้อน้ำยาง</p>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/member.png"
-                alt="การจัดการสมาชิก"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">การจัดการสมาชิก</p>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/expense.png"
-                alt="ระบบการเงิน"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/report.png"
-                alt="รายงานและวิเคราะห์"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">รายงานและวิเคราะห์</p>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Image
-                src="/landing/backup.png"
-                alt="การจัดการระบบ"
-                width={1920}
-                height={1080}
-                className="object-contain w-full h-auto"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white font-semibold text-xl">การจัดการระบบ</p>
-              </div>
-            </div>
-          </SwiperSlide>
-        </Swiper>
-      </section>
-
-      {/* Expense Image Section */}
-      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
-          ระบบการเงิน
-        </h2>
-        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-          <Image
-            src="/landing/expense.png"
-            alt="ระบบการเงิน"
-            width={1920}
-            height={1080}
-            className="object-contain w-full h-auto"
-            priority
-          />
-        </div>
-      </section> */}
-
       {/* Features Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
@@ -578,6 +477,283 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      
+      {/* Gallery Section with Toggle */}
+      <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+            ภาพรวมระบบ
+          </h2>
+          {/* Toggle Button */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <button
+              onClick={() => setShowDarkMode(false)}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                !showDarkMode
+                  ? 'bg-green-600 text-white shadow-lg scale-105'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              White Mode
+            </button>
+            <button
+              onClick={() => setShowDarkMode(true)}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                showDarkMode
+                  ? 'bg-green-600 text-white shadow-lg scale-105'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              Dark Mode
+            </button>
+          </div>
+        </div>
+
+        {/* White Mode Swiper */}
+        {!showDarkMode && (
+          <Swiper
+            key="white-mode"
+            modules={swiperModules}
+            spaceBetween={30}
+            slidesPerView={1}
+            navigation
+            pagination={swiperPagination}
+            autoplay={swiperAutoplaySlow}
+            loop
+            className="pb-12"
+          >
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing_white/white_purchase.png"
+                  alt="Dashboard"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">Dashboard</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing_white/white_purchase_list.png"
+                  alt="รายการรับซื้อ"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">รายการรับซื้อ</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing_white/white_expense.png"
+                  alt="ระบบการเงิน"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing_white/member_history.png"
+                  alt="ประวัติสมาชิก"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">ประวัติสมาชิก</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing_white/white_edit.png"
+                  alt="แก้ไขข้อมูล"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">แก้ไขข้อมูล</p>
+                </div>
+              </div>
+            </SwiperSlide>
+          </Swiper>
+        )}
+
+        {/* Dark Mode Swiper */}
+        {showDarkMode && (
+          <Swiper
+            key="dark-mode"
+            modules={swiperModules}
+            spaceBetween={30}
+            slidesPerView={1}
+            navigation
+            pagination={swiperPagination}
+            autoplay={swiperAutoplaySlow}
+            loop
+            className="pb-12"
+          >
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/dashboard.png"
+                  alt="Dashboard"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                  priority
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">Dashboard</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/purchase.png"
+                  alt="การรับซื้อน้ำยาง"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">การรับซื้อน้ำยาง</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/member.png"
+                  alt="การจัดการสมาชิก"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">การจัดการสมาชิก</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/expense.png"
+                  alt="ระบบการเงิน"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/report.png"
+                  alt="รายงานและวิเคราะห์"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">รายงานและวิเคราะห์</p>
+                </div>
+              </div>
+            </SwiperSlide>
+            <SwiperSlide>
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Image
+                  src="/landing/backup.png"
+                  alt="การจัดการระบบ"
+                  width={1920}
+                  height={1080}
+                  className="object-contain w-full h-auto"
+                />
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <p className="text-white font-semibold text-xl">การจัดการระบบ</p>
+                </div>
+              </div>
+            </SwiperSlide>
+          </Swiper>
+        )}
+      </section>
+
+      {/* Slip Example Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="w-full flex justify-center lg:justify-start">
+            <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 flex items-center justify-center p-4 md:p-6">
+              <Image
+                src="/slip.png"
+                alt="ตัวอย่างสลิปการรับซื้อ"
+                width={400}
+                height={533}
+                className="object-contain w-full h-auto rounded-lg"
+                unoptimized
+              />
+            </div>
+          </div>
+          <div className="text-left">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              ตัวอย่างสลิปการรับซื้อ
+            </h2>
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6">
+              ระบบสามารถพิมพ์สลิปการรับซื้อได้ทันที พร้อมข้อมูลครบถ้วนและเป็นระเบียบ
+            </p>
+            <ul className="space-y-3 text-gray-600 dark:text-gray-300">
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
+                <span>พิมพ์สลิปได้ทันทีหลังการรับซื้อ</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
+                <span>ข้อมูลครบถ้วน ระบุรายละเอียดการรับซื้อ</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
+                <span>รูปแบบสลิปสวยงาม เป็นระเบียบ</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Expense Image Section */}
+      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
+          ระบบการเงิน
+        </h2>
+        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <Image
+            src="/landing/expense.png"
+            alt="ระบบการเงิน"
+            width={1920}
+            height={1080}
+            className="object-contain w-full h-auto"
+            priority
+          />
+        </div>
+      </section> */}
+
 
       {/* Benefits Section */}
       <section id="benefits" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -1041,24 +1217,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            พร้อมเริ่มใช้งานแล้วหรือยัง?
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-            ทดลองใช้ฟรีเพื่อเริ่มใช้งานระบบบริหารจัดการรับซื้อน้ำยาง
-          </p>
-          <Link
-            href="/login"
-            className="inline-block px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          >
-            ทดลองใช้ฟรี
-          </Link>
-        </div>
-      </section>
-
       {/* Final CTA Section */}
       <section id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/80 rounded-3xl p-8 md:p-12 border border-green-200/50 dark:border-green-800/50">
@@ -1310,4 +1468,7 @@ export default function LandingPage() {
     </div>
   );
 }
+
+// Export memoized component to prevent unnecessary rerenders from parent component
+export default memo(LandingPage);
 

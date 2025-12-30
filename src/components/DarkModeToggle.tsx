@@ -1,8 +1,9 @@
 'use client';
 
+import { memo } from 'react';
 import { useDarkMode } from '@/contexts/DarkModeContext';
 
-export default function DarkModeToggle() {
+function DarkModeToggle() {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   return (
@@ -45,3 +46,5 @@ export default function DarkModeToggle() {
     </button>
   );
 }
+
+export default memo(DarkModeToggle);

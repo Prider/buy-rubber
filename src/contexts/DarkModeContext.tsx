@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 
 interface DarkModeContextType {
   isDarkMode: boolean;
@@ -26,21 +26,29 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      
+      return newMode;
+    });
+  }, []);
+
+  const value = useMemo(() => ({
+    isDarkMode,
+    toggleDarkMode,
+  }), [isDarkMode, toggleDarkMode]);
 
   return (
-    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <DarkModeContext.Provider value={value}>
       {children}
     </DarkModeContext.Provider>
   );
