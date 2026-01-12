@@ -324,7 +324,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       memberId: prev.memberId, // Keep member selection
       productTypeId: '',
       grossWeight: '',
-      containerWeight: '0',
+      containerWeight: '',
       netWeight: '',
       pricePerUnit: '',
       bonusPrice: '',
@@ -346,7 +346,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       memberId: '',
       productTypeId: '',
       grossWeight: '',
-      containerWeight: '0',
+      containerWeight: '',
       netWeight: '',
       pricePerUnit: '',
       bonusPrice: '',
