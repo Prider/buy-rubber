@@ -11,31 +11,11 @@ export default function Home() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // Check if running in Electron
-    const checkElectron = (isAuthenticated: boolean, isLoading: boolean) => {
-      const isElectronEnv = typeof window !== 'undefined' && (window as any).electron?.isElectron === true;
-      
-      // Redirect based on environment
-      if (isElectronEnv) {
-        // Electron: redirect to dashboard
-        if(!isLoading && isAuthenticated) {
-          router.push('/dashboard');
-        } else {
-          router.push('/login');
-        }
-      } else {
-        // Web: redirect to landing page
-        router.replace('/landing');
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push('/dashboard');
       }
-    };
-
-    // Check immediately
-    checkElectron(isAuthenticated, isLoading);
-    
-    // Also check after a short delay in case electron object loads asynchronously
-    const timeout = setTimeout(checkElectron, 100);
-    
-    return () => clearTimeout(timeout);
+    }
   }, [isAuthenticated, isLoading, router]);
 
   return (
