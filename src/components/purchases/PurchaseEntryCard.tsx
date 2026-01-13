@@ -606,7 +606,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               </div>
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                  น้ำหนักภาชนะ <span className="text-red-500">*</span>
+                  น้ำหนักภาชนะ
                 </label>
                 <div className="relative">
                   <input
@@ -618,7 +618,6 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     value={formData.containerWeight}
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef, grossWeightRef)}
-                    required
                     disabled={submitting}
                     className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="0.00"

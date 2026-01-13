@@ -290,18 +290,15 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Check if form is valid
   const isFormValid = useCallback(() => {
     const grossWeight = parseFloat(formData.grossWeight) || 0;
-    const containerWeight = parseFloat(formData.containerWeight) || 0;
+    // Default containerWeight to 0 if empty
+    const containerWeight = formData.containerWeight === '' ? 0 : (parseFloat(formData.containerWeight) || 0);
     // Allow containerWeight to be 0, but it must be less than grossWeight when both are set
     const isWeightValid = grossWeight > 0 && containerWeight >= 0 && containerWeight < grossWeight;
-    
-    // Check that containerWeight is provided (including '0' as a valid value)
-    const hasContainerWeight = formData.containerWeight !== '' && !isNaN(parseFloat(formData.containerWeight));
     
     return !!(
       formData.memberId && 
       formData.productTypeId && 
       formData.grossWeight && 
-      hasContainerWeight && 
       formData.netWeight && 
       formData.pricePerUnit &&
       isWeightValid &&
