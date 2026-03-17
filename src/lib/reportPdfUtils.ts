@@ -36,6 +36,7 @@ const renderTableRows = (reportType: ReportType, rows: any[]) => {
             <td>${item.member?.name || '-'}</td>
             <td>${item.productType?.name || '-'}</td>
             <td class=\"number\">${formatNumber(item.dryWeight)}</td>
+            <td class=\"number\">${formatNumber(item.dryWeight ? item.totalAmount / item.dryWeight : 0)}</td>
             <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
           </tr>
         `
@@ -83,6 +84,7 @@ const renderTableHeaders = (reportType: ReportType) => {
         <th>สมาชิก</th>
         <th>ประเภทสินค้า</th>
         <th>น้ำหนัก (กก.)</th>
+        <th>ราคา/กก.</th>
         <th>ยอดเงิน</th>
       </tr>
     `;

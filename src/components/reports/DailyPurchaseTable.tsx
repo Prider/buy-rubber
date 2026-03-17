@@ -57,6 +57,9 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
               น้ำหนัก (กก.)
             </th>
             <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              ราคา/กก.
+            </th>
+            <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               ยอดเงิน
             </th>
           </tr>
@@ -64,6 +67,7 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {pagedData.map((item: DailyPurchaseRow, idx: number) => {
             const displayIndex = offset + pageStartIndex + idx + 1;
+            const unitPrice = item.dryWeight ? item.totalAmount / item.dryWeight : 0;
             return (
             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
@@ -96,6 +100,9 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-purple-600 dark:text-purple-400">
                 {formatNumber(item.dryWeight)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-600 dark:text-blue-300">
+                {formatNumber(unitPrice)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(item.totalAmount)}
