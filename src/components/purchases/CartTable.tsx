@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAlert } from '@/hooks/useAlert';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -57,6 +57,15 @@ export const CartTable: React.FC<CartTableProps> = ({
   setError,
 }) => {
   const { showConfirm } = useAlert();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to the latest cart item when new items are added
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [cart.length]);
+
   const handleSaveAndAskPrint = async () => {
     logger.debug('Save button clicked', { cartItems: cart });
     try {
@@ -142,7 +151,10 @@ export const CartTable: React.FC<CartTableProps> = ({
 
       {/* Table */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto overflow-y-auto flex-1 min-h-0"
+        >
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
               <tr className="border-b border-gray-200 dark:border-gray-600">
