@@ -37,6 +37,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isElectron, setIsElectron] = useState(false);
+  const [todayText, setTodayText] = useState('');
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -45,6 +46,17 @@ export default function Layout({ children }: LayoutProps) {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
   }, []);
 
+  // Generate today's date text on the client only to avoid SSR/CSR locale differences
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const text = new Date().toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+    });
+    setTodayText(text);
+  }, []);
 
 
   // Redirect to login if username is Unknown (but only after auth has finished loading)
@@ -347,13 +359,11 @@ export default function Layout({ children }: LayoutProps) {
                 <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {new Date().toLocaleDateString('th-TH', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    weekday: 'short',
-                  })}
+                <div
+                  className="text-sm text-gray-600 dark:text-gray-400"
+                  suppressHydrationWarning
+                >
+                  {todayText}
                 </div>
               </div>
             </div>
