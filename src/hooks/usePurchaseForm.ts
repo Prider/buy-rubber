@@ -44,9 +44,13 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
 
   // Memoize today's date to prevent unnecessary recalculations
   const todayDate = useMemo(() => getTodayDate(), []);
+
+  // Track the last date explicitly chosen by the user.
+  // This prevents resetForm (after Add to cart) from snapping back to today.
+  const [userSelectedDate, setUserSelectedDate] = useState<string>(todayDate);
   
   const [formData, setFormData] = useState<PurchaseFormData>({
-    date: todayDate,
+    date: userSelectedDate,
     memberId: '',
     productTypeId: '',
     grossWeight: '',
@@ -202,6 +206,9 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Handle input changes
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    if (name === 'date' && value !== todayDate) {
+      setUserSelectedDate(value);
+    }
     
     // If product type is selected, automatically set the price from daily prices
     if (name === 'productTypeId' && value) {
@@ -317,7 +324,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   // Reset form (keeping member selection for quick multiple entries)
   const resetForm = useCallback(() => {
     setFormData(prev => ({
-      date: todayDate,
+      date: userSelectedDate || prev.date,
       memberId: prev.memberId, // Keep member selection
       productTypeId: '',
       grossWeight: '',
@@ -334,7 +341,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     setProductTypeSearchTerm('');
     setSelectedProductType(null);
     setShowProductTypeDropdown(false);
-  }, [todayDate]);
+  }, [userSelectedDate]);
 
   // Reset ALL fields including member (for Reset button)
   const resetAllFields = useCallback(() => {
