@@ -6,6 +6,7 @@ import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiClient } from '@/lib/apiClient';
 
 interface NavigationItem {
   name: string;
@@ -56,6 +57,27 @@ export default function Layout({ children }: LayoutProps) {
       weekday: 'short',
     });
     setTodayText(text);
+  }, []);
+
+  // Preload slip settings into localStorage so slipGenerator can render correctly
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const NAME_KEY = 'slip_companyName';
+    const ADDRESS_KEY = 'slip_companyAddress';
+
+    const loadSlipSettings = async () => {
+      try {
+        const apiClient = getApiClient();
+        const data = await apiClient.get<{ companyName: string; companyAddress: string }>('/api/slip/settings');
+        // Always overwrite with server values so updates done in Electron propagate to Browser.
+        if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
+        if (data?.companyAddress) window.localStorage.setItem(ADDRESS_KEY, data.companyAddress);
+      } catch {
+        // If it fails, slipGenerator will fall back to its defaults.
+      }
+    };
+
+    loadSlipSettings();
   }, []);
 
 

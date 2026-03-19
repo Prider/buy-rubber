@@ -1,6 +1,43 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { PurchaseTransaction, CartItem } from '../types';
 
+const DEFAULT_COMPANY_NAME = 'สินทวี';
+const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';
+
+const SLIP_COMPANY_NAME_KEY = 'slip_companyName';
+const SLIP_COMPANY_ADDRESS_KEY = 'slip_companyAddress';
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getStoredSlipCompanyName(): string {
+  if (typeof window === 'undefined') return DEFAULT_COMPANY_NAME;
+  try {
+    const v = window.localStorage.getItem(SLIP_COMPANY_NAME_KEY);
+    if (v && v.trim()) return v;
+  } catch {
+    // ignore
+  }
+  return DEFAULT_COMPANY_NAME;
+}
+
+function getStoredSlipCompanyAddress(): string {
+  if (typeof window === 'undefined') return DEFAULT_COMPANY_ADDRESS;
+  try {
+    const v = window.localStorage.getItem(SLIP_COMPANY_ADDRESS_KEY);
+    if (v && v.trim()) return v;
+  } catch {
+    // ignore
+  }
+  return DEFAULT_COMPANY_ADDRESS;
+}
+
 /**
  * Convert a purchase transaction to cart items format for slip generation
  */
@@ -46,6 +83,8 @@ export function generateSlipHTMLFromItems(
     purchaseNo?: string;
     memberName?: string;
     memberCode?: string;
+    companyName?: string;
+    companyAddress?: string;
   }
 ): string {
   if (items.length === 0) {
@@ -67,6 +106,9 @@ export function generateSlipHTMLFromItems(
   // Get member info - use provided or find from first item
   const memberName = options?.memberName || items.find(item => item.memberName && item.memberCode)?.memberName || '';
   const memberCode = options?.memberCode || items.find(item => item.memberName && item.memberCode)?.memberCode || '';
+
+  const companyName = options?.companyName || getStoredSlipCompanyName();
+  const companyAddress = options?.companyAddress || getStoredSlipCompanyAddress();
 
   return `
     <html>
@@ -103,8 +145,8 @@ export function generateSlipHTMLFromItems(
       <body>
         <div class="slip">
           <div class="store">
-            <h1>สินทวี</h1>
-            <p>171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ</p>
+            <h1>${escapeHtml(companyName)}</h1>
+            <p>${escapeHtml(companyAddress)}</p>
           </div>
           <div class="meta">
             เลขที่: ${purchaseNo}<br/>
