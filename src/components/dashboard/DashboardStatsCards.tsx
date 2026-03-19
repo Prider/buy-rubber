@@ -4,6 +4,7 @@ import { memo, useMemo } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { DashboardStats } from '@/hooks/useDashboardData';
 import { TodayPurchasesCardByProductType } from './TodayPurchasesCardByProductType';
+import { TodayWeightsCardByProductType } from './TodayWeightsCardByProductType';
 
 interface DashboardStatsCardsProps {
   stats: DashboardStats;
@@ -275,7 +276,10 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Bigger */}
         <div className="lg:col-span-2">
-          <TodayPurchasesCardByProductType stats={stats} />
+          <div className="space-y-6">
+            <TodayPurchasesCardByProductType stats={stats} />
+            <TodayWeightsCardByProductType stats={stats} />
+          </div>
         </div>
         {/* Right Column - Smaller */}
         <div className="lg:col-span-1">
