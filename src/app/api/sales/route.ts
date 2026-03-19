@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (productTypeId) where.productTypeId = productTypeId;
     if (sellingType) where.sellingType = sellingType;
 
-    const sales = await prisma.sale.findMany({
+    const sales = await (prisma as any).sale.findMany({
       where,
       include: { productType: true, user: true },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
@@ -80,9 +80,17 @@ export async function POST(request: NextRequest) {
     const saleNo = await generateDocumentNumber('SAL', saleDate);
     const weight = Number(data.weight);
     const pricePerUnit = Number(data.pricePerUnit);
-    const totalAmount = weight * pricePerUnit;
+    const expenseCost = data.expenseCost === undefined || data.expenseCost === null || data.expenseCost === ''
+      ? null
+      : Number(data.expenseCost);
+    if (expenseCost !== null && (Number.isNaN(expenseCost) || expenseCost < 0)) {
+      return NextResponse.json({ error: 'ค่าใช้จ่ายไม่ถูกต้อง' }, { status: 400 });
+    }
 
-    const sale = await prisma.sale.create({
+    // totalAmount is net amount after expenses (if provided)
+    const totalAmount = weight * pricePerUnit - (expenseCost || 0);
+
+    const sale = await (prisma as any).sale.create({
       data: {
         saleNo,
         date: saleDate,
@@ -95,6 +103,7 @@ export async function POST(request: NextRequest) {
           : null,
         pricePerUnit,
         expenseType: data.expenseType ? String(data.expenseType) : null,
+        expenseCost: expenseCost,
         sellingType: String(data.sellingType),
         totalAmount,
         notes: data.notes ? String(data.notes) : null,
