@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -19,7 +19,9 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   purchases Purchase[]
+  sales     Sale[]
 }
 
 // สมาชิก (เจ้าของสวน)
@@ -56,6 +58,7 @@ model ProductType {
 
   purchases     Purchase[]
   productPrices ProductPrice[]
+  sales         Sale[]
 }
 
 // ราคาสินค้าตามประเภทประจำวัน
@@ -159,6 +162,34 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+// การขายสินค้า
+model Sale {
+  id            String   @id @default(uuid())
+  saleNo        String   @unique
+  date          DateTime @default(now())
+  userId        String
+  companyName   String
+  productTypeId String
+  weight        Float
+  rubberPercent Float?
+  pricePerUnit  Float
+  expenseType   String?
+  expenseCost   Float?
+  sellingType   String // จ่ายสด / ขายล่วง / ฝาก
+  totalAmount   Float
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  productType ProductType @relation(fields: [productTypeId], references: [id])
+
+  @@index([date])
+  @@index([companyName])
+  @@index([productTypeId])
+  @@index([sellingType])
+}
+
 // ข้อมูลการสำรอง
 model Backup {
   id          String   @id @default(uuid())
@@ -171,3 +202,4 @@ model Backup {
   @@index([createdAt])
   @@index([backupType])
 }
+

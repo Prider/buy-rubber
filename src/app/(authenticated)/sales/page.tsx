@@ -253,8 +253,8 @@ export default function SalesPage() {
 
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
-        <div className="lg:col-span-2 h-full overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+        <div className="shrink-0 w-full min-w-0">
           <SalesFormCard
             error={error}
             productTypes={productTypes}
@@ -266,7 +266,7 @@ export default function SalesPage() {
           />
         </div>
 
-        <div className="lg:col-span-3 h-full overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col min-w-0 overflow-hidden">
           <SalesTable sales={paginatedSales} />
           <SalesPagination
             pagination={pagination}
