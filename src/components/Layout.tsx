@@ -304,12 +304,12 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <div
-        className={`transition-all duration-200 ${
+        className={`flex min-h-screen min-w-0 flex-col transition-all duration-200 ${
           sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
         }`}
       >
         {/* Top bar */}
-        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
+        <header className="shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
           <div className="relative flex items-center justify-between px-6 py-3">
             {/* Left side - Menu button */}
             <div className="flex items-center space-x-4">
@@ -393,8 +393,13 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="p-6" ref={mainContentRef}>{children}</main>
+        {/* Page content — flex-1 + min-h-0 so pages (e.g. sales table) can fill remaining viewport height */}
+        <main
+          className="flex min-h-0 flex-1 flex-col p-6 min-w-0"
+          ref={mainContentRef}
+        >
+          {children}
+        </main>
       </div>
 
       {/* Mobile overlay */}

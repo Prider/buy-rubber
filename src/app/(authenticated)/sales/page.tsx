@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 import SalesFormCard from '@/components/sales/SalesFormCard';
 import SalesTable from '@/components/sales/SalesTable';
-import SalesPagination from '@/components/sales/SalesPagination';
 
 interface ProductType {
   id: string;
@@ -252,28 +251,26 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
-        <div className="shrink-0 w-full min-w-0">
-          <SalesFormCard
-            error={error}
-            productTypes={productTypes}
-            formData={formData}
-            totalPreview={totalPreview}
-            saving={saving}
-            onInputChange={handleInputChange}
-            onSave={handleSave}
-          />
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+      <div className="shrink-0 w-full min-w-0">
+        <SalesFormCard
+          error={error}
+          productTypes={productTypes}
+          formData={formData}
+          totalPreview={totalPreview}
+          saving={saving}
+          onInputChange={handleInputChange}
+          onSave={handleSave}
+        />
+      </div>
 
-        <div className="flex-1 min-h-0 flex flex-col min-w-0 overflow-hidden">
-          <SalesTable sales={paginatedSales} />
-          <SalesPagination
-            pagination={pagination}
-            loading={saving}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <SalesTable
+          sales={paginatedSales}
+          pagination={pagination}
+          loading={saving}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

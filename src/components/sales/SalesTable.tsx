@@ -1,6 +1,7 @@
 'use client';
 
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import SalesPagination from '@/components/sales/SalesPagination';
 
 interface SaleRow {
   id: string;
@@ -19,14 +20,30 @@ interface SaleRow {
   totalAmount: number;
 }
 
-interface SalesTableProps {
-  sales: SaleRow[];
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
 }
 
-export default function SalesTable({ sales }: SalesTableProps) {
+interface SalesTableProps {
+  sales: SaleRow[];
+  pagination: PaginationInfo;
+  loading?: boolean;
+  onPageChange: (page: number) => void;
+}
+
+export default function SalesTable({
+  sales,
+  pagination,
+  loading = false,
+  onPageChange,
+}: SalesTableProps) {
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+    <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden min-h-0">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600 shrink-0">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">ตารางรายการขาย</h2>
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
@@ -75,6 +92,7 @@ export default function SalesTable({ sales }: SalesTableProps) {
           </tbody>
         </table>
       </div>
+      <SalesPagination pagination={pagination} loading={loading} onPageChange={onPageChange} embedded />
     </div>
   );
 }

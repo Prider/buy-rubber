@@ -14,9 +14,16 @@ interface SalesPaginationProps {
   pagination: PaginationInfo;
   loading: boolean;
   onPageChange: (page: number) => void;
+  /** When true, render as footer inside SalesTable (no outer card / margin). */
+  embedded?: boolean;
 }
 
-export default function SalesPagination({ pagination, loading, onPageChange }: SalesPaginationProps) {
+export default function SalesPagination({
+  pagination,
+  loading,
+  onPageChange,
+  embedded = false,
+}: SalesPaginationProps) {
   const { page, limit, total, totalPages } = pagination;
 
   if (totalPages <= 1) return null;
@@ -24,9 +31,13 @@ export default function SalesPagination({ pagination, loading, onPageChange }: S
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
+  const outerClass = embedded
+    ? 'shrink-0 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+    : 'mt-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden';
+
   return (
-    <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 flex items-center justify-between">
+    <div className={outerClass}>
+      <div className="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm text-gray-600 dark:text-gray-400">
           แสดง {from} - {to} จาก {total} รายการ
         </div>
@@ -66,7 +77,11 @@ export default function SalesPagination({ pagination, loading, onPageChange }: S
               }
 
               if (pageNum === page - 2 || pageNum === page + 2) {
-                return <span key={pageNum} className="px-2 text-gray-500">...</span>;
+                return (
+                  <span key={pageNum} className="px-2 text-gray-500">
+                    ...
+                  </span>
+                );
               }
 
               return null;
@@ -85,4 +100,3 @@ export default function SalesPagination({ pagination, loading, onPageChange }: S
     </div>
   );
 }
-
