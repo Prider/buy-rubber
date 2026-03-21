@@ -251,9 +251,10 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-      <div className="shrink-0 w-full min-w-0">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden">
+      <div className="w-full min-w-0 shrink-0 overflow-x-auto">
         <SalesFormCard
+          compact
           error={error}
           productTypes={productTypes}
           formData={formData}
@@ -266,6 +267,7 @@ export default function SalesPage() {
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <SalesTable
+          compact
           sales={paginatedSales}
           pagination={pagination}
           loading={saving}
