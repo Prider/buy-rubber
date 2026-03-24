@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const companyName = searchParams.get('companyName');
     const productTypeId = searchParams.get('productTypeId');
     const sellingType = searchParams.get('sellingType');
+    const search = searchParams.get('search');
 
     const where: Record<string, unknown> = {};
 
@@ -30,9 +31,26 @@ export async function GET(request: NextRequest) {
     if (productTypeId) where.productTypeId = productTypeId;
     if (sellingType) where.sellingType = sellingType;
 
+    if (search) {
+      const s = String(search).trim();
+      if (s) {
+        where.OR = [
+          { saleNo: { contains: s } },
+          { companyName: { contains: s } },
+          { sellingType: { contains: s } },
+          { productType: { is: { name: { contains: s } } } },
+          { productType: { is: { code: { contains: s } } } },
+        ];
+      }
+    }
+
     const sales = await (prisma as any).sale.findMany({
       where,
-      include: { productType: true, user: true },
+      include: {
+        productType: true,
+        // Avoid returning sensitive user fields (e.g. password hash)
+        user: { select: { id: true, username: true } },
+      },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
 

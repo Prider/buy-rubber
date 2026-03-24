@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 import SalesFormCard from '@/components/sales/SalesFormCard';
 import SalesTable from '@/components/sales/SalesTable';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface ProductType {
   id: string;
@@ -83,6 +84,10 @@ export default function SalesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Search state (debounced) - similar UX to PurchasesList
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   const [formData, setFormData] = useState<SaleFormData>(() => ({
     date: getTodayDate(),
     companyName: '',
@@ -133,12 +138,26 @@ export default function SalesPage() {
     return { ...rest, expenseNote: expenseNote ?? notes ?? null };
   }, []);
 
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm('');
+  }, []);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+    },
+    [],
+  );
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      const salesUrl = debouncedSearchTerm
+        ? `/api/sales?search=${encodeURIComponent(debouncedSearchTerm)}`
+        : '/api/sales';
       const [productRes, salesRes] = await Promise.all([
         fetch('/api/product-types'),
-        fetch('/api/sales'),
+        fetch(salesUrl),
       ]);
 
       if (productRes.ok) {
@@ -154,7 +173,7 @@ export default function SalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [normalizeSaleRow]);
+  }, [normalizeSaleRow, debouncedSearchTerm]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -164,6 +183,11 @@ export default function SalesPage() {
     }
     loadData();
   }, [isLoading, user, router, loadData]);
+
+  // When search changes, start from the first page slice
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -270,7 +294,10 @@ export default function SalesPage() {
           compact
           sales={paginatedSales}
           pagination={pagination}
-          loading={saving}
+          loading={loading || saving}
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          onClearSearch={handleClearSearch}
           onPageChange={setCurrentPage}
         />
       </div>
