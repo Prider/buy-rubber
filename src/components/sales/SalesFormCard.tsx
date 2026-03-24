@@ -1,7 +1,14 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { formatCurrency } from '@/lib/utils';
+import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
+import {
+  getSalesFormCardBorderClass,
+  getSalesFormCardTitle,
+  getSalesFormLayoutClasses,
+  getSalesFormSaveButtonText,
+} from '@/components/sales/salesFormCardUi';
 
 interface ProductType {
   id: string;
@@ -22,12 +29,6 @@ interface SaleFormData {
   sellingType: string;
 }
 
-const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'];
-const EXPENSE_TYPES = ['ค่าขนส่ง', 'ค่าแรง', 'ค่าบริการ', 'อื่นๆ'];
-
-const INPUT_CLASS =
-  'w-full min-w-0 px-3 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600';
-
 function Field({
   label,
   children,
@@ -45,7 +46,7 @@ function Field({
   );
 }
 
-interface SalesFormCardProps {
+export interface SalesFormCardProps {
   /** Tighter spacing for viewport-fit layouts (e.g. sales page). */
   compact?: boolean;
   /** Initial fold state; form body starts open when true (default). */
@@ -55,8 +56,11 @@ interface SalesFormCardProps {
   formData: SaleFormData;
   totalPreview: number;
   saving: boolean;
+  isEditing?: boolean;
+  editingSaleNo?: string | null;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSave: () => void;
+  onCancelEdit?: () => void;
 }
 
 function ChevronIcon({ open, className = 'h-5 w-5' }: { open: boolean; className?: string }) {
@@ -73,6 +77,8 @@ function ChevronIcon({ open, className = 'h-5 w-5' }: { open: boolean; className
   );
 }
 
+const PANEL_ID = 'sales-form-card-panel';
+
 export default function SalesFormCard({
   compact = false,
   defaultOpen = true,
@@ -81,40 +87,33 @@ export default function SalesFormCard({
   formData,
   totalPreview,
   saving,
+  isEditing = false,
+  editingSaleNo = null,
   onInputChange,
   onSave,
+  onCancelEdit,
 }: SalesFormCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  const buttonText = useMemo(() => {
-    return saving ? 'กำลังบันทึก...' : 'บันทึก Selling Transactions';
-  }, [saving]);
-
-  const inputClass = compact
-    ? 'w-full min-w-0 px-2.5 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600'
-    : INPUT_CLASS;
-
-  const titleClass = compact
-    ? 'text-base font-bold text-gray-900 dark:text-white'
-    : 'text-xl font-bold text-gray-900 dark:text-white';
-  const bodyPad = compact ? 'p-2.5 flex flex-col gap-2 min-w-0' : 'p-4 flex flex-col gap-3 min-w-0';
-  const rowGap = compact ? 'gap-2' : 'gap-3';
-
-  const headerBtnPad = compact ? 'px-4 py-2' : 'px-6 py-4';
-  const panelId = 'sales-form-card-panel';
+  const layout = getSalesFormLayoutClasses(compact);
+  const cardBorderClass = getSalesFormCardBorderClass(isEditing);
+  const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
+  const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
 
   return (
-    <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <div
+      data-testid="sales-form-card"
+      className={`flex w-full flex-col overflow-hidden rounded-2xl border bg-white shadow-lg dark:bg-gray-800 ${cardBorderClass}`}
+    >
       <button
         type="button"
         id="sales-form-card-toggle"
         aria-expanded={isOpen}
-        aria-controls={panelId}
+        aria-controls={PANEL_ID}
         onClick={() => setIsOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40 ${headerBtnPad} border-b border-gray-200 dark:border-gray-600`}
+        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40 ${layout.headerBtnPad} border-b border-gray-200 dark:border-gray-600`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h2 className={`min-w-0 ${titleClass}`}>บันทึกการขาย</h2>
+          <h2 className={`min-w-0 ${layout.titleClass}`}>{titleText}</h2>
           {!isOpen && error ? (
             <span
               className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-200"
@@ -129,149 +128,182 @@ export default function SalesFormCard({
       </button>
 
       <div
-        id={panelId}
+        id={PANEL_ID}
         role="region"
         aria-labelledby="sales-form-card-toggle"
         className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className={bodyPad}>
-        {error && (
-          <div
-            className={`shrink-0 rounded-lg border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 ${
-              compact ? 'p-1.5 text-xs' : 'p-2 text-sm'
-            }`}
-          >
-            {error}
-          </div>
-        )}
+          <div className={layout.bodyPad}>
+            {error ? (
+              <div
+                className={`shrink-0 rounded-lg border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 ${
+                  compact ? 'p-1.5 text-xs' : 'p-2 text-sm'
+                }`}
+              >
+                {error}
+              </div>
+            ) : null}
 
-        {/* Row 1: main sale fields */}
-        <div className={`flex flex-wrap xl:flex-nowrap items-end ${rowGap} w-full min-w-0 overflow-x-auto pb-0.5`}>
-          <Field label="วันที่" className="min-w-[9.5rem] max-w-[10rem]">
-            <input type="date" name="date" value={formData.date} onChange={onInputChange} className={inputClass} />
-          </Field>
-          <Field label="ชื่อบริษัทปลายทาง" className="min-w-[10rem] flex-[1.25]">
-            <input
-              name="companyName"
-              value={formData.companyName}
-              onChange={onInputChange}
-              className={inputClass}
-              placeholder="เช่น บริษัท A"
-            />
-          </Field>
-          <Field label="รูปแบบการขาย" className="min-w-[8.5rem] max-w-[10rem]">
-            <select name="sellingType" value={formData.sellingType} onChange={onInputChange} className={inputClass}>
-              {SELLING_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="ประเภทสินค้า" className="!flex-none min-w-[8.5rem] max-w-[11rem] w-[10rem] shrink-0">
-            <select name="productTypeId" value={formData.productTypeId} onChange={onInputChange} className={inputClass}>
-              <option value="">เลือกประเภทสินค้า</option>
-              {productTypes.map((pt) => (
-                <option key={pt.id} value={pt.id}>
-                  {pt.code} - {pt.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="%ยาง" className="min-w-[6.5rem] max-w-[7rem]">
-            <input
-              type="number"
-              step="0.01"
-              name="rubberPercent"
-              value={formData.rubberPercent}
-              onChange={onInputChange}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="น้ำหนัก (กก.)" className="min-w-[7rem] max-w-[8rem]">
-            <input
-              type="number"
-              step="0.01"
-              name="weight"
-              value={formData.weight}
-              onChange={onInputChange}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="ราคา/กก." className="min-w-[7rem] max-w-[8rem]">
-            <input
-              type="number"
-              step="0.01"
-              name="pricePerUnit"
-              value={formData.pricePerUnit}
-              onChange={onInputChange}
-              className={inputClass}
-            />
-          </Field>
-        </div>
-
-        {/* Row 2: expense fields + total + save */}
-        <div
-          className={`flex flex-wrap xl:flex-nowrap items-end ${rowGap} w-full min-w-0 overflow-x-auto border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
-        >
-          <Field label="ชนิดค่าใช้จ่าย" className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
-            <select name="expenseType" value={formData.expenseType} onChange={onInputChange} className={inputClass}>
-              <option value="">ไม่ระบุ</option>
-              {EXPENSE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="ค่าใช้จ่าย (บาท)" className="min-w-[7.5rem] max-w-[9rem]">
-            <input
-              type="number"
-              step="0.01"
-              name="expenseCost"
-              value={formData.expenseCost}
-              onChange={onInputChange}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="หมายเหตุค่าใช้จ่าย" className="min-w-[10rem] flex-[1.5]">
-            <input
-              name="expenseNote"
-              value={formData.expenseNote}
-              onChange={onInputChange}
-              placeholder="เช่น ค่าขนส่ง..."
-              className={inputClass}
-            />
-          </Field>
-          <div
-            className={`flex w-full shrink-0 flex-wrap items-center xl:ml-auto xl:w-auto xl:justify-end ${compact ? 'gap-2' : 'gap-3 pb-0.5'}`}
-          >
             <div
-              className={`rounded-lg bg-gray-50 whitespace-nowrap dark:bg-gray-700 ${
-                compact
-                  ? 'min-w-0 px-3 py-1.5 text-xs sm:text-sm'
-                  : 'min-w-[18rem] px-5 py-2.5 text-sm sm:min-w-[22rem]'
-              }`}
+              className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 overflow-x-auto pb-0.5`}
             >
-              ยอดรวมประมาณการ: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
+              <Field label="วันที่" className="min-w-[9.5rem] max-w-[10rem]">
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                />
+              </Field>
+              <Field label="ชื่อบริษัทปลายทาง" className="min-w-[10rem] flex-[1.25]">
+                <input
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                  placeholder="เช่น บริษัท A"
+                />
+              </Field>
+              <Field label="รูปแบบการขาย" className="min-w-[8.5rem] max-w-[10rem]">
+                <select
+                  name="sellingType"
+                  value={formData.sellingType}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                >
+                  {SELLING_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="ประเภทสินค้า" className="!flex-none min-w-[8.5rem] max-w-[11rem] w-[10rem] shrink-0">
+                <select
+                  name="productTypeId"
+                  value={formData.productTypeId}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                >
+                  <option value="">เลือกประเภทสินค้า</option>
+                  {productTypes.map((pt) => (
+                    <option key={pt.id} value={pt.id}>
+                      {pt.code} - {pt.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="%ยาง" className="min-w-[6.5rem] max-w-[7rem]">
+                <input
+                  type="number"
+                  step="0.01"
+                  name="rubberPercent"
+                  value={formData.rubberPercent}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                />
+              </Field>
+              <Field label="น้ำหนัก (กก.)" className="min-w-[7rem] max-w-[8rem]">
+                <input
+                  type="number"
+                  step="0.01"
+                  name="weight"
+                  value={formData.weight}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                />
+              </Field>
+              <Field label="ราคา/กก." className="min-w-[7rem] max-w-[8rem]">
+                <input
+                  type="number"
+                  step="0.01"
+                  name="pricePerUnit"
+                  value={formData.pricePerUnit}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                />
+              </Field>
             </div>
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={saving}
-              className={`shrink-0 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 ${
-                compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
-              }`}
+
+            <div
+              className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 overflow-x-auto border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
             >
-              {buttonText}
-            </button>
-          </div>
-        </div>
+              <Field label="ชนิดค่าใช้จ่าย" className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
+                <select
+                  name="expenseType"
+                  value={formData.expenseType}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                >
+                  <option value="">ไม่ระบุ</option>
+                  {EXPENSE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="ค่าใช้จ่าย (บาท)" className="min-w-[7.5rem] max-w-[9rem]">
+                <input
+                  type="number"
+                  step="0.01"
+                  name="expenseCost"
+                  value={formData.expenseCost}
+                  onChange={onInputChange}
+                  className={layout.inputClass}
+                />
+              </Field>
+              <Field label="หมายเหตุค่าใช้จ่าย" className="min-w-[10rem] flex-[1.5]">
+                <input
+                  name="expenseNote"
+                  value={formData.expenseNote}
+                  onChange={onInputChange}
+                  placeholder="เช่น ค่าขนส่ง..."
+                  className={layout.inputClass}
+                />
+              </Field>
+              <div
+                className={`flex w-full shrink-0 flex-wrap items-center xl:ml-auto xl:w-auto xl:justify-end ${compact ? 'gap-2' : 'gap-3 pb-0.5'}`}
+              >
+                {isEditing && onCancelEdit ? (
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    disabled={saving}
+                    className={`shrink-0 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 ${
+                      compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
+                    }`}
+                  >
+                    ยกเลิกการแก้ไข
+                  </button>
+                ) : null}
+                <div
+                  className={`rounded-lg bg-gray-50 whitespace-nowrap dark:bg-gray-700 ${
+                    compact
+                      ? 'min-w-0 px-3 py-1.5 text-xs sm:text-sm'
+                      : 'min-w-[18rem] px-5 py-2.5 text-sm sm:min-w-[22rem]'
+                  }`}
+                >
+                  ยอดรวมประมาณการ: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
+                </div>
+                <button
+                  type="button"
+                  data-testid="sales-form-save"
+                  onClick={onSave}
+                  disabled={saving}
+                  className={`shrink-0 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 ${
+                    compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
+                  }`}
+                >
+                  {saveButtonText}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

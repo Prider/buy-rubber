@@ -40,6 +40,10 @@ interface SalesTableProps {
   searchTerm?: string;
   onSearchChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   onClearSearch?: () => void;
+  editingSaleId?: string | null;
+  deletingSaleId?: string | null;
+  onEdit?: (row: SaleRow) => void;
+  onDelete?: (saleId: string) => void;
 }
 
 export default function SalesTable({
@@ -51,6 +55,10 @@ export default function SalesTable({
   searchTerm = '',
   onSearchChange,
   onClearSearch,
+  editingSaleId = null,
+  deletingSaleId = null,
+  onEdit,
+  onDelete,
 }: SalesTableProps) {
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
   const titleClass = compact
@@ -144,18 +152,26 @@ export default function SalesTable({
               <th className={`${cellPad} text-left`}>หมายเหตุค่าใช้จ่าย</th>
               <th className={`${cellPad} text-left`}>รูปแบบขาย</th>
               <th className={`${cellPad} text-right`}>ยอดรวม</th>
+              {(onEdit || onDelete) && <th className={`${cellPad} text-center`}>จัดการ</th>}
             </tr>
           </thead>
           <tbody>
             {sales.length === 0 ? (
               <tr>
-                <td colSpan={12} className={`${cellPad} py-8 text-center text-gray-500`}>
+                <td colSpan={onEdit || onDelete ? 13 : 12} className={`${cellPad} py-8 text-center text-gray-500`}>
                   ยังไม่มีข้อมูลการขาย
                 </td>
               </tr>
             ) : (
               sales.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100 dark:border-gray-700">
+                <tr
+                  key={row.id}
+                  className={`${
+                    editingSaleId === row.id
+                      ? 'border-y border-violet-300 dark:border-violet-500'
+                      : 'border-t border-gray-100 dark:border-gray-700'
+                  }`}
+                >
                   <td className={cellPad}>{new Date(row.date).toLocaleDateString('th-TH')}</td>
                   <td className={cellPad}>{row.saleNo}</td>
                   <td className={cellPad}>{row.companyName}</td>
@@ -168,6 +184,36 @@ export default function SalesTable({
                   <td className={cellPad}>{row.expenseNote || '-'}</td>
                   <td className={cellPad}>{row.sellingType}</td>
                   <td className={`${cellPad} text-right font-semibold`}>{formatCurrency(row.totalAmount)}</td>
+                  {(onEdit || onDelete) && (
+                    <td className={`${cellPad} text-center`}>
+                      <div className="inline-flex items-center gap-2">
+                        {onEdit ? (
+                          <button
+                            type="button"
+                            onClick={() => onEdit(row)}
+                            disabled={Boolean(deletingSaleId)}
+                            className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                              editingSaleId === row.id
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                            } disabled:opacity-50`}
+                          >
+                            {editingSaleId === row.id ? 'ยกเลิกแก้ไข' : 'แก้ไข'}
+                          </button>
+                        ) : null}
+                        {onDelete ? (
+                          <button
+                            type="button"
+                            onClick={() => onDelete(row.id)}
+                            disabled={Boolean(deletingSaleId)}
+                            className="rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/60"
+                          >
+                            {deletingSaleId === row.id ? 'กำลังลบ...' : 'ลบ'}
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
