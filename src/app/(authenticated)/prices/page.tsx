@@ -9,18 +9,18 @@ import { usePriceData } from '@/hooks/usePriceData';
 import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
-import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
-import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
+// import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
+// import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
 
 const ProductTypeFormModal = dynamic(
   () => import('@/components/prices/ProductTypeFormModal'),
   { ssr: false, loading: () => null }
 );
 
-const SetPriceFormModal = dynamic(
-  () => import('@/components/prices/SetPriceFormModal'),
-  { ssr: false, loading: () => null }
-);
+// const SetPriceFormModal = dynamic(
+//   () => import('@/components/prices/SetPriceFormModal'),
+//   { ssr: false, loading: () => null }
+// );
 
 interface ProductType {
   id: string;
@@ -29,25 +29,25 @@ interface ProductType {
   description?: string;
 }
 
-interface ProductPrice {
-  productTypeId: string;
-  price: number;
-}
+// interface ProductPrice {
+//   productTypeId: string;
+//   price: number;
+// }
 
 export default function PricesPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const { showSuccess, showError, showWarning, showConfirm } = useAlert();
-  const { loading, productTypes, loadData, getPriceForDateAndType } = usePriceData();
+  const { showSuccess, showError, showConfirm } = useAlert();
+  const { productTypes, loadData } = usePriceData();
   
-  const [showForm, setShowForm] = useState(false);
+  // const [showForm, setShowForm] = useState(false);
   const [showProductTypeForm, setShowProductTypeForm] = useState(false);
   const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
   
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    prices: [] as ProductPrice[],
-  });
+  // const [formData, setFormData] = useState({
+  //   date: new Date().toISOString().split('T')[0],
+  //   prices: [] as ProductPrice[],
+  // });
   
   const [productTypeForm, setProductTypeForm] = useState({
     code: '',
@@ -56,97 +56,97 @@ export default function PricesPage() {
   });
 
   // Initialize form prices when productTypes load
-  const initializeFormPrices = (types: ProductType[]) => {
-    const todayDate = new Date().toISOString().split('T')[0];
+  // const initializeFormPrices = (types: ProductType[]) => {
+  //   const todayDate = new Date().toISOString().split('T')[0];
     
-    setFormData(prev => ({
-      ...prev,
-      prices: types.map(pt => {
-        // Use current price if exists, otherwise 0
-        const currentPrice = getPriceForDateAndType(todayDate, pt.id);
-        return {
-          productTypeId: pt.id,
-          price: currentPrice || 0,
-        };
-      }),
-    }));
-  };
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     prices: types.map(pt => {
+  //       // Use current price if exists, otherwise 0
+  //       const currentPrice = getPriceForDateAndType(todayDate, pt.id);
+  //       return {
+  //         productTypeId: pt.id,
+  //         price: currentPrice || 0,
+  //       };
+  //     }),
+  //   }));
+  // };
 
   // Check if any price has been changed from today's value
-  const hasPriceChanges = () => {
-    const todayDate = new Date().toISOString().split('T')[0];
+  // const hasPriceChanges = () => {
+  //   const todayDate = new Date().toISOString().split('T')[0];
     
-    return formData.prices.some(p => {
-      const currentPrice = getPriceForDateAndType(todayDate, p.productTypeId);
+  //   return formData.prices.some(p => {
+  //     const currentPrice = getPriceForDateAndType(todayDate, p.productTypeId);
       
-      if (currentPrice === null && p.price > 0) {
-        return true;
-      }
+  //     if (currentPrice === null && p.price > 0) {
+  //       return true;
+  //     }
       
-      if (currentPrice !== null && Math.abs(currentPrice - p.price) > 0.001) {
-        return true;
-      }
+  //     if (currentPrice !== null && Math.abs(currentPrice - p.price) > 0.001) {
+  //       return true;
+  //     }
       
-      return false;
-    });
-  };
+  //     return false;
+  //   });
+  // };
 
-  // Price form handlers
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // // Price form handlers
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
     
-    const hasValidPrice = formData.prices.some(p => p.price > 0);
-    if (!hasValidPrice) {
-      showWarning('คำเตือน', 'กรุณาระบุราคาอย่างน้อย 1 ประเภทสินค้า');
-      return;
-    }
+  //   const hasValidPrice = formData.prices.some(p => p.price > 0);
+  //   if (!hasValidPrice) {
+  //     showWarning('คำเตือน', 'กรุณาระบุราคาอย่างน้อย 1 ประเภทสินค้า');
+  //     return;
+  //   }
     
-    console.log('[Price Form] Submitting:', formData);
+  //   console.log('[Price Form] Submitting:', formData);
     
-    try {
-      const response = await axios.post('/api/prices/daily', formData);
-      console.log('[Price Form] Success:', response.data);
+  //   try {
+  //     const response = await axios.post('/api/prices/daily', formData);
+  //     console.log('[Price Form] Success:', response.data);
       
-      setShowForm(false);
+  //     setShowForm(false);
       
-      // Force reload data to show updated prices
-      await loadData();
+  //     // Force reload data to show updated prices
+  //     await loadData();
       
-      // Reset form with current prices (just loaded)
-      const todayDate = new Date().toISOString().split('T')[0];
-      setFormData({
-        date: todayDate,
-        prices: productTypes.map(pt => ({
-          productTypeId: pt.id,
-          price: getPriceForDateAndType(todayDate, pt.id) || 0,
-        })),
-      });
+  //     // Reset form with current prices (just loaded)
+  //     const todayDate = new Date().toISOString().split('T')[0];
+  //     setFormData({
+  //       date: todayDate,
+  //       prices: productTypes.map(pt => ({
+  //         productTypeId: pt.id,
+  //         price: getPriceForDateAndType(todayDate, pt.id) || 0,
+  //       })),
+  //     });
       
-      showSuccess('บันทึกราคาสำเร็จ', `บันทึกราคา ${response.data.count} รายการเรียบร้อยแล้ว`, { autoClose: true, autoCloseDelay: 3000 });
-    } catch (error: unknown) {
-      console.error('[Price Form] Error:', error);
-      const errorMsg = error instanceof Error 
-        ? error.message 
-        : (error as { response?: { data?: { details?: string; error?: string } } })?.response?.data?.details 
-          || (error as { response?: { data?: { error?: string } } })?.response?.data?.error 
-          || 'เกิดข้อผิดพลาด';
-      showError('ไม่สามารถบันทึกราคาได้', errorMsg);
-    }
-  };
+  //     showSuccess('บันทึกราคาสำเร็จ', `บันทึกราคา ${response.data.count} รายการเรียบร้อยแล้ว`, { autoClose: true, autoCloseDelay: 3000 });
+  //   } catch (error: unknown) {
+  //     console.error('[Price Form] Error:', error);
+  //     const errorMsg = error instanceof Error 
+  //       ? error.message 
+  //       : (error as { response?: { data?: { details?: string; error?: string } } })?.response?.data?.details 
+  //         || (error as { response?: { data?: { error?: string } } })?.response?.data?.error 
+  //         || 'เกิดข้อผิดพลาด';
+  //     showError('ไม่สามารถบันทึกราคาได้', errorMsg);
+  //   }
+  // };
 
-  const updatePrice = (productTypeId: string, price: number) => {
-    setFormData(prev => ({
-      ...prev,
-      prices: prev.prices.map(p =>
-        p.productTypeId === productTypeId ? { ...p, price } : p
-      ),
-    }));
-  };
+  // const updatePrice = (productTypeId: string, price: number) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     prices: prev.prices.map(p =>
+  //       p.productTypeId === productTypeId ? { ...p, price } : p
+  //     ),
+  //   }));
+  // };
 
-  const handleOpenPriceForm = () => {
-    initializeFormPrices(productTypes);
-    setShowForm(true);
-  };
+  // const handleOpenPriceForm = () => {
+  //   initializeFormPrices(productTypes);
+  //   setShowForm(true);
+  // };
 
   // Product type handlers
   const handleProductTypeSubmit = async (e: React.FormEvent) => {
@@ -260,8 +260,7 @@ export default function PricesPage() {
           onDelete={handleDeleteProductType}
         />
 
-        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-          {/* Header */}
+        {/* <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -286,20 +285,18 @@ export default function PricesPage() {
             </button>
           </div>
 
-          {/* Today's Prices */}
           <TodayPricesDisplay
             productTypes={productTypes}
             getPriceForDateAndType={getPriceForDateAndType}
           />
 
-          {/* Price History Table */}
           <PriceHistoryTable
             productTypes={productTypes}
             getPriceForDateAndType={getPriceForDateAndType}
             loading={loading}
           />
           <div className="absolute inset-0 rounded-2xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm pointer-events-auto"></div>
-        </div>
+        </div> */}
       </div>
 
       {/* Product Type Form Modal */}
@@ -313,7 +310,7 @@ export default function PricesPage() {
       />
 
       {/* Set Price Form Modal */}
-      <SetPriceFormModal
+      {/* <SetPriceFormModal
         isOpen={showForm}
         formData={formData}
         productTypes={productTypes}
@@ -323,7 +320,7 @@ export default function PricesPage() {
         onSubmit={handleSubmit}
         onDateChange={(date) => setFormData({ ...formData, date })}
         onPriceChange={updatePrice}
-      />
+      /> */}
     </>
   );
 }

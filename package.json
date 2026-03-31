@@ -26,6 +26,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:sales": "tsx prisma/seedSale.ts",
+    "db:seed:product-types": "tsx prisma/seedProductTypes.ts",
+    "db:rebuild-stock": "tsx prisma/rebuildStock.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",

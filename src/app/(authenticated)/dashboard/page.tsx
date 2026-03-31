@@ -67,7 +67,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 h-full min-h-0 overflow-hidden pb-4">
+    <div className="flex flex-col gap-6 pb-4">
       {/* Header Section */}
       <div className="flex-shrink-0">
         <div className="flex items-center space-x-3">
@@ -97,14 +97,14 @@ export default function DashboardPage() {
       </div> */}
 
       {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-        <div className="lg:col-span-1 h-full min-h-0">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
           <RecentPurchasesList purchases={recentPurchases} />
         </div>
-        <div className="lg:col-span-1 h-full min-h-0">
+        <div className="lg:col-span-1">
           <RecentExpensesList expenses={recentExpenses} />
         </div>
-        <div className="lg:col-span-1 h-full min-h-0">
+        <div className="lg:col-span-1">
           <TopMembersList topMembers={topMembers} />
         </div>
       </div>

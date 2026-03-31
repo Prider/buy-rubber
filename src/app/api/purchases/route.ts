@@ -8,6 +8,7 @@ import {
   generateDocumentNumber,
   getUserFromToken
 } from '@/lib/utils';
+import { applyPurchaseToStock } from '@/lib/stock/stockService';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -250,32 +251,45 @@ export async function POST(request: NextRequest) {
       purchaseDate = data.date instanceof Date ? data.date : new Date();
     }
     
-    const purchase = await prisma.purchase.create({
-      data: {
-        purchaseNo,
-        date: purchaseDate,
-        memberId: data.memberId,
-        productTypeId: data.productTypeId,
-        userId: userId,
-        grossWeight: data.grossWeight,
-        containerWeight: data.containerWeight || 0,
-        netWeight,
-        rubberPercent: data.rubberPercent,
-        dryWeight,
-        basePrice,
-        adjustedPrice,
-        bonusPrice: data.bonusPrice || 0,
-        finalPrice,
-        totalAmount,
-        ownerAmount,
-        tapperAmount,
-        notes: data.notes,
-      },
-      include: {
-        member: true,
-        productType: true,
-        user: true,
-      },
+    const purchase = await prisma.$transaction(async (tx) => {
+      const created = await tx.purchase.create({
+        data: {
+          purchaseNo,
+          date: purchaseDate,
+          memberId: data.memberId,
+          productTypeId: data.productTypeId,
+          userId: userId,
+          grossWeight: data.grossWeight,
+          containerWeight: data.containerWeight || 0,
+          netWeight,
+          rubberPercent: data.rubberPercent,
+          dryWeight,
+          basePrice,
+          adjustedPrice,
+          bonusPrice: data.bonusPrice || 0,
+          finalPrice,
+          totalAmount,
+          ownerAmount,
+          tapperAmount,
+          notes: data.notes,
+        },
+        include: {
+          member: true,
+          productType: true,
+          user: true,
+        },
+      });
+
+      await applyPurchaseToStock(tx, {
+        productTypeId: created.productTypeId,
+        qtyKg: created.netWeight,
+        unitCostPerKg: created.finalPrice,
+        refNo: created.purchaseNo,
+        date: created.date,
+        notes: created.notes,
+      });
+
+      return created;
     });
 
     // Invalidate dashboard cache when a purchase is created
@@ -342,7 +356,10 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     });
 
     // Validate all items and prepare purchase data
-    const purchaseDataList = [];
+    const purchaseDataList: {
+      purchaseNo: string; // Same purchaseNo for all items in the batch
+      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
+    }[] = [];
     
     for (const item of items) {
       // Validate required fields
@@ -481,18 +498,31 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     }
 
     // Save all purchases in a transaction with the same purchaseNo
-    const purchases = await prisma.$transaction(
-      purchaseDataList.map(data => 
-        prisma.purchase.create({
-          data,
+    const purchases = await prisma.$transaction(async (tx) => {
+      const createdPurchases = [];
+      for (const itemData of purchaseDataList) {
+        const created = await tx.purchase.create({
+          data: itemData,
           include: {
             member: true,
             productType: true,
             user: true,
           },
-        })
-      )
-    );
+        });
+
+        await applyPurchaseToStock(tx, {
+          productTypeId: created.productTypeId,
+          qtyKg: created.netWeight,
+          unitCostPerKg: created.finalPrice,
+          refNo: created.purchaseNo,
+          date: created.date,
+          notes: created.notes,
+        });
+
+        createdPurchases.push(created);
+      }
+      return createdPurchases;
+    });
 
     // Invalidate dashboard cache when batch purchases are created
     cache.delete(CACHE_KEYS.DASHBOARD);

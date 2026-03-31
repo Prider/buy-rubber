@@ -59,6 +59,9 @@ model ProductType {
   purchases     Purchase[]
   productPrices ProductPrice[]
   sales         Sale[]
+
+  stockPositions     StockPosition[]
+  stockLedgerEntries StockLedgerEntry[]
 }
 
 // ราคาสินค้าตามประเภทประจำวัน
@@ -188,6 +191,51 @@ model Sale {
   @@index([companyName])
   @@index([productTypeId])
   @@index([sellingType])
+}
+
+// Current stock position per ProductType (netWeight-based, kg)
+model StockPosition {
+  id              String   @id @default(uuid())
+  productTypeId  String   @unique
+  quantityKg     Float    @default(0)
+  avgCostPerKg   Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  productType ProductType @relation(fields: [productTypeId], references: [id])
+  @@index([productTypeId])
+}
+
+// Ledger entries to allow correct average-cost calculation and audit trail
+model StockLedgerEntry {
+  id                     String        @id @default(uuid())
+  productTypeId          String
+  // "PURCHASE" | "SALE"
+  refType                String
+  refNo                  String?
+  refId                  String?
+
+  // Effective stock movement (kg)
+  qtyChangeKg            Float
+  unitCostPerKg          Float?
+  totalCost              Float?
+
+  // Snapshot balance after applying this entry (kg + avg cost)
+  balanceQtyKg           Float
+  balanceAvgCostPerKg   Float
+
+  // Use transaction date for sorting and reporting
+  date                   DateTime     @default(now())
+  notes                  String?
+
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  productType ProductType @relation(fields: [productTypeId], references: [id])
+
+  // productTypeId + time ordering (matches ledger list query)
+  @@index([productTypeId, date])
+  @@index([productTypeId, date, createdAt])
 }
 
 // ข้อมูลการสำรอง

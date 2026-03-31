@@ -20,6 +20,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
   { name: 'รับซื้อยาง', href: '/purchases', icon: '🚚' },
   { name: 'ขายสินค้า', href: '/sales', icon: '🛒' },
+  { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
   { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
@@ -304,7 +305,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <div
-        className={`flex min-h-screen min-w-0 flex-col transition-all duration-200 ${
+        className={`flex h-full min-h-0 min-w-0 flex-col transition-all duration-200 ${
           sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
         }`}
       >
