@@ -8,79 +8,21 @@ import SalesFormCard from '@/components/sales/SalesFormCard';
 import SalesTable from '@/components/sales/SalesTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAlert } from '@/hooks/useAlert';
-
-interface ProductType {
-  id: string;
-  code: string;
-  name: string;
-}
-
-interface SaleRow {
-  id: string;
-  saleNo: string;
-  date: string;
-  companyName: string;
-  productTypeId: string;
-  productType?: { name: string; code: string };
-  weight: number;
-  rubberPercent: number | null;
-  pricePerUnit: number;
-  expenseType: string | null;
-  expenseCost: number | null;
-  expenseNote: string | null;
-  sellingType: string;
-  totalAmount: number;
-}
-
-interface SaleFormData {
-  date: string;
-  companyName: string;
-  productTypeId: string;
-  weight: string;
-  rubberPercent: string;
-  pricePerUnit: string;
-  expenseType: string;
-  expenseCost: string;
-  expenseNote: string;
-  sellingType: string;
-}
-
-type SaleRowApi = Omit<SaleRow, 'expenseNote'> & {
-  notes?: string | null;
-  expenseNote?: string | null;
-};
-
-const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'];
-// Note: expense types are rendered in `SalesFormCard`
-
-function getTodayDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function parseOptionalNumber(v: string): number | null {
-  if (v === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function parseRequiredNumber(v: string): number | null {
-  if (v === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function toInputDate(value: string): string {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return getTodayDate();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import {
+  buildSalePayload,
+  computePagination,
+  computeTotalPreview,
+  getTodayDate,
+  normalizeSaleRow,
+  paginateRows,
+  parseRequiredNumber,
+  SELLING_TYPES,
+  toInputDate,
+  type ProductType,
+  type SaleFormData,
+  type SaleRow,
+  type SaleRowApi,
+} from './page.utils';
 
 export default function SalesPage() {
   const router = useRouter();
@@ -114,31 +56,17 @@ export default function SalesPage() {
     sellingType: SELLING_TYPES[0],
   }));
 
-  const totalPreview = useMemo(() => {
-    const w = parseRequiredNumber(formData.weight) ?? 0;
-    const p = parseRequiredNumber(formData.pricePerUnit) ?? 0;
-    const expenseCost = parseOptionalNumber(formData.expenseCost) ?? 0;
-    const total = w * p - expenseCost;
-    return total > 0 ? total : 0;
-  }, [formData.weight, formData.pricePerUnit, formData.expenseCost]);
+  const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
 
-  const pagination = useMemo(() => {
-    const total = sales.length;
-    const totalPages = Math.ceil(total / pageSize) || 1;
-    return {
-      page: currentPage,
-      limit: pageSize,
-      total,
-      totalPages,
-      hasMore: currentPage < totalPages,
-    };
-  }, [sales.length, currentPage]);
+  const pagination = useMemo(
+    () => computePagination(sales.length, currentPage, pageSize),
+    [sales.length, currentPage, pageSize],
+  );
 
-  const paginatedSales = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return sales.slice(start, end);
-  }, [sales, currentPage]);
+  const paginatedSales = useMemo(
+    () => paginateRows(sales, currentPage, pageSize),
+    [sales, currentPage, pageSize],
+  );
 
   const editingSaleNo = useMemo(() => {
     if (!editingSaleId) return null;
@@ -150,11 +78,6 @@ export default function SalesPage() {
       setCurrentPage(pagination.totalPages);
     }
   }, [pagination.page, pagination.totalPages]);
-
-  const normalizeSaleRow = useCallback((row: SaleRowApi): SaleRow => {
-    const { notes, expenseNote, ...rest } = row;
-    return { ...rest, expenseNote: expenseNote ?? notes ?? null };
-  }, []);
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('');
@@ -191,7 +114,7 @@ export default function SalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [normalizeSaleRow, debouncedSearchTerm]);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -250,18 +173,7 @@ export default function SalesPage() {
     setError('');
     try {
       const isEditing = Boolean(editingSaleId);
-      const payload = {
-        date: formData.date,
-        companyName: formData.companyName.trim(),
-        productTypeId: formData.productTypeId,
-        weight,
-        rubberPercent: formData.rubberPercent === '' ? null : parseFloat(formData.rubberPercent),
-        pricePerUnit,
-        expenseType: formData.expenseType || null,
-        expenseCost: parseOptionalNumber(formData.expenseCost),
-        notes: formData.expenseNote.trim() ? formData.expenseNote : null,
-        sellingType: formData.sellingType,
-      };
+      const payload = buildSalePayload(formData);
 
       const res = await fetch(isEditing ? `/api/sales/${editingSaleId}` : '/api/sales', {
         method: isEditing ? 'PUT' : 'POST',
@@ -351,7 +263,7 @@ export default function SalesPage() {
         setDeletingSaleId(null);
       }
     },
-    [editingSaleId, sales, showConfirm],
+    [editingSaleId, sales, showConfirm, resetForm],
   );
 
   if (isLoading || loading) {
