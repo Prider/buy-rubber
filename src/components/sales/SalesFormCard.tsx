@@ -28,6 +28,17 @@ interface SaleFormData {
   expenseNote: string;
   sellingType: string;
 }
+type SalesFormFieldName =
+  | 'date'
+  | 'companyName'
+  | 'productTypeId'
+  | 'weight'
+  | 'rubberPercent'
+  | 'pricePerUnit'
+  | 'expenseType'
+  | 'expenseCost'
+  | 'expenseNote'
+  | 'sellingType';
 
 function Field({
   label,
@@ -55,6 +66,11 @@ export interface SalesFormCardProps {
   productTypes: ProductType[];
   formData: SaleFormData;
   totalPreview: number;
+  selectedStockKg?: number | null;
+  selectedAvgCostPerKg?: number | null;
+  fieldErrors?: Partial<Record<SalesFormFieldName, string>>;
+  hasValidationError?: boolean;
+  isSubmitReady?: boolean;
   saving: boolean;
   isEditing?: boolean;
   editingSaleNo?: string | null;
@@ -86,6 +102,11 @@ export default function SalesFormCard({
   productTypes,
   formData,
   totalPreview,
+  selectedStockKg = null,
+  selectedAvgCostPerKg = null,
+  fieldErrors = {},
+  hasValidationError = false,
+  isSubmitReady = false,
   saving,
   isEditing = false,
   editingSaleNo = null,
@@ -98,6 +119,12 @@ export default function SalesFormCard({
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
   const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
+  const getInputClass = (field: SalesFormFieldName) =>
+    `${layout.inputClass} ${
+      fieldErrors[field]
+        ? 'border-red-500 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-500'
+        : ''
+    }`;
 
   return (
     <div
@@ -154,7 +181,7 @@ export default function SalesFormCard({
                   name="date"
                   value={formData.date}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('date')}
                 />
               </Field>
               <Field label="ชื่อบริษัทปลายทาง" className="min-w-[10rem] flex-[1.25]">
@@ -162,7 +189,7 @@ export default function SalesFormCard({
                   name="companyName"
                   value={formData.companyName}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('companyName')}
                   placeholder="เช่น บริษัท A"
                 />
               </Field>
@@ -171,7 +198,7 @@ export default function SalesFormCard({
                   name="sellingType"
                   value={formData.sellingType}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('sellingType')}
                 >
                   {SELLING_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -185,7 +212,7 @@ export default function SalesFormCard({
                   name="productTypeId"
                   value={formData.productTypeId}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('productTypeId')}
                 >
                   <option value="">เลือกประเภทสินค้า</option>
                   {productTypes.map((pt) => (
@@ -202,27 +229,37 @@ export default function SalesFormCard({
                   name="rubberPercent"
                   value={formData.rubberPercent}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('rubberPercent')}
                 />
               </Field>
               <Field label="น้ำหนัก (กก.)" className="min-w-[7rem] max-w-[8rem]">
+                {formData.productTypeId ? (
+                  <div className="mb-1 text-[11px] text-red-500 dark:text-red-400">
+                    คงเหลือ: <span className="font-semibold">{selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'}</span> กก.
+                  </div>
+                ) : null}
                 <input
                   type="number"
                   step="0.01"
                   name="weight"
                   value={formData.weight}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('weight')}
                 />
               </Field>
               <Field label="ราคา/กก." className="min-w-[7rem] max-w-[8rem]">
+                {formData.productTypeId ? (
+                  <div className="mb-1 text-[11px] text-red-500 dark:text-red-500">
+                    ต้นทุนเฉลี่ย: <span className="font-semibold">{selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}</span>
+                  </div>
+                ) : null}
                 <input
                   type="number"
                   step="0.01"
                   name="pricePerUnit"
                   value={formData.pricePerUnit}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('pricePerUnit')}
                 />
               </Field>
             </div>
@@ -235,7 +272,7 @@ export default function SalesFormCard({
                   name="expenseType"
                   value={formData.expenseType}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('expenseType')}
                 >
                   <option value="">ไม่ระบุ</option>
                   {EXPENSE_TYPES.map((type) => (
@@ -252,7 +289,7 @@ export default function SalesFormCard({
                   name="expenseCost"
                   value={formData.expenseCost}
                   onChange={onInputChange}
-                  className={layout.inputClass}
+                  className={getInputClass('expenseCost')}
                 />
               </Field>
               <Field label="หมายเหตุค่าใช้จ่าย" className="min-w-[10rem] flex-[1.5]">
@@ -261,7 +298,7 @@ export default function SalesFormCard({
                   value={formData.expenseNote}
                   onChange={onInputChange}
                   placeholder="เช่น ค่าขนส่ง..."
-                  className={layout.inputClass}
+                  className={getInputClass('expenseNote')}
                 />
               </Field>
               <div
@@ -292,7 +329,7 @@ export default function SalesFormCard({
                   type="button"
                   data-testid="sales-form-save"
                   onClick={onSave}
-                  disabled={saving}
+                  disabled={saving || hasValidationError || !isSubmitReady}
                   className={`shrink-0 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 ${
                     compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
                   }`}

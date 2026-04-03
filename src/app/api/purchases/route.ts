@@ -287,6 +287,7 @@ export async function POST(request: NextRequest) {
         refNo: created.purchaseNo,
         date: created.date,
         notes: created.notes,
+        refId: created.id,
       });
 
       return created;
@@ -517,6 +518,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
           refNo: created.purchaseNo,
           date: created.date,
           notes: created.notes,
+          refId: created.id,
         });
 
         createdPurchases.push(created);

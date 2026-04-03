@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { reverseSaleFromStock } from '@/lib/stock/stockService';
 
 export const runtime = 'nodejs';
 
@@ -86,12 +87,22 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const sale = await (prisma as any).sale.findUnique({ where: { id: params.id } });
+    const sale = await prisma.sale.findUnique({ where: { id: params.id } });
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 
-    await (prisma as any).sale.delete({ where: { id: params.id } });
+    await prisma.$transaction(async (tx) => {
+      await reverseSaleFromStock(tx, {
+        productTypeId: sale.productTypeId,
+        qtyKg: sale.weight,
+        refNo: sale.saleNo,
+        date: new Date(),
+        notes: `คืนสต็อกจากการลบรายการขาย ${sale.saleNo}`,
+      });
+      await tx.sale.delete({ where: { id: params.id } });
+    });
+
     return NextResponse.json({ message: 'ลบรายการขายเรียบร้อยแล้ว' });
   } catch (error) {
     logger.error('DELETE /api/sales/[id] failed', error);

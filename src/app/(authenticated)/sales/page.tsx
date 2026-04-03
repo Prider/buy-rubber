@@ -32,7 +32,9 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'weight' | 'pricePerUnit', string>>>({});
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [stockPositionMap, setStockPositionMap] = useState<Record<string, { quantityKg: number; avgCostPerKg: number }>>({});
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
   const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
@@ -67,6 +69,26 @@ export default function SalesPage() {
     () => paginateRows(sales, currentPage, pageSize),
     [sales, currentPage, pageSize],
   );
+  const hasValidationError = useMemo(() => Object.keys(fieldErrors).length > 0, [fieldErrors]);
+  const isSubmitReady = useMemo(() => {
+    if (
+      !formData.companyName.trim() ||
+      !formData.productTypeId ||
+      !formData.weight ||
+      !formData.pricePerUnit ||
+      !formData.sellingType
+    ) {
+      return false;
+    }
+
+    const weight = parseRequiredNumber(formData.weight);
+    const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
+    return weight != null && pricePerUnit != null;
+  }, [formData]);
+  const selectedStockInfo = useMemo(() => {
+    if (!formData.productTypeId) return null;
+    return stockPositionMap[formData.productTypeId] ?? null;
+  }, [formData.productTypeId, stockPositionMap]);
 
   const editingSaleNo = useMemo(() => {
     if (!editingSaleId) return null;
@@ -96,17 +118,33 @@ export default function SalesPage() {
       const salesUrl = debouncedSearchTerm
         ? `/api/sales?search=${encodeURIComponent(debouncedSearchTerm)}`
         : '/api/sales';
-      const [productRes, salesRes] = await Promise.all([
+      const [stockPositionsRes, productTypesRes, salesListRes] = await Promise.all([
+        fetch('/api/stock/positions'),
         fetch('/api/product-types'),
         fetch(salesUrl),
       ]);
 
-      if (productRes.ok) {
-        const types = await productRes.json();
+      if (productTypesRes.ok) {
+        const types = await productTypesRes.json();
         setProductTypes(types);
       }
-      if (salesRes.ok) {
-        const saleRows = (await salesRes.json()) as SaleRowApi[];
+      if (stockPositionsRes.ok) {
+        const rows = (await stockPositionsRes.json()) as Array<{
+          productTypeId: string;
+          quantityKg: number;
+          avgCostPerKg: number;
+        }>;
+        const nextMap: Record<string, { quantityKg: number; avgCostPerKg: number }> = {};
+        for (const row of rows) {
+          nextMap[row.productTypeId] = {
+            quantityKg: row.quantityKg ?? 0,
+            avgCostPerKg: row.avgCostPerKg ?? 0,
+          };
+        }
+        setStockPositionMap(nextMap);
+      }
+      if (salesListRes.ok) {
+        const saleRows = (await salesListRes.json()) as SaleRowApi[];
         setSales(saleRows.map(normalizeSaleRow));
       }
     } catch (_e) {
@@ -133,6 +171,13 @@ export default function SalesPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'weight' || name === 'pricePerUnit') {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const resetForm = useCallback(() => {
@@ -149,6 +194,7 @@ export default function SalesPage() {
       sellingType: SELLING_TYPES[0],
     }));
     setEditingSaleId(null);
+    setFieldErrors({});
   }, []);
 
   const handleSave = async () => {
@@ -165,14 +211,29 @@ export default function SalesPage() {
     const weight = parseRequiredNumber(formData.weight);
     const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
     if (weight == null || pricePerUnit == null) {
+      setFieldErrors({
+        ...(weight == null ? { weight: 'invalid' } : {}),
+        ...(pricePerUnit == null ? { pricePerUnit: 'invalid' } : {}),
+      });
       setError('กรุณากรอกน้ำหนักและราคาให้ถูกต้อง');
+      return;
+    }
+
+    const isEditing = Boolean(editingSaleId);
+    const selectedStockKg = selectedStockInfo?.quantityKg ?? null;
+    const EPS = 1e-6;
+    // Front-end validator: block oversell on create.
+    // (PUT /api/sales/[id] currently doesn't adjust stock in this app, so we only validate for POST.)
+    if (!isEditing && selectedStockKg != null && weight > selectedStockKg + EPS) {
+      setFieldErrors({ weight: 'exceeds-stock' });
+      setError('น้ำหนักที่ขายต้องไม่เกินสต็อกคงเหลือ');
       return;
     }
 
     setSaving(true);
     setError('');
+    setFieldErrors({});
     try {
-      const isEditing = Boolean(editingSaleId);
       const payload = buildSalePayload(formData);
 
       const res = await fetch(isEditing ? `/api/sales/${editingSaleId}` : '/api/sales', {
@@ -257,6 +318,23 @@ export default function SalesPage() {
         if (editingSaleId === saleId) {
           resetForm();
         }
+
+        const stockRes = await fetch('/api/stock/positions');
+        if (stockRes.ok) {
+          const rows = (await stockRes.json()) as Array<{
+            productTypeId: string;
+            quantityKg: number;
+            avgCostPerKg: number;
+          }>;
+          const nextMap: Record<string, { quantityKg: number; avgCostPerKg: number }> = {};
+          for (const row of rows) {
+            nextMap[row.productTypeId] = {
+              quantityKg: row.quantityKg ?? 0,
+              avgCostPerKg: row.avgCostPerKg ?? 0,
+            };
+          }
+          setStockPositionMap(nextMap);
+        }
       } catch (_e) {
         setError('ไม่สามารถลบรายการขาย');
       } finally {
@@ -280,9 +358,14 @@ export default function SalesPage() {
         <SalesFormCard
           compact
           error={error}
+          fieldErrors={fieldErrors}
+          hasValidationError={hasValidationError}
+          isSubmitReady={isSubmitReady}
           productTypes={productTypes}
           formData={formData}
           totalPreview={totalPreview}
+          selectedStockKg={selectedStockInfo?.quantityKg ?? null}
+          selectedAvgCostPerKg={selectedStockInfo?.avgCostPerKg ?? null}
           saving={saving}
           isEditing={Boolean(editingSaleId)}
           editingSaleNo={editingSaleNo}

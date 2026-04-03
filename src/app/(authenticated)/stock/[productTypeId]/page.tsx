@@ -152,7 +152,15 @@ export default function StockDetailPage() {
                   <tr key={e.id} className="border-t border-gray-100 dark:border-gray-600">
                     <td className="px-4 py-3">{new Date(e.date).toLocaleDateString('th-TH')}</td>
                     <td className="px-4 py-3">
-                      <span className={e.refType === 'PURCHASE' ? 'text-green-600' : 'text-red-600'}>{e.refType}</span>
+                      <span
+                        className={
+                          e.refType === 'PURCHASE' || e.refType === 'SALE_DELETE'
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }
+                      >
+                        {e.refType}
+                      </span>
                     </td>
                     <td className="px-4 py-3">{e.refNo ?? '-'}</td>
                     <td className={`px-4 py-3 text-right ${e.qtyChangeKg >= 0 ? 'text-green-700' : 'text-red-700'}`}>

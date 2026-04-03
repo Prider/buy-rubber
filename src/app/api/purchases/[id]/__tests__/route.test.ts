@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { DELETE } from '../route';
 
+vi.mock('@/lib/stock/stockService', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/stock/stockService')>();
+  return {
+    ...mod,
+    reversePurchaseFromStock: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
+vi.mock('@/lib/cache', () => ({
+  cache: { delete: vi.fn() },
+  CACHE_KEYS: { DASHBOARD: 'dashboard:stats' },
+}));
+
 // Mock Prisma
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -9,6 +22,7 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       delete: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -54,11 +68,15 @@ describe('DELETE /api/purchases/[id]', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
-    
+
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: typeof prisma) => Promise<unknown>) =>
+      fn(prisma)
+    );
   });
 
   describe('Successful deletion', () => {
@@ -75,6 +93,7 @@ describe('DELETE /api/purchases/[id]', () => {
       expect(vi.mocked(prisma.purchase.findUnique)).toHaveBeenCalledWith({
         where: { id: 'purchase-1' },
       });
+      expect(vi.mocked(prisma.$transaction)).toHaveBeenCalled();
       expect(vi.mocked(prisma.purchase.delete)).toHaveBeenCalledWith({
         where: { id: 'purchase-1' },
       });
@@ -126,10 +145,10 @@ describe('DELETE /api/purchases/[id]', () => {
       );
     });
 
-    it('should return 500 when delete fails', async () => {
+    it('should return 500 when transaction fails', async () => {
       vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase);
       const dbError = new Error('Delete operation failed');
-      vi.mocked(prisma.purchase.delete).mockRejectedValue(dbError);
+      vi.mocked(prisma.$transaction).mockRejectedValue(dbError);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/purchase-1');
       const response = await DELETE(request, { params: { id: 'purchase-1' } });
@@ -143,18 +162,19 @@ describe('DELETE /api/purchases/[id]', () => {
       );
     });
 
-    it('should handle foreign key constraint errors', async () => {
+    it('should return 400 when stock insufficient', async () => {
       vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase);
-      const constraintError = new Error('Foreign key constraint violation');
-      vi.mocked(prisma.purchase.delete).mockRejectedValue(constraintError);
+      const { StockInsufficientError } = await import('@/lib/stock/stockService');
+      vi.mocked(prisma.$transaction).mockRejectedValue(
+        new StockInsufficientError('x', 'product-1', 10, 95)
+      );
 
       const request = new NextRequest('http://localhost:3000/api/purchases/purchase-1');
       const response = await DELETE(request, { params: { id: 'purchase-1' } });
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('เกิดข้อผิดพลาดในการลบการรับซื้อ');
-      expect(vi.mocked(logger.error)).toHaveBeenCalled();
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('สต็อก');
     });
   });
 
@@ -203,4 +223,3 @@ describe('DELETE /api/purchases/[id]', () => {
     });
   });
 });
-

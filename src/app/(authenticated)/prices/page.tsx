@@ -27,6 +27,7 @@ interface ProductType {
   code: string;
   name: string;
   description?: string;
+  isActive?: boolean;
 }
 
 // interface ProductPrice {
@@ -187,9 +188,9 @@ export default function PricesPage() {
   const handleDeleteProductType = async (productType: ProductType) => {
     const confirmed = await showConfirm(
       'ยืนยันการลบประเภทสินค้า',
-      `คุณต้องการลบประเภทสินค้า "${productType.name}" (${productType.code}) หรือไม่?\n\nการลบนี้จะลบราคาที่เกี่ยวข้องทั้งหมด`,
+      `คุณต้องการลบประเภทสินค้า "${productType.name}" (${productType.code}) หรือไม่?\n\nถ้ามีประวัติรับซื้อ การขาย หรือสต็อก ระบบจะปิดการใช้งานแทนการลบจริง เพื่อเก็บข้อมูลเดิมไว้\nถ้าไม่มีข้อมูลอ้างอิง ระบบจะลบจริง (รวมราคาที่ผูกกับประเภทนี้)`,
       {
-        confirmText: 'ลบ',
+        confirmText: 'ดำเนินการ',
         cancelText: 'ยกเลิก',
         variant: 'danger',
       }
@@ -200,14 +201,48 @@ export default function PricesPage() {
     }
 
     try {
-      await axios.delete(`/api/product-types/${productType.id}`);
+      const res = await axios.delete<{ success?: boolean; deactivated?: boolean }>(
+        `/api/product-types/${productType.id}`
+      );
       loadData();
-      showSuccess('ลบสำเร็จ', `ลบประเภทสินค้า "${productType.name}" เรียบร้อยแล้ว`, { autoClose: true, autoCloseDelay: 3000 });
+      if (res.data?.deactivated) {
+        showSuccess(
+          'ปิดการใช้งานแล้ว',
+          `ประเภทสินค้า "${productType.name}" ถูกปิดการใช้งานแล้ว (ยังใช้ในประวัติเดิมได้) กดเปิดใช้งานได้ในภายหลัง`,
+          { autoClose: true, autoCloseDelay: 4000 }
+        );
+      } else {
+        showSuccess('ลบสำเร็จ', `ลบประเภทสินค้า "${productType.name}" เรียบร้อยแล้ว`, {
+          autoClose: true,
+          autoCloseDelay: 3000,
+        });
+      }
     } catch (error: unknown) {
       const errorMsg = error instanceof Error
         ? error.message
         : (error as { response?: { data?: { error?: string } } })?.response?.data?.error
           || 'ไม่สามารถลบประเภทสินค้าได้';
+      showError('เกิดข้อผิดพลาด', errorMsg);
+    }
+  };
+
+  const handleReactivateProductType = async (productType: ProductType) => {
+    try {
+      await axios.put(`/api/product-types/${productType.id}`, {
+        name: productType.name,
+        description: productType.description || '',
+        isActive: true,
+      });
+      loadData();
+      showSuccess('เปิดใช้งานแล้ว', `ประเภทสินค้า "${productType.name}" พร้อมใช้งานอีกครั้ง`, {
+        autoClose: true,
+        autoCloseDelay: 3000,
+      });
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error
+        ? error.message
+        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+          || 'ไม่สามารถเปิดใช้งานได้';
       showError('เกิดข้อผิดพลาด', errorMsg);
     }
   };
@@ -258,6 +293,7 @@ export default function PricesPage() {
           onAdd={openProductTypeForm}
           onEdit={handleEditProductType}
           onDelete={handleDeleteProductType}
+          onReactivate={handleReactivateProductType}
         />
 
         {/* <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
