@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
+import { invalidateProductTypesCache } from '@/lib/cache';
+
+function isForeignKeyViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003';
+}
 
 // PUT /api/product-types/[id] - Update product type
 export async function PUT(
@@ -9,7 +15,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, isActive } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -18,16 +24,24 @@ export async function PUT(
       );
     }
 
+    const data: {
+      name: string;
+      description: string | null;
+      isActive?: boolean;
+    } = {
+      name,
+      description: description || null,
+    };
+    if (typeof isActive === 'boolean') {
+      data.isActive = isActive;
+    }
+
     const productType = await prisma.productType.update({
       where: { id: params.id },
-      data: {
-        name,
-        description: description || null,
-      },
+      data,
     });
 
-    // Invalidate product types cache when a product type is updated
-    cache.delete(CACHE_KEYS.PRODUCT_TYPES);
+    invalidateProductTypesCache();
 
     return NextResponse.json(productType);
   } catch (error) {
@@ -45,16 +59,58 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const existing = await prisma.productType.findUnique({
+      where: { id: params.id },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Product type not found' }, { status: 404 });
+    }
+
+    const [purchaseCount, saleCount, ledgerCount, positionRow] = await Promise.all([
+      prisma.purchase.count({ where: { productTypeId: params.id } }),
+      prisma.sale.count({ where: { productTypeId: params.id } }),
+      stockLedgerEntry.count({ where: { productTypeId: params.id } }),
+      stockPosition.findUnique({
+        where: { productTypeId: params.id },
+        select: { id: true },
+      }),
+    ]);
+    const positionCount = positionRow ? 1 : 0;
+
+    const blocked =
+      purchaseCount > 0 || saleCount > 0 || ledgerCount > 0 || positionCount > 0;
+    if (blocked) {
+      const productType = await prisma.productType.update({
+        where: { id: params.id },
+        data: { isActive: false },
+      });
+      invalidateProductTypesCache();
+      return NextResponse.json({
+        success: true,
+        deactivated: true,
+        productType,
+      });
+    }
+
     await prisma.productType.delete({
       where: { id: params.id },
     });
 
-    // Invalidate product types cache when a product type is deleted
-    cache.delete(CACHE_KEYS.PRODUCT_TYPES);
+    invalidateProductTypesCache();
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deactivated: false });
   } catch (error) {
     console.error('Delete product type error:', error);
+    if (isForeignKeyViolation(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Cannot delete this product type because other records still reference it.',
+        },
+        { status: 409 },
+      );
+    }
     return NextResponse.json(
       { error: 'Failed to delete product type' },
       { status: 500 }

@@ -8,8 +8,18 @@ vi.mock('@/lib/prisma', () => ({
     productType: {
       update: vi.fn(),
       delete: vi.fn(),
+      findUnique: vi.fn(),
     },
+    purchase: { count: vi.fn() },
+    sale: { count: vi.fn() },
+    stockLedgerEntry: { count: vi.fn() },
+    stockPosition: { findUnique: vi.fn() },
   },
+}));
+
+// Mock cache invalidation
+vi.mock('@/lib/cache', () => ({
+  invalidateProductTypesCache: vi.fn(),
 }));
 
 // Mock console.error
@@ -124,6 +134,30 @@ describe('PUT /api/product-types/[id]', () => {
         },
       });
     });
+
+    it('should update isActive when provided', async () => {
+      vi.mocked(prisma.productType.update).mockResolvedValue({ ...mockProductType, isActive: true });
+
+      const request = new NextRequest('http://localhost:3000/api/product-types/product-1', {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: 'น้ำยางสด',
+          description: '',
+          isActive: true,
+        }),
+      });
+
+      await PUT(request, { params: { id: 'product-1' } });
+
+      expect(vi.mocked(prisma.productType.update)).toHaveBeenCalledWith({
+        where: { id: 'product-1' },
+        data: {
+          name: 'น้ำยางสด',
+          description: null,
+          isActive: true,
+        },
+      });
+    });
   });
 
   describe('Error handling', () => {
@@ -223,7 +257,12 @@ describe('DELETE /api/product-types/[id]', () => {
   });
 
   describe('Successful deletion', () => {
-    it('should delete a product type', async () => {
+    it('should delete a product type when nothing references it', async () => {
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.purchase.count).mockResolvedValue(0);
+      vi.mocked(prisma.sale.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockPosition.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.productType.delete).mockResolvedValue({});
 
       const request = new NextRequest('http://localhost:3000/api/product-types/product-1');
@@ -232,6 +271,7 @@ describe('DELETE /api/product-types/[id]', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      expect(data.deactivated).toBe(false);
       expect(vi.mocked(prisma.productType.delete)).toHaveBeenCalledWith({
         where: { id: 'product-1' },
       });
@@ -239,20 +279,51 @@ describe('DELETE /api/product-types/[id]', () => {
   });
 
   describe('Error handling', () => {
-    it('should return 500 when product type does not exist', async () => {
-      const dbError = new Error('Record to delete does not exist');
-      vi.mocked(prisma.productType.delete).mockRejectedValue(dbError);
+    it('should return 404 when product type does not exist', async () => {
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/product-types/nonexistent');
       const response = await DELETE(request, { params: { id: 'nonexistent' } });
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('Failed to delete product type');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Delete product type error:', dbError);
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Product type not found');
+      expect(vi.mocked(prisma.productType.delete)).not.toHaveBeenCalled();
+    });
+
+    it('should deactivate (soft) when purchases reference the product type', async () => {
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.purchase.count).mockResolvedValue(2);
+      vi.mocked(prisma.sale.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockPosition.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.productType.update).mockResolvedValue({
+        id: 'product-1',
+        code: 'PT001',
+        name: 'น้ำยางสด',
+        isActive: false,
+      });
+
+      const request = new NextRequest('http://localhost:3000/api/product-types/product-1');
+      const response = await DELETE(request, { params: { id: 'product-1' } });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.deactivated).toBe(true);
+      expect(vi.mocked(prisma.productType.update)).toHaveBeenCalledWith({
+        where: { id: 'product-1' },
+        data: { isActive: false },
+      });
+      expect(vi.mocked(prisma.productType.delete)).not.toHaveBeenCalled();
     });
 
     it('should return 500 when database delete fails', async () => {
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.purchase.count).mockResolvedValue(0);
+      vi.mocked(prisma.sale.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockPosition.findUnique).mockResolvedValue(null);
       const dbError = new Error('Database connection failed');
       vi.mocked(prisma.productType.delete).mockRejectedValue(dbError);
 
@@ -264,38 +335,27 @@ describe('DELETE /api/product-types/[id]', () => {
       expect(data.error).toBe('Failed to delete product type');
       expect(consoleErrorSpy).toHaveBeenCalledWith('Delete product type error:', dbError);
     });
-
-    it('should handle foreign key constraint errors', async () => {
-      const constraintError = new Error('Foreign key constraint violation');
-      vi.mocked(prisma.productType.delete).mockRejectedValue(constraintError);
-
-      const request = new NextRequest('http://localhost:3000/api/product-types/product-1');
-      const response = await DELETE(request, { params: { id: 'product-1' } });
-      const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('Failed to delete product type');
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
   });
 
   describe('Edge cases', () => {
     it('should handle empty string id', async () => {
-      const dbError = new Error('Invalid ID');
-      vi.mocked(prisma.productType.delete).mockRejectedValue(dbError);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/product-types/');
       const response = await DELETE(request, { params: { id: '' } });
       await response.json();
 
-      expect(response.status).toBe(500);
-      expect(vi.mocked(prisma.productType.delete)).toHaveBeenCalledWith({
-        where: { id: '' },
-      });
+      expect(response.status).toBe(404);
+      expect(vi.mocked(prisma.productType.delete)).not.toHaveBeenCalled();
     });
 
     it('should handle UUID format id', async () => {
       const uuidId = '550e8400-e29b-41d4-a716-446655440000';
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: uuidId });
+      vi.mocked(prisma.purchase.count).mockResolvedValue(0);
+      vi.mocked(prisma.sale.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockPosition.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.productType.delete).mockResolvedValue({});
 
       const request = new NextRequest(`http://localhost:3000/api/product-types/${uuidId}`);
@@ -304,6 +364,7 @@ describe('DELETE /api/product-types/[id]', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      expect(data.deactivated).toBe(false);
       expect(vi.mocked(prisma.productType.delete)).toHaveBeenCalledWith({
         where: { id: uuidId },
       });

@@ -23,7 +23,11 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-// Mock cache
+// Mock cache (hoisted so the factory can close over the mock fn)
+const { invalidateProductTypesCache } = vi.hoisted(() => ({
+  invalidateProductTypesCache: vi.fn(),
+}));
+
 vi.mock('@/lib/cache', () => ({
   cache: {
     get: vi.fn(),
@@ -31,16 +35,19 @@ vi.mock('@/lib/cache', () => ({
     delete: vi.fn(),
   },
   CACHE_KEYS: {
-    PRODUCT_TYPES: 'product-types',
+    PRODUCT_TYPES_ACTIVE: 'product-types:active',
+    PRODUCT_TYPES_ALL: 'product-types:all',
   },
   CACHE_TTL: {
     PRODUCT_TYPES: 1800000,
   },
+  invalidateProductTypesCache,
 }));
 
 describe('GET /api/product-types', () => {
   let prisma: any;
   let logger: any;
+  let cache: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn> };
 
   const mockProductType = {
     id: 'product-1',
@@ -58,12 +65,15 @@ describe('GET /api/product-types', () => {
     
     const prismaModule = await import('@/lib/prisma');
     const loggerModule = await import('@/lib/logger');
+    const cacheModule = await import('@/lib/cache');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    cache = cacheModule.cache;
+    vi.mocked(cache.get).mockReturnValue(null);
   });
 
   describe('Successful retrieval', () => {
-    it('should return all product types ordered by code', async () => {
+    it('should return active product types ordered by code by default', async () => {
       vi.mocked(prisma.productType.findMany).mockResolvedValue([mockProductType]);
 
       const request = new NextRequest('http://localhost:3000/api/product-types');
@@ -75,8 +85,23 @@ describe('GET /api/product-types', () => {
       expect(data).toHaveLength(1);
       expect(data[0].code).toBe(mockProductType.code);
       expect(vi.mocked(prisma.productType.findMany)).toHaveBeenCalledWith({
+        where: { isActive: true },
         orderBy: { code: 'asc' },
       });
+    });
+
+    it('should return all product types when includeInactive=1', async () => {
+      vi.mocked(prisma.productType.findMany).mockResolvedValue([mockProductType]);
+
+      const request = new NextRequest('http://localhost:3000/api/product-types?includeInactive=1');
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toHaveLength(1);
+      const findArg = vi.mocked(prisma.productType.findMany).mock.calls[0][0];
+      expect(findArg.orderBy).toEqual({ code: 'asc' });
+      expect(findArg.where).toBeUndefined();
     });
 
     it('should return empty array when no product types exist', async () => {
@@ -113,7 +138,9 @@ describe('GET /api/product-types', () => {
       const request = new NextRequest('http://localhost:3000/api/product-types');
       await GET(request);
 
-      expect(vi.mocked(logger.info)).toHaveBeenCalledWith('GET /api/product-types');
+      expect(vi.mocked(logger.info)).toHaveBeenCalledWith('GET /api/product-types', {
+        includeInactive: false,
+      });
     });
 
     it('should log success with count', async () => {
@@ -124,7 +151,7 @@ describe('GET /api/product-types', () => {
 
       expect(vi.mocked(logger.info)).toHaveBeenCalledWith(
         'GET /api/product-types - Success',
-        { count: 1 }
+        { count: 1, includeInactive: false }
       );
     });
   });
@@ -253,6 +280,7 @@ describe('POST /api/product-types', () => {
           description: null,
         },
       });
+      expect(invalidateProductTypesCache).toHaveBeenCalled();
     });
 
     it('should create a product type with description', async () => {

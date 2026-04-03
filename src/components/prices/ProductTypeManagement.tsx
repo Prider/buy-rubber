@@ -8,6 +8,7 @@ interface ProductType {
   code: string;
   name: string;
   description?: string;
+  isActive?: boolean;
 }
 
 interface ProductTypeManagementProps {
@@ -15,6 +16,7 @@ interface ProductTypeManagementProps {
   onAdd: () => void;
   onEdit: (productType: ProductType) => void;
   onDelete: (productType: ProductType) => void;
+  onReactivate: (productType: ProductType) => void;
 }
 
 const MAX_PRODUCT_TYPES = 10;
@@ -23,7 +25,8 @@ export default function ProductTypeManagement({
   productTypes, 
   onAdd, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onReactivate,
 }: ProductTypeManagementProps) {
   const isMaxReached = productTypes.length >= MAX_PRODUCT_TYPES;
 
@@ -79,6 +82,7 @@ export default function ProductTypeManagement({
               index={index}
               onEdit={onEdit}
               onDelete={onDelete}
+              onReactivate={onReactivate}
             />
           ))}
         </div>

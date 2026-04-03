@@ -8,6 +8,7 @@ interface ProductType {
   code: string;
   name: string;
   description?: string;
+  isActive?: boolean;
 }
 export function usePriceData() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export function usePriceData() {
   const loadData = useCallback(async () => {
     try {
       const [productTypesRes, pricesRes] = await Promise.all([
-        axios.get('/api/product-types'),
+        axios.get('/api/product-types', { params: { includeInactive: '1' } }),
         axios.get('/api/prices/history?days=11'), // Get today + last 10 days
       ]);
       

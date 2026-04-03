@@ -96,9 +96,17 @@ export const cache = new Cache();
 // Cache key constants
 export const CACHE_KEYS = {
   DASHBOARD: 'dashboard:stats',
-  PRODUCT_TYPES: 'product-types:all',
+  /** Active-only list (dropdowns: sales, purchases, etc.) */
+  PRODUCT_TYPES_ACTIVE: 'product-types:active',
+  /** Admin / prices UI: includes inactive */
+  PRODUCT_TYPES_ALL: 'product-types:all',
   MEMBERS: (params?: string) => `members:${params || 'default'}`,
 } as const;
+
+export function invalidateProductTypesCache(): void {
+  cache.delete(CACHE_KEYS.PRODUCT_TYPES_ACTIVE);
+  cache.delete(CACHE_KEYS.PRODUCT_TYPES_ALL);
+}
 
 // TTL constants (in milliseconds)
 export const CACHE_TTL = {
