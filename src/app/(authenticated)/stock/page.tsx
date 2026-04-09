@@ -12,7 +12,33 @@ type StockPositionRow = {
   productType: { id: string; code: string; name: string };
   quantityKg: number;
   avgCostPerKg: number;
+  avgSellingPricePerKg?: number | null;
+  soldKg?: number | null;
 };
+
+const PNL_EPS = 1e-6;
+
+function ProfitLossCell({ value }: { value: number | null | undefined }) {
+  if (value == null || !Number.isFinite(value)) {
+    return <span className="text-gray-400 dark:text-gray-500">–</span>;
+  }
+
+  const isGain = value > PNL_EPS;
+  const isLoss = value < -PNL_EPS;
+  const cls = isGain
+    ? 'text-green-600 dark:text-green-400 font-semibold tabular-nums'
+    : isLoss
+      ? 'text-red-600 dark:text-red-400 font-semibold tabular-nums'
+      : 'text-gray-600 dark:text-gray-400 tabular-nums';
+  const prefix = isGain ? '+' : '';
+
+  return (
+    <span className={cls}>
+      {prefix}
+      {formatCurrency(value)}
+    </span>
+  );
+}
 
 export default function StockPage() {
   const { user, isLoading } = useAuth();
@@ -100,7 +126,7 @@ export default function StockPage() {
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
           <div className="flex items-center justify-between gap-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              แสดงจำนวนสต็อก (kg) และราคาเฉลี่ยต้นทุนต่อ kg
+              แสดงจำนวนสต็อก (kg), ราคาเฉลี่ยต้นทุนต่อ kg, ราคาขายเฉลี่ยต่อ kg และกำไร/ขาดทุน
             </div>
           </div>
         </div>
@@ -113,6 +139,8 @@ export default function StockPage() {
                 <th className="px-4 py-3 text-left">ชื่อสินค้า</th>
                 <th className="px-4 py-3 text-right">สต็อกคงเหลือ (kg)</th>
                 <th className="px-4 py-3 text-right">ราคาเฉลี่ยต้นทุน / kg</th>
+                <th className="px-4 py-3 text-right">ราคาขายเฉลี่ย / kg</th>
+                <th className="px-4 py-3 text-right">กำไร/ขาดทุน</th>
               </tr>
             </thead>
 
@@ -132,12 +160,26 @@ export default function StockPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-semibold">{formatNumber(row.quantityKg)}</td>
                   <td className="px-4 py-3 text-right">{formatCurrency(row.avgCostPerKg)}</td>
+                  <td className="px-4 py-3 text-right">
+                    {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <ProfitLossCell
+                      value={
+                        row.avgSellingPricePerKg != null
+                          ? row.soldKg != null && row.soldKg > 0
+                            ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
+                            : null
+                          : null
+                      }
+                    />
+                  </td>
                 </tr>
               ))}
 
               {sortedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
                     ไม่มีข้อมูลสต็อก
                   </td>
                 </tr>
@@ -150,4 +192,3 @@ export default function StockPage() {
     </div>
   );
 }
-

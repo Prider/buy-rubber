@@ -52,13 +52,37 @@ export async function GET(request: NextRequest) {
       positions.map((p) => [p.productTypeId, { quantityKg: p.quantityKg, avgCostPerKg: p.avgCostPerKg }]),
     );
 
+    // "ราคาขายเฉลี่ย" = (sum(weight * pricePerUnit) / sum(weight)) for each productTypeId
+    const saleAggMap = new Map<string, { soldKg: number; revenue: number }>();
+    if (ids.length > 0) {
+      const salesRows = await prisma.sale.findMany({
+        where: { productTypeId: { in: ids } },
+        select: { productTypeId: true, weight: true, pricePerUnit: true },
+      });
+
+      for (const row of salesRows) {
+        const soldKg = Number(row.weight ?? 0);
+        const pricePerKg = Number(row.pricePerUnit ?? 0);
+        const cur = saleAggMap.get(row.productTypeId) ?? { soldKg: 0, revenue: 0 };
+        cur.soldKg += soldKg;
+        cur.revenue += soldKg * pricePerKg;
+        saleAggMap.set(row.productTypeId, cur);
+      }
+    }
+
     const result = productTypes.map((pt) => {
       const pos = posMap.get(pt.id);
+      const saleAgg = saleAggMap.get(pt.id);
+      const soldKg = saleAgg?.soldKg ?? 0;
+      const avgSellingPricePerKg = soldKg > 0 ? saleAgg!.revenue / soldKg : null;
+
       return {
         productTypeId: pt.id,
         productType: { id: pt.id, code: pt.code, name: pt.name },
         quantityKg: pos?.quantityKg ?? 0,
         avgCostPerKg: pos?.avgCostPerKg ?? 0,
+        avgSellingPricePerKg,
+        soldKg,
       };
     });
 
