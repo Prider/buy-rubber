@@ -1,4 +1,10 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import {
+  getStoredSlipPaperSize,
+  slipPageWidthMm,
+  slipWidthPxFor,
+  type SlipPaperSizeId,
+} from '@/lib/slipPaper';
 import { PurchaseTransaction, CartItem } from '../types';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
@@ -85,6 +91,8 @@ export function generateSlipHTMLFromItems(
     memberCode?: string;
     companyName?: string;
     companyAddress?: string;
+    /** When omitted, uses `localStorage` (same as print/PDF). */
+    paperSize?: SlipPaperSizeId;
   }
 ): string {
   if (items.length === 0) {
@@ -109,6 +117,9 @@ export function generateSlipHTMLFromItems(
 
   const companyName = options?.companyName || getStoredSlipCompanyName();
   const companyAddress = options?.companyAddress || getStoredSlipCompanyAddress();
+  const paperSizeId = options?.paperSize ?? getStoredSlipPaperSize();
+  const slipWidthPx = slipWidthPxFor(paperSizeId);
+  const pageWidthMm = slipPageWidthMm(paperSizeId);
 
   return `
     <html>
@@ -120,9 +131,58 @@ export function generateSlipHTMLFromItems(
         <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
         <style>
           * { box-sizing: border-box; }
-          html { background: #ffffff !important; margin: 0; padding: 0; }
-          body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 0; padding: 0; background: #ffffff !important; width: 100%; height: 100%; }
-          .slip { width: 320px; margin: 16px 16px; background: #ffffff !important; border-radius: 12px; padding: 16px 18px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+          html { background: #ffffff !important; margin: 0; padding: 0; width: 100%; min-height: 100%; }
+          body {
+            font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif;
+            margin: 0 auto;
+            padding: 16px 0;
+            background: #ffffff !important;
+            width: ${slipWidthPx}px;
+            max-width: 100%;
+            min-height: 100%;
+          }
+          @media screen {
+            html { min-height: 100%; }
+            body {
+              min-height: 100vh;
+              min-height: 100dvh;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              justify-content: safe center;
+              align-items: stretch;
+            }
+          }
+          .slip {
+            width: 100%;
+            margin: 0;
+            flex-shrink: 0;
+            background: #ffffff !important;
+            border-radius: 12px;
+            padding: 16px 18px;
+          }
+          @media print {
+            html, body {
+              width: ${slipWidthPx}px !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
+              min-height: 0 !important;
+              background: #ffffff !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .slip {
+              border-radius: 0 !important;
+              box-shadow: none !important;
+              padding: 12px 14px !important;
+            }
+            @page {
+              size: ${pageWidthMm}mm auto;
+              margin: 0;
+            }
+          }
           .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
           .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
           .store p { margin: 4px 0; font-size: 13px; color: #475569; }
@@ -143,7 +203,7 @@ export function generateSlipHTMLFromItems(
         </style>
       </head>
       <body>
-        <div class="slip">
+        <div class="slip" data-slip-width="${slipWidthPx}">
           <div class="store">
             <h1>${escapeHtml(companyName)}</h1>
             <p>${escapeHtml(companyAddress)}</p>

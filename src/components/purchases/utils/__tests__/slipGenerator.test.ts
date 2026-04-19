@@ -396,6 +396,22 @@ describe('slipGenerator', () => {
 
       expect(result).toContain('วันที่พิมพ์:');
     });
+
+    it('should apply paper size width and data-slip-width', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const result = generateSlipHTMLFromItems(items, { paperSize: '58mm' });
+
+      expect(result).toContain('width: 219px');
+      expect(result).toContain('data-slip-width="219"');
+    });
   });
 
   describe('generateSlipHTML', () => {

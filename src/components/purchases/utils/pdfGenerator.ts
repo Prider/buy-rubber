@@ -7,13 +7,11 @@ import { generateSlipHTML } from './slipGenerator';
  * Shared PDF generation utility that accepts HTML string
  */
 export async function generatePDFFromHTML(html: string, fileName: string): Promise<void> {
-  // Create container with exact slip width (320px) to match HTML design
   const container = document.createElement('div');
   container.innerHTML = html;
   container.style.position = 'fixed';
   container.style.top = '-10000px';
   container.style.left = '0';
-  container.style.width = '320px';
   container.style.color = '#000000';
   container.style.filter = 'none';
   container.style.webkitFilter = 'none';
@@ -27,33 +25,34 @@ export async function generatePDFFromHTML(html: string, fileName: string): Promi
     setTimeout(() => resolve(), 200);
   });
 
-  // Find the slip element to capture exact dimensions
-  const slipElement = container.querySelector('.slip') as HTMLElement;
-  
-  // Ensure slip element has white background
+  const slipElement = container.querySelector('.slip') as HTMLElement | null;
+
+  const attrW = slipElement?.getAttribute('data-slip-width');
+  let slipWidthPx = attrW ? parseInt(attrW, 10) : 320;
+  if (!Number.isFinite(slipWidthPx) || slipWidthPx <= 0) {
+    slipWidthPx = slipElement?.offsetWidth || 320;
+  }
+
+  container.style.width = `${slipWidthPx}px`;
+
   if (slipElement) {
     slipElement.style.background = '#ffffff';
     slipElement.style.backgroundColor = '#ffffff';
   }
-  
-  // Use scale 1 for exact 1:1 pixel mapping to match slip size
+
   const canvas = await html2canvas(slipElement || container, {
-    scale: 1, // Exact pixel dimensions: 320px = 320px canvas width
+    scale: 1,
     useCORS: true,
     backgroundColor: '#ffffff',
     removeContainer: false,
     logging: false,
-    width: 320,
-    windowWidth: 320,
+    width: slipWidthPx,
+    windowWidth: slipWidthPx,
   });
-  
+
   document.body.removeChild(container);
 
-  // Convert pixels to mm (96 DPI standard)
-  // Slip width is exactly 320px
-  // At 96 DPI: 1px = 25.4/96 mm = 0.264583mm
-  // 320px = 320 * (25.4 / 96) = 84.67mm
-  const slipWidthPx = 320;
+  // 96px ≈ 1in → mm
   const pdfWidthMm = slipWidthPx * (25.4 / 96);
   const pdfHeightMm = (canvas.height / canvas.width) * pdfWidthMm;
 
