@@ -11,7 +11,6 @@ import { useAlert } from '@/hooks/useAlert';
 import {
   buildSalePayload,
   computePagination,
-  computeTotalPreview,
   getTodayDate,
   normalizeSaleRow,
   paginateRows,
@@ -57,8 +56,6 @@ export default function SalesPage() {
     expenseNote: '',
     sellingType: SELLING_TYPES[0],
   }));
-
-  const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
 
   const pagination = useMemo(
     () => computePagination(sales.length, currentPage, pageSize),
@@ -363,7 +360,6 @@ export default function SalesPage() {
           isSubmitReady={isSubmitReady}
           productTypes={productTypes}
           formData={formData}
-          totalPreview={totalPreview}
           selectedStockKg={selectedStockInfo?.quantityKg ?? null}
           selectedAvgCostPerKg={selectedStockInfo?.avgCostPerKg ?? null}
           saving={saving}

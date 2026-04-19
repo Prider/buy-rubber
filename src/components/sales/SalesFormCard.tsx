@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { formatCurrency } from '@/lib/utils';
+import { computeTotalPreview } from '@/app/(authenticated)/sales/page.utils';
 import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
 import {
   getSalesFormCardBorderClass,
@@ -65,7 +66,6 @@ export interface SalesFormCardProps {
   error: string;
   productTypes: ProductType[];
   formData: SaleFormData;
-  totalPreview: number;
   selectedStockKg?: number | null;
   selectedAvgCostPerKg?: number | null;
   fieldErrors?: Partial<Record<SalesFormFieldName, string>>;
@@ -101,7 +101,6 @@ export default function SalesFormCard({
   error,
   productTypes,
   formData,
-  totalPreview,
   selectedStockKg = null,
   selectedAvgCostPerKg = null,
   fieldErrors = {},
@@ -115,6 +114,7 @@ export default function SalesFormCard({
   onCancelEdit,
 }: SalesFormCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
