@@ -412,6 +412,24 @@ describe('slipGenerator', () => {
       expect(result).toContain('width: 219px');
       expect(result).toContain('data-slip-width="219"');
     });
+
+    it('should stack signature rows for 58mm paper', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const narrow = generateSlipHTMLFromItems(items, { paperSize: '58mm' });
+      const wide = generateSlipHTMLFromItems(items, { paperSize: '80mm' });
+
+      expect(narrow).toMatch(/<div class="signatures signatures--stacked">/);
+      expect(wide).toMatch(/<div class="signatures">/);
+      expect(wide).not.toMatch(/<div class="signatures signatures--stacked">/);
+    });
   });
 
   describe('generateSlipHTML', () => {

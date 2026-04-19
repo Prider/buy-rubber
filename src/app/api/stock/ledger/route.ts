@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing productTypeId' }, { status: 400 });
     }
 
-    const [productType, position, entries, total] = await Promise.all([
+    const [productType, position, saleRows, entries, total] = await Promise.all([
       prisma.productType.findUnique({
         where: { id: productTypeId },
         select: { id: true, code: true, name: true },
@@ -32,6 +32,10 @@ export async function GET(request: NextRequest) {
       stockPosition.findUnique({
         where: { productTypeId },
         select: { quantityKg: true, avgCostPerKg: true },
+      }),
+      prisma.sale.findMany({
+        where: { productTypeId },
+        select: { weight: true, pricePerUnit: true },
       }),
       stockLedgerEntry.findMany({
         where: { productTypeId },
@@ -54,11 +58,22 @@ export async function GET(request: NextRequest) {
       stockLedgerEntry.count({ where: { productTypeId } }),
     ]);
 
+    let soldKg = 0;
+    let revenue = 0;
+    for (const r of saleRows) {
+      const w = Number(r.weight ?? 0);
+      const p = Number(r.pricePerUnit ?? 0);
+      soldKg += w;
+      revenue += w * p;
+    }
+    const avgSellingPricePerKg = soldKg > 0 ? revenue / soldKg : null;
+
     return NextResponse.json({
       productType: productType ?? { id: productTypeId, code: '-', name: '-' },
       position: {
         quantityKg: position?.quantityKg ?? 0,
         avgCostPerKg: position?.avgCostPerKg ?? 0,
+        avgSellingPricePerKg,
       },
       entries,
       pagination: {

@@ -194,7 +194,15 @@ export function generateSlipHTMLFromItems(
           .item-amount { text-align: right; font-size: 13px; color: #0f172a; font-weight: 600; }
           .item-amount .price { font-size: 11px; color: #475569; font-weight: 400; display: block; }
           .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
-          .signatures { display: flex; justify-content: space-between; padding-top: 16px;}
+          .signatures { display: flex; justify-content: space-between; padding-top: 16px; gap: 8px; }
+          .signatures--stacked {
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+            gap: 20px;
+          }
+          .signatures--stacked .signature { flex: none; width: 100%; }
+          .signatures--stacked .signature-line { width: min(75%, 140px); margin-top: 32px; }
           .signature { flex: 1; text-align: center; }
           .signature-label { font-size: 12px; color: #475569; margin-bottom: 10px; margin-top: 10px; }
           .signature-line { border-top: 1px dotted #64748b; margin: 0 auto; width: 120px; margin-top: 40px; }
@@ -244,7 +252,7 @@ export function generateSlipHTMLFromItems(
             <span>ยอดสุทธิ</span>
             <span>${formatCurrency(total)}</span>
           </div>
-          <div class="signatures">
+          <div class="signatures${paperSizeId === '58mm' ? ' signatures--stacked' : ''}">
             <div class="signature">
               <div class="signature-line"></div>
               <div class="signature-label">ผู้จัดทำ</div>

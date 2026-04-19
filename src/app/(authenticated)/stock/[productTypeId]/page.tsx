@@ -22,7 +22,7 @@ type LedgerEntry = {
 
 type LedgerResponse = {
   productType: { id: string; code: string; name: string };
-  position: { quantityKg: number; avgCostPerKg: number };
+  position: { quantityKg: number; avgCostPerKg: number; avgSellingPricePerKg?: number | null };
   entries: LedgerEntry[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 };
@@ -36,7 +36,9 @@ export default function StockDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [position, setPosition] = useState<{ quantityKg: number; avgCostPerKg: number } | null>(null);
+  const [position, setPosition] = useState<
+    { quantityKg: number; avgCostPerKg: number; avgSellingPricePerKg?: number | null } | null
+  >(null);
   const [productType, setProductType] = useState<{ id: string; code: string; name: string } | null>(null);
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number }>({
@@ -111,6 +113,13 @@ export default function StockDetailPage() {
               </div>
               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                 ต้นทุนเฉลี่ย: <span className="font-semibold">{formatCurrency(position.avgCostPerKg)}</span> / กก.
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                ราคาขายเฉลี่ย:{' '}
+                <span className="font-semibold">
+                  {position.avgSellingPricePerKg != null ? formatCurrency(position.avgSellingPricePerKg) : '-'}
+                </span>{' '}
+                / กก.
               </div>
             </div>
           ) : null}

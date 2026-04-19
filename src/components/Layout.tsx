@@ -7,6 +7,7 @@ import DarkModeToggle from './DarkModeToggle';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
+import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
 
 interface NavigationItem {
   name: string;
@@ -18,14 +19,15 @@ interface NavigationItem {
 
 const NAV_ITEMS: NavigationItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
-  { name: 'รับซื้อยาง', href: '/purchases', icon: '🚚' },
-  { name: 'ขายสินค้า', href: '/sales', icon: '🛒' },
+  { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
+  { name: 'ขายสินค้า', href: '/sales', icon: '🚚' },
   { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
   { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
-  { name: 'ประเภทสินค้า', href: '/prices', icon: '📦' },
+  { name: 'ประเภทสินค้า', href: '/prices', icon: '💳' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
+  { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true, electronOnly: true },
 ];
@@ -70,10 +72,16 @@ export default function Layout({ children }: LayoutProps) {
     const loadSlipSettings = async () => {
       try {
         const apiClient = getApiClient();
-        const data = await apiClient.get<{ companyName: string; companyAddress: string }>('/api/slip/settings');
+        const data = await apiClient.get<{
+          companyName: string;
+          companyAddress: string;
+          paperSize?: string;
+        }>('/api/slip/settings');
         // Always overwrite with server values so updates done in Electron propagate to Browser.
         if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
         if (data?.companyAddress) window.localStorage.setItem(ADDRESS_KEY, data.companyAddress);
+        const paper = normalizeSlipPaperSize(data?.paperSize);
+        window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
       } catch {
         // If it fails, slipGenerator will fall back to its defaults.
       }
