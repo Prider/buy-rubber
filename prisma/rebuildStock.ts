@@ -1,15 +1,30 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const EPS = 1e-6;
 
 type StockState = { qtyKg: number; avgCostPerKg: number };
 
+type StockPositionDelegate = {
+  deleteMany(args?: Prisma.StockPositionDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+  createMany(args?: Prisma.StockPositionCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+};
+
+type StockLedgerDelegate = {
+  deleteMany(args?: Prisma.StockLedgerEntryDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+  createMany(args?: Prisma.StockLedgerEntryCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+};
+
+const asStock = prisma as unknown as {
+  stockPosition: StockPositionDelegate;
+  stockLedgerEntry: StockLedgerDelegate;
+};
+
 async function main() {
   console.log('🔁 rebuildStock: start');
 
-  await prisma.stockLedgerEntry.deleteMany({});
-  await prisma.stockPosition.deleteMany({});
+  await asStock.stockLedgerEntry.deleteMany({});
+  await asStock.stockPosition.deleteMany({});
 
   const purchases = await prisma.purchase.findMany({
     select: {
@@ -154,7 +169,7 @@ async function main() {
   }));
 
   if (positionsData.length) {
-    await prisma.stockPosition.createMany({
+    await asStock.stockPosition.createMany({
       data: positionsData,
     });
   }
@@ -162,7 +177,7 @@ async function main() {
   const chunkSize = 500;
   for (let i = 0; i < ledgerEntries.length; i += chunkSize) {
     const chunk = ledgerEntries.slice(i, i + chunkSize);
-    await prisma.stockLedgerEntry.createMany({
+    await asStock.stockLedgerEntry.createMany({
       data: chunk.map((e) => ({
         productTypeId: e.productTypeId,
         refType: e.refType,
