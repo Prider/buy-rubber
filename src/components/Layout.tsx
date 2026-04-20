@@ -25,7 +25,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
-  { name: 'ประเภทสินค้า', href: '/prices', icon: '💳' },
+  // { name: 'ประเภทสินค้า', href: '/prices', icon: '💳' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
