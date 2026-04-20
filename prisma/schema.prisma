@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,9 +19,7 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   purchases Purchase[]
-  sales     Sale[]
 }
 
 // สมาชิก (เจ้าของสวน)
@@ -58,10 +56,6 @@ model ProductType {
 
   purchases     Purchase[]
   productPrices ProductPrice[]
-  sales         Sale[]
-
-  stockPositions     StockPosition[]
-  stockLedgerEntries StockLedgerEntry[]
 }
 
 // ราคาสินค้าตามประเภทประจำวัน
@@ -165,79 +159,6 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
-// การขายสินค้า
-model Sale {
-  id            String   @id @default(uuid())
-  saleNo        String   @unique
-  date          DateTime @default(now())
-  userId        String
-  companyName   String
-  productTypeId String
-  weight        Float
-  rubberPercent Float?
-  pricePerUnit  Float
-  expenseType   String?
-  expenseCost   Float?
-  sellingType   String // จ่ายสด / ขายล่วง / ฝาก
-  totalAmount   Float
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user        User        @relation(fields: [userId], references: [id])
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-
-  @@index([date])
-  @@index([companyName])
-  @@index([productTypeId])
-  @@index([sellingType])
-}
-
-// Current stock position per ProductType (netWeight-based, kg)
-model StockPosition {
-  id              String   @id @default(uuid())
-  productTypeId  String   @unique
-  quantityKg     Float    @default(0)
-  avgCostPerKg   Float    @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-  @@index([productTypeId])
-}
-
-// Ledger entries to allow correct average-cost calculation and audit trail
-model StockLedgerEntry {
-  id                     String        @id @default(uuid())
-  productTypeId          String
-  // "PURCHASE" | "SALE"
-  refType                String
-  refNo                  String?
-  refId                  String?
-
-  // Effective stock movement (kg)
-  qtyChangeKg            Float
-  unitCostPerKg          Float?
-  totalCost              Float?
-
-  // Snapshot balance after applying this entry (kg + avg cost)
-  balanceQtyKg           Float
-  balanceAvgCostPerKg   Float
-
-  // Use transaction date for sorting and reporting
-  date                   DateTime     @default(now())
-  notes                  String?
-
-  createdAt              DateTime     @default(now())
-  updatedAt              DateTime     @updatedAt
-
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-
-  // productTypeId + time ordering (matches ledger list query)
-  @@index([productTypeId, date])
-  @@index([productTypeId, date, createdAt])
-}
-
 // ข้อมูลการสำรอง
 model Backup {
   id          String   @id @default(uuid())
@@ -250,4 +171,3 @@ model Backup {
   @@index([createdAt])
   @@index([backupType])
 }
-
