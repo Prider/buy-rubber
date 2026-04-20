@@ -119,6 +119,7 @@ export default function SalesFormCard({
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
   const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
+  const isFieldDisabled = (field: SalesFormFieldName) => isEditing && field !== 'pricePerUnit';
   const getInputClass = (field: SalesFormFieldName) =>
     `${layout.inputClass} ${
       fieldErrors[field]
@@ -181,6 +182,7 @@ export default function SalesFormCard({
                   name="date"
                   value={formData.date}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('date')}
                   className={getInputClass('date')}
                 />
               </Field>
@@ -189,6 +191,7 @@ export default function SalesFormCard({
                   name="companyName"
                   value={formData.companyName}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('companyName')}
                   className={getInputClass('companyName')}
                   placeholder="เช่น บริษัท A"
                 />
@@ -198,6 +201,7 @@ export default function SalesFormCard({
                   name="sellingType"
                   value={formData.sellingType}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('sellingType')}
                   className={getInputClass('sellingType')}
                 >
                   {SELLING_TYPES.map((type) => (
@@ -212,6 +216,7 @@ export default function SalesFormCard({
                   name="productTypeId"
                   value={formData.productTypeId}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('productTypeId')}
                   className={getInputClass('productTypeId')}
                 >
                   <option value="">เลือกประเภทสินค้า</option>
@@ -229,6 +234,7 @@ export default function SalesFormCard({
                   name="rubberPercent"
                   value={formData.rubberPercent}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('rubberPercent')}
                   className={getInputClass('rubberPercent')}
                 />
               </Field>
@@ -244,6 +250,7 @@ export default function SalesFormCard({
                   name="weight"
                   value={formData.weight}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('weight')}
                   className={getInputClass('weight')}
                 />
               </Field>
@@ -259,6 +266,7 @@ export default function SalesFormCard({
                   name="pricePerUnit"
                   value={formData.pricePerUnit}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('pricePerUnit')}
                   className={getInputClass('pricePerUnit')}
                 />
               </Field>
@@ -272,6 +280,7 @@ export default function SalesFormCard({
                   name="expenseType"
                   value={formData.expenseType}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('expenseType')}
                   className={getInputClass('expenseType')}
                 >
                   <option value="">ไม่ระบุ</option>
@@ -289,6 +298,7 @@ export default function SalesFormCard({
                   name="expenseCost"
                   value={formData.expenseCost}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('expenseCost')}
                   className={getInputClass('expenseCost')}
                 />
               </Field>
@@ -297,6 +307,7 @@ export default function SalesFormCard({
                   name="expenseNote"
                   value={formData.expenseNote}
                   onChange={onInputChange}
+                  disabled={isFieldDisabled('expenseNote')}
                   placeholder="เช่น ค่าขนส่ง..."
                   className={getInputClass('expenseNote')}
                 />
