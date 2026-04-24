@@ -4,6 +4,14 @@ import { prisma } from '@/lib/prisma';
 import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
 import { invalidateProductTypesCache } from '@/lib/cache';
 
+type SaleCountDelegate = {
+  count(args?: unknown): Promise<number>;
+};
+
+const asSale = prisma as unknown as {
+  sale?: SaleCountDelegate;
+};
+
 function isForeignKeyViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003';
 }
@@ -67,9 +75,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Product type not found' }, { status: 404 });
     }
 
+    const saleCountPromise = asSale.sale
+      ? asSale.sale.count({ where: { productTypeId: params.id } })
+      : Promise.resolve(0);
+
     const [purchaseCount, saleCount, ledgerCount, positionRow] = await Promise.all([
       prisma.purchase.count({ where: { productTypeId: params.id } }),
-      prisma.sale.count({ where: { productTypeId: params.id } }),
+      saleCountPromise,
       stockLedgerEntry.count({ where: { productTypeId: params.id } }),
       stockPosition.findUnique({
         where: { productTypeId: params.id },
