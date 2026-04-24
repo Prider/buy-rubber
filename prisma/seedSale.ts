@@ -8,6 +8,8 @@ import { PrismaClient } from '@prisma/client';
 import { generateDocumentNumber as generateDocumentNumberUtil } from '@/lib/utils';
 
 const prisma = new PrismaClient();
+type SaleDelegate = { create(args: unknown): Promise<unknown> };
+const asSale = prisma as unknown as { sale?: SaleDelegate };
 
 const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'] as const;
 const EXPENSE_TYPES = ['ค่าขนส่ง', 'ค่าแรง', 'ค่าบริการ', 'อื่นๆ'];
@@ -28,6 +30,11 @@ const SALE_COUNT = 100;
 
 async function main() {
   console.log('🧾 seedSale: สร้างรายการขายตัวอย่าง...');
+
+  if (!asSale.sale) {
+    console.log('⚠️ seedSale: ข้ามการสร้างข้อมูลขาย เพราะ Prisma client นี้ไม่มี delegate "sale"');
+    return;
+  }
 
   const users = await prisma.user.findMany({
     where: { isActive: true },
@@ -77,7 +84,7 @@ async function main() {
     const saleNo = await generateDocumentNumberUtil('SAL', date);
 
     try {
-      await prisma.sale.create({
+      await asSale.sale.create({
         data: {
           saleNo,
           date,
