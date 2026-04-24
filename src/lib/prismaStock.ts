@@ -3,27 +3,20 @@
  * `stockLedgerEntry` on `PrismaClient` (symbol index on the generated class). Runtime
  * always has these after `npx prisma generate`.
  */
-import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 type StockPositionDelegate = {
-	findMany<T extends Prisma.StockPositionFindManyArgs>(
-		args?: Prisma.Subset<T, Prisma.StockPositionFindManyArgs>,
-	): Prisma.PrismaPromise<Array<Prisma.StockPositionGetPayload<T>>>;
-	findUnique<T extends Prisma.StockPositionFindUniqueArgs>(
-		args: Prisma.Subset<T, Prisma.StockPositionFindUniqueArgs>,
-	): Prisma.PrismaPromise<Prisma.StockPositionGetPayload<T> | null>;
-	deleteMany(args?: Prisma.StockPositionDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
-	createMany(args?: Prisma.StockPositionCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+	findMany(args?: unknown): Promise<unknown[]>;
+	findUnique(args: unknown): Promise<unknown | null>;
+	deleteMany(args?: unknown): Promise<unknown>;
+	createMany(args?: unknown): Promise<unknown>;
 };
 
 type StockLedgerDelegate = {
-	findMany<T extends Prisma.StockLedgerEntryFindManyArgs>(
-		args?: Prisma.Subset<T, Prisma.StockLedgerEntryFindManyArgs>,
-	): Prisma.PrismaPromise<Array<Prisma.StockLedgerEntryGetPayload<T>>>;
-	count(args?: Prisma.Subset<Prisma.StockLedgerEntryCountArgs, Prisma.StockLedgerEntryCountArgs>): Prisma.PrismaPromise<number>;
-	deleteMany(args?: Prisma.StockLedgerEntryDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
-	createMany(args?: Prisma.StockLedgerEntryCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+	findMany(args?: unknown): Promise<unknown[]>;
+	count(args?: unknown): Promise<number>;
+	deleteMany(args?: unknown): Promise<unknown>;
+	createMany(args?: unknown): Promise<unknown>;
 };
 
 const asStock = prisma as unknown as { stockPosition: StockPositionDelegate; stockLedgerEntry: StockLedgerDelegate };
