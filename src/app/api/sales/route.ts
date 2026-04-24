@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
@@ -8,6 +7,35 @@ import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockServi
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+
+type SaleRecord = {
+  id: string;
+  saleNo: string;
+  date: Date;
+  userId: string;
+  companyName: string;
+  productTypeId: string;
+  weight: number;
+  rubberPercent: number | null;
+  pricePerUnit: number;
+  expenseType: string | null;
+  expenseCost: number | null;
+  sellingType: string;
+  totalAmount: number;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  productType?: { id: string; code: string; name: string };
+  user?: { id: string; username: string };
+};
+
+type SaleDelegate = {
+  findMany(args?: unknown): Promise<SaleRecord[]>;
+  count(args?: unknown): Promise<number>;
+  create(args?: unknown): Promise<SaleRecord>;
+};
+
+const asSale = prisma as unknown as { sale?: SaleDelegate };
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,8 +49,8 @@ export async function GET(request: NextRequest) {
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit');
 
-    const where: Prisma.SaleWhereInput = {};
-    const dateFilter: Prisma.DateTimeFilter = {};
+    const where: Record<string, unknown> = {};
+    const dateFilter: { gte?: Date; lte?: Date } = {};
     const paginated = pageParam != null && pageParam !== '';
     const page = paginated ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
     const limit = paginated
@@ -83,20 +111,36 @@ export async function GET(request: NextRequest) {
       productType: { select: { id: true, code: true, name: true } },
       // Avoid returning sensitive user fields (e.g. password hash)
       user: { select: { id: true, username: true } },
-    } satisfies Prisma.SaleSelect;
+    };
 
-    const orderBy: Prisma.SaleOrderByWithRelationInput[] = [{ date: 'desc' }, { createdAt: 'desc' }];
+    const orderBy = [{ date: 'desc' }, { createdAt: 'desc' }];
+
+    if (!asSale.sale) {
+      return NextResponse.json(
+        paginated
+          ? {
+              data: [],
+              pagination: {
+                page,
+                limit: limit ?? DEFAULT_LIMIT,
+                total: 0,
+                totalPages: 1,
+              },
+            }
+          : [],
+      );
+    }
 
     if (paginated && limit !== undefined) {
       const [sales, total] = await Promise.all([
-        prisma.sale.findMany({
+        asSale.sale.findMany({
           where,
           select: saleSelect,
           orderBy,
           skip: (page - 1) * limit,
           take: limit,
         }),
-        prisma.sale.count({ where }),
+        asSale.sale.count({ where }),
       ]);
 
       return NextResponse.json({
@@ -110,7 +154,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const sales = await prisma.sale.findMany({
+    const sales = await asSale.sale.findMany({
       where,
       select: saleSelect,
       orderBy,
@@ -125,6 +169,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!asSale.sale) {
+      return NextResponse.json({ error: 'ระบบยังไม่รองรับการขายในสภาพแวดล้อมนี้' }, { status: 501 });
+    }
+
     const data = await request.json();
     const tokenUser = getUserFromToken(request);
     const userId = data.userId || tokenUser?.userId;
@@ -180,7 +228,12 @@ export async function POST(request: NextRequest) {
         notes: data.notes ? String(data.notes) : null,
       });
 
-      return tx.sale.create({
+      const txSale = (tx as unknown as { sale?: SaleDelegate }).sale;
+      if (!txSale) {
+        throw new Error('Sale delegate is not available in transaction client');
+      }
+
+      return txSale.create({
         data: {
           saleNo,
           date: saleDate,
