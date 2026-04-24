@@ -12,6 +12,11 @@ type SaleAggRow = {
   weight: number;
   pricePerUnit: number;
 };
+type StockPositionRow = {
+  productTypeId: string;
+  quantityKg: number;
+  avgCostPerKg: number;
+};
 type SaleFindManyDelegate = {
   findMany(args?: unknown): Promise<SaleAggRow[]>;
 };
@@ -46,7 +51,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const ids = productTypes.map((pt) => pt.id);
-    const positions =
+    const positions = (
       ids.length === 0
         ? []
         : limit !== undefined
@@ -56,10 +61,14 @@ export async function GET(request: NextRequest) {
             })
           : await stockPosition.findMany({
               select: { productTypeId: true, quantityKg: true, avgCostPerKg: true },
-            });
+            })
+    ) as StockPositionRow[];
 
     const posMap = new Map<string, { quantityKg: number; avgCostPerKg: number }>(
-      positions.map((p) => [p.productTypeId, { quantityKg: p.quantityKg, avgCostPerKg: p.avgCostPerKg }]),
+      positions.map((p: StockPositionRow) => [
+        p.productTypeId,
+        { quantityKg: p.quantityKg, avgCostPerKg: p.avgCostPerKg },
+      ]),
     );
 
     // "ราคาขายเฉลี่ย" = (sum(weight * pricePerUnit) / sum(weight)) for each productTypeId

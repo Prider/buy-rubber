@@ -94,12 +94,13 @@ export async function GET(request: NextRequest) {
       revenue += w * p;
     }
     const avgSellingPricePerKg = soldKg > 0 ? revenue / soldKg : null;
+    const positionData = (position ?? null) as StockPositionRow | null;
 
     return NextResponse.json({
       productType: productType ?? { id: productTypeId, code: '-', name: '-' },
       position: {
-        quantityKg: position?.quantityKg ?? 0,
-        avgCostPerKg: position?.avgCostPerKg ?? 0,
+        quantityKg: positionData?.quantityKg ?? 0,
+        avgCostPerKg: positionData?.avgCostPerKg ?? 0,
         avgSellingPricePerKg,
       },
       entries,

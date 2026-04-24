@@ -14,32 +14,29 @@ export NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
-# Step 2: Check if DATABASE_URL is set
+# Step 2: Database setup (optional in CI/build environments)
 if [ -z "$DATABASE_URL" ]; then
-    echo "❌ ERROR: DATABASE_URL is not set!"
-    echo "Please set DATABASE_URL in your Vercel project settings:"
-    echo "1. Go to your Vercel project dashboard"
-    echo "2. Settings > Environment Variables"
-    echo "3. Add DATABASE_URL with your Neon connection string"
-    exit 1
-fi
-
-echo "✅ DATABASE_URL is set"
-
-# Step 3: Push database schema (create/update tables)
-echo "📊 Pushing database schema..."
-if npx prisma db push --skip-generate --accept-data-loss; then
-    echo "✅ Schema pushed successfully"
+    echo "⚠️  DATABASE_URL is not set - skipping schema push and seed."
+    echo "If your deployment requires DB migrations/seed at build time,"
+    echo "set DATABASE_URL in Vercel project environment variables."
 else
-    echo "⚠️  Warning: Schema push failed, but continuing build..."
-fi
+    echo "✅ DATABASE_URL is set"
 
-# Step 4: Seed database (only if not already seeded)
-echo "🌱 Checking if database needs seeding..."
-if npx prisma db seed; then
-    echo "✅ Database seeded successfully"
-else
-    echo "⚠️  Database might already be seeded or seed failed, continuing build..."
+    # Step 3: Push database schema (create/update tables)
+    echo "📊 Pushing database schema..."
+    if npx prisma db push --skip-generate --accept-data-loss; then
+        echo "✅ Schema pushed successfully"
+    else
+        echo "⚠️  Warning: Schema push failed, but continuing build..."
+    fi
+
+    # Step 4: Seed database (only if not already seeded)
+    echo "🌱 Checking if database needs seeding..."
+    if npx prisma db seed; then
+        echo "✅ Database seeded successfully"
+    else
+        echo "⚠️  Database might already be seeded or seed failed, continuing build..."
+    fi
 fi
 
 # Step 5: Build Next.js application

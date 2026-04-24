@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Performance constants
 const DEFAULT_DATE_RANGE_DAYS = 90; // Default to last 90 days if no date range provided

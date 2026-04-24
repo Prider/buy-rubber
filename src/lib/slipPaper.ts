@@ -35,7 +35,7 @@ export function slipWidthPxFor(id: SlipPaperSizeId): number {
 }
 
 export function normalizeSlipPaperSize(raw: unknown): SlipPaperSizeId {
-  if (raw === '58mm' || raw === '80mm' || raw === '104mm' || raw === 'a4') return raw;
+  if (raw === '58mm' || raw === '80mm' || raw === '104mm') return raw;
   return DEFAULT_SLIP_PAPER;
 }
 
