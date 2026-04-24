@@ -15,9 +15,23 @@ type StockLedgerDelegate = {
   createMany(args?: unknown): Promise<unknown>;
 };
 
+type SaleDelegate = {
+  findMany(args?: unknown): Promise<
+    Array<{
+      saleNo: string;
+      productTypeId: string;
+      weight: number;
+      date: Date;
+      createdAt: Date;
+      notes: string | null;
+    }>
+  >;
+};
+
 const asStock = prisma as unknown as {
   stockPosition: StockPositionDelegate;
   stockLedgerEntry: StockLedgerDelegate;
+  sale?: SaleDelegate;
 };
 
 async function main() {
@@ -39,17 +53,19 @@ async function main() {
     orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
   });
 
-  const sales = await prisma.sale.findMany({
-    select: {
-      saleNo: true,
-      productTypeId: true,
-      weight: true,
-      date: true,
-      createdAt: true,
-      notes: true,
-    },
-    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
-  });
+  const sales = asStock.sale
+    ? await asStock.sale.findMany({
+        select: {
+          saleNo: true,
+          productTypeId: true,
+          weight: true,
+          date: true,
+          createdAt: true,
+          notes: true,
+        },
+        orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+      })
+    : [];
 
   const events: Array<
     | {
