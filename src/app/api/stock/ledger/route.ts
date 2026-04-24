@@ -10,6 +10,19 @@ const MAX_LIMIT = 200;
 type SaleRow = { weight: number; pricePerUnit: number };
 type SaleFindManyDelegate = { findMany(args?: unknown): Promise<SaleRow[]> };
 const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+type StockPositionRow = { quantityKg: number; avgCostPerKg: number };
+type StockLedgerRow = {
+  id: string;
+  refType: string;
+  refNo: string | null;
+  qtyChangeKg: number;
+  unitCostPerKg: number | null;
+  totalCost: number | null;
+  balanceQtyKg: number;
+  balanceAvgCostPerKg: number;
+  date: Date;
+  notes: string | null;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,7 +77,13 @@ export async function GET(request: NextRequest) {
         },
       }),
       stockLedgerEntry.count({ where: { productTypeId } }),
-    ]);
+    ]) as [
+      { id: string; code: string; name: string } | null,
+      StockPositionRow | null,
+      SaleRow[],
+      StockLedgerRow[],
+      number,
+    ];
 
     let soldKg = 0;
     let revenue = 0;
