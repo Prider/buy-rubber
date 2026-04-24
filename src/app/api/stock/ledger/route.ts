@@ -7,6 +7,10 @@ export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 200;
 
+type SaleRow = { weight: number; pricePerUnit: number };
+type SaleFindManyDelegate = { findMany(args?: unknown): Promise<SaleRow[]> };
+const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,6 +28,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing productTypeId' }, { status: 400 });
     }
 
+    const saleRowsPromise = asSale.sale
+      ? asSale.sale.findMany({
+          where: { productTypeId },
+          select: { weight: true, pricePerUnit: true },
+        })
+      : Promise.resolve([]);
+
     const [productType, position, saleRows, entries, total] = await Promise.all([
       prisma.productType.findUnique({
         where: { id: productTypeId },
@@ -33,10 +44,7 @@ export async function GET(request: NextRequest) {
         where: { productTypeId },
         select: { quantityKg: true, avgCostPerKg: true },
       }),
-      prisma.sale.findMany({
-        where: { productTypeId },
-        select: { weight: true, pricePerUnit: true },
-      }),
+      saleRowsPromise,
       stockLedgerEntry.findMany({
         where: { productTypeId },
         orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
