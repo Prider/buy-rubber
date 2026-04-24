@@ -1,4 +1,4 @@
-import { PrismaClient, type Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const EPS = 1e-6;
@@ -6,13 +6,13 @@ const EPS = 1e-6;
 type StockState = { qtyKg: number; avgCostPerKg: number };
 
 type StockPositionDelegate = {
-  deleteMany(args?: Prisma.StockPositionDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
-  createMany(args?: Prisma.StockPositionCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+  deleteMany(args?: unknown): Promise<unknown>;
+  createMany(args?: unknown): Promise<unknown>;
 };
 
 type StockLedgerDelegate = {
-  deleteMany(args?: Prisma.StockLedgerEntryDeleteManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
-  createMany(args?: Prisma.StockLedgerEntryCreateManyArgs): Prisma.PrismaPromise<Prisma.BatchPayload>;
+  deleteMany(args?: unknown): Promise<unknown>;
+  createMany(args?: unknown): Promise<unknown>;
 };
 
 const asStock = prisma as unknown as {
