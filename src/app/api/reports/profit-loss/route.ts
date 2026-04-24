@@ -17,6 +17,19 @@ interface PeriodAccumulator {
   saleWeight: number;
 }
 
+type SaleFindManyDelegate = {
+  findMany(args?: unknown): Promise<
+    Array<{
+      date: Date;
+      totalAmount: number;
+      pricePerUnit: number;
+      weight: number;
+    }>
+  >;
+};
+
+const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+
 function parseDateOrNull(raw: string | null): Date | null {
   if (!raw) return null;
   const date = new Date(raw);
@@ -104,11 +117,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
     }
 
+    const salesPromise = asSale.sale
+      ? asSale.sale.findMany({
+          where: { date: { gte: startDate, lte: endDate } },
+          select: { date: true, totalAmount: true, pricePerUnit: true, weight: true },
+        })
+      : Promise.resolve([]);
+
     const [sales, purchases, expenses] = await Promise.all([
-      prisma.sale.findMany({
-        where: { date: { gte: startDate, lte: endDate } },
-        select: { date: true, totalAmount: true, pricePerUnit: true, weight: true },
-      }),
+      salesPromise,
       prisma.purchase.findMany({
         where: { date: { gte: startDate, lte: endDate } },
         select: { date: true, totalAmount: true, finalPrice: true, netWeight: true },
