@@ -5,13 +5,32 @@ import { reverseSaleFromStock } from '@/lib/stock/stockService';
 
 export const runtime = 'nodejs';
 
+type SaleRecord = {
+  id: string;
+  saleNo: string;
+  date: Date;
+  productTypeId: string;
+  weight: number;
+};
+
+type SaleDelegate = {
+  findUnique(args: unknown): Promise<SaleRecord | null>;
+  update(args: unknown): Promise<unknown>;
+  delete(args: unknown): Promise<unknown>;
+};
+
+const asSale = prisma as unknown as { sale?: SaleDelegate };
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const data = await request.json();
-    const sale = await (prisma as any).sale.findUnique({ where: { id: params.id } });
+    if (!asSale.sale) {
+      return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
+    }
+    const sale = await asSale.sale.findUnique({ where: { id: params.id } });
 
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
@@ -51,7 +70,7 @@ export async function PUT(
 
     const totalAmount = weight * pricePerUnit - (expenseCost || 0);
 
-    const updated = await (prisma as any).sale.update({
+    const updated = await asSale.sale.update({
       where: { id: params.id },
       data: {
         date: data.date ? new Date(data.date) : sale.date,
@@ -87,12 +106,19 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const sale = await prisma.sale.findUnique({ where: { id: params.id } });
+    if (!asSale.sale) {
+      return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
+    }
+    const sale = await asSale.sale.findUnique({ where: { id: params.id } });
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 
     await prisma.$transaction(async (tx) => {
+      const txSale = (tx as unknown as { sale?: SaleDelegate }).sale;
+      if (!txSale) {
+        throw new Error('Sale delegate is not available in transaction client');
+      }
       await reverseSaleFromStock(tx, {
         productTypeId: sale.productTypeId,
         qtyKg: sale.weight,
@@ -100,7 +126,7 @@ export async function DELETE(
         date: new Date(),
         notes: `คืนสต็อกจากการลบรายการขาย ${sale.saleNo}`,
       });
-      await tx.sale.delete({ where: { id: params.id } });
+      await txSale.delete({ where: { id: params.id } });
     });
 
     return NextResponse.json({ message: 'ลบรายการขายเรียบร้อยแล้ว' });
