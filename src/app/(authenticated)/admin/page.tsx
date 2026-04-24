@@ -46,6 +46,7 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
 ];
 
 const PREVIEW_IFRAME_HEIGHT = 560;
+const FORCE_SHOW_ADMIN_ON_WEB = process.env.NEXT_PUBLIC_ADMIN_FORCE_SHOW === 'true';
 
 type AdminSettingsTab = 'connection' | 'slip' | 'users';
 
@@ -95,6 +96,7 @@ export default function AdminSettingsPage() {
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>('connection');
+  const canAccessAdminPage = isElectron || FORCE_SHOW_ADMIN_ON_WEB;
 
   // Check if running in Electron
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function AdminSettingsPage() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Redirect if not authenticated or not in Electron
+  // Redirect if not authenticated or not in Electron (unless force-show env is enabled)
   useEffect(() => {
     // Wait for auth and Electron check to finish loading before checking
     if (isLoading || !electronCheckComplete) {
@@ -123,15 +125,15 @@ export default function AdminSettingsPage() {
       router.push('/login');
       return;
     }
-    if (!isElectron) {
+    if (!canAccessAdminPage) {
       router.push('/dashboard');
       return;
     }
-  }, [user, isLoading, router, isElectron, electronCheckComplete]);
+  }, [user, isLoading, router, canAccessAdminPage, electronCheckComplete]);
 
   // Load slip settings
   useEffect(() => {
-    if (!electronCheckComplete || !isElectron) return;
+    if (!electronCheckComplete || !canAccessAdminPage) return;
 
     const loadSlipSettings = async () => {
       try {
@@ -164,7 +166,7 @@ export default function AdminSettingsPage() {
     };
 
     loadSlipSettings();
-  }, [electronCheckComplete, isElectron, slipDefaults.companyAddress, slipDefaults.companyName, showError]);
+  }, [electronCheckComplete, canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName, showError]);
 
   const handleSaveSlipSettings = async () => {
     try {
@@ -233,7 +235,7 @@ export default function AdminSettingsPage() {
   if (!user) {
     return null;
   }
-  if (!isElectron) {
+  if (!canAccessAdminPage) {
     return null;
   }
 
