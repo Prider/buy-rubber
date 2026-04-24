@@ -7,6 +7,16 @@ export const runtime = 'nodejs';
 
 const MAX_PAGE_SIZE = 200;
 
+type SaleAggRow = {
+  productTypeId: string;
+  weight: number;
+  pricePerUnit: number;
+};
+type SaleFindManyDelegate = {
+  findMany(args?: unknown): Promise<SaleAggRow[]>;
+};
+const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -55,10 +65,12 @@ export async function GET(request: NextRequest) {
     // "ราคาขายเฉลี่ย" = (sum(weight * pricePerUnit) / sum(weight)) for each productTypeId
     const saleAggMap = new Map<string, { soldKg: number; revenue: number }>();
     if (ids.length > 0) {
-      const salesRows = await prisma.sale.findMany({
-        where: { productTypeId: { in: ids } },
-        select: { productTypeId: true, weight: true, pricePerUnit: true },
-      });
+      const salesRows = asSale.sale
+        ? await asSale.sale.findMany({
+            where: { productTypeId: { in: ids } },
+            select: { productTypeId: true, weight: true, pricePerUnit: true },
+          })
+        : [];
 
       for (const row of salesRows) {
         const soldKg = Number(row.weight ?? 0);
