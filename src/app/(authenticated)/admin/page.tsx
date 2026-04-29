@@ -46,7 +46,6 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
 ];
 
 const PREVIEW_IFRAME_HEIGHT = 560;
-const FORCE_SHOW_ADMIN_ON_WEB = process.env.NEXT_PUBLIC_ADMIN_FORCE_SHOW === 'true';
 
 type AdminSettingsTab = 'connection' | 'slip' | 'users';
 
@@ -59,8 +58,6 @@ const ADMIN_TABS: { id: AdminSettingsTab; label: string }[] = [
 export default function AdminSettingsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [isElectron, setIsElectron] = useState(false);
-  const [electronCheckComplete, setElectronCheckComplete] = useState(false);
   const { showSuccess, showError } = useAlert();
   
   // Admin settings hook
@@ -96,29 +93,11 @@ export default function AdminSettingsPage() {
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>('connection');
-  const canAccessAdminPage = isElectron || FORCE_SHOW_ADMIN_ON_WEB;
+  const canAccessAdminPage = user?.role === 'admin';
 
-  // Check if running in Electron
+  // Redirect if not authenticated or not admin
   useEffect(() => {
-    const checkElectron = () => {
-      const isElectronEnv = typeof window !== 'undefined' && window.electron?.isElectron === true;
-      setIsElectron(isElectronEnv);
-      setElectronCheckComplete(true);
-    };
-    
-    // Check immediately
-    checkElectron();
-    
-    // Also check after a short delay in case electron object loads asynchronously
-    const timeout = setTimeout(checkElectron, 100);
-    
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Redirect if not authenticated or not in Electron (unless force-show env is enabled)
-  useEffect(() => {
-    // Wait for auth and Electron check to finish loading before checking
-    if (isLoading || !electronCheckComplete) {
+    if (isLoading) {
       return;
     }
     if (!user) {
@@ -129,11 +108,11 @@ export default function AdminSettingsPage() {
       router.push('/dashboard');
       return;
     }
-  }, [user, isLoading, router, canAccessAdminPage, electronCheckComplete]);
+  }, [user, isLoading, router, canAccessAdminPage]);
 
   // Load slip settings
   useEffect(() => {
-    if (!electronCheckComplete || !canAccessAdminPage) return;
+    if (!canAccessAdminPage) return;
 
     const loadSlipSettings = async () => {
       try {
@@ -166,7 +145,7 @@ export default function AdminSettingsPage() {
     };
 
     loadSlipSettings();
-  }, [electronCheckComplete, canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName, showError]);
+  }, [canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName, showError]);
 
   const handleSaveSlipSettings = async () => {
     try {
@@ -223,8 +202,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Show loader while auth is loading or Electron check not complete
-  if (isLoading || !electronCheckComplete) {
+  if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังโหลด..." />

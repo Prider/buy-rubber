@@ -29,7 +29,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
-  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true, electronOnly: true },
+  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];
 
 interface LayoutProps {
