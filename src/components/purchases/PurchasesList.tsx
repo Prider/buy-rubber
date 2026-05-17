@@ -111,7 +111,6 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
   if (error) {
     return errorComponent;
   }
-
   return (
     <div className="space-y-6">
       {/* Search Bar */}

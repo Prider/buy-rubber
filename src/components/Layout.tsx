@@ -22,7 +22,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
   { name: 'ขายสินค้า', href: '/sales', icon: '🚚' },
   { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
-  { name: 'รายการรับซื้อ', href: '/purchases-list', icon: '📋' },
+  { name: 'ประวัติการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   // { name: 'ประเภทสินค้า', href: '/prices', icon: '💳' },

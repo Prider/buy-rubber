@@ -456,7 +456,7 @@ function LandingPage() {
               10K+
             </div>
             <div className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-              รายการรับซื้อ
+              ประวัติการรับซื้อ
             </div>
           </div>
           <div className="text-center">

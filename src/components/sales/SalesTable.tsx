@@ -76,7 +76,7 @@ export default function SalesTable({
       <div
         className={`flex shrink-0 items-center gap-4 border-b border-gray-200 dark:border-gray-600 ${headPad}`}
       >
-        <h2 className={`${titleClass} whitespace-nowrap`}>ตารางรายการขาย</h2>
+        <h2 className={`${titleClass} whitespace-nowrap`}>ประวัติการขาย</h2>
 
         {onSearchChange && (
           <div className="flex min-w-0 flex-1 items-center gap-4">

@@ -18,7 +18,6 @@
     "electron:build:win": "rm -rf dist && npm run setup:sqlite && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --win",
     "electron:build:mac": "rm -rf dist && npm run setup:sqlite && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --mac",
     "setup:postgres": "bash scripts/setup-postgres-db.sh",
-    "setup:postgres:local": "node scripts/setup-postgres-local.js",
     "setup:sqlite": "node scripts/setup-sqlite-local.js",
     "push:github": "bash scripts/push-to-github.sh",
     "lint": "next lint --quiet",
