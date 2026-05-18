@@ -11,6 +11,7 @@ type SaleAggRow = {
   productTypeId: string;
   weight: number;
   pricePerUnit: number;
+  expenseCost: number | null;
 };
 type StockPositionRow = {
   productTypeId: string;
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       const salesRows = asSale.sale
         ? await asSale.sale.findMany({
             where: { productTypeId: { in: ids } },
-            select: { productTypeId: true, weight: true, pricePerUnit: true },
+            select: { productTypeId: true, weight: true, pricePerUnit: true, expenseCost: true },
           })
         : [];
 
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
         const pricePerKg = Number(row.pricePerUnit ?? 0);
         const cur = saleAggMap.get(row.productTypeId) ?? { soldKg: 0, revenue: 0 };
         cur.soldKg += soldKg;
-        cur.revenue += soldKg * pricePerKg;
+        cur.revenue += soldKg * pricePerKg - Number(row.expenseCost ?? 0);
         saleAggMap.set(row.productTypeId, cur);
       }
     }
