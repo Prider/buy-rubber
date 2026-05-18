@@ -1,5 +1,3 @@
-// This is your Prisma schema file
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "windows", "darwin"]
@@ -10,122 +8,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ผู้ใช้งานระบบ
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
+  id        String     @id @default(uuid())
+  username  String     @unique
   password  String
-  role      String   @default("user") // admin, user, viewer
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      String     @default("user")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   purchases Purchase[]
+  sales     Sale[]
 }
 
-// สมาชิก (เจ้าของสวน)
 model Member {
-  id             String   @id @default(uuid())
-  code           String   @unique
+  id             String     @id @default(uuid())
+  code           String     @unique
   name           String
   idCard         String?
   phone          String?
   address        String?
   bankAccount    String?
   bankName       String?
-  ownerPercent   Float    @default(100) // เปอร์เซ็นต์เจ้าของสวน
-  tapperPercent  Float    @default(0) // เปอร์เซ็นต์คนตัด
-  tapperId       String? // ID คนตัด (ถ้ามี)
-  tapperName     String? // ชื่อคนตัด
-  advanceBalance Float    @default(0) // ยอดเบิกเงินล่วงหน้า
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  purchases Purchase[]
+  ownerPercent   Float      @default(100)
+  tapperPercent  Float      @default(0)
+  tapperId       String?
+  tapperName     String?
+  advanceBalance Float      @default(0)
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  purchases      Purchase[]
 }
 
-// ประเภทสินค้ายาง
 model ProductType {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String // น้ำยางสด, ยางแห้ง, เศษยาง
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  purchases     Purchase[]
-  productPrices ProductPrice[]
+  id                 String             @id @default(uuid())
+  code               String             @unique
+  name               String
+  description        String?
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  productPrices      ProductPrice[]
+  purchases          Purchase[]
+  sales              Sale[]
+  stockPositions     StockPosition[]
+  stockLedgerEntries StockLedgerEntry[]
 }
 
-// ราคาสินค้าตามประเภทประจำวัน
 model ProductPrice {
-  id            String   @id @default(uuid())
-  date          DateTime // วันที่ตั้งราคา
+  id            String      @id @default(uuid())
+  date          DateTime
   productTypeId String
-  price         Float // ราคา (บาท/กก.)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  price         Float
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 
-  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
-
-  @@unique([date, productTypeId]) // ป้องกันการตั้งราคาซ้ำในวันเดียวกัน
+  @@unique([date, productTypeId])
   @@index([date])
 }
 
-// การรับซื้อ
 model Purchase {
-  id            String   @id @default(uuid())
-  purchaseNo    String
-  date          DateTime @default(now())
-  memberId      String
-  productTypeId String
-  userId        String
-
-  // น้ำหนัก
-  grossWeight     Float // น้ำหนักรวมภาชนะ (กก.)
-  containerWeight Float @default(0) // น้ำหนักภาชนะ (กก.)
-  netWeight       Float // น้ำหนักสุทธิ (กก.)
-
-  // สำหรับน้ำยางสด
-  rubberPercent Float? // %ยาง (DRC)
-  dryWeight     Float // น้ำหนักแห้ง (กก.)
-
-  // ราคา
-  basePrice     Float // ราคาพื้นฐาน (บาท/กก.)
-  adjustedPrice Float // ราคาหลังปรับตาม %ยาง
-  bonusPrice    Float @default(0) // ราคาบวกพิเศษ
-  finalPrice    Float // ราคาสุดท้าย (บาท/กก.)
-  totalAmount   Float // ยอดเงินรวม
-
-  // การแบ่ง %
-  ownerAmount  Float // เงินเจ้าของสวน
-  tapperAmount Float @default(0) // เงินคนตัด
-
-  isPaid    Boolean  @default(false)
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  member      Member      @relation(fields: [memberId], references: [id])
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
+  id              String      @id @default(uuid())
+  purchaseNo      String
+  date            DateTime    @default(now())
+  memberId        String
+  productTypeId   String
+  userId          String
+  grossWeight     Float
+  containerWeight Float       @default(0)
+  netWeight       Float
+  rubberPercent   Float?
+  dryWeight       Float
+  basePrice       Float
+  adjustedPrice   Float
+  bonusPrice      Float       @default(0)
+  finalPrice      Float
+  totalAmount     Float
+  ownerAmount     Float
+  tapperAmount    Float       @default(0)
+  isPaid          Boolean     @default(false)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  member          Member      @relation(fields: [memberId], references: [id])
+  productType     ProductType @relation(fields: [productTypeId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
 
   @@index([purchaseNo])
   @@index([date])
   @@index([memberId])
 }
 
-// ค่าใช้จ่ายประจำวัน
 model Expense {
   id          String   @id @default(uuid())
   expenseNo   String   @unique
   date        DateTime @default(now())
-  category    String // ค่าน้ำมัน, ค่าซ่อมรถ, ค่าคนงาน, อื่นๆ
+  category    String
   amount      Float
   description String?
-  userId      String   // ID ของผู้ใช้ที่สร้างรายการ
-  userName    String   // ชื่อผู้ใช้ที่สร้างรายการ
+  userId      String
+  userName    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -134,24 +117,22 @@ model Expense {
   @@index([userId])
 }
 
-// ค่าบริการ (Service Fees)
 model ServiceFee {
-  id          String   @id @default(uuid())
-  serviceFeeNo String  @unique
-  purchaseNo  String? // Link to purchase transaction (same cart)
-  date        DateTime @default(now())
-  category    String // ประเภทค่าบริการ
-  amount      Float // จำนวนเงิน (บวก)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  serviceFeeNo String   @unique
+  purchaseNo   String?
+  date         DateTime @default(now())
+  category     String
+  amount       Float
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([date])
   @@index([purchaseNo])
   @@index([category])
 }
 
-// ตั้งค่าระบบ
 model Setting {
   id        String   @id @default(uuid())
   key       String   @unique
@@ -159,15 +140,72 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
-// ข้อมูลการสำรอง
 model Backup {
-  id          String   @id @default(uuid())
-  fileName    String   @unique
-  filePath    String
-  fileSize    Int
-  backupType  String   // "auto" or "manual"
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  fileName   String   @unique
+  filePath   String
+  fileSize   Int
+  backupType String
+  createdAt  DateTime @default(now())
 
   @@index([createdAt])
   @@index([backupType])
+}
+
+model Sale {
+  id            String      @id @default(uuid())
+  saleNo        String      @unique
+  date          DateTime    @default(now())
+  userId        String
+  companyName   String
+  productTypeId String
+  weight        Float
+  rubberPercent Float?
+  pricePerUnit  Float
+  expenseType   String?
+  expenseCost   Float?
+  sellingType   String
+  totalAmount   Float
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id])
+  productType   ProductType @relation(fields: [productTypeId], references: [id])
+
+  @@index([date])
+  @@index([userId])
+  @@index([productTypeId])
+  @@index([saleNo])
+}
+
+model StockPosition {
+  id            String      @id @default(uuid())
+  productTypeId String      @unique
+  quantityKg    Float       @default(0)
+  avgCostPerKg  Float       @default(0)
+  updatedAt     DateTime    @updatedAt
+  productType   ProductType @relation(fields: [productTypeId], references: [id])
+}
+
+model StockLedgerEntry {
+  id                  String      @id @default(uuid())
+  productTypeId       String
+  refType             String
+  refNo               String?
+  refId               String?
+  qtyChangeKg         Float
+  unitCostPerKg       Float?
+  totalCost           Float?
+  balanceQtyKg        Float
+  balanceAvgCostPerKg Float
+  date                DateTime
+  notes               String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  productType         ProductType @relation(fields: [productTypeId], references: [id])
+
+  @@index([productTypeId])
+  @@index([date])
+  @@index([refType])
+  @@index([refId])
 }

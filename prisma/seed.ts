@@ -129,41 +129,6 @@ async function main() {
   ]);
   console.log('✅ สร้างประเภทสินค้า:', productTypes.length, 'ประเภท');
 
-  // // สร้างราคาสินค้าตัวอย่าง (3 วันล่าสุด รวมวันนี้)
-  // const productPrices = [];
-  
-  // // Get today's date at noon to avoid timezone issues
-  // const now = new Date();
-  // console.log(`System time: ${now.toISOString()}, Local date: ${now.toLocaleDateString()}`);
-  
-  // for (let i = 0; i < 2; i++) {
-  //   // Create date at noon local time to avoid timezone conversion issues
-  //   const date = new Date();
-  //   date.setDate(date.getDate() - i);
-  //   date.setHours(12, 0, 0, 0); // Set to noon instead of midnight
-    
-  //   const dateStr = date.toISOString().split('T')[0];
-  //   console.log(`Creating prices for day ${i} (${dateStr}):`);
-    
-  //   // สร้างราคาสำหรับแต่ละประเภทสินค้า
-  //   for (const productType of productTypes) {
-  //     const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
-  //     const priceVariation = i * 0.5; // ราคาลดลงทุกวัน
-      
-  //     const priceRecord = await prisma.productPrice.create({
-  //       data: {
-  //         date: date,
-  //         productTypeId: productType.id,
-  //         price: basePrice - priceVariation,
-  //       },
-  //     });
-      
-  //     console.log(`  ✓ ${productType.code}: ${priceRecord.price} บาท (date: ${priceRecord.date.toISOString()})`);
-  //     productPrices.push(priceRecord);
-  //   }
-  // }
-  // console.log('✅ สร้างราคาสินค้าตัวอย่าง:', productPrices.length, 'รายการ');
-
   // สร้างค่าใช้จ่ายตัวอย่าง
   console.log('💸 สร้างข้อมูลค่าใช้จ่าย...');
   const expenseCategories = [
@@ -366,7 +331,7 @@ async function main() {
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
   const purchases = [];
-  const purchaseCount = 10; // Create enough purchases to link service fees
+  const purchaseCount = 5; // Create enough purchases to link service fees
   
   for (let i = 0; i < purchaseCount; i++) {
     const member = members[i % members.length];
@@ -382,7 +347,8 @@ async function main() {
     const netWeight = grossWeight - containerWeight;
     const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
     const finalPrice = basePrice + (Math.random() * 5);
-    const totalAmount = netWeight * finalPrice;
+    // const totalAmount = netWeight * finalPrice;
+    const totalAmount = 1000;
     
     const ownerAmount = (totalAmount * member.ownerPercent) / 100;
     const tapperAmount = (totalAmount * member.tapperPercent) / 100;
@@ -400,7 +366,8 @@ async function main() {
           userId: randomUser.id,
           grossWeight: parseFloat(grossWeight.toFixed(2)),
           containerWeight: parseFloat(containerWeight.toFixed(2)),
-          netWeight: parseFloat(netWeight.toFixed(2)),
+          // netWeight: parseFloat(netWeight.toFixed(2)),
+          netWeight: 1,
           dryWeight: parseFloat(netWeight.toFixed(2)),
           basePrice: parseFloat(basePrice.toFixed(2)),
           adjustedPrice: parseFloat(finalPrice.toFixed(2)),
@@ -412,6 +379,7 @@ async function main() {
           isPaid: false,
         },
       });
+      console.log('purchase ::', purchase)
       purchases.push(purchase);
     } catch (_error) {
       // Skip if duplicate or error
@@ -424,70 +392,70 @@ async function main() {
   }
   console.log('✅ สร้างการรับซื้อ:', purchases.length, 'รายการ');
 
-  // สร้างค่าบริการตัวอย่าง (100+ รายการ)
-  console.log('💰 สร้างค่าบริการตัวอย่าง...');
+  // // สร้างค่าบริการตัวอย่าง (100+ รายการ)
+  // console.log('💰 สร้างค่าบริการตัวอย่าง...');
   
-  const serviceFeeCategories = [
-    { category: 'ค่าขนส่ง', baseAmount: 200 },
-    { category: 'ค่าบรรจุภัณฑ์', baseAmount: 150 },
-    { category: 'ค่าการตรวจสอบ', baseAmount: 100 },
-    { category: 'ค่าบริการอื่นๆ', baseAmount: 80 },
-    { category: 'ค่าธรรมเนียม', baseAmount: 50 },
-    { category: 'ค่าใช้จ่ายเพิ่มเติม', baseAmount: 120 },
-  ];
+  // const serviceFeeCategories = [
+  //   { category: 'ค่าขนส่ง', baseAmount: 200 },
+  //   { category: 'ค่าบรรจุภัณฑ์', baseAmount: 150 },
+  //   { category: 'ค่าการตรวจสอบ', baseAmount: 100 },
+  //   { category: 'ค่าบริการอื่นๆ', baseAmount: 80 },
+  //   { category: 'ค่าธรรมเนียม', baseAmount: 50 },
+  //   { category: 'ค่าใช้จ่ายเพิ่มเติม', baseAmount: 120 },
+  // ];
   
-  const serviceFees = [];
-  const serviceFeeCount = 10; // Create 120 service fees for testing
+  // const serviceFees = [];
+  // const serviceFeeCount = 10; // Create 120 service fees for testing
   
-  for (let i = 0; i < serviceFeeCount; i++) {
-    const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];
+  // for (let i = 0; i < serviceFeeCount; i++) {
+  //   const categoryInfo = serviceFeeCategories[i % serviceFeeCategories.length];
     
-    // Create dates spread over last 60 days
-    const date = new Date();
-    date.setDate(date.getDate() - (i % 60));
-    // Vary times throughout the day
-    const hour = 7 + Math.floor((i * 13) % 15); // 7 AM to 9 PM
-    const minute = (i * 17) % 60;
-    date.setHours(hour, minute, (i * 23) % 60, (i * 37) % 1000);
+  //   // Create dates spread over last 60 days
+  //   const date = new Date();
+  //   date.setDate(date.getDate() - (i % 60));
+  //   // Vary times throughout the day
+  //   const hour = 7 + Math.floor((i * 13) % 15); // 7 AM to 9 PM
+  //   const minute = (i * 17) % 60;
+  //   date.setHours(hour, minute, (i * 23) % 60, (i * 37) % 1000);
     
-    const serviceFeeNo = await generateDocumentNumberUtil('SVC', date);
+  //   const serviceFeeNo = await generateDocumentNumberUtil('SVC', date);
     
-    // Link 100% to purchases - always use actual purchaseNo from created purchases
-    let purchaseNo: string | null = null;
+  //   // Link 100% to purchases - always use actual purchaseNo from created purchases
+  //   let purchaseNo: string | null = null;
     
-    if (purchases.length > 0) {
-      // Use actual purchase number from an existing purchase
-      const linkedPurchase = purchases[i % purchases.length];
-      purchaseNo = linkedPurchase.purchaseNo; // Use the actual purchaseNo from the purchase
-    }
+  //   if (purchases.length > 0) {
+  //     // Use actual purchase number from an existing purchase
+  //     const linkedPurchase = purchases[i % purchases.length];
+  //     purchaseNo = linkedPurchase.purchaseNo; // Use the actual purchaseNo from the purchase
+  //   }
     
-    const amount = parseFloat((categoryInfo.baseAmount + (Math.random() * 100)).toFixed(2));
-    const notes = i % 3 === 0 ? `หมายเหตุ ${i + 1}` : null;
+  //   const amount = parseFloat((categoryInfo.baseAmount + (Math.random() * 100)).toFixed(2));
+  //   const notes = i % 3 === 0 ? `หมายเหตุ ${i + 1}` : null;
     
-    try {
-      const serviceFee = await prisma.serviceFee.create({
-        data: {
-          serviceFeeNo,
-          purchaseNo: purchaseNo, // Use actual purchaseNo from created purchase, or null
-          date,
-          createdAt: date,
-          category: categoryInfo.category,
-          amount,
-          notes,
-        },
-      });
-      serviceFees.push(serviceFee);
-    } catch (_error) {
-      // Skip if duplicate
-      console.log(`   ⚠️  ข้ามค่าบริการ ${serviceFeeNo}`);
-    }
+  //   try {
+  //     const serviceFee = await prisma.serviceFee.create({
+  //       data: {
+  //         serviceFeeNo,
+  //         purchaseNo: purchaseNo, // Use actual purchaseNo from created purchase, or null
+  //         date,
+  //         createdAt: date,
+  //         category: categoryInfo.category,
+  //         amount,
+  //         notes,
+  //       },
+  //     });
+  //     serviceFees.push(serviceFee);
+  //   } catch (_error) {
+  //     // Skip if duplicate
+  //     console.log(`   ⚠️  ข้ามค่าบริการ ${serviceFeeNo}`);
+  //   }
     
-    if ((i + 1) % 30 === 0) {
-      console.log(`   ✓ สร้างค่าบริการครบ ${i + 1} รายการ`);
-    }
-  }
-  console.log('✅ สร้างค่าบริการ:', serviceFees.length, 'รายการ');
-  console.log(`   - เชื่อมกับ purchase: ${serviceFees.filter(sf => sf.purchaseNo).length} รายการ (100%)`);
+  //   if ((i + 1) % 30 === 0) {
+  //     console.log(`   ✓ สร้างค่าบริการครบ ${i + 1} รายการ`);
+  //   }
+  // }
+  // console.log('✅ สร้างค่าบริการ:', serviceFees.length, 'รายการ');
+  // console.log(`   - เชื่อมกับ purchase: ${serviceFees.filter(sf => sf.purchaseNo).length} รายการ (100%)`);
 
   console.log('✅ สร้างข้อมูลเบื้องต้นเรียบร้อย');
   console.log('');

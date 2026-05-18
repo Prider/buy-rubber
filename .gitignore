@@ -47,3 +47,8 @@ next-env.d.ts
 /prisma/dev.db-journal
 /prisma/backups/
 prisma/prisma/dev.db
+
+# Playwright
+/playwright/.auth/
+/playwright-report/
+/test-results/
