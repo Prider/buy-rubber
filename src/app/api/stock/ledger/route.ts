@@ -7,9 +7,6 @@ export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 200;
 
-type SaleRow = { weight: number; pricePerUnit: number };
-type SaleFindManyDelegate = { findMany(args?: unknown): Promise<SaleRow[]> };
-const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
 type StockPositionRow = { quantityKg: number; avgCostPerKg: number };
 type StockLedgerRow = {
   id: string;
@@ -23,6 +20,7 @@ type StockLedgerRow = {
   date: Date;
   notes: string | null;
 };
+type SaleAggResult = { soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,14 +39,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing productTypeId' }, { status: 400 });
     }
 
-    const saleRowsPromise = asSale.sale
-      ? asSale.sale.findMany({
-          where: { productTypeId },
-          select: { weight: true, pricePerUnit: true },
-        })
-      : Promise.resolve([]);
+    // Single aggregate query instead of loading every Sale row into memory
+    const saleAggPromise = prisma.$queryRaw<SaleAggResult[]>`
+      SELECT
+        COALESCE(SUM(weight), 0)::float AS "soldKg",
+        COALESCE(SUM(weight * "pricePerUnit"), 0)::float AS revenue
+      FROM "Sale"
+      WHERE "productTypeId" = ${productTypeId}
+    `;
 
-    const [productType, position, saleRows, entries, total] = await Promise.all([
+    const [productType, position, saleAgg, entries, total] = await Promise.all([
       prisma.productType.findUnique({
         where: { id: productTypeId },
         select: { id: true, code: true, name: true },
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         where: { productTypeId },
         select: { quantityKg: true, avgCostPerKg: true },
       }),
-      saleRowsPromise,
+      saleAggPromise,
       stockLedgerEntry.findMany({
         where: { productTypeId },
         orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
@@ -80,19 +80,13 @@ export async function GET(request: NextRequest) {
     ]) as [
       { id: string; code: string; name: string } | null,
       StockPositionRow | null,
-      SaleRow[],
+      SaleAggResult[],
       StockLedgerRow[],
       number,
     ];
 
-    let soldKg = 0;
-    let revenue = 0;
-    for (const r of saleRows) {
-      const w = Number(r.weight ?? 0);
-      const p = Number(r.pricePerUnit ?? 0);
-      soldKg += w;
-      revenue += w * p;
-    }
+    const soldKg = Number(saleAgg[0]?.soldKg ?? 0);
+    const revenue = Number(saleAgg[0]?.revenue ?? 0);
     const avgSellingPricePerKg = soldKg > 0 ? revenue / soldKg : null;
     const positionData = (position ?? null) as StockPositionRow | null;
 

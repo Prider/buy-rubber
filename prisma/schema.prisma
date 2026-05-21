@@ -205,6 +205,7 @@ model StockLedgerEntry {
   productType         ProductType @relation(fields: [productTypeId], references: [id])
 
   @@index([productTypeId])
+  @@index([productTypeId, date, createdAt])
   @@index([date])
   @@index([refType])
   @@index([refId])

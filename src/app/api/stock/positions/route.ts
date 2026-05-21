@@ -1,27 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockPosition } from '@/lib/prismaStock';
-import type { Prisma } from '@prisma/client';
 
 export const runtime = 'nodejs';
 
 const MAX_PAGE_SIZE = 200;
 
-type SaleAggRow = {
-  productTypeId: string;
-  weight: number;
-  pricePerUnit: number;
-  expenseCost: number | null;
-};
 type StockPositionRow = {
   productTypeId: string;
   quantityKg: number;
   avgCostPerKg: number;
 };
-type SaleFindManyDelegate = {
-  findMany(args?: unknown): Promise<SaleAggRow[]>;
-};
-const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+type SaleAgg = { productTypeId: string; soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,16 +28,18 @@ export async function GET(request: NextRequest) {
 
     const paginated = pageParam != null && pageParam !== '';
     const page = paginated ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+    // Always cap rows — unpaginated path uses MAX_PAGE_SIZE as a hard ceiling
     const limit = paginated
       ? Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(limitParam || '30', 10) || 30))
-      : undefined;
+      : MAX_PAGE_SIZE;
 
     const [productTypes, total] = await Promise.all([
       prisma.productType.findMany({
         where,
         select: { id: true, code: true, name: true },
         orderBy: { code: 'asc' },
-        ...(limit !== undefined ? { skip: (page - 1) * limit, take: limit } : {}),
+        skip: paginated ? (page - 1) * limit : 0,
+        take: limit,
       }),
       paginated ? prisma.productType.count({ where }) : Promise.resolve(0),
     ]);
@@ -55,14 +48,10 @@ export async function GET(request: NextRequest) {
     const positions = (
       ids.length === 0
         ? []
-        : limit !== undefined
-          ? await stockPosition.findMany({
-              where: { productTypeId: { in: ids } },
-              select: { productTypeId: true, quantityKg: true, avgCostPerKg: true },
-            })
-          : await stockPosition.findMany({
-              select: { productTypeId: true, quantityKg: true, avgCostPerKg: true },
-            })
+        : await stockPosition.findMany({
+            where: { productTypeId: { in: ids } },
+            select: { productTypeId: true, quantityKg: true, avgCostPerKg: true },
+          })
     ) as StockPositionRow[];
 
     const posMap = new Map<string, { quantityKg: number; avgCostPerKg: number }>(
@@ -72,23 +61,23 @@ export async function GET(request: NextRequest) {
       ]),
     );
 
-    // "ราคาขายเฉลี่ย" = (sum(weight * pricePerUnit) / sum(weight)) for each productTypeId
+    // ราคาขายเฉลี่ย = SUM(weight * pricePerUnit - expenseCost) / SUM(weight) per productTypeId
+    // Aggregated in SQL to avoid loading every Sale row into memory
     const saleAggMap = new Map<string, { soldKg: number; revenue: number }>();
     if (ids.length > 0) {
-      const salesRows = asSale.sale
-        ? await asSale.sale.findMany({
-            where: { productTypeId: { in: ids } },
-            select: { productTypeId: true, weight: true, pricePerUnit: true, expenseCost: true },
-          })
-        : [];
-
-      for (const row of salesRows) {
-        const soldKg = Number(row.weight ?? 0);
-        const pricePerKg = Number(row.pricePerUnit ?? 0);
-        const cur = saleAggMap.get(row.productTypeId) ?? { soldKg: 0, revenue: 0 };
-        cur.soldKg += soldKg;
-        cur.revenue += soldKg * pricePerKg - Number(row.expenseCost ?? 0);
-        saleAggMap.set(row.productTypeId, cur);
+      const saleAggs = await prisma.$queryRaw<SaleAgg[]>`
+        SELECT "productTypeId",
+               COALESCE(SUM(weight), 0)::float AS "soldKg",
+               COALESCE(SUM(weight * "pricePerUnit" - COALESCE("expenseCost", 0)), 0)::float AS revenue
+        FROM "Sale"
+        WHERE "productTypeId" IN (${Prisma.join(ids)})
+        GROUP BY "productTypeId"
+      `;
+      for (const row of saleAggs) {
+        saleAggMap.set(row.productTypeId, {
+          soldKg: Number(row.soldKg),
+          revenue: Number(row.revenue),
+        });
       }
     }
 
@@ -108,7 +97,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    if (paginated && limit !== undefined) {
+    if (paginated) {
       return NextResponse.json({
         data: result,
         pagination: {
