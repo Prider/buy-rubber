@@ -14,9 +14,12 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
     const purchaseNo = searchParams.get('purchaseNo');
     const category = searchParams.get('category');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const requestedLimit = parseInt(searchParams.get('limit') || '200');
+    const limit = Math.min(isNaN(requestedLimit) || requestedLimit <= 0 ? 200 : requestedLimit, 500);
 
     const where: any = {};
-    
+
     if (startDate || endDate) {
       where.date = {};
       if (startDate) {
@@ -39,14 +42,26 @@ export async function GET(request: NextRequest) {
       where.category = category;
     }
 
-    const serviceFees = await prisma.serviceFee.findMany({
-      where,
-      orderBy: {
-        date: 'desc',
+    const [serviceFees, total] = await Promise.all([
+      prisma.serviceFee.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+      }),
+      prisma.serviceFee.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      serviceFees,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
       },
     });
-
-    return NextResponse.json(serviceFees);
   } catch (error) {
     logger.error('Failed to get service fees', error);
     return NextResponse.json(
@@ -105,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Generate service fee number
     const serviceFeeDate = date ? new Date(date) : new Date();
-    const serviceFeeNo = await generateDocumentNumber('SVC', serviceFeeDate);
+    const serviceFeeNo = generateDocumentNumber('SVC', serviceFeeDate);
 
     logger.debug('Creating service fee', { serviceFeeNo, purchaseNo, category, amount: parsedAmount, date: serviceFeeDate });
 
@@ -180,13 +195,10 @@ async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; 
         );
       }
 
-      // Generate service fee number for each item
       const itemDate = item.date ? new Date(item.date) : (date ? new Date(date) : new Date());
-      const serviceFeeNo = await generateDocumentNumber('SVC', itemDate);
-
       serviceFeeDataList.push({
-        serviceFeeNo,
-        purchaseNo: purchaseNo || null, // Link to purchase transaction if provided
+        serviceFeeNo: '', // filled below with retry-safe generation
+        purchaseNo: purchaseNo || null,
         date: itemDate,
         category: item.category.trim(),
         amount: Math.abs(parsedAmount),
@@ -194,14 +206,24 @@ async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; 
       });
     }
 
-    // Save all service fees in a transaction
-    const serviceFees = await prisma.$transaction(
-      serviceFeeDataList.map(data => 
-        prisma.serviceFee.create({
-          data,
-        })
-      )
-    );
+    // Save all service fees in a transaction; retry on P2002 (unique serviceFeeNo collision)
+    let serviceFees: Awaited<ReturnType<typeof prisma.serviceFee.create>>[] = [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const dataWithNumbers = serviceFeeDataList.map((d) => ({
+          ...d,
+          serviceFeeNo: generateDocumentNumber('SVC', d.date),
+        }));
+        serviceFees = await prisma.$transaction(
+          dataWithNumbers.map((data) => prisma.serviceFee.create({ data }))
+        );
+        break;
+      } catch (err: any) {
+        if (err?.code !== 'P2002' || attempt === 2) throw err;
+        // tiny wait so the timestamp advances before the next attempt
+        await new Promise((r) => setTimeout(r, 2));
+      }
+    }
 
     logger.debug('Batch service fee - Successfully created', serviceFees.length);
     return NextResponse.json({ serviceFees, purchaseNo }, { status: 201 });

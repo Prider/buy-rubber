@@ -98,6 +98,8 @@ model Purchase {
   @@index([purchaseNo])
   @@index([date])
   @@index([memberId])
+  @@index([productTypeId])
+  @@index([memberId, date])
 }
 
 model Expense {
@@ -206,6 +208,7 @@ model StockLedgerEntry {
 
   @@index([productTypeId])
   @@index([productTypeId, date, createdAt])
+  @@index([productTypeId, refType])
   @@index([date])
   @@index([refType])
   @@index([refId])

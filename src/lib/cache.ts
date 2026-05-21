@@ -1,7 +1,8 @@
-/**
- * Simple in-memory cache with TTL (Time To Live) support
- * Used for caching API responses to reduce database load
- */
+// Process-local in-memory cache with TTL.
+// LIMITATION: cache.delete() only invalidates the current process. On multi-instance
+// deployments (Vercel, PM2 cluster) other instances continue serving stale data until
+// their TTL expires. Keep TTLs short for mutable data, or replace with a shared cache
+// (Redis / Next.js unstable_cache + revalidateTag) before scaling horizontally.
 
 interface CacheEntry<T> {
   data: T;
@@ -108,12 +109,14 @@ export function invalidateProductTypesCache(): void {
   cache.delete(CACHE_KEYS.PRODUCT_TYPES_ALL);
 }
 
-// TTL constants (in milliseconds)
+// TTL constants (in milliseconds).
+// Dashboard and members are mutable — keep TTL short so cross-instance staleness
+// is bounded to 30 s rather than 5–10 min.
 export const CACHE_TTL = {
-  DASHBOARD: 5 * 60 * 1000, // 5 minutes
-  DASHBOARD_LONG: 10 * 60 * 1000, // 10 minutes
-  PRODUCT_TYPES: 30 * 60 * 1000, // 30 minutes (product types don't change often)
-  MEMBERS: 5 * 60 * 1000, // 5 minutes
+  DASHBOARD: 30 * 1000,          // 30 seconds
+  DASHBOARD_LONG: 30 * 1000,     // 30 seconds (same — "long" variant removed)
+  PRODUCT_TYPES: 5 * 60 * 1000,  // 5 minutes (changes rarely)
+  MEMBERS: 30 * 1000,            // 30 seconds
 } as const;
 
 // Helper function to generate cache key from request params

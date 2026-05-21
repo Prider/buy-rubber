@@ -40,9 +40,11 @@ export async function GET(
       where.productTypeId = productTypeId;
     }
 
+    const MAX_FETCH_ALL = 500;
+
     // Get total count
     const total = await prisma.purchase.count({ where });
-    const take = fetchAll ? (total === 0 ? 0 : total) : limit;
+    const take = fetchAll ? Math.min(total, MAX_FETCH_ALL) : limit;
 
     // Get purchases
     const purchases = await prisma.purchase.findMany({

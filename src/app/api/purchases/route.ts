@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
     );
 
     // สร้างเลขที่รับซื้อ
-    const purchaseNo = await generateDocumentNumber('PUR', new Date(data.date));
+    const purchaseNo = generateDocumentNumber('PUR', new Date(data.date));
 
     logger.debug('Creating purchase', {
       purchaseNo,
@@ -351,20 +351,14 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     const purchaseDate = date || items[0]?.date || new Date().toISOString().split('T')[0];
     
     // Generate one purchase number for all items in the batch
-    const batchPurchaseNo = await generateDocumentNumber('PUR', new Date(purchaseDate));
+    const batchPurchaseNo = generateDocumentNumber('PUR', new Date(purchaseDate));
     logger.info('Batch purchase - Generated purchaseNo', { 
       purchaseNo: batchPurchaseNo, 
       itemCount: items.length 
     });
 
-    // Validate all items and prepare purchase data
-    const purchaseDataList: {
-      purchaseNo: string; // Same purchaseNo for all items in the batch
-      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
-    }[] = [];
-    
+    // Validate required fields for all items up front (no DB calls)
     for (const item of items) {
-      // Validate required fields
       if (!item.memberId) {
         return NextResponse.json(
           { error: 'กรุณาเลือกสมาชิก', details: 'memberId is required for all items' },
@@ -383,7 +377,45 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
           { status: 400 }
         );
       }
+    }
 
+    // Deduplicate FK ids so we can batch-fetch in 4 queries instead of 4×N
+    const uniqueMemberIds = [...new Set(items.map((i) => i.memberId).filter(Boolean))];
+    const uniqueProductTypeIds = [...new Set(items.map((i) => i.productTypeId).filter(Boolean))];
+
+    const [user, membersArr, productTypesArr, productPricesArr] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.member.findMany({ where: { id: { in: uniqueMemberIds } } }),
+      prisma.productType.findMany({ where: { id: { in: uniqueProductTypeIds } } }),
+      prisma.productPrice.findMany({
+        where: {
+          productTypeId: { in: uniqueProductTypeIds },
+          date: {
+            gte: new Date(purchaseDate + 'T00:00:00'),
+            lte: new Date(purchaseDate + 'T23:59:59'),
+          },
+        },
+      }),
+    ]);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
+        { status: 404 }
+      );
+    }
+
+    const memberMap = new Map(membersArr.map((m) => [m.id, m]));
+    const productTypeMap = new Map(productTypesArr.map((pt) => [pt.id, pt]));
+    const priceMap = new Map(productPricesArr.map((p) => [p.productTypeId, p]));
+
+    // Validate all items and prepare purchase data
+    const purchaseDataList: {
+      purchaseNo: string;
+      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
+    }[] = [];
+
+    for (const item of items) {
       // Calculate net weight
       const netWeight = item.netWeight || (item.grossWeight - (item.containerWeight || 0));
 
@@ -393,39 +425,9 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         dryWeight = calculateDryWeight(netWeight, item.rubberPercent);
       }
 
-      // Get product price
-      const productPrice = await prisma.productPrice.findFirst({
-        where: {
-          date: {
-            gte: new Date(purchaseDate + 'T00:00:00'),
-            lte: new Date(purchaseDate + 'T23:59:59'),
-          },
-          productTypeId: item.productTypeId,
-        },
-      });
-
-      // Use price from form or product price
-      // Allow negative prices for service fees (COST product type)
-      const basePrice = item.pricePerUnit !== undefined ? item.pricePerUnit : (productPrice?.price || 0);
-      
-      if (basePrice === 0) {
-        return NextResponse.json(
-          { error: 'กรุณาระบุราคาต่อหน่วย', details: `Price is required for product type ${item.productTypeId}` },
-          { status: 400 }
-        );
-      }
-
-      // Calculate prices
-      const adjustedPrice = basePrice;
-      const finalPrice = adjustedPrice + (item.bonusPrice || 0);
-      const totalAmount = netWeight * finalPrice;
-
-      // Validate foreign keys (member, productType, and user)
-      const [member, productType, user] = await Promise.all([
-        prisma.member.findUnique({ where: { id: item.memberId } }),
-        prisma.productType.findUnique({ where: { id: item.productTypeId } }),
-        prisma.user.findUnique({ where: { id: userId } }),
-      ]);
+      const member = memberMap.get(item.memberId);
+      const productType = productTypeMap.get(item.productTypeId);
+      const productPrice = priceMap.get(item.productTypeId);
 
       if (!member) {
         return NextResponse.json(
@@ -441,12 +443,20 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         );
       }
 
-      if (!user) {
+      // Allow negative prices for service fees (COST product type)
+      const basePrice = item.pricePerUnit !== undefined ? item.pricePerUnit : (productPrice?.price || 0);
+
+      if (basePrice === 0) {
         return NextResponse.json(
-          { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
-          { status: 404 }
+          { error: 'กรุณาระบุราคาต่อหน่วย', details: `Price is required for product type ${item.productTypeId}` },
+          { status: 400 }
         );
       }
+
+      // Calculate prices
+      const adjustedPrice = basePrice;
+      const finalPrice = adjustedPrice + (item.bonusPrice || 0);
+      const totalAmount = netWeight * finalPrice;
 
       // Calculate split
       const { ownerAmount, tapperAmount } = calculateSplit(

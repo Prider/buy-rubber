@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     if (!productType) return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
 
     const saleDate = data.date ? new Date(data.date) : new Date();
-    const saleNo = await generateDocumentNumber('SAL', saleDate);
+    const saleNo = generateDocumentNumber('SAL', saleDate);
     const weight = Number(data.weight);
     const pricePerUnit = Number(data.pricePerUnit);
     const expenseCost = data.expenseCost === undefined || data.expenseCost === null || data.expenseCost === ''

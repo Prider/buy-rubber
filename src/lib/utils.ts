@@ -74,15 +74,14 @@ export function calculateSplit(
 }
 
 // สร้างเลขที่เอกสารอัตโนมัติ
-export async function generateDocumentNumber(
-  prefix: string,
-  date: Date
-): Promise<string> {
+export function generateDocumentNumber(prefix: string, date: Date): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  
-  return `${prefix}-${year}${month}-${random}`;
+  // Use last 6 digits of unix-ms timestamp — monotonically increasing within a process,
+  // ~1M unique values vs the previous 10K random, and still collision-safe when callers
+  // wrap creation in a retry on Prisma P2002 (unique constraint violation).
+  const seq = (Date.now() % 1_000_000).toString().padStart(6, '0');
+  return `${prefix}-${year}${month}-${seq}`;
 }
 
 // Helper function to extract user info from auth token

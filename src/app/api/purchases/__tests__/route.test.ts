@@ -12,15 +12,18 @@ vi.mock('@/lib/prisma', () => ({
     },
     member: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     productType: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
     },
     productPrice: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -64,11 +67,10 @@ vi.mock('@/lib/utils', () => ({
     tapperAmount: (totalAmount * tapperPercent) / 100,
   })),
   getUserFromToken: vi.fn(() => null),
-  generateDocumentNumber: vi.fn(async (prefix: string, date: Date) => {
+  generateDocumentNumber: vi.fn((prefix: string, date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `${prefix}-${year}${month}-${random}`;
+    return `${prefix}-${year}${month}-000001`;
   }),
 }));
 
@@ -945,11 +947,11 @@ describe('POST /api/purchases', () => {
     });
 
     it('should create multiple purchases with same purchaseNo', async () => {
-      // Mock multiple calls for each item validation
-      vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
-      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+      // Batch handler uses findMany for members/productTypes/productPrices (hoisted out of loop)
+      vi.mocked(prisma.member.findMany).mockResolvedValue([mockMember]);
+      vi.mocked(prisma.productType.findMany).mockResolvedValue([mockProductType]);
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-      vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
       
       const mockPurchase1 = { ...mockPurchase, id: 'purchase-1', grossWeight: 100 };
       const mockPurchase2 = { ...mockPurchase, id: 'purchase-2', grossWeight: 200 };
