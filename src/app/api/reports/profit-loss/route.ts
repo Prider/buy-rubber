@@ -18,18 +18,8 @@ interface PeriodAccumulator {
   saleWeight: number;
 }
 
-type SaleFindManyDelegate = {
-  findMany(args?: unknown): Promise<
-    Array<{
-      date: Date;
-      totalAmount: number;
-      pricePerUnit: number;
-      weight: number;
-    }>
-  >;
-};
-
-const asSale = prisma as unknown as { sale?: SaleFindManyDelegate };
+type PurchaseSaleAgg = { period: Date; total: number; weighted_price: number; weight: number };
+type ExpenseAgg = { period: Date; total: number };
 
 function parseDateOrNull(raw: string | null): Date | null {
   if (!raw) return null;
@@ -118,50 +108,63 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
     }
 
-    const salesPromise = asSale.sale
-      ? asSale.sale.findMany({
-          where: { date: { gte: startDate, lte: endDate } },
-          select: { date: true, totalAmount: true, pricePerUnit: true, weight: true },
-        })
-      : Promise.resolve([]);
+    // Push all aggregation to the DB with DATE_TRUNC — returns one row per period,
+    // never loading individual Sale/Purchase/Expense rows into Node.js memory.
+    const truncUnit = viewMode === 'daily' ? 'day' : 'month';
 
-    const [sales, purchases, expenses] = await Promise.all([
-      salesPromise,
-      prisma.purchase.findMany({
-        where: { date: { gte: startDate, lte: endDate } },
-        select: { date: true, totalAmount: true, finalPrice: true, netWeight: true },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: startDate, lte: endDate } },
-        select: { date: true, amount: true },
-      }),
+    const [saleAggs, purchaseAggs, expenseAggs] = await Promise.all([
+      prisma.$queryRaw<PurchaseSaleAgg[]>`
+        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
+               COALESCE(SUM("totalAmount"), 0)::float  AS total,
+               COALESCE(SUM("pricePerUnit" * weight), 0)::float AS weighted_price,
+               COALESCE(SUM(weight), 0)::float          AS weight
+        FROM "Sale"
+        WHERE date >= ${startDate} AND date <= ${endDate}
+        GROUP BY DATE_TRUNC(${truncUnit}, date)
+      `,
+      prisma.$queryRaw<PurchaseSaleAgg[]>`
+        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
+               COALESCE(SUM("totalAmount"), 0)::float          AS total,
+               COALESCE(SUM("finalPrice" * "netWeight"), 0)::float AS weighted_price,
+               COALESCE(SUM("netWeight"), 0)::float             AS weight
+        FROM "Purchase"
+        WHERE date >= ${startDate} AND date <= ${endDate}
+        GROUP BY DATE_TRUNC(${truncUnit}, date)
+      `,
+      prisma.$queryRaw<ExpenseAgg[]>`
+        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
+               COALESCE(SUM(amount), 0)::float AS total
+        FROM "Expense"
+        WHERE date >= ${startDate} AND date <= ${endDate}
+        GROUP BY DATE_TRUNC(${truncUnit}, date)
+      `,
     ]);
 
     const periodMap = createPeriodMap(startDate, endDate, viewMode);
 
-    for (const item of sales) {
-      const key = keyFromDate(item.date, viewMode);
-      const row = periodMap.get(key);
-      if (!row) continue;
-      row.sales += item.totalAmount || 0;
-      row.salePriceWeighted += (item.pricePerUnit || 0) * (item.weight || 0);
-      row.saleWeight += item.weight || 0;
+    for (const row of saleAggs) {
+      const key = keyFromDate(new Date(row.period), viewMode);
+      const acc = periodMap.get(key);
+      if (!acc) continue;
+      acc.sales += Number(row.total);
+      acc.salePriceWeighted += Number(row.weighted_price);
+      acc.saleWeight += Number(row.weight);
     }
 
-    for (const item of purchases) {
-      const key = keyFromDate(item.date, viewMode);
-      const row = periodMap.get(key);
-      if (!row) continue;
-      row.purchases += item.totalAmount || 0;
-      row.purchasePriceWeighted += (item.finalPrice || 0) * (item.netWeight || 0);
-      row.purchaseWeight += item.netWeight || 0;
+    for (const row of purchaseAggs) {
+      const key = keyFromDate(new Date(row.period), viewMode);
+      const acc = periodMap.get(key);
+      if (!acc) continue;
+      acc.purchases += Number(row.total);
+      acc.purchasePriceWeighted += Number(row.weighted_price);
+      acc.purchaseWeight += Number(row.weight);
     }
 
-    for (const item of expenses) {
-      const key = keyFromDate(item.date, viewMode);
-      const row = periodMap.get(key);
-      if (!row) continue;
-      row.expenses += item.amount || 0;
+    for (const row of expenseAggs) {
+      const key = keyFromDate(new Date(row.period), viewMode);
+      const acc = periodMap.get(key);
+      if (!acc) continue;
+      acc.expenses += Number(row.total);
     }
 
     const periods = Array.from(periodMap.values()).map((row) => {
@@ -188,7 +191,7 @@ export async function GET(request: NextRequest) {
         acc.net += row.net;
         return acc;
       },
-      { sales: 0, purchases: 0, expenses: 0, net: 0 }
+      { sales: 0, purchases: 0, expenses: 0, net: 0 },
     );
 
     return NextResponse.json({

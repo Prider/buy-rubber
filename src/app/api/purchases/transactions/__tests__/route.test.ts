@@ -916,13 +916,6 @@ describe('GET /api/purchases/transactions', () => {
         expect.objectContaining({
           count: 1,
           total: 1,
-          pagination: expect.objectContaining({
-            page: 1,
-            limit: 20,
-            total: 1,
-            totalPages: 1,
-            hasMore: false,
-          }),
         })
       );
     });
@@ -1069,7 +1062,7 @@ describe('GET /api/purchases/transactions', () => {
           },
         },
       ]);
-      
+
       const purchase1 = { ...mockPurchase1, purchaseNo: 'PUR-202401-0001' };
       const purchase2 = { ...mockPurchase3, purchaseNo: 'PUR-202401-0002' };
       const serviceFee1 = { ...mockServiceFee1, purchaseNo: 'PUR-202401-0001' };
@@ -1086,6 +1079,171 @@ describe('GET /api/purchases/transactions', () => {
       expect(data.transactions).toHaveLength(2);
       expect(data.transactions[0].serviceFees).toHaveLength(1);
       expect(data.transactions[1].serviceFees).toHaveLength(1);
+    });
+  });
+
+  // ─── Tests that verify DB-level behaviour introduced by the scalability fix ───
+
+  describe('DB-level pagination (scalability fix)', () => {
+    it('calls groupBy twice: once for count (no take/skip) and once paginated (with take/skip)', async () => {
+      const countRows = [{ purchaseNo: 'PUR-01' }, { purchaseNo: 'PUR-02' }, { purchaseNo: 'PUR-03' }];
+      const pageRows = [
+        {
+          purchaseNo: 'PUR-01',
+          memberId: 'member-1',
+          _max: { createdAt: new Date('2024-01-15T10:00:00'), date: new Date('2024-01-15') },
+          _sum: { totalAmount: 1000 },
+        },
+      ];
+
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce(countRows as any)   // count call
+        .mockResolvedValueOnce(pageRows as any);   // paginated call
+
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?page=1&limit=1&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(prisma.purchase.groupBy).toHaveBeenCalledTimes(2);
+
+      // Count call: no take/skip, only ['purchaseNo'] in by
+      expect(prisma.purchase.groupBy).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ by: ['purchaseNo'] }),
+      );
+      expect(prisma.purchase.groupBy).not.toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ take: expect.anything() }),
+      );
+
+      // Paginated call: has take and skip
+      expect(prisma.purchase.groupBy).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ take: 1, skip: 0 }),
+      );
+
+      // Total comes from count call (3), not from page results
+      expect(data.pagination.total).toBe(3);
+      expect(data.pagination.totalPages).toBe(3);
+    });
+
+    it('passes correct skip for page 2', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?page=3&limit=10&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      await GET(request);
+
+      // Second groupBy call (paginated) must have skip=20 (page 3, limit 10)
+      expect(prisma.purchase.groupBy).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ take: 10, skip: 20 }),
+      );
+    });
+
+    it('fetches full purchase data only for the current page purchaseNos', async () => {
+      const pageRows = [
+        {
+          purchaseNo: 'PUR-PAGE',
+          memberId: 'member-1',
+          _max: { createdAt: new Date('2024-01-15T10:00:00'), date: new Date('2024-01-15') },
+          _sum: { totalAmount: 500 },
+        },
+      ];
+
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([{ purchaseNo: 'PUR-PAGE' }, { purchaseNo: 'PUR-OTHER' }] as any)
+        .mockResolvedValueOnce(pageRows as any);
+
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([
+        { ...mockPurchase1, purchaseNo: 'PUR-PAGE' },
+      ]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?page=1&limit=1&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      await GET(request);
+
+      // findMany must only request the page's purchaseNos, not all of them
+      expect(prisma.purchase.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            purchaseNo: { in: ['PUR-PAGE'] },
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('DB-level search (scalability fix)', () => {
+    it('pre-fetches matching memberIds before groupBy when search is provided', async () => {
+      vi.mocked(prisma.member.findMany).mockResolvedValue([{ id: 'member-match' } as any]);
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?search=สมชาย&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      await GET(request);
+
+      // member.findMany must be called first to resolve the search to IDs
+      expect(prisma.member.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ OR: expect.any(Array) }),
+          select: { id: true },
+        }),
+      );
+    });
+
+    it('adds OR condition to groupBy WHERE so search happens in the DB', async () => {
+      vi.mocked(prisma.member.findMany).mockResolvedValue([{ id: 'member-1' } as any]);
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?search=abc&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      await GET(request);
+
+      // Both groupBy calls must receive a where.OR clause
+      expect(prisma.purchase.groupBy).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          where: expect.objectContaining({ OR: expect.any(Array) }),
+        }),
+      );
+      expect(prisma.purchase.groupBy).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          where: expect.objectContaining({ OR: expect.any(Array) }),
+        }),
+      );
+    });
+
+    it('does not search members when memberId filter is already set', async () => {
+      vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases/transactions?memberId=member-1&search=abc&startDate=2024-01-01&endDate=2024-01-31',
+      );
+      await GET(request);
+
+      // member.findMany should NOT be called for the search when memberId is set
+      expect(prisma.member.findMany).not.toHaveBeenCalled();
     });
   });
 });

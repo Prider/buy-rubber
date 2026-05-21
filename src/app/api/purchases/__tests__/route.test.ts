@@ -48,6 +48,11 @@ vi.mock('@/lib/cache', () => ({
   },
 }));
 
+// Mock stock service called inside $transaction
+vi.mock('@/lib/stock/stockService', () => ({
+  applyPurchaseToStock: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock utility functions
 vi.mock('@/lib/utils', () => ({
   calculateDryWeight: vi.fn((netWeight: number, rubberPercent: number) => 
@@ -140,7 +145,7 @@ describe('GET /api/purchases', () => {
           user: true,
         },
         orderBy: { date: 'desc' },
-        take: undefined,
+        take: 1000,
       });
     });
 
@@ -274,6 +279,39 @@ describe('GET /api/purchases', () => {
         expect.objectContaining({
           take: 10,
         })
+      );
+    });
+
+    it('should apply default cap of 1000 when no limit param is given', async () => {
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest('http://localhost:3000/api/purchases');
+      await GET(request);
+
+      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 1000 }),
+      );
+    });
+
+    it('should respect an explicit limit below 1000', async () => {
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest('http://localhost:3000/api/purchases?limit=50');
+      await GET(request);
+
+      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 50 }),
+      );
+    });
+
+    it('should clamp a limit above 1000 to 1000', async () => {
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest('http://localhost:3000/api/purchases?limit=9999');
+      await GET(request);
+
+      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 1000 }),
       );
     });
 
@@ -425,6 +463,11 @@ describe('POST /api/purchases', () => {
     
     // Clear cache before each test
     vi.mocked(cacheModule.cache.get).mockReturnValue(null);
+
+    // Make $transaction invoke its callback so tx.purchase.create is called
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+      callback({ purchase: { create: prisma.purchase.create } }),
+    );
   });
 
   describe('Single purchase creation', () => {

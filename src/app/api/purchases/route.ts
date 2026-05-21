@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
       where.isPaid = isPaid === 'true';
     }
 
+    const DEFAULT_LIMIT = 1000;
     const purchases = await prisma.purchase.findMany({
       where,
       include: {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
         user: true,
       },
       orderBy: { date: 'desc' },
-      take: limit ? parseInt(limit) : undefined,
+      take: limit ? Math.min(parseInt(limit), DEFAULT_LIMIT) : DEFAULT_LIMIT,
     });
 
     logger.info('GET /api/purchases - Success', { count: purchases.length });
