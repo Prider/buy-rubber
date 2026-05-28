@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { generateDocumentNumber as generateDocumentNumberUtil } from '@/lib/utils';
 
 const prisma = new PrismaClient();
 
@@ -33,9 +32,18 @@ async function main() {
   console.log('   - ลบค่าใช้จ่าย');
   
   // ลบข้อมูลหลักหลังจากลบข้อมูลที่อ้างอิงแล้ว
+  await prisma.stockLedgerEntry.deleteMany({});
+  console.log('   - ลบรายการสต็อก');
+
+  await prisma.stockPosition.deleteMany({});
+  console.log('   - ลบตำแหน่งสต็อก');
+
+  await prisma.sale.deleteMany({});
+  console.log('   - ลบข้อมูลการขาย');
+
   await prisma.member.deleteMany({});
   console.log('   - ลบข้อมูลสมาชิก');
-  
+
   await prisma.productType.deleteMany({});
   console.log('   - ลบประเภทสินค้า');
   
@@ -330,65 +338,75 @@ async function main() {
 
   // สร้างการรับซื้อตัวอย่างเพื่อเชื่อมกับค่าบริการ
   console.log('🛒 สร้างการรับซื้อตัวอย่าง...');
-  const purchases = [];
-  const purchaseCount = 5; // Create enough purchases to link service fees
-  
-  for (let i = 0; i < purchaseCount; i++) {
-    const member = members[i % members.length];
-    const productType = productTypes[i % productTypes.length];
-    const randomUser = [admin, user][i % 2]; // Alternate between admin and user
-    
-    const date = new Date();
-    date.setDate(date.getDate() - (1 + Math.floor(i / 5))); // Always in the past, spread across days
-    date.setHours(8 + (i % 12), (i * 7) % 60, 0, 0); // Vary times within the day
-    
-    const grossWeight = 50 + Math.random() * 100;
-    const containerWeight = 2 + Math.random() * 5;
-    const netWeight = grossWeight - containerWeight;
-    const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
-    const finalPrice = basePrice + (Math.random() * 5);
-    // const totalAmount = netWeight * finalPrice;
-    const totalAmount = 1000;
-    
-    const ownerAmount = (totalAmount * member.ownerPercent) / 100;
-    const tapperAmount = (totalAmount * member.tapperPercent) / 100;
-    
-    const purchaseNo = await generateDocumentNumberUtil('PUR', date);
-    
-    try {
-      const purchase = await prisma.purchase.create({
-        data: {
-          purchaseNo,
-          date,
-          createdAt: date,
-          memberId: member.id,
-          productTypeId: productType.id,
-          userId: randomUser.id,
-          grossWeight: parseFloat(grossWeight.toFixed(2)),
-          containerWeight: parseFloat(containerWeight.toFixed(2)),
-          // netWeight: parseFloat(netWeight.toFixed(2)),
-          netWeight: 1,
-          dryWeight: parseFloat(netWeight.toFixed(2)),
-          basePrice: parseFloat(basePrice.toFixed(2)),
-          adjustedPrice: parseFloat(finalPrice.toFixed(2)),
-          bonusPrice: 0,
-          finalPrice: parseFloat(finalPrice.toFixed(2)),
-          totalAmount: parseFloat(totalAmount.toFixed(2)),
-          ownerAmount: parseFloat(ownerAmount.toFixed(2)),
-          tapperAmount: parseFloat(tapperAmount.toFixed(2)),
-          isPaid: false,
-        },
+  const purchases: { purchaseNo: string }[] = [];
+  const purchaseCount = 4000;
+  const purchaseBatchSize = 200;
+
+  for (let i = 0; i < purchaseCount; i += purchaseBatchSize) {
+    const batchEnd = Math.min(i + purchaseBatchSize, purchaseCount);
+    const batchData = [];
+
+    for (let j = i; j < batchEnd; j++) {
+      const member = members[j % members.length];
+      const productType = productTypes[j % productTypes.length];
+      const randomUser = [admin, user][j % 2]; // Alternate between admin and user
+
+      // Spread across last 365 days so the app has realistic historical data
+      const date = new Date();
+      date.setDate(date.getDate() - (j % 365));
+      date.setHours(8 + (j % 12), (j * 7) % 60, 0, 0);
+
+      const grossWeight = 50 + Math.random() * 100;
+      const containerWeight = 2 + Math.random() * 5;
+      const netWeight = grossWeight - containerWeight;
+      const basePrice = productType.code === 'FRESH' ? 50 : productType.code === 'DRY' ? 45 : 30;
+      const finalPrice = basePrice + (Math.random() * 5);
+      const totalAmount = netWeight * finalPrice;
+
+      const ownerAmount = (totalAmount * member.ownerPercent) / 100;
+      const tapperAmount = (totalAmount * member.tapperPercent) / 100;
+
+      // Use a sequential index as the doc-number suffix to avoid collisions
+      // during rapid bulk inserts (Date.now() collides when many records are
+      // created within the same millisecond).
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const seq = (j + 1).toString().padStart(6, '0');
+      const purchaseNo = `PUR-${year}${month}-${seq}`;
+
+      batchData.push({
+        purchaseNo,
+        date,
+        createdAt: date,
+        memberId: member.id,
+        productTypeId: productType.id,
+        userId: randomUser.id,
+        grossWeight: parseFloat(grossWeight.toFixed(2)),
+        containerWeight: parseFloat(containerWeight.toFixed(2)),
+        netWeight: parseFloat(netWeight.toFixed(2)),
+        dryWeight: parseFloat(netWeight.toFixed(2)),
+        basePrice: parseFloat(basePrice.toFixed(2)),
+        adjustedPrice: parseFloat(finalPrice.toFixed(2)),
+        bonusPrice: 0,
+        finalPrice: parseFloat(finalPrice.toFixed(2)),
+        totalAmount: parseFloat(totalAmount.toFixed(2)),
+        ownerAmount: parseFloat(ownerAmount.toFixed(2)),
+        tapperAmount: parseFloat(tapperAmount.toFixed(2)),
+        isPaid: false,
       });
-      console.log('purchase ::', purchase)
-      purchases.push(purchase);
+    }
+
+    try {
+      const result = await prisma.purchase.createMany({
+        data: batchData,
+        skipDuplicates: true,
+      });
+      purchases.push(...batchData.slice(0, result.count));
     } catch (_error) {
-      // Skip if duplicate or error
-      console.log(`   ⚠️  ข้ามการรับซื้อ ${purchaseNo}`);
+      console.log(`   ⚠️  ข้ามรุ่น ${i + 1}–${batchEnd}`);
     }
-    
-    if ((i + 1) % 50 === 0) {
-      console.log(`   ✓ สร้างการรับซื้อครบ ${i + 1} รายการ`);
-    }
+
+    console.log(`   ✓ สร้างการรับซื้อครบ ${batchEnd} / ${purchaseCount} รายการ`);
   }
   console.log('✅ สร้างการรับซื้อ:', purchases.length, 'รายการ');
 

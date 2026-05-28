@@ -327,9 +327,9 @@ export default function StockPage() {
                   <td className="px-4 py-3 text-right">
                     <ProfitLossCell
                       value={
-                        row.avgSellingPricePerKg != null
-                          ? row.soldKg != null && row.soldKg > 0
-                            ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
+                          row.avgSellingPricePerKg != null
+                            ? row.soldKg != null && row.soldKg > 0
+                              ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
                             : null
                           : null
                       }
