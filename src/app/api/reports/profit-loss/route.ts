@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
                COALESCE(SUM(weight), 0)::float          AS weight
         FROM "Sale"
         WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY DATE_TRUNC(${truncUnit}, date)
+        GROUP BY 1
       `,
       prisma.$queryRaw<PurchaseSaleAgg[]>`
         SELECT DATE_TRUNC(${truncUnit}, date) AS period,
@@ -129,14 +129,14 @@ export async function GET(request: NextRequest) {
                COALESCE(SUM("netWeight"), 0)::float             AS weight
         FROM "Purchase"
         WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY DATE_TRUNC(${truncUnit}, date)
+        GROUP BY 1
       `,
       prisma.$queryRaw<ExpenseAgg[]>`
         SELECT DATE_TRUNC(${truncUnit}, date) AS period,
                COALESCE(SUM(amount), 0)::float AS total
         FROM "Expense"
         WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY DATE_TRUNC(${truncUnit}, date)
+        GROUP BY 1
       `,
     ]);
 
