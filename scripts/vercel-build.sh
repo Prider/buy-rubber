@@ -37,6 +37,14 @@ else
     else
         echo "⚠️  Database might already be seeded or seed failed, continuing build..."
     fi
+
+    # Step 5: Rebuild stock ledger from purchases/sales
+    echo "📦 Rebuilding stock ledger..."
+    if npm run db:rebuild-stock; then
+        echo "✅ Stock ledger rebuilt successfully"
+    else
+        echo "⚠️  Stock rebuild failed, continuing build..."
+    fi
 fi
 
 # Step 5: Build Next.js application
