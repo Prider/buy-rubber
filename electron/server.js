@@ -144,13 +144,10 @@ const startServer = async (customAppPath = null, databasePath = null) => {
   const hostname = '0.0.0.0';
   let port = 3000;
   
-  // Set DATABASE_URL before starting Next.js server
-  // Check if DATABASE_URL is already set (e.g., PostgreSQL from .env)
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgresql://')) {
-    console.log('✅ Using PostgreSQL connection from environment');
-    console.log('DATABASE_URL:', process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@')); // Mask password
-    // DATABASE_URL is already set, no need to modify it
-  } else if (databasePath) {
+  // Set DATABASE_URL before starting Next.js server.
+  // Always prefer the explicitly-provided databasePath (Electron SQLite mode).
+  // A postgresql:// in .env is for Vercel/web only — don't use it in the desktop app.
+  if (databasePath) {
     // SQLite: Verify database file exists
     if (!fs.existsSync(databasePath)) {
       console.error('❌ Database file does not exist at:', databasePath);

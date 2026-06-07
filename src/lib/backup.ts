@@ -37,10 +37,12 @@ function getDatabasePathFromEnv(): string {
       const rawPath = url.replace(/^file:/, '');
       // decode %20 etc.
       let decodedPath = decodeURIComponent(rawPath);
-      
-      // Handle relative paths - resolve them relative to process.cwd()
+
+      // Prisma resolves relative SQLite paths relative to the schema directory
+      // (the prisma/ folder), not process.cwd(). Mirror that behaviour here.
       if (!path.isAbsolute(decodedPath)) {
-        decodedPath = path.resolve(process.cwd(), decodedPath);
+        const schemaDir = path.join(process.cwd(), 'prisma');
+        decodedPath = path.resolve(schemaDir, decodedPath);
       }
       
       possiblePaths.push(decodedPath);
@@ -119,6 +121,14 @@ export async function ensureBackupDirectory() {
 // สร้างไฟล์สำรองข้อมูล
 export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
   try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (!dbUrl.startsWith('file:')) {
+      return {
+        success: false,
+        error: 'การสำรองข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+      };
+    }
+
     logger.info('Starting backup creation', { type: backupType });
     const backupDir = await ensureBackupDirectory();
 
@@ -197,6 +207,14 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
 // เรียกคืนข้อมูลจากไฟล์สำรอง
 export async function restoreBackup(backupId: string) {
   try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (!dbUrl.startsWith('file:')) {
+      return {
+        success: false,
+        error: 'การเรียกคืนข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+      };
+    }
+
     logger.info('Starting backup restore', { backupId });
     const backup = await prisma.backup.findUnique({
       where: { id: backupId },
