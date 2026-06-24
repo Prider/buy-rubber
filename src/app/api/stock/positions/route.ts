@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
     if (ids.length > 0) {
       const saleAggs = await prisma.$queryRaw<SaleAgg[]>`
         SELECT "productTypeId",
-               COALESCE(SUM(weight), 0)::float AS "soldKg",
-               COALESCE(SUM(weight * "pricePerUnit" - COALESCE("expenseCost", 0)), 0)::float AS revenue
+               CAST(COALESCE(SUM(weight), 0) AS REAL) AS "soldKg",
+               CAST(COALESCE(SUM(weight * "pricePerUnit" - COALESCE("expenseCost", 0)), 0) AS REAL) AS revenue
         FROM "Sale"
         WHERE "productTypeId" IN (${Prisma.join(ids)})
         GROUP BY "productTypeId"

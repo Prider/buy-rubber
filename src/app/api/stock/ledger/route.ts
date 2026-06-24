@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
     // Single aggregate query instead of loading every Sale row into memory
     const saleAggPromise = prisma.$queryRaw<SaleAggResult[]>`
       SELECT
-        COALESCE(SUM(weight), 0)::float AS "soldKg",
-        COALESCE(SUM(weight * "pricePerUnit"), 0)::float AS revenue
+        CAST(COALESCE(SUM(weight), 0) AS REAL) AS "soldKg",
+        CAST(COALESCE(SUM(weight * "pricePerUnit"), 0) AS REAL) AS revenue
       FROM "Sale"
       WHERE "productTypeId" = ${productTypeId}
     `;

@@ -204,6 +204,15 @@ if (exec('npm run db:seed')) {
   log('  ⚠️  Seeding failed (this is okay if seed script doesn\'t exist)', 'yellow');
 }
 
+// Step 9: Rebuild stock ledger from purchases/sales
+log('');
+log('Step 9: Rebuilding stock ledger...', 'yellow');
+if (exec('npm run db:rebuild-stock')) {
+  log('  ✓ Stock ledger rebuilt', 'green');
+} else {
+  log('  ⚠️  Stock rebuild failed', 'yellow');
+}
+
 log('');
 log('========================================', 'cyan');
 log('✅ SQLite Setup Complete!', 'green');
