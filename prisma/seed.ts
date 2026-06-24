@@ -399,7 +399,6 @@ async function main() {
     try {
       const result = await prisma.purchase.createMany({
         data: batchData,
-        skipDuplicates: true,
       });
       purchases.push(...batchData.slice(0, result.count));
     } catch (_error) {

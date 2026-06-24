@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     // Push search into the DB: pre-fetch matching memberIds so the groupBy WHERE can filter them
     if (searchTerm) {
       const orConditions: Prisma.PurchaseWhereInput[] = [
-        { purchaseNo: { contains: searchTerm, mode: 'insensitive' } },
+        { purchaseNo: { contains: searchTerm } },
       ];
 
       // Only search by member name/code when not already filtered to a specific member
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
         const matchingMembers = await prisma.member.findMany({
           where: {
             OR: [
-              { name: { contains: searchTerm, mode: 'insensitive' } },
-              { code: { contains: searchTerm, mode: 'insensitive' } },
+              { name: { contains: searchTerm } },
+              { code: { contains: searchTerm } },
             ],
           },
           select: { id: true },
