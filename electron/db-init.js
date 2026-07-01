@@ -5,7 +5,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const { app } = require('electron');
+const { rebuildStock } = require('./rebuild-stock');
+
+/** Tables added in recent schema versions; existing installs may lack these. */
+const REQUIRED_TABLES = ['Sale', 'StockPosition', 'StockLedgerEntry'];
 
 // Create a debug log file to help troubleshoot database initialization
 function debugLog(message) {
@@ -17,6 +22,212 @@ function debugLog(message) {
   } catch (e) {
     console.error('Failed to write debug log:', e.message);
     console.log(message);
+  }
+}
+
+function resolvePrismaProjectRoot() {
+  const candidates = [
+    app.getAppPath(),
+    path.join(__dirname, '..'),
+  ];
+  for (const root of candidates) {
+    if (fs.existsSync(path.join(root, 'prisma', 'schema.prisma'))) {
+      return root;
+    }
+  }
+  return path.join(__dirname, '..');
+}
+
+function buildPrismaDbPushCommand(projectRoot) {
+  const prismaCliPath = path.join(projectRoot, 'node_modules', 'prisma', 'build', 'index.js');
+  const prismaBinPath = path.join(projectRoot, 'node_modules', '.bin', 'prisma');
+  if (fs.existsSync(prismaCliPath)) {
+    return `node "${prismaCliPath}" db push --skip-generate`;
+  }
+  if (fs.existsSync(prismaBinPath)) {
+    return `"${prismaBinPath}" db push --skip-generate`;
+  }
+  return 'npx prisma db push --skip-generate';
+}
+
+function runPrismaDbPush(dbUrl) {
+  const projectRoot = resolvePrismaProjectRoot();
+  const prismaCmd = buildPrismaDbPushCommand(projectRoot);
+  debugLog('Running schema sync: ' + prismaCmd);
+  debugLog('Prisma project root: ' + projectRoot);
+  execSync(prismaCmd, {
+    cwd: projectRoot,
+    env: { ...process.env, DATABASE_URL: dbUrl },
+    stdio: 'pipe',
+  });
+  debugLog('✅ Database schema synchronized via Prisma CLI');
+}
+
+async function getMissingTables(prisma) {
+  const rows = await prisma.$queryRaw`
+    SELECT name FROM sqlite_master
+    WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'
+  `;
+  const existing = new Set((rows || []).map((row) => row.name));
+  return REQUIRED_TABLES.filter((table) => !existing.has(table));
+}
+
+async function countPurchases(dbUrl) {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
+  try {
+    return await prisma.purchase.count();
+  } catch {
+    return 0;
+  } finally {
+    await prisma.$disconnect().catch(() => {});
+  }
+}
+
+function findBundledDatabasePath() {
+  const appPath = app.getAppPath();
+  const possibleDbPaths = [
+    path.join(process.resourcesPath || appPath, 'prisma', 'dev.db'),
+    path.join(appPath, 'prisma', 'dev.db'),
+    path.join(appPath, '..', 'prisma', 'dev.db'),
+    path.join(__dirname, '..', 'prisma', 'dev.db'),
+  ];
+  for (const dbPath of possibleDbPaths) {
+    if (fs.existsSync(dbPath)) {
+      return dbPath;
+    }
+  }
+  return null;
+}
+
+async function maybeRefreshFromBundle(userDbPath, dbUrl) {
+  const bundledDbPath = findBundledDatabasePath();
+  if (!bundledDbPath) {
+    debugLog('No bundled database found for refresh check');
+    return false;
+  }
+
+  const normalizedBundled = bundledDbPath.replace(/\\/g, '/');
+  const bundledUrl = `file:${normalizedBundled}`;
+  const [userPurchases, bundledPurchases] = await Promise.all([
+    countPurchases(dbUrl),
+    countPurchases(bundledUrl),
+  ]);
+
+  debugLog(
+    `Purchase count check: user=${userPurchases}, bundled=${bundledPurchases}`,
+  );
+
+  // Re-copy when user DB is stale (e.g. old install before seed data was bundled).
+  if (userPurchases > 0 || bundledPurchases === 0) {
+    return false;
+  }
+
+  const backupDir = path.join(path.dirname(userDbPath), 'backups');
+  fs.mkdirSync(backupDir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = path.join(backupDir, `dev.db.before-bundle-refresh.${stamp}`);
+  fs.copyFileSync(userDbPath, backupPath);
+  debugLog(`Backed up stale database to: ${backupPath}`);
+  fs.copyFileSync(bundledDbPath, userDbPath);
+  debugLog(`✅ Refreshed user database from bundle (${bundledPurchases} purchases)`);
+  return true;
+}
+
+async function ensureExpenseUserColumns(prisma) {
+  const columns = await prisma.$queryRaw`
+    SELECT name FROM pragma_table_info('Expense') WHERE name = 'userId'
+  `;
+  if (columns && columns.length > 0) {
+    return;
+  }
+
+  debugLog('Adding missing userId and userName columns to Expense table...');
+  const alterStatements = [
+    `ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''`,
+    `ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''`,
+  ];
+  for (const sql of alterStatements) {
+    try {
+      await prisma.$executeRawUnsafe(sql);
+    } catch (e) {
+      if (!e.message.includes('duplicate column')) {
+        debugLog('⚠️  Could not run: ' + sql + ' — ' + e.message);
+      }
+    }
+  }
+  try {
+    await prisma.$executeRaw`UPDATE Expense SET userId = '' WHERE userId IS NULL`;
+    await prisma.$executeRaw`UPDATE Expense SET userName = '' WHERE userName IS NULL`;
+    debugLog('✅ Expense user columns updated');
+  } catch (e) {
+    debugLog('⚠️  Could not update Expense rows: ' + e.message);
+  }
+}
+
+async function ensureSchemaUpToDate(dbUrl) {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient({
+    datasources: { db: { url: dbUrl } },
+  });
+
+  try {
+    const missingTables = await getMissingTables(prisma);
+    if (missingTables.length > 0) {
+      debugLog('Missing tables detected: ' + missingTables.join(', '));
+      await prisma.$disconnect();
+      runPrismaDbPush(dbUrl);
+      return;
+    }
+
+    await ensureExpenseUserColumns(prisma);
+    debugLog('✅ Database schema is up to date');
+  } catch (error) {
+    debugLog('⚠️  Schema check failed: ' + error.message);
+    debugLog('⚠️  Attempting fallback: prisma db push...');
+    try {
+      runPrismaDbPush(dbUrl);
+    } catch (pushError) {
+      debugLog('⚠️  Prisma CLI fallback also failed: ' + pushError.message);
+      debugLog('⚠️  Database may be missing recent schema changes');
+    }
+  } finally {
+    await prisma.$disconnect().catch(() => {});
+  }
+}
+
+async function ensureStockData(dbUrl) {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient({
+    datasources: {
+      db: { url: dbUrl },
+    },
+  });
+
+  try {
+    const [purchaseCount, positionCount] = await Promise.all([
+      prisma.purchase.count(),
+      prisma.stockPosition.count(),
+    ]);
+
+    if (purchaseCount === 0 || positionCount > 0) {
+      debugLog(
+        `Stock check: purchases=${purchaseCount}, positions=${positionCount} (no rebuild needed)`,
+      );
+      return;
+    }
+
+    debugLog(
+      `Stock data missing (${purchaseCount} purchases, 0 positions). Rebuilding stock ledger...`,
+    );
+    const result = await rebuildStock(dbUrl);
+    debugLog(
+      `✅ Stock rebuilt: positions=${result.positions}, ledgerEntries=${result.ledgerEntries}`,
+    );
+  } catch (error) {
+    debugLog('⚠️  Failed to rebuild stock: ' + error.message);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -72,104 +283,11 @@ function initializeDatabase() {
       if (fs.existsSync(userDbPath)) {
         const stats = fs.statSync(userDbPath);
         debugLog(`Database already exists: ${(stats.size / 1024).toFixed(2)} KB`);
+        await maybeRefreshFromBundle(userDbPath, dbUrl);
         debugLog('Ensuring database schema is up to date...');
-        
-        // Use Prisma to check and add missing columns
-        try {
-          const { PrismaClient } = require('@prisma/client');
-          const prisma = new PrismaClient({
-            datasources: {
-              db: {
-                url: dbUrl,
-              },
-            },
-          });
-          
-          // Check if Expense table has userId column
-          const columns = await prisma.$queryRaw`
-            SELECT name FROM pragma_table_info('Expense') WHERE name = 'userId'
-          `;
-          
-          if (!columns || columns.length === 0) {
-            debugLog('Adding missing userId and userName columns to Expense table...');
-            
-            // Add userId column if it doesn't exist (SQLite allows adding columns)
-            try {
-              await prisma.$executeRaw`
-                ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''
-              `;
-              debugLog('✅ Added userId column');
-            } catch (e) {
-              // Column might already exist or table doesn't exist
-              if (!e.message.includes('duplicate column')) {
-                debugLog('⚠️  Could not add userId: ' + e.message);
-              }
-            }
-            
-            // Add userName column if it doesn't exist
-            try {
-              await prisma.$executeRaw`
-                ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''
-              `;
-              debugLog('✅ Added userName column');
-            } catch (e) {
-              if (!e.message.includes('duplicate column')) {
-                debugLog('⚠️  Could not add userName: ' + e.message);
-              }
-            }
-            
-            // Update existing rows with default values if needed
-            try {
-              await prisma.$executeRaw`
-                UPDATE Expense SET userId = '' WHERE userId IS NULL
-              `;
-              await prisma.$executeRaw`
-                UPDATE Expense SET userName = '' WHERE userName IS NULL
-              `;
-              debugLog('✅ Updated existing rows');
-            } catch (e) {
-              debugLog('⚠️  Could not update existing rows: ' + e.message);
-            }
-          } else {
-            debugLog('✅ Database schema is up to date');
-          }
-          
-          await prisma.$disconnect();
-        } catch (error) {
-          debugLog('⚠️  Failed to update schema via Prisma: ' + error.message);
-          debugLog('⚠️  Attempting fallback: prisma db push...');
-          
-          // Fallback: try prisma db push
-          try {
-            const { execSync } = require('child_process');
-            const appPath = app.getAppPath();
-            const prismaPath = path.join(appPath, '..', 'node_modules', '.bin', 'prisma');
-            const prismaCliPath = path.join(appPath, '..', 'node_modules', 'prisma', 'build', 'index.js');
-            
-            let prismaCmd = null;
-            if (fs.existsSync(prismaCliPath)) {
-              prismaCmd = `node "${prismaCliPath}" db push --skip-generate --accept-data-loss`;
-            } else if (fs.existsSync(prismaPath)) {
-              prismaCmd = `"${prismaPath}" db push --skip-generate --accept-data-loss`;
-            } else {
-              prismaCmd = 'npx prisma db push --skip-generate --accept-data-loss';
-            }
-            
-            if (prismaCmd) {
-              debugLog('Running: ' + prismaCmd);
-              execSync(prismaCmd, {
-                cwd: path.join(appPath, '..'),
-                env: { ...process.env, DATABASE_URL: dbUrl },
-                stdio: 'pipe',
-              });
-              debugLog('✅ Database schema synchronized via Prisma CLI');
-            }
-          } catch (pushError) {
-            debugLog('⚠️  Prisma CLI fallback also failed: ' + pushError.message);
-            debugLog('⚠️  Database may be missing recent schema changes');
-            debugLog('⚠️  User may need to delete database and restart app');
-          }
-        }
+        await ensureSchemaUpToDate(dbUrl);
+
+        await ensureStockData(dbUrl);
         
         debugLog('=== DATABASE INITIALIZATION COMPLETE ===');
         resolve(userDbPath);
@@ -178,33 +296,11 @@ function initializeDatabase() {
       
       debugLog('No existing database found, searching for source...');
 
-      // Try to find the seeded database in the app bundle
-      const appPath = app.getAppPath();
-      debugLog('app.getAppPath(): ' + appPath);
-      debugLog('process.resourcesPath: ' + (process.resourcesPath || 'undefined'));
-      debugLog('__dirname: ' + __dirname);
-      
-      const possibleDbPaths = [
-        // In packaged app (without asar) - extraResources go to resources/prisma/dev.db
-        path.join(process.resourcesPath || appPath, 'prisma', 'dev.db'),
-        // In app bundle resources (alternative path)
-        path.join(appPath, 'prisma', 'dev.db'),
-        // In development
-        path.join(appPath, '..', 'prisma', 'dev.db'),
-        // Fallback
-        path.join(__dirname, '..', 'prisma', 'dev.db'),
-      ];
-
-      debugLog('Searching for seeded database in:');
-      let sourceDbPath = null;
-      for (const dbPath of possibleDbPaths) {
-        const exists = fs.existsSync(dbPath);
-        debugLog(`  - ${dbPath} ${exists ? '✅' : '❌'}`);
-        if (exists) {
-          sourceDbPath = dbPath;
-          debugLog('Found seeded database at: ' + sourceDbPath);
-          break;
-        }
+      const sourceDbPath = findBundledDatabasePath();
+      if (sourceDbPath) {
+        debugLog('Found seeded database at: ' + sourceDbPath);
+      } else {
+        debugLog('Searching for seeded database in bundled paths — none found');
       }
 
       if (!sourceDbPath) {
@@ -267,36 +363,9 @@ function initializeDatabase() {
       
       // Ensure schema is up to date after copying
       debugLog('Ensuring database schema is up to date...');
-      try {
-        const { execSync } = require('child_process');
-        const appPath = app.getAppPath();
-        const prismaCliPath = path.join(appPath, '..', 'node_modules', 'prisma', 'build', 'index.js');
-        const prismaPath = path.join(appPath, '..', 'node_modules', '.bin', 'prisma');
-        
-        // Try to find prisma executable
-        let prismaCmd = null;
-        if (fs.existsSync(prismaCliPath)) {
-          prismaCmd = `node "${prismaCliPath}" db push --skip-generate`;
-        } else if (fs.existsSync(prismaPath)) {
-          prismaCmd = `"${prismaPath}" db push --skip-generate`;
-        } else {
-          prismaCmd = 'npx prisma db push --skip-generate';
-        }
-        
-        if (prismaCmd) {
-          debugLog('Running: ' + prismaCmd);
-          execSync(prismaCmd, {
-            cwd: path.join(appPath, '..'),
-            env: { ...process.env, DATABASE_URL: dbUrl },
-            stdio: 'pipe',
-          });
-          debugLog('✅ Database schema synchronized');
-        }
-      } catch (error) {
-        debugLog('⚠️  Failed to sync database schema: ' + error.message);
-        debugLog('⚠️  Error details: ' + (error.stdout?.toString() || error.message));
-        // Don't fail - continue with copied database
-      }
+      await ensureSchemaUpToDate(dbUrl);
+
+      await ensureStockData(dbUrl);
       
       debugLog('=== DATABASE INITIALIZATION COMPLETE ===');
       

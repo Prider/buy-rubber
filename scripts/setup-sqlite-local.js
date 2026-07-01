@@ -40,6 +40,9 @@ const schemaPath = path.join(projectRoot, 'prisma', 'schema.prisma');
 const sqliteSchemaPath = path.join(projectRoot, 'prisma', 'schema.sqlite.prisma');
 const envPath = path.join(projectRoot, '.env');
 const dbPath = path.join(projectRoot, 'prisma', 'dev.db');
+const legacyDbPath = path.join(projectRoot, 'prisma', 'prisma', 'dev.db');
+const dbUrl = `file:${dbPath.replace(/\\/g, '/')}`;
+const prismaEnv = { ...process.env, DATABASE_URL: dbUrl };
 
 log('========================================', 'cyan');
 log('Setting up SQLite for Local Development', 'cyan');
@@ -92,7 +95,8 @@ log('');
 log('Step 3: Creating/updating .env file...', 'yellow');
 
 const envContent = `# Local Development with SQLite
-DATABASE_URL="file:./prisma/dev.db"
+# Path is relative to prisma/schema.prisma (resolves to prisma/dev.db)
+DATABASE_URL="file:./dev.db"
 
 # JWT Secret
 JWT_SECRET="your-secret-key-change-this-in-production"
@@ -124,6 +128,15 @@ if (fs.existsSync(dbPath)) {
 } else {
   log('  ✓ No existing database file', 'green');
 }
+if (fs.existsSync(legacyDbPath)) {
+  fs.unlinkSync(legacyDbPath);
+  log('  ✓ Removed legacy misplaced database (prisma/prisma/dev.db)', 'green');
+  try {
+    fs.rmdirSync(path.join(projectRoot, 'prisma', 'prisma'));
+  } catch {
+    // ignore if not empty
+  }
+}
 
 // Step 5: Fix Prisma binary permissions (Unix systems)
 log('');
@@ -147,12 +160,12 @@ log('Step 6: Generating Prisma client...', 'yellow');
 // Use node to run prisma directly to avoid permission issues
 const prismaCliPath = path.join(projectRoot, 'node_modules', 'prisma', 'build', 'index.js');
 if (fs.existsSync(prismaCliPath)) {
-  if (exec(`node "${prismaCliPath}" generate`)) {
+  if (exec(`node "${prismaCliPath}" generate`, { env: prismaEnv })) {
     log('  ✓ Prisma client generated', 'green');
   } else {
     // Fallback to npx
     log('  Trying with npx...', 'yellow');
-    if (exec('npx --yes prisma generate')) {
+    if (exec('npx --yes prisma generate', { env: prismaEnv })) {
       log('  ✓ Prisma client generated', 'green');
     } else {
       log('  ✗ Failed to generate Prisma client', 'red');
@@ -162,7 +175,7 @@ if (fs.existsSync(prismaCliPath)) {
   }
 } else {
   // Use npx as fallback
-  if (exec('npx --yes prisma generate')) {
+  if (exec('npx --yes prisma generate', { env: prismaEnv })) {
     log('  ✓ Prisma client generated', 'green');
   } else {
     log('  ✗ Failed to generate Prisma client', 'red');
@@ -175,11 +188,11 @@ if (fs.existsSync(prismaCliPath)) {
 log('');
 log('Step 7: Creating database and pushing schema...', 'yellow');
 if (fs.existsSync(prismaCliPath)) {
-  if (exec(`node "${prismaCliPath}" db push`)) {
+  if (exec(`node "${prismaCliPath}" db push`, { env: prismaEnv })) {
     log('  ✓ Database created and schema pushed', 'green');
   } else {
     // Fallback to npx
-    if (exec('npx --yes prisma db push')) {
+    if (exec('npx --yes prisma db push', { env: prismaEnv })) {
       log('  ✓ Database created and schema pushed', 'green');
     } else {
       log('  ✗ Failed to push schema', 'red');
@@ -187,7 +200,7 @@ if (fs.existsSync(prismaCliPath)) {
     }
   }
 } else {
-  if (exec('npx --yes prisma db push')) {
+  if (exec('npx --yes prisma db push', { env: prismaEnv })) {
     log('  ✓ Database created and schema pushed', 'green');
   } else {
     log('  ✗ Failed to push schema', 'red');
@@ -198,7 +211,7 @@ if (fs.existsSync(prismaCliPath)) {
 // Step 8: Seed database
 log('');
 log('Step 8: Seeding database...', 'yellow');
-if (exec('npm run db:seed')) {
+if (exec('npm run db:seed', { env: prismaEnv })) {
   log('  ✓ Database seeded', 'green');
 } else {
   log('  ⚠️  Seeding failed (this is okay if seed script doesn\'t exist)', 'yellow');
@@ -207,10 +220,13 @@ if (exec('npm run db:seed')) {
 // Step 9: Rebuild stock ledger from purchases/sales
 log('');
 log('Step 9: Rebuilding stock ledger...', 'yellow');
-if (exec('npm run db:rebuild-stock')) {
+if (exec('node electron/rebuild-stock.js', {
+  env: prismaEnv,
+})) {
   log('  ✓ Stock ledger rebuilt', 'green');
 } else {
-  log('  ⚠️  Stock rebuild failed', 'yellow');
+  log('  ✗ Stock rebuild failed', 'red');
+  process.exit(1);
 }
 
 log('');
