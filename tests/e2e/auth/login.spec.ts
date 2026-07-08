@@ -15,7 +15,7 @@ test.describe('Login page', () => {
   })
 
   test('shows demo credentials banner', async ({ page }) => {
-    await expect(page.getByText('demo')).toBeVisible()
+    await expect(page.getByText('demo', { exact: true })).toBeVisible()
     await expect(page.getByText('demo@123')).toBeVisible()
   })
 

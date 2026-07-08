@@ -68,7 +68,7 @@ test.describe('Admin — user management', () => {
     const username = `deluser${suffix}`
 
     // Create user via API
-    const createRes = await request.post('http://localhost:3000/api/users', {
+    const createRes = await request.post('/api/users', {
       headers: { Authorization: `Bearer ${adminToken}` },
       data: { username, password: 'Delete@123', role: 'viewer' },
     })
@@ -93,7 +93,6 @@ test.describe('Admin — user management', () => {
 
 test.describe('Role-based access control', () => {
   test('viewer role cannot access admin page', async ({ browser }) => {
-    // Create a new context — log in as viewer (demo/demo@123)
     const context = await browser.newContext()
     const page = await context.newPage()
 
@@ -103,16 +102,11 @@ test.describe('Role-based access control', () => {
     await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click()
     await page.waitForURL('/dashboard')
 
-    // Attempt to visit /admin
     await page.goto('/admin')
 
-    // Should be redirected away or shown an access denied message
-    const url = page.url()
-    const isDenied =
-      !url.includes('/admin') ||
-      (await page.getByText(/ไม่มีสิทธิ์|Access Denied|Unauthorized/i).count()) > 0
-
-    expect(isDenied).toBe(true)
+    // Client-side guard redirects non-admin users away from /admin
+    await expect(page).toHaveURL('/dashboard')
+    await expect(page.getByRole('button', { name: 'จัดการผู้ใช้งาน' })).not.toBeVisible()
 
     await context.close()
   })

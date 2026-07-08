@@ -1,6 +1,7 @@
 import { type APIRequestContext } from '@playwright/test'
 
-const BASE = 'http://localhost:3000'
+const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
+const BASE = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`
 
 /**
  * Returns an Authorization header using the admin token stored in localStorage
