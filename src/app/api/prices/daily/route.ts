@@ -88,9 +88,18 @@ export async function POST(request: NextRequest) {
     // Filter valid prices
     const validPrices = prices.filter(p => p.price > 0);
 
+    // Prevent duplicate creates for the same (date, productTypeId).
+    // Prisma has @@unique([date, productTypeId]), so duplicates in the input array
+    // would otherwise fail the whole request.
+    const uniquePricesByType = new Map<string, { productTypeId: string; price: number }>();
+    for (const p of validPrices) {
+      uniquePricesByType.set(p.productTypeId, p); // last value wins
+    }
+    const uniquePrices = Array.from(uniquePricesByType.values());
+
     // Create new price records
     const createdPrices = await Promise.all(
-      validPrices.map(async (p) => {
+      uniquePrices.map(async (p) => {
         return await prisma.productPrice.create({
           data: {
             date: priceDate,

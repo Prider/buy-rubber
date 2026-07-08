@@ -361,6 +361,34 @@ describe('POST /api/prices/daily', () => {
       expect(vi.mocked(prisma.productPrice.create)).toHaveBeenCalledTimes(2);
     });
 
+    it('should prevent duplicate productTypeId creates within the same request', async () => {
+      vi.mocked(prisma.productPrice.deleteMany).mockResolvedValue({ count: 0 });
+      vi.mocked(prisma.productPrice.create).mockResolvedValue(mockPrice);
+
+      const request = new NextRequest('http://localhost:3000/api/prices/daily', {
+        method: 'POST',
+        body: JSON.stringify({
+          date: '2024-01-15',
+          prices: [
+            { productTypeId: 'product-1', price: 50 },
+            { productTypeId: 'product-1', price: 60 }, // duplicate type in same payload
+          ],
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.count).toBe(1); // only one record should be created
+      expect(vi.mocked(prisma.productPrice.create)).toHaveBeenCalledTimes(1);
+
+      const createCall = vi.mocked(prisma.productPrice.create).mock.calls[0][0];
+      expect(createCall.data.productTypeId).toBe('product-1');
+      expect(createCall.data.price).toBe(60); // last value wins
+    });
+
     it('should set price date to noon to avoid timezone issues', async () => {
       vi.mocked(prisma.productPrice.deleteMany).mockResolvedValue({ count: 0 });
       vi.mocked(prisma.productPrice.create).mockResolvedValue(mockPrice);
