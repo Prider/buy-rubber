@@ -2,6 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { AuthProvider, useAuth, usePermission } from '../AuthContext';
 import React from 'react';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+
+function createTestToken(
+  payload: { userId: string; username?: string; role: string },
+  expiresIn: string | number = '1h'
+): string {
+  return jwt.sign(
+    {
+      userId: payload.userId,
+      username: payload.username ?? 'testuser',
+      role: payload.role,
+    },
+    JWT_SECRET,
+    { expiresIn }
+  );
+}
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -99,12 +117,11 @@ describe('AuthContext', () => {
     });
 
     it('should load user from valid token in localStorage', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'testuser',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
+      });
       localStorageMock.setItem('auth_token', token);
 
       render(
@@ -124,7 +141,6 @@ describe('AuthContext', () => {
 
     it('should remove invalid token from localStorage', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      // Use a string that will cause JSON.parse to fail when decoded
       localStorageMock.setItem('auth_token', 'not-valid-base64-json-token!!!');
 
       render(
@@ -138,16 +154,57 @@ describe('AuthContext', () => {
       });
 
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_user');
       expect(screen.getByTestId('user')).toHaveTextContent('null');
       consoleErrorSpy.mockRestore();
     });
 
-    it('should handle missing username in token gracefully', async () => {
-      const userData = {
-        userId: 'user-1',
+    it('should clear expired token and redirect to login', async () => {
+      const token = createTestToken(
+        { userId: 'user-1', username: 'testuser', role: 'admin' },
+        '-1s'
+      );
+      localStorageMock.setItem('auth_token', token);
+      localStorageMock.setItem('auth_user', JSON.stringify({
+        id: 'user-1',
+        username: 'testuser',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
+      }));
+
+      const hrefSetter = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, set href(value: string) { hrefSetter(value); } },
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
+      });
+
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_user');
+      expect(screen.getByTestId('user')).toHaveTextContent('null');
+      expect(hrefSetter).toHaveBeenCalledWith('/login');
+
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    it('should handle missing username in token gracefully', async () => {
+      const token = jwt.sign(
+        { userId: 'user-1', role: 'admin' },
+        JWT_SECRET,
+        { expiresIn: '1h' }
+      );
       localStorageMock.setItem('auth_token', token);      render(
         <AuthProvider>
           <TestComponent />
@@ -177,7 +234,11 @@ describe('AuthContext', () => {
         json: async () => ({
           success: true,
           user: mockUser,
-          token: 'mock-token',
+          token: createTestToken({
+            userId: 'user-1',
+            username: 'testuser',
+            role: 'admin',
+          }),
         }),
       });
 
@@ -206,7 +267,7 @@ describe('AuthContext', () => {
         body: JSON.stringify({ username: 'testuser', password: 'password' }),
       });
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'mock-token');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', expect.any(String));
       expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true');
     });
 
@@ -270,13 +331,13 @@ describe('AuthContext', () => {
 
   describe('logout', () => {
     it('should logout and clear user data', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'testuser',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      (global.fetch as any).mockResolvedValueOnce({});
+      });
+      localStorageMock.setItem('auth_token', token);
+      (global.fetch as any).mockResolvedValueOnce({});
 
       render(
         <AuthProvider>
@@ -303,13 +364,13 @@ describe('AuthContext', () => {
     });
 
     it('should handle logout API errors gracefully', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'testuser',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      });
+      localStorageMock.setItem('auth_token', token);
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -338,13 +399,13 @@ describe('AuthContext', () => {
 
   describe('hasRole', () => {
     it('should return true when user has the role', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'admin',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -358,13 +419,13 @@ describe('AuthContext', () => {
     });
 
     it('should return false when user does not have the role', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'user',
         role: 'user',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -394,13 +455,13 @@ describe('AuthContext', () => {
 
   describe('hasAnyRole', () => {
     it('should return true when user has one of the roles', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'admin',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -414,13 +475,13 @@ describe('AuthContext', () => {
     });
 
     it('should return false when user does not have any of the roles', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'viewer',
         role: 'viewer',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -448,13 +509,13 @@ describe('AuthContext', () => {
 
   describe('usePermission', () => {
     it('should return true when user has the permission', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'admin',
         role: 'admin',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <PermissionTestComponent permission="user.create" />
         </AuthProvider>
@@ -466,13 +527,13 @@ describe('AuthContext', () => {
     });
 
     it('should return false when user does not have the permission', async () => {
-      const userData = {
+      const token = createTestToken({
         userId: 'user-1',
         username: 'viewer',
         role: 'viewer',
-      };
-      const token = Buffer.from(JSON.stringify(userData)).toString('base64');
-      localStorageMock.setItem('auth_token', token);      render(
+      });
+      localStorageMock.setItem('auth_token', token);
+      render(
         <AuthProvider>
           <PermissionTestComponent permission="user.create" />
         </AuthProvider>

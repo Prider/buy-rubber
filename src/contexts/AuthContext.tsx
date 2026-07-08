@@ -2,61 +2,76 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { AuthContextType, User, UserRole, ROLE_PERMISSIONS, Permission } from '@/types/user';
+import {
+  clearAuthSession,
+  decodeTokenPayload,
+  isTokenExpired,
+  redirectToLogin,
+} from '@/lib/sessionToken';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function userFromSavedData(savedUser: string): Omit<User, 'password'> | null {
+  try {
+    return JSON.parse(savedUser);
+  } catch {
+    return null;
+  }
+}
+
+function userFromToken(token: string): Omit<User, 'password'> | null {
+  const decoded = decodeTokenPayload(token);
+  if (!decoded) {
+    return null;
+  }
+
+  return {
+    id: decoded.userId,
+    username: decoded.username,
+    role: decoded.role as UserRole,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
     const token = localStorage.getItem('auth_token');
     const savedUser = localStorage.getItem('auth_user');
-    
-    if (token && savedUser) {
-      try {
-        // Try to restore user from saved data first (more reliable)
-        const user = JSON.parse(savedUser);
-        setUser(user);
-      } catch (error) {
-        console.error('Invalid saved user data:', error);
-        // Fallback: try to decode from token
-        try {
-          // Use browser-compatible base64 decoding
-          const decoded = JSON.parse(atob(token));
-          setUser({
-            id: decoded.userId,
-            username: decoded.username || 'Unknown',
-            role: decoded.role,
-            createdAt: new Date(decoded.createdAt || Date.now()),
-            updatedAt: new Date(decoded.updatedAt || Date.now()),
-            isActive: decoded.isActive !== undefined ? decoded.isActive : true
-          });
-        } catch (tokenError) {
-          console.error('Invalid token:', tokenError);
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-        }
-      }
-    } else if (token) {
-      // Only token exists, try to decode it
-      try {
-        const decoded = JSON.parse(atob(token));
-        setUser({
-          id: decoded.userId,
-          username: decoded.username || 'Unknown',
-          role: decoded.role,
-          createdAt: new Date(decoded.createdAt || Date.now()),
-          updatedAt: new Date(decoded.updatedAt || Date.now()),
-          isActive: decoded.isActive !== undefined ? decoded.isActive : true
-        });
-      } catch (error) {
-        console.error('Invalid token:', error);
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (isTokenExpired(token)) {
+      clearAuthSession();
+      setUser(null);
+      setIsLoading(false);
+      redirectToLogin();
+      return;
+    }
+
+    if (savedUser) {
+      const restoredUser = userFromSavedData(savedUser);
+      if (restoredUser) {
+        setUser(restoredUser);
+        setIsLoading(false);
+        return;
       }
     }
+
+    const restoredUser = userFromToken(token);
+    if (restoredUser) {
+      setUser(restoredUser);
+    } else {
+      clearAuthSession();
+    }
+
     setIsLoading(false);
   }, []);
 
@@ -73,15 +88,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (data.success && data.user && data.token) {
+        if (isTokenExpired(data.token)) {
+          console.error('Login returned an expired token');
+          return false;
+        }
+
         setUser(data.user);
         localStorage.setItem('auth_token', data.token);
-        // Also save user data for easier restoration on reload
         localStorage.setItem('auth_user', JSON.stringify(data.user));
         return true;
-      } else {
-        console.error('Login failed:', data.message);
-        return false;
       }
+
+      console.error('Login failed:', data.message);
+      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -97,8 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
+      clearAuthSession();
     }
   }, []);
 

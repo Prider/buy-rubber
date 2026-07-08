@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { AppConfig } from '@/lib/config';
+import { isTokenExpired, redirectToLogin } from '@/lib/sessionToken';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -26,6 +27,10 @@ class ApiClient {
       (config) => {
         const token = localStorage.getItem('auth_token');
         if (token) {
+          if (isTokenExpired(token)) {
+            redirectToLogin();
+            return Promise.reject(new Error('Session expired'));
+          }
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -40,10 +45,7 @@ class ApiClient {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          redirectToLogin();
         }
         return Promise.reject(error);
       }

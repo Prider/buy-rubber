@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userStore } from '@/lib/userStore';
 import { UpdateUserRequest } from '@/types/user';
-
-// Helper function to verify admin role
-function verifyAdminRole(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return false;
-  }
-
-  try {
-    const token = authHeader.substring(7);
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    return decoded.role === 'admin';
-  } catch {
-    return false;
-  }
-}
+import { verifyAdminRole } from '@/lib/sessionToken';
 
 // GET /api/users/[id] - Get user by ID (admin only)
 export async function GET(

@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import jwt from 'jsonwebtoken';
 import { POST } from '../route';
 import type { User } from '@/types/user';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 
 // Mock userStore - functions will be set up in beforeEach
 vi.mock('@/lib/userStore', () => ({
@@ -73,7 +76,7 @@ describe('POST /api/auth/login', () => {
       expect(typeof data.token).toBe('string');
     });
 
-    it('should generate a valid base64 token', async () => {
+    it('should generate a valid JWT token', async () => {
       vi.mocked(userStore.getAllUsers).mockResolvedValue([mockUser]);
       vi.mocked(userStore.authenticateUser).mockResolvedValue(mockUser);
 
@@ -89,11 +92,17 @@ describe('POST /api/auth/login', () => {
       const data = await response.json();
 
       expect(data.token).toBeDefined();
-      
-      // Decode token and verify structure
-      const decoded = JSON.parse(Buffer.from(data.token, 'base64').toString());
+
+      const decoded = jwt.verify(data.token, JWT_SECRET) as {
+        userId: string;
+        role: string;
+        username: string;
+        exp: number;
+      };
       expect(decoded.userId).toBe(mockUser.id);
       expect(decoded.role).toBe(mockUser.role);
+      expect(decoded.username).toBe(mockUser.username);
+      expect(decoded.exp).toBeTypeOf('number');
     });
   });
 
@@ -370,9 +379,10 @@ describe('POST /api/auth/login', () => {
       const response = await POST(request);
       const data = await response.json();
 
-      const tokenPayload = JSON.parse(
-        Buffer.from(data.token, 'base64').toString()
-      );
+      const tokenPayload = jwt.verify(data.token, JWT_SECRET) as {
+        userId: string;
+        role: string;
+      };
 
       expect(tokenPayload.userId).toBe(mockUser.id);
       expect(tokenPayload.role).toBe(mockUser.role);
@@ -416,12 +426,8 @@ describe('POST /api/auth/login', () => {
       const response2 = await POST(request2);
       const data2 = await response2.json();
 
-      const token1Payload = JSON.parse(
-        Buffer.from(data1.token, 'base64').toString()
-      );
-      const token2Payload = JSON.parse(
-        Buffer.from(data2.token, 'base64').toString()
-      );
+      const token1Payload = jwt.verify(data1.token, JWT_SECRET) as { userId: string };
+      const token2Payload = jwt.verify(data2.token, JWT_SECRET) as { userId: string };
 
       expect(token1Payload.userId).toBe('1');
       expect(token2Payload.userId).toBe('2');

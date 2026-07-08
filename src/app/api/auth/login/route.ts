@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LoginRequest, LoginResponse } from '@/types/user';
 import { logger } from '@/lib/logger';
 import { userStore } from '@/lib/userStore';
+import { generateToken } from '@/lib/auth';
 
 // Ensure Node.js runtime (required for Prisma and Buffer)
 export const runtime = 'nodejs';
@@ -72,14 +73,11 @@ export async function POST(request: NextRequest) {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
-    // In a real application, you would generate a JWT token here
-    // For now, we'll use a simple session approach
-    // Include username in token for better client-side restoration
-    const token = Buffer.from(JSON.stringify({ 
-      userId: user.id, 
+    const token = generateToken({
+      userId: user.id,
       username: user.username,
-      role: user.role 
-    })).toString('base64');
+      role: user.role,
+    });
 
     logger.info('Token generated successfully', { userId: user.id });
 

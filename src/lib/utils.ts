@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { NextRequest } from 'next/server';
+import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -86,20 +87,16 @@ export function generateDocumentNumber(prefix: string, date: Date): string {
 
 // Helper function to extract user info from auth token
 export function getUserFromToken(request: NextRequest): { userId: string; username: string } | null {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = getBearerToken(request);
+  if (!token) {
     return null;
   }
 
-  try {
-    const token = authHeader.substring(7);
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (decoded.userId && decoded.username) {
-      return { userId: decoded.userId, username: decoded.username };
-    }
-    return null;
-  } catch {
+  const user = getVerifiedUserFromToken(token);
+  if (!user) {
     return null;
   }
+
+  return { userId: user.userId, username: user.username };
 }
 
