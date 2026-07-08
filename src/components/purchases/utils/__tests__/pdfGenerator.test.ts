@@ -104,6 +104,30 @@ describe('pdfGenerator', () => {
       const createElementCall = vi.mocked(document.createElement);
       expect(createElementCall).toHaveBeenCalled();
     });
+
+    it('should use data-slip-width for PDF capture dimensions', async () => {
+      const slipEl = document.createElement('div');
+      slipEl.className = 'slip';
+      slipEl.setAttribute('data-slip-width', '219');
+
+      const container = document.createElement('div');
+      vi.mocked(document.createElement).mockReturnValue(container);
+      vi.spyOn(container, 'querySelector').mockReturnValue(slipEl);
+
+      const html =
+        '<html><body><div class="slip" data-slip-width="219">Narrow slip</div></body></html>';
+      const fileName = 'narrow.pdf';
+
+      const html2canvasModule = await import('html2canvas');
+      const html2canvasMock = vi.mocked(html2canvasModule.default);
+
+      await generatePDFFromHTML(html, fileName);
+
+      expect(html2canvasMock).toHaveBeenCalledWith(
+        slipEl,
+        expect.objectContaining({ width: 219, windowWidth: 219 })
+      );
+    });
   });
 
   describe('generateTransactionPDF', () => {

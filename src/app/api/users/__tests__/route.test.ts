@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
+import { generateToken } from '@/lib/auth';
 
 // Mock userStore
 vi.mock('@/lib/userStore', () => ({
@@ -22,14 +23,12 @@ vi.mock('@/lib/logger', () => ({
 
 // Helper function to create admin token
 function createAdminToken(): string {
-  const payload = { role: 'admin', username: 'admin' };
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
+  return generateToken({ userId: 'admin-1', username: 'admin', role: 'admin' });
 }
 
 // Helper function to create non-admin token
 function createUserToken(): string {
-  const payload = { role: 'user', username: 'user' };
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
+  return generateToken({ userId: 'user-1', username: 'user', role: 'user' });
 }
 
 describe('GET /api/users', () => {

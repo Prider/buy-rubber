@@ -8,6 +8,7 @@ vi.mock('@/lib/prisma', () => ({
     serviceFee: {
       findMany: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -57,6 +58,7 @@ describe('GET /api/servicefees', () => {
     const loggerModule = await import('@/lib/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    vi.mocked(prisma.serviceFee.count).mockResolvedValue(1);
   });
 
   describe('Successful retrieval', () => {
@@ -68,12 +70,14 @@ describe('GET /api/servicefees', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(data)).toBe(true);
-      expect(data).toHaveLength(1);
-      expect(data[0].serviceFeeNo).toBe(mockServiceFee.serviceFeeNo);
+      expect(data.serviceFees).toHaveLength(1);
+      expect(data.serviceFees[0].serviceFeeNo).toBe(mockServiceFee.serviceFeeNo);
+      expect(data.pagination.total).toBe(1);
       expect(vi.mocked(prisma.serviceFee.findMany)).toHaveBeenCalledWith({
         where: {},
         orderBy: { date: 'desc' },
+        take: 200,
+        skip: 0,
       });
     });
 
@@ -91,6 +95,8 @@ describe('GET /api/servicefees', () => {
               gte: expect.any(Date),
             }),
           }),
+          take: 200,
+          skip: 0,
         })
       );
     });
@@ -109,6 +115,8 @@ describe('GET /api/servicefees', () => {
               lte: expect.any(Date),
             }),
           }),
+          take: 200,
+          skip: 0,
         })
       );
     });
@@ -128,6 +136,8 @@ describe('GET /api/servicefees', () => {
               lte: expect.any(Date),
             }),
           }),
+          take: 200,
+          skip: 0,
         })
       );
     });
@@ -144,6 +154,8 @@ describe('GET /api/servicefees', () => {
           where: expect.objectContaining({
             purchaseNo: 'PUR-202401-0001',
           }),
+          take: 200,
+          skip: 0,
         })
       );
     });
@@ -160,6 +172,8 @@ describe('GET /api/servicefees', () => {
           where: expect.objectContaining({
             category: 'ค่าขนส่ง',
           }),
+          take: 200,
+          skip: 0,
         })
       );
     });

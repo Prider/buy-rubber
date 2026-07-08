@@ -25,13 +25,28 @@ export { expect }
  * Logs in directly via the UI. Used only in specs that explicitly test
  * the authentication flow (auth/login.spec.ts).
  */
+export async function submitLogin(
+  page: Page,
+  username: string,
+  password: string
+) {
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill(username)
+  await page.getByPlaceholder('กรอกรหัสผ่าน').fill(password)
+
+  const loginReq = page.waitForResponse(
+    (r) => r.url().includes('/api/auth/login') && r.request().method() === 'POST'
+  )
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click()
+  return loginReq
+}
+
 export async function loginAs(
   page: Page,
   username: string,
   password: string
 ): Promise<void> {
   await page.goto('/login')
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill(username)
-  await page.getByPlaceholder('กรอกรหัสผ่าน').fill(password)
-  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click()
+  const loginRes = await submitLogin(page, username, password)
+  expect(loginRes.ok()).toBeTruthy()
+  await page.waitForURL('/dashboard')
 }

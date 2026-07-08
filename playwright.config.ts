@@ -25,6 +25,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
+      testIgnore: /auth\/login\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',

@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test'
-import { loginAs } from '../fixtures/auth.fixture'
+import { loginAs, submitLogin } from '../fixtures/auth.fixture'
+import { ensureViewerUser } from '../fixtures/data.fixture'
 
 // This spec intentionally does NOT use storageState — it tests the login UI itself.
 
 test.describe('Login page', () => {
+  test.beforeAll(async ({ request }) => {
+    await ensureViewerUser(request)
+  })
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
   })
@@ -35,7 +40,7 @@ test.describe('Login page', () => {
   })
 
   test('wrong password shows error message', async ({ page }) => {
-    await loginAs(page, 'admin', 'wrongpassword')
+    await submitLogin(page, 'admin', 'wrongpassword')
     await expect(page.getByText('Invalid username or password')).toBeVisible()
     await expect(page).toHaveURL('/login')
   })

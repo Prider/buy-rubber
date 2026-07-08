@@ -4,7 +4,8 @@ import { todayDate } from '../fixtures/data.fixture'
 test.describe('Report generation', () => {
   test('reports page loads with filter card', async ({ page }) => {
     await page.goto('/reports')
-    await expect(page.getByRole('heading', { name: /รายงาน|Report/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'รายงาน', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'ตัวกรองรายงาน' })).toBeVisible()
   })
 
   test('filter by date range and generate report', async ({ page }) => {
@@ -43,7 +44,21 @@ test.describe('Report generation', () => {
   test('PDF export button is present', async ({ page }) => {
     await page.goto('/reports')
 
-    const pdfBtn = page.getByRole('button', { name: /PDF|ดาวน์โหลด|Export/i })
+    const today = new Date()
+    const thirtyDaysAgo = new Date(today)
+    thirtyDaysAgo.setDate(today.getDate() - 30)
+    const startDate = thirtyDaysAgo.toISOString().slice(0, 10)
+    const endDate = todayDate()
+
+    const dateInputs = page.locator('input[type="date"]')
+    await dateInputs.first().fill(startDate)
+    await dateInputs.last().fill(endDate)
+
+    const generateBtn = page.getByRole('button', { name: /ค้นหา|สร้างรายงาน|Generate|แสดง/i })
+    await generateBtn.click()
+    await page.waitForResponse((r) => r.url().includes('/api/reports') || r.url().includes('/api/purchases'))
+
+    const pdfBtn = page.getByRole('button', { name: /ดาวน์โหลด PDF/i })
     await expect(pdfBtn).toBeVisible()
   })
 

@@ -1,10 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   transactionToCartItems,
   generateSlipHTMLFromItems,
   generateSlipHTML,
 } from '../slipGenerator';
 import { PurchaseTransaction, CartItem } from '../../types';
+import { SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
+
+function useLocalStorageBackingStore() {
+  const store: Record<string, string> = {};
+  vi.mocked(localStorage.getItem).mockImplementation((key) => store[key] ?? null);
+  vi.mocked(localStorage.setItem).mockImplementation((key, value) => {
+    store[key] = value;
+  });
+  vi.mocked(localStorage.removeItem).mockImplementation((key) => {
+    delete store[key];
+  });
+  vi.mocked(localStorage.clear).mockImplementation(() => {
+    for (const key of Object.keys(store)) delete store[key];
+  });
+  return store;
+}
 
 describe('slipGenerator', () => {
   describe('transactionToCartItems', () => {
@@ -429,6 +445,73 @@ describe('slipGenerator', () => {
       expect(narrow).toMatch(/<div class="signatures signatures--stacked">/);
       expect(wide).toMatch(/<div class="signatures">/);
       expect(wide).not.toMatch(/<div class="signatures signatures--stacked">/);
+    });
+  });
+
+  describe('REQ-PUR-10: Respect slip paper size setting', () => {
+    const sampleItems: CartItem[] = [
+      {
+        id: 'p1',
+        type: 'purchase',
+        date: '2024-01-15',
+        totalAmount: 5000,
+      },
+    ];
+
+    beforeEach(() => {
+      useLocalStorageBackingStore();
+    });
+
+    it.each([
+      ['58mm', 219, 58],
+      ['80mm', 302, 80],
+      ['104mm', 393, 104],
+    ] as const)('applies %s width (%d px) in slip HTML', (paperSize, widthPx, pageMm) => {
+      const result = generateSlipHTMLFromItems(sampleItems, { paperSize });
+
+      expect(result).toContain(`width: ${widthPx}px`);
+      expect(result).toContain(`data-slip-width="${widthPx}"`);
+      expect(result).toContain(`size: ${pageMm}mm auto;`);
+    });
+
+    it('reads paper size from localStorage when option is omitted', () => {
+      localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, '104mm');
+
+      const result = generateSlipHTMLFromItems(sampleItems);
+
+      expect(result).toContain('width: 393px');
+      expect(result).toContain('data-slip-width="393"');
+    });
+
+    it('generateSlipHTML uses stored paper size for purchase slips', () => {
+      localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, '58mm');
+
+      const transaction: PurchaseTransaction = {
+        purchaseNo: 'P001',
+        date: '2024-01-15',
+        createdAt: '2024-01-15T10:00:00Z',
+        purchases: [
+          {
+            id: 'p1',
+            purchaseNo: 'P001',
+            date: '2024-01-15',
+            member: { id: 'm1', code: 'M001', name: 'John Doe' },
+            productType: { id: 'pt1', name: 'น้ำยางสด', code: 'RUBBER' },
+            netWeight: 100,
+            finalPrice: 50,
+            totalAmount: 5000,
+          },
+        ],
+        serviceFees: [],
+        totalAmount: 5000,
+        member: { id: 'm1', code: 'M001', name: 'John Doe' },
+      };
+
+      const result = generateSlipHTML(transaction);
+
+      expect(result).toContain('width: 219px');
+      expect(result).toContain('data-slip-width="219"');
+      expect(result).toMatch(/<div class="signatures signatures--stacked">/);
     });
   });
 

@@ -1,7 +1,8 @@
 import { type APIRequestContext } from '@playwright/test'
 
 const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`
+export const E2E_BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`
+const BASE = E2E_BASE_URL
 
 /**
  * Returns an Authorization header using the admin token stored in localStorage
@@ -96,6 +97,23 @@ export async function deleteUser(
   await request.delete(`${BASE}/api/users/${id}`, {
     headers: apiHeaders(token),
   })
+}
+
+/** Ensures the demo viewer account exists for login/RBAC tests. */
+export async function ensureViewerUser(request: APIRequestContext): Promise<void> {
+  const loginRes = await request.post(`${BASE}/api/auth/login`, {
+    data: { username: 'demo', password: 'demo@123' },
+  })
+  if (loginRes.ok()) return
+
+  const adminToken = await getAdminToken(request)
+  const createRes = await request.post(`${BASE}/api/users`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+    data: { username: 'demo', password: 'demo@123', role: 'viewer' },
+  })
+  if (!createRes.ok() && createRes.status() !== 409) {
+    throw new Error(`Failed to ensure demo viewer user: ${createRes.status()}`)
+  }
 }
 
 /** Returns today's date string in YYYY-MM-DD format. */
