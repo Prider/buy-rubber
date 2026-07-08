@@ -54,31 +54,47 @@ test.describe('Report generation', () => {
     await expect(page.getByRole('heading', { name: /dashboard|แดชบอร์ด/i })).toBeVisible()
   })
 
-  test('dashboard refreshes on tab focus', async ({ page }) => {
-    await page.goto('/dashboard')
+  test('dashboard refreshes on tab focus', async ({ context }) => {
+    const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
+    await context.addInitScript((port: string) => {
+      localStorage.setItem('client_port', port)
+    }, e2ePort)
 
-    // Simulate visibility change by hiding then showing the page
-    const responsePromise = page.waitForResponse(
-      (r) => r.url().includes('/api/dashboard'),
-      { timeout: 5000 }
-    )
+    const dashboardPage = await context.newPage()
+    let dashboardRequests = 0
+    dashboardPage.on('request', (req) => {
+      if (req.url().includes('/api/dashboard') && req.method() === 'GET') {
+        dashboardRequests += 1
+      }
+    })
 
-    // Trigger visibilitychange event
-    await page.evaluate(() => {
+    await dashboardPage.goto('/dashboard')
+    await expect(dashboardPage.getByRole('heading', { name: /dashboard|แดชบอร์ด/i })).toBeVisible()
+    await expect.poll(() => dashboardRequests, { timeout: 15_000 }).toBeGreaterThanOrEqual(1)
+
+    // Dashboard throttles refresh to once every 2 seconds after mount
+    await dashboardPage.waitForTimeout(2500)
+    const requestsBeforeFocus = dashboardRequests
+
+    // Simulate tab away then back (getter override works when value property does not)
+    await dashboardPage.evaluate(() => {
+      let visibility: DocumentVisibilityState = document.visibilityState
       Object.defineProperty(document, 'visibilityState', {
-        value: 'hidden',
-        writable: true,
+        configurable: true,
+        get() {
+          return visibility
+        },
       })
+      visibility = 'hidden'
       document.dispatchEvent(new Event('visibilitychange'))
-      Object.defineProperty(document, 'visibilityState', {
-        value: 'visible',
-        writable: true,
-      })
+      visibility = 'visible'
       document.dispatchEvent(new Event('visibilitychange'))
     })
 
-    // Dashboard API should be called
-    const response = await responsePromise
-    expect(response.status()).toBe(200)
+    await expect.poll(() => dashboardRequests, { timeout: 10_000 }).toBeGreaterThan(
+      requestsBeforeFocus
+    )
+
+    await dashboardPage.close()
   })
 })
