@@ -100,7 +100,6 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/';
   };
 
   const navigation = NAV_ITEMS.filter((item) => {

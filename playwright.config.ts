@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// Use a dedicated port so e2e tests don't hit a stale app on :3000 (e.g. Electron).
+const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
+const e2eBaseURL = `http://localhost:${e2ePort}`
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
@@ -8,7 +12,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: e2eBaseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -35,9 +39,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    command: `PORT=${e2ePort} npm run dev`,
+    url: e2eBaseURL,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 })

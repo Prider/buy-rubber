@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
-      clearAuthSession();
+      redirectToLogin();
     }
   }, []);
 
