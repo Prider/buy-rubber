@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatNumber, formatDate, calculateDryWeight, calculateSplit } from '../utils'
+import { formatCurrency, formatNumber, formatDate, calculateDryWeight, calculateAdjustedPrice, calculateSplit } from '../utils'
 
 describe('Utils', () => {
   describe('formatCurrency', () => {
@@ -91,6 +91,26 @@ describe('Utils', () => {
       const rubberPercent = 50.5
       const dryWeight = calculateDryWeight(netWeight, rubberPercent)
       expect(dryWeight).toBeCloseTo(50.75)
+    })
+  })
+
+  describe('calculateAdjustedPrice', () => {
+    it('DRC % adjusts purchase price', () => {
+      const basePrice = 50
+      const rubberPercent = 60
+      const adjustedPrice = calculateAdjustedPrice(basePrice, rubberPercent)
+
+      expect(adjustedPrice).toBe(30)
+      expect(adjustedPrice).not.toBe(basePrice)
+    })
+
+    it('should keep base price when rubberPercent is missing', () => {
+      expect(calculateAdjustedPrice(50)).toBe(50)
+      expect(calculateAdjustedPrice(50, null)).toBe(50)
+    })
+
+    it('should keep base price when rubberPercent is 100', () => {
+      expect(calculateAdjustedPrice(50, 100)).toBe(50)
     })
   })
 

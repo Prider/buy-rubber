@@ -61,7 +61,12 @@ vi.mock('@/lib/utils', () => ({
   calculateDryWeight: vi.fn((netWeight: number, rubberPercent: number) => 
     (netWeight * rubberPercent) / 100
   ),
-  calculateAdjustedPrice: vi.fn((basePrice: number) => basePrice),
+  calculateAdjustedPrice: vi.fn((basePrice: number, rubberPercent?: number | null) => {
+    if (rubberPercent == null || Number.isNaN(rubberPercent)) {
+      return basePrice;
+    }
+    return (basePrice * rubberPercent) / 100;
+  }),
   calculateSplit: vi.fn((totalAmount: number, ownerPercent: number, tapperPercent: number) => ({
     ownerAmount: (totalAmount * ownerPercent) / 100,
     tapperAmount: (totalAmount * tapperPercent) / 100,
@@ -755,6 +760,43 @@ describe('POST /api/purchases', () => {
         await POST(request);
 
         expect(vi.mocked(utils.calculateDryWeight)).toHaveBeenCalledWith(95, 60);
+      });
+
+      it('DRC % adjusts purchase price', async () => {
+        vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
+        vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
+        vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+
+        const request = new NextRequest('http://localhost:3000/api/purchases', {
+          method: 'POST',
+          body: JSON.stringify({
+            memberId: 'member-1',
+            productTypeId: 'product-1',
+            userId: 'user-1',
+            date: '2024-01-15',
+            grossWeight: 100,
+            containerWeight: 5,
+            netWeight: 100,
+            rubberPercent: 60,
+            pricePerUnit: 50,
+          }),
+        });
+
+        await POST(request);
+
+        expect(vi.mocked(utils.calculateAdjustedPrice)).toHaveBeenCalledWith(50, 60);
+        expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              basePrice: 50,
+              adjustedPrice: 30, // 50 * 60 / 100
+              finalPrice: 30,
+              totalAmount: 3000, // 100 * 30
+            }),
+          })
+        );
       });
 
       it('should use product price when pricePerUnit is not provided', async () => {

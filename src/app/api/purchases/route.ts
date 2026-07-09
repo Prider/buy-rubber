@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
 import { 
-  calculateDryWeight, 
+  calculateDryWeight,
+  calculateAdjustedPrice,
   calculateSplit,
   generateDocumentNumber,
   getUserFromToken
@@ -179,8 +180,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // คำนวณราคาที่ปรับแล้ว (สำหรับตอนนี้ใช้ราคาพื้นฐาน)
-    const adjustedPrice = basePrice;
+    // ปรับราคาต่อกก. ตาม %ยาง (DRC) — หากไม่มี %ยาง ใช้ราคากลางตามเดิม
+    const adjustedPrice = calculateAdjustedPrice(basePrice, data.rubberPercent);
 
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
@@ -453,8 +454,8 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         );
       }
 
-      // Calculate prices
-      const adjustedPrice = basePrice;
+      // ปรับราคาต่อกก. ตาม %ยาง (DRC) — หากไม่มี %ยาง ใช้ราคากลางตามเดิม
+      const adjustedPrice = calculateAdjustedPrice(basePrice, item.rubberPercent);
       const finalPrice = adjustedPrice + (item.bonusPrice || 0);
       const totalAmount = netWeight * finalPrice;
 

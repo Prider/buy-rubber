@@ -77,4 +77,56 @@ test.describe('Price management', () => {
     )
     expect(dashboardPrice?.price).toBe(targetPrice)
   })
+
+  test('View historical prices', async ({ request }) => {
+    const token = await getAdminToken(request)
+
+    const productTypesRes = await request.get('/api/product-types', {
+      headers: apiHeaders(token),
+    })
+    expect(productTypesRes.ok()).toBeTruthy()
+
+    const productTypes = (await productTypesRes.json()) as Array<{
+      id: string
+      code: string
+      name: string
+    }>
+    expect(productTypes.length).toBeGreaterThan(0)
+
+    const targetProductType = productTypes[0]
+    const historicalPrice = 77.77
+
+    // Use yesterday so it should be considered "history" even if the UI excludes today.
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().slice(0, 10)
+
+    const setPriceRes = await request.post('/api/prices/daily', {
+      headers: apiHeaders(token),
+      data: {
+        date: yesterdayStr,
+        prices: [{ productTypeId: targetProductType.id, price: historicalPrice }],
+      },
+    })
+    expect(setPriceRes.ok()).toBeTruthy()
+
+    const historyRes = await request.get('/api/prices/history?days=11', {
+      headers: apiHeaders(token),
+    })
+    expect(historyRes.ok()).toBeTruthy()
+
+    const history = (await historyRes.json()) as Array<{
+      productTypeId: string
+      price: number
+      date: string
+    }>
+
+    const savedHistoryRecord = history.find((r) => {
+      const rDate = new Date(r.date).toISOString().slice(0, 10)
+      return r.productTypeId === targetProductType.id && rDate === yesterdayStr
+    })
+
+    expect(savedHistoryRecord).toBeDefined()
+    expect(savedHistoryRecord?.price).toBe(historicalPrice)
+  })
 })

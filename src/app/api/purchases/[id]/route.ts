@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
-import { calculateDryWeight, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
 import {
   applyPurchaseToStock,
   reversePurchaseFromStock,
@@ -106,7 +106,7 @@ export async function PUT(
       return NextResponse.json({ error: 'กรุณาระบุราคาต่อหน่วย' }, { status: 400 });
     }
 
-    const adjustedPrice = basePrice;
+    const adjustedPrice = calculateAdjustedPrice(basePrice, data.rubberPercent);
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
     const totalAmount = netWeight * finalPrice;
 

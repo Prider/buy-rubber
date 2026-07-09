@@ -62,6 +62,17 @@ export function calculateDryWeight(netWeight: number, rubberPercent: number): nu
   return (netWeight * rubberPercent) / 100;
 }
 
+// ปรับราคาต่อกก. ตาม %ยาง (DRC) — คิดเป็นสัดส่วนของราคากลาง
+export function calculateAdjustedPrice(
+  basePrice: number,
+  rubberPercent?: number | null
+): number {
+  if (rubberPercent == null || Number.isNaN(rubberPercent)) {
+    return basePrice;
+  }
+  return (basePrice * rubberPercent) / 100;
+}
+
 // คำนวณการแบ่งเงินเจ้าของสวนและคนตัด
 export function calculateSplit(
   totalAmount: number,
