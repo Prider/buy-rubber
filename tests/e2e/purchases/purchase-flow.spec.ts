@@ -8,6 +8,8 @@ import {
   E2E_BASE_URL,
   getAdminToken,
   getSlipSettings,
+  getStockQuantity,
+  findOrCreateProductType,
   setDailyPrices,
   setSlipSettings,
   uniqueSuffix,
@@ -87,15 +89,27 @@ test.describe('Purchase flow', () => {
   }
 
   async function selectProductType(page: Page) {
+    await selectProductTypeBy(page, productType)
+  }
+
+  async function selectProductTypeBy(
+    page: Page,
+    pt: { code: string; name: string }
+  ) {
     const productSearch = page.getByPlaceholder('ค้นหาตามชื่อหรือรหัส...')
     await productSearch.click()
-    await productSearch.fill(productType.code)
-    await page.getByRole('button', { name: new RegExp(`${productType.code} - ${productType.name}`) }).click()
+    await productSearch.fill(pt.code)
+    await page.getByRole('button', { name: new RegExp(`${pt.code} - ${pt.name}`) }).click()
+    await expect(page.locator('input[name="pricePerUnit"]')).not.toHaveValue('', { timeout: 10_000 })
   }
 
   async function fillWeights(page: Page, gross: string, container: string) {
-    await page.locator('input[name="grossWeight"]').fill(gross)
-    await page.locator('input[name="containerWeight"]').fill(container)
+    const grossInput = page.locator('input[name="grossWeight"]')
+    const containerInput = page.locator('input[name="containerWeight"]')
+    await grossInput.clear()
+    await grossInput.fill(gross)
+    await containerInput.clear()
+    await containerInput.fill(container)
   }
 
   function purchaseForm(page: Page) {
@@ -118,12 +132,12 @@ test.describe('Purchase flow', () => {
     page: Page,
     gross: string,
     container: string,
-    options?: { includeMember?: boolean }
+    options?: { includeMember?: boolean; productType?: { code: string; name: string } }
   ) {
     if (options?.includeMember) {
       await selectMember(page)
     }
-    await selectProductType(page)
+    await selectProductTypeBy(page, options?.productType ?? productType)
     await fillWeights(page, gross, container)
     await expect(purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' })).toBeEnabled()
     await purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' }).click()
@@ -159,6 +173,121 @@ test.describe('Purchase flow', () => {
 
     await expect(page.getByText('น้ำหนักภาชนะต้องน้อยกว่าน้ำหนักรวมภาชนะ')).toBeVisible()
     await expect(purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' })).toBeDisabled()
+  })
+
+  test('REQ-PUR-11: validates required purchase fields', async ({ page }) => {
+    await gotoPurchasesPage(page)
+
+    const form = purchaseForm(page)
+    const addBtn = form.getByRole('button', { name: 'เพิ่มลงตะกร้า' })
+
+    await expect(addBtn).toBeDisabled()
+
+    await fillWeights(page, '100', '5')
+    await expect(addBtn).toBeDisabled()
+
+    await selectMember(page)
+    await expect(addBtn).toBeDisabled()
+
+    await selectProductType(page)
+    await expect(page.locator('input[name="pricePerUnit"]')).toHaveValue('50')
+    await expect(addBtn).toBeEnabled()
+
+    await addBtn.click()
+    await expect(page.getByText('รายการรับซื้อที่รอการบันทึก (1 รายการ)')).toBeVisible()
+
+    await form.getByRole('button', { name: 'รีเซ็ต' }).click()
+    await selectProductType(page)
+    await fillWeights(page, '80', '3')
+    await expect(addBtn).toBeDisabled()
+  })
+
+  test('REQ-PUR-12: supports dry rubber and scrap product types', async ({ page, request }) => {
+    const suffix = uniqueSuffix()
+    const dryRubber = await findOrCreateProductType(request, adminToken, {
+      code: `E2E-DRY-${suffix}`,
+      name: `ยางแห้ง E2E ${suffix}`,
+    })
+    const scrapRubber = await findOrCreateProductType(request, adminToken, {
+      code: `E2E-SCRAP-${suffix}`,
+      name: `เศษยาง E2E ${suffix}`,
+    })
+
+    const dryPrice = 55
+    const scrapPrice = 35
+    await setDailyPrices(request, adminToken, [
+      { productTypeId: productType.id, price: 50 },
+      { productTypeId: dryRubber.id, price: dryPrice },
+      { productTypeId: scrapRubber.id, price: scrapPrice },
+    ])
+
+    const dryNet = 200 - 10
+    const scrapNet = 80 - 3
+
+    await gotoPurchasesPage(page)
+
+    await addPurchaseItem(page, '200', '10', {
+      includeMember: true,
+      productType: dryRubber,
+    })
+    await expect(page.getByPlaceholder('ค้นหาตามชื่อหรือรหัส...')).toHaveValue('')
+    await expect(page.locator('input[name="grossWeight"]')).toHaveValue('')
+    await expect(page.locator('input[name="containerWeight"]')).toHaveValue('')
+
+    await selectProductTypeBy(page, scrapRubber)
+    await fillWeights(page, '80', '3')
+    await expect(page.locator('input[name="netWeight"]')).toHaveValue('77.00')
+    await purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' }).click()
+
+    await expect(page.getByText('รายการรับซื้อที่รอการบันทึก (2 รายการ)')).toBeVisible()
+    const cartTable = page.getByRole('table')
+    await expect(cartTable.getByText(dryRubber.name, { exact: true })).toBeVisible()
+    await expect(cartTable.getByText(scrapRubber.name, { exact: true })).toBeVisible()
+
+    const saveReq = page.waitForResponse(
+      (r) => r.url().includes('/api/purchases') && r.request().method() === 'POST'
+    )
+    await page.getByRole('button', { name: 'บันทึกข้อมูล' }).click()
+    const saveRes = await saveReq
+    expect(saveRes.ok()).toBeTruthy()
+
+    const body = (await saveRes.json()) as {
+      purchases?: Array<{
+        id: string
+        productTypeId: string
+        netWeight: number
+        dryWeight: number
+        rubberPercent: number | null
+        totalAmount: number
+      }>
+    }
+
+    expect(body.purchases?.length).toBe(2)
+
+    const dryPurchase = body.purchases?.find(
+      (p) => p.productTypeId === dryRubber.id && p.netWeight === dryNet
+    )
+    const scrapPurchase = body.purchases?.find(
+      (p) => p.productTypeId === scrapRubber.id && p.netWeight === scrapNet
+    )
+
+    expect(dryPurchase).toBeDefined()
+    expect(dryPurchase?.netWeight).toBe(dryNet)
+    expect(dryPurchase?.dryWeight).toBe(dryNet)
+    expect(dryPurchase?.rubberPercent).toBeNull()
+    expect(dryPurchase?.totalAmount).toBeCloseTo(dryNet * dryPrice, 2)
+
+    expect(scrapPurchase).toBeDefined()
+    expect(scrapPurchase?.netWeight).toBe(scrapNet)
+    expect(scrapPurchase?.dryWeight).toBe(scrapNet)
+    expect(scrapPurchase?.rubberPercent).toBeNull()
+    expect(scrapPurchase?.totalAmount).toBeCloseTo(scrapNet * scrapPrice, 2)
+
+    for (const purchase of body.purchases ?? []) {
+      if (purchase.id) createdPurchaseIds.push(purchase.id)
+    }
+
+    await expect(page.getByText('บันทึกข้อมูลเรียบร้อยแล้ว')).toBeVisible()
   })
 
   test('submits multi-item purchase transaction', async ({ page }) => {
@@ -310,5 +439,51 @@ test.describe('Purchase flow', () => {
     expect(previewHtml).toContain('width: 219px')
 
     await previewPage.close()
+  })
+
+  test('REQ-STK-01: purchase increases stock', async ({ page, request }) => {
+    const grossKg = 100
+    const containerKg = 5
+    const expectedNetKg = grossKg - containerKg
+
+    const stockBefore = await getStockQuantity(request, productType.id, adminToken)
+
+    await gotoPurchasesPage(page)
+    await addPurchaseItem(page, String(grossKg), String(containerKg), { includeMember: true })
+
+    const saveReq = page.waitForResponse(
+      (r) => r.url().includes('/api/purchases') && r.request().method() === 'POST'
+    )
+    await page.getByRole('button', { name: 'บันทึกข้อมูล' }).click()
+    const saveRes = await saveReq
+    expect(saveRes.ok()).toBeTruthy()
+
+    const purchaseBody = (await saveRes.json()) as {
+      purchases?: Array<{ id: string; netWeight?: number }>
+    }
+    expect(purchaseBody.purchases?.[0]?.netWeight).toBe(expectedNetKg)
+
+    for (const purchase of purchaseBody.purchases ?? []) {
+      if (purchase.id) createdPurchaseIds.push(purchase.id)
+    }
+
+    const stockAfter = await getStockQuantity(request, productType.id, adminToken)
+    expect(stockAfter).toBeCloseTo(stockBefore + expectedNetKg, 2)
+
+    const stockPageReq = page.waitForResponse(
+      (r) => r.url().includes('/api/stock/positions') && r.ok()
+    )
+    await page.goto('/stock')
+    await expect(page.getByRole('heading', { name: 'จัดการสต็อกสินค้า' })).toBeVisible()
+    await stockPageReq
+
+    const formattedQty = new Intl.NumberFormat('th-TH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(stockAfter)
+
+    await expect(
+      page.getByRole('row').filter({ hasText: productType.code })
+    ).toContainText(formattedQty)
   })
 })

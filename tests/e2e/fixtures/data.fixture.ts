@@ -210,3 +210,53 @@ export async function setSlipSettings(
     paperSize: (body.paperSize ?? settings.paperSize ?? current.paperSize) as SlipPaperSize,
   }
 }
+
+type StockPositionRow = {
+  productTypeId: string
+  quantityKg: number
+}
+
+/** Returns current stock quantity (kg) for a product type. */
+export async function getStockQuantity(
+  request: APIRequestContext,
+  productTypeId: string,
+  token?: string
+): Promise<number> {
+  const res = await request.get(`${BASE}/api/stock/positions`, {
+    headers: token ? apiHeaders(token) : undefined,
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to get stock positions: ${res.status()}`)
+  }
+  const positions = (await res.json()) as StockPositionRow[]
+  const row = positions.find((p) => p.productTypeId === productTypeId)
+  return row?.quantityKg ?? 0
+}
+
+type ProductTypeRow = { id: string; code: string; name: string }
+
+/** Finds an active product type by exact name, or creates one if missing. */
+export async function findOrCreateProductType(
+  request: APIRequestContext,
+  token: string,
+  data: { code: string; name: string; description?: string }
+): Promise<ProductTypeRow> {
+  const listRes = await request.get(`${BASE}/api/product-types`, {
+    headers: apiHeaders(token),
+  })
+  if (!listRes.ok()) {
+    throw new Error(`Failed to list product types: ${listRes.status()}`)
+  }
+  const types = (await listRes.json()) as ProductTypeRow[]
+  const existing = types.find((t) => t.name === data.name || t.code === data.code)
+  if (existing) return existing
+
+  const createRes = await request.post(`${BASE}/api/product-types`, {
+    headers: apiHeaders(token),
+    data,
+  })
+  if (!createRes.ok()) {
+    throw new Error(`Failed to create product type: ${createRes.status()}`)
+  }
+  return createRes.json() as Promise<ProductTypeRow>
+}
