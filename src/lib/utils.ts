@@ -57,6 +57,11 @@ export function generateCode(prefix: string, sequence: number): string {
   return `${prefix}${sequence.toString().padStart(6, '0')}`;
 }
 
+// คำนวณน้ำหนักสุทธิจากน้ำหนักรวมภาชนะลบน้ำหนักภาชนะ
+export function calculateNetWeight(grossWeight: number, containerWeight: number = 0): number {
+  return grossWeight - containerWeight;
+}
+
 // คำนวณน้ำหนักแห้งจากน้ำหนักสดและ %ยาง
 export function calculateDryWeight(netWeight: number, rubberPercent: number): number {
   return (netWeight * rubberPercent) / 100;

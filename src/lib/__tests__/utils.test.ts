@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatNumber, formatDate, calculateDryWeight, calculateAdjustedPrice, calculateSplit } from '../utils'
+import { formatCurrency, formatNumber, formatDate, calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit } from '../utils'
 
 describe('Utils', () => {
   describe('formatCurrency', () => {
@@ -61,6 +61,21 @@ describe('Utils', () => {
       // Both should produce non-empty strings
       expect(date1).toBeTruthy()
       expect(date2).toBeTruthy()
+    })
+  })
+
+  describe('REQ-PUR-02: Calculate net weight from gross minus container', () => {
+    it('should calculate net weight as gross minus container', () => {
+      expect(calculateNetWeight(100, 5)).toBe(95)
+    })
+
+    it('should treat missing container weight as zero', () => {
+      expect(calculateNetWeight(100)).toBe(100)
+      expect(calculateNetWeight(100, 0)).toBe(100)
+    })
+
+    it('should handle decimal weights', () => {
+      expect(calculateNetWeight(100.5, 2.25)).toBeCloseTo(98.25)
     })
   })
 

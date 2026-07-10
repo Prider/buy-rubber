@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
 import { 
+  calculateNetWeight,
   calculateDryWeight,
   calculateAdjustedPrice,
   calculateSplit,
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // คำนวณน้ำหนักสุทธิ (ใช้ค่าที่ส่งมา หรือคำนวณใหม่)
-    const netWeight = data.netWeight || (data.grossWeight - (data.containerWeight || 0));
+    const netWeight = data.netWeight || calculateNetWeight(data.grossWeight, data.containerWeight || 0);
 
     // คำนวณน้ำหนักแห้ง
     let dryWeight = netWeight;
@@ -418,7 +419,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
 
     for (const item of items) {
       // Calculate net weight
-      const netWeight = item.netWeight || (item.grossWeight - (item.containerWeight || 0));
+      const netWeight = item.netWeight || calculateNetWeight(item.grossWeight, item.containerWeight || 0);
 
       // Calculate dry weight
       let dryWeight = netWeight;

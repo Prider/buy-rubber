@@ -58,6 +58,9 @@ vi.mock('@/lib/stock/stockService', () => ({
 
 // Mock utility functions
 vi.mock('@/lib/utils', () => ({
+  calculateNetWeight: vi.fn((grossWeight: number, containerWeight: number = 0) =>
+    grossWeight - containerWeight
+  ),
   calculateDryWeight: vi.fn((netWeight: number, rubberPercent: number) => 
     (netWeight * rubberPercent) / 100
   ),
@@ -799,34 +802,227 @@ describe('POST /api/purchases', () => {
         );
       });
 
-      it('should use product price when pricePerUnit is not provided', async () => {
-        vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
-        vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-        vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(mockProductPrice);
-        vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+      describe('REQ-PUR-03: Apply daily price to purchase', () => {
+        const purchaseDate = '2024-01-15';
 
-        const request = new NextRequest('http://localhost:3000/api/purchases', {
-          method: 'POST',
-          body: JSON.stringify({
-            memberId: 'member-1',
-            productTypeId: 'product-1',
-            userId: 'user-1',
-            date: '2024-01-15',
-            grossWeight: 100,
-            containerWeight: 5,
-          }),
+        const setupDailyPriceMocks = (productPrice = mockProductPrice) => {
+          vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
+          vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+          vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+          vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(productPrice);
+          vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+        };
+
+        it('looks up daily price by product type and purchase date', async () => {
+          setupDailyPriceMocks();
+
+          const request = new NextRequest('http://localhost:3000/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify({
+              memberId: 'member-1',
+              productTypeId: 'product-1',
+              userId: 'user-1',
+              date: purchaseDate,
+              grossWeight: 100,
+              containerWeight: 5,
+            }),
+          });
+
+          await POST(request);
+
+          expect(vi.mocked(prisma.productPrice.findFirst)).toHaveBeenCalledWith({
+            where: {
+              date: {
+                gte: new Date(`${purchaseDate}T00:00:00`),
+                lte: new Date(`${purchaseDate}T23:59:59`),
+              },
+              productTypeId: 'product-1',
+            },
+          });
         });
 
-        await POST(request);
+        it('uses daily price as basePrice when pricePerUnit is not provided', async () => {
+          setupDailyPriceMocks();
 
-        expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              basePrice: 50, // From productPrice
+          const request = new NextRequest('http://localhost:3000/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify({
+              memberId: 'member-1',
+              productTypeId: 'product-1',
+              userId: 'user-1',
+              date: purchaseDate,
+              grossWeight: 100,
+              containerWeight: 5,
             }),
-          })
-        );
+          });
+
+          await POST(request);
+
+          expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+            expect.objectContaining({
+              data: expect.objectContaining({
+                basePrice: 50,
+                finalPrice: 50,
+              }),
+            })
+          );
+        });
+
+        it('prefers explicit pricePerUnit over daily price', async () => {
+          setupDailyPriceMocks();
+
+          const request = new NextRequest('http://localhost:3000/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify({
+              memberId: 'member-1',
+              productTypeId: 'product-1',
+              userId: 'user-1',
+              date: purchaseDate,
+              grossWeight: 100,
+              containerWeight: 5,
+              pricePerUnit: 42,
+            }),
+          });
+
+          await POST(request);
+
+          expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+            expect.objectContaining({
+              data: expect.objectContaining({
+                basePrice: 42,
+                finalPrice: 42,
+              }),
+            })
+          );
+        });
+
+        it('calculates totalAmount from daily price', async () => {
+          setupDailyPriceMocks({ ...mockProductPrice, price: 55 });
+
+          const request = new NextRequest('http://localhost:3000/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify({
+              memberId: 'member-1',
+              productTypeId: 'product-1',
+              userId: 'user-1',
+              date: purchaseDate,
+              grossWeight: 100,
+              containerWeight: 5,
+            }),
+          });
+
+          await POST(request);
+
+          expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+            expect.objectContaining({
+              data: expect.objectContaining({
+                netWeight: 95,
+                basePrice: 55,
+                finalPrice: 55,
+                totalAmount: 5225, // 95 * 55
+              }),
+            })
+          );
+        });
+
+        it('returns 400 when daily price is missing and pricePerUnit is not provided', async () => {
+          vi.mocked(utils.getUserFromToken).mockReturnValue({ userId: 'user-1', username: 'testuser' });
+          vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
+          vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
+          vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+          vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+
+          const request = new NextRequest('http://localhost:3000/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify({
+              memberId: 'member-1',
+              productTypeId: 'product-1',
+              date: purchaseDate,
+              grossWeight: 100,
+            }),
+          });
+
+          const response = await POST(request);
+          const data = await response.json();
+
+          expect(response.status).toBe(400);
+          expect(data.error).toBe('กรุณาระบุราคาต่อหน่วย');
+        });
+
+        describe('batch purchase', () => {
+          beforeEach(() => {
+            vi.mocked(prisma.member.findMany).mockResolvedValue([mockMember]);
+            vi.mocked(prisma.productType.findMany).mockResolvedValue([mockProductType]);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+            vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+          });
+
+          it('looks up daily prices for the transaction date', async () => {
+            vi.mocked(prisma.productPrice.findMany).mockResolvedValue([mockProductPrice]);
+
+            const request = new NextRequest('http://localhost:3000/api/purchases', {
+              method: 'POST',
+              body: JSON.stringify({
+                userId: 'user-1',
+                date: purchaseDate,
+                items: [
+                  {
+                    memberId: 'member-1',
+                    productTypeId: 'product-1',
+                    grossWeight: 100,
+                    containerWeight: 5,
+                  },
+                ],
+              }),
+            });
+
+            await POST(request);
+
+            expect(vi.mocked(prisma.productPrice.findMany)).toHaveBeenCalledWith({
+              where: {
+                productTypeId: { in: ['product-1'] },
+                date: {
+                  gte: new Date(`${purchaseDate}T00:00:00`),
+                  lte: new Date(`${purchaseDate}T23:59:59`),
+                },
+              },
+            });
+          });
+
+          it('uses daily price per item when pricePerUnit is omitted', async () => {
+            vi.mocked(prisma.productPrice.findMany).mockResolvedValue([
+              { ...mockProductPrice, price: 48 },
+            ]);
+
+            const request = new NextRequest('http://localhost:3000/api/purchases', {
+              method: 'POST',
+              body: JSON.stringify({
+                userId: 'user-1',
+                date: purchaseDate,
+                items: [
+                  {
+                    memberId: 'member-1',
+                    productTypeId: 'product-1',
+                    grossWeight: 100,
+                    containerWeight: 5,
+                  },
+                ],
+              }),
+            });
+
+            await POST(request);
+
+            expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+              expect.objectContaining({
+                data: expect.objectContaining({
+                  basePrice: 48,
+                  finalPrice: 48,
+                  totalAmount: 4560, // 95 * 48
+                }),
+              })
+            );
+          });
+        });
       });
 
       it('should calculate split amounts correctly', async () => {

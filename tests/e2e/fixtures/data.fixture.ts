@@ -87,6 +87,50 @@ export async function deleteExpense(
 }
 
 /**
+ * Deletes a purchase by ID via the API.
+ */
+export async function deletePurchase(
+  request: APIRequestContext,
+  id: string,
+  token: string
+): Promise<void> {
+  await request.delete(`${BASE}/api/purchases/${id}`, {
+    headers: apiHeaders(token),
+  })
+}
+
+/**
+ * Deletes a service fee by ID via the API.
+ */
+export async function deleteServiceFee(
+  request: APIRequestContext,
+  id: string,
+  token: string
+): Promise<void> {
+  await request.delete(`${BASE}/api/servicefees/${id}`, {
+    headers: apiHeaders(token),
+  })
+}
+
+/**
+ * Sets daily prices for a date via the API.
+ */
+export async function setDailyPrices(
+  request: APIRequestContext,
+  token: string,
+  prices: Array<{ productTypeId: string; price: number }>,
+  date: string = todayDate()
+): Promise<void> {
+  const res = await request.post(`${BASE}/api/prices/daily`, {
+    headers: apiHeaders(token),
+    data: { date, prices },
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to set daily prices: ${res.status()}`)
+  }
+}
+
+/**
  * Deletes a user by ID via the API.
  */
 export async function deleteUser(
@@ -124,4 +168,45 @@ export function todayDate(): string {
 /** Returns a unique suffix based on current timestamp for test data. */
 export function uniqueSuffix(): string {
   return Date.now().toString().slice(-6)
+}
+
+export type SlipPaperSize = '58mm' | '80mm' | '104mm'
+
+export type SlipSettings = {
+  companyName: string
+  companyAddress: string
+  paperSize: SlipPaperSize
+}
+
+/** Fetches slip print settings from the API. */
+export async function getSlipSettings(request: APIRequestContext): Promise<SlipSettings> {
+  const res = await request.get(`${BASE}/api/slip/settings`)
+  if (!res.ok()) {
+    throw new Error(`Failed to get slip settings: ${res.status()}`)
+  }
+  return res.json() as Promise<SlipSettings>
+}
+
+/** Persists slip print settings (paper size, company info) via the API. */
+export async function setSlipSettings(
+  request: APIRequestContext,
+  settings: Partial<SlipSettings> & { paperSize?: SlipPaperSize }
+): Promise<SlipSettings> {
+  const current = await getSlipSettings(request)
+  const res = await request.post(`${BASE}/api/slip/settings`, {
+    data: {
+      companyName: settings.companyName ?? current.companyName,
+      companyAddress: settings.companyAddress ?? current.companyAddress,
+      paperSize: settings.paperSize ?? current.paperSize,
+    },
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to set slip settings: ${res.status()}`)
+  }
+  const body = (await res.json()) as SlipSettings
+  return {
+    companyName: body.companyName ?? settings.companyName ?? current.companyName,
+    companyAddress: body.companyAddress ?? settings.companyAddress ?? current.companyAddress,
+    paperSize: (body.paperSize ?? settings.paperSize ?? current.paperSize) as SlipPaperSize,
+  }
 }
