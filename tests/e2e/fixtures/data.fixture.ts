@@ -30,11 +30,29 @@ export async function getAdminToken(request: APIRequestContext): Promise<string>
  * Creates a member via the API.
  * Fetches the next available code first since the POST endpoint requires it.
  */
+export type MemberRecord = {
+  id: string
+  code: string
+  name: string
+  phone?: string | null
+  ownerPercent?: number
+  tapperPercent?: number
+  tapperName?: string | null
+  advanceBalance?: number
+  isActive?: boolean
+}
+
 export async function createMember(
   request: APIRequestContext,
   token: string,
-  data: { name: string; phone?: string }
-): Promise<{ id: string; code: string; name: string }> {
+  data: {
+    name: string
+    phone?: string
+    ownerPercent?: number
+    tapperPercent?: number
+    tapperName?: string
+  }
+): Promise<MemberRecord> {
   const codeRes = await request.get(`${BASE}/api/members/next-code`, {
     headers: apiHeaders(token),
   })
@@ -44,7 +62,44 @@ export async function createMember(
     headers: apiHeaders(token),
     data: { code, ...data },
   })
+  if (!createRes.ok()) {
+    const body = await createRes.text()
+    throw new Error(`Failed to create member: ${createRes.status()} ${body}`)
+  }
   return createRes.json()
+}
+
+/** Fetches a member by ID via the API. */
+export async function getMember(
+  request: APIRequestContext,
+  token: string,
+  id: string
+): Promise<MemberRecord> {
+  const res = await request.get(`${BASE}/api/members/${id}`, {
+    headers: apiHeaders(token),
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to get member: ${res.status()}`)
+  }
+  return res.json()
+}
+
+/** Updates a member by ID via the API. */
+export async function updateMember(
+  request: APIRequestContext,
+  token: string,
+  id: string,
+  data: Partial<MemberRecord> & { name: string }
+): Promise<MemberRecord> {
+  const res = await request.put(`${BASE}/api/members/${id}`, {
+    headers: apiHeaders(token),
+    data,
+  })
+  if (!res.ok()) {
+    const body = await res.text()
+    throw new Error(`Failed to update member: ${res.status()} ${body}`)
+  }
+  return res.json()
 }
 
 /**

@@ -6,6 +6,18 @@ import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+/** Normalize raw SQL aggregate values (SQLite may return bigint). */
+function parseMaxNum(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 /**
  * GET /api/members/next-code
  * 
@@ -28,16 +40,16 @@ export async function GET() {
     
     try {
       // Approach 1: Use CAST with INTEGER conversion
-      const result = await prisma.$queryRaw<Array<{ max_num: number | null }>>`
+      const result = await prisma.$queryRaw<Array<{ max_num: number | bigint | null }>>`
         SELECT MAX(CAST(SUBSTR(code, 2) AS INTEGER)) as max_num
         FROM "Member"
         WHERE code LIKE 'M%'
           AND LENGTH(code) >= 2
           AND SUBSTR(code, 2) GLOB '[0-9]*'
       `;
-      
-      const maxNum = result[0]?.max_num;
-      if (maxNum !== null && maxNum !== undefined && !isNaN(maxNum)) {
+
+      const maxNum = parseMaxNum(result[0]?.max_num);
+      if (maxNum !== null) {
         maxNumber = maxNum;
       } else {
         // Fallback: If query returns null, fetch codes and process in JS
