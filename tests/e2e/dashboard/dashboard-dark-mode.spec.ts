@@ -105,3 +105,50 @@ test.describe('Dashboard dark mode', () => {
     expect(contrastResults.minRatio).toBeGreaterThanOrEqual(MIN_LARGE_TEXT_CONTRAST)
   })
 })
+
+test.describe('Dashboard dark mode persistence', () => {
+  test('REQ-UI-01: dark mode persists across reloads', async ({ page }) => {
+    await page.goto('/dashboard')
+    await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
+
+    await page.evaluate(() => {
+      localStorage.setItem('theme', 'light')
+      document.documentElement.classList.remove('dark')
+    })
+    await page.reload()
+    await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
+
+    await page.getByRole('button', { name: 'เปลี่ยนเป็นโหมดมืด' }).click()
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+      .toBe(true)
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('dark')
+
+    await page.reload()
+    await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+      .toBe(true)
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('dark')
+
+    await page.getByRole('button', { name: 'เปลี่ยนเป็นโหมดสว่าง' }).click()
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+      .toBe(false)
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('light')
+
+    await page.reload()
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
+      .toBe(false)
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('light')
+  })
+})
