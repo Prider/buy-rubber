@@ -1,3 +1,7 @@
+import fs from 'fs'
+import path from 'path'
+import jwt from 'jsonwebtoken'
+import { PrismaClient } from '@prisma/client'
 import { type APIRequestContext } from '@playwright/test'
 
 const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
@@ -24,6 +28,68 @@ export async function getAdminToken(request: APIRequestContext): Promise<string>
   })
   const body = await res.json()
   return body.token as string
+}
+
+/** Fetches the viewer (demo) auth token from the login API. */
+export async function getViewerToken(request: APIRequestContext): Promise<string> {
+  await ensureViewerUser(request)
+  const res = await request.post(`${BASE}/api/auth/login`, {
+    data: { username: 'demo', password: 'demo@123' },
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to get viewer token: ${res.status()}`)
+  }
+  const body = await res.json()
+  return body.token as string
+}
+
+function readJwtSecret(): string {
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET
+  }
+
+  try {
+    const envPath = path.join(process.cwd(), '.env')
+    const envContent = fs.readFileSync(envPath, 'utf-8')
+    const match = envContent.match(/^JWT_SECRET=["']?([^"'\n]+)["']?/m)
+    if (match?.[1]) {
+      return match[1]
+    }
+  } catch {
+    // Fall through to default used by the dev server when .env is absent.
+  }
+
+  return 'your-secret-key-change-this-in-production'
+}
+
+/** Creates an already-expired JWT for session-expiry tests. */
+export function generateExpiredToken(payload: {
+  userId: string
+  username: string
+  role: string
+}): string {
+  return jwt.sign(payload, readJwtSecret(), { expiresIn: '-1s' })
+}
+
+let prismaClient: PrismaClient | null = null
+
+function getPrismaClient(): PrismaClient {
+  if (!prismaClient) {
+    const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
+    prismaClient = new PrismaClient({
+      datasources: { db: { url: `file:${dbPath}` } },
+    })
+  }
+  return prismaClient
+}
+
+/** Reads the stored password hash for a user directly from the database. */
+export async function getStoredPasswordHash(username: string): Promise<string | null> {
+  const user = await getPrismaClient().user.findUnique({
+    where: { username },
+    select: { password: true },
+  })
+  return user?.password ?? null
 }
 
 /**
