@@ -589,3 +589,113 @@ export async function findOrCreateProductType(
   }
   return createRes.json() as Promise<ProductTypeRow>
 }
+
+export type BackupRecord = {
+  id: string
+  fileName: string
+  filePath: string
+  fileSize: number
+  backupType: 'auto' | 'manual'
+  createdAt: string
+}
+
+/** Lists backup records via the API. */
+export async function listBackups(
+  request: APIRequestContext,
+  token?: string
+): Promise<BackupRecord[]> {
+  const res = await request.get(`${BASE}/api/backup`, {
+    headers: token ? apiHeaders(token) : undefined,
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to list backups: ${res.status()}`)
+  }
+  const body = (await res.json()) as { backups: BackupRecord[] }
+  return body.backups ?? []
+}
+
+/** Creates a database backup via the API. Retries when filename timestamps collide. */
+export async function createBackupViaApi(
+  request: APIRequestContext,
+  token?: string,
+  type: 'auto' | 'manual' = 'manual'
+): Promise<BackupRecord> {
+  const maxAttempts = 3
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1100))
+    }
+
+    const res = await request.post(`${BASE}/api/backup`, {
+      headers: token ? apiHeaders(token) : undefined,
+      data: { type },
+    })
+    const bodyText = await res.text()
+    let body: { success?: boolean; backup?: BackupRecord; error?: string }
+    try {
+      body = JSON.parse(bodyText) as { success?: boolean; backup?: BackupRecord; error?: string }
+    } catch {
+      body = {}
+    }
+
+    if (res.ok() && body.success && body.backup) {
+      return body.backup
+    }
+
+    const isDuplicateName =
+      bodyText.includes('Unique constraint failed') || bodyText.includes('fileName')
+    if (!isDuplicateName || attempt === maxAttempts - 1) {
+      throw new Error(`Failed to create backup: ${res.status()} ${bodyText}`)
+    }
+  }
+
+  throw new Error('Failed to create backup after retries')
+}
+
+/** Restores a database from a backup via the API. */
+export async function restoreBackupViaApi(
+  request: APIRequestContext,
+  id: string,
+  token?: string
+): Promise<{ ok: boolean; status: number; body: Record<string, unknown> }> {
+  const res = await request.put(`${BASE}/api/backup`, {
+    headers: token ? apiHeaders(token) : undefined,
+    data: { id },
+  })
+  const body = (await res.json()) as Record<string, unknown>
+  return { ok: res.ok(), status: res.status(), body }
+}
+
+/** Deletes a backup record and file via the API. */
+export async function deleteBackupViaApi(
+  request: APIRequestContext,
+  id: string,
+  token?: string
+): Promise<void> {
+  const res = await request.delete(`${BASE}/api/backup?id=${encodeURIComponent(id)}`, {
+    headers: token ? apiHeaders(token) : undefined,
+  })
+  if (!res.ok()) {
+    const body = await res.text()
+    throw new Error(`Failed to delete backup: ${res.status()} ${body}`)
+  }
+}
+
+/** Downloads a backup file via the API. */
+export async function downloadBackupViaApi(
+  request: APIRequestContext,
+  id: string,
+  token?: string
+): Promise<{ status: number; contentType: string | null; contentLength: number; body: Buffer }> {
+  const res = await request.get(`${BASE}/api/backup/${id}/download`, {
+    headers: token ? apiHeaders(token) : undefined,
+  })
+  const body = Buffer.from(await res.body())
+  return {
+    status: res.status(),
+    contentType: res.headers()['content-type'] ?? null,
+    contentLength: Number(res.headers()['content-length'] ?? body.length),
+    body,
+  }
+}
