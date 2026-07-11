@@ -165,6 +165,140 @@ export function todayDate(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/** Returns a date string offset by the given number of days from today. */
+export function offsetDate(days: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+export type CreatedPurchaseItem = {
+  id: string
+  purchaseNo: string
+  totalAmount: number
+  netWeight: number
+  productTypeId: string
+  memberId: string
+}
+
+export type CreatedPurchaseTransaction = {
+  purchaseNo: string
+  purchases: CreatedPurchaseItem[]
+}
+
+type PurchaseItemInput = {
+  grossWeight: number
+  containerWeight?: number
+  pricePerUnit?: number
+  productTypeId?: string
+  memberId?: string
+  date?: string
+}
+
+/** Creates a purchase transaction (single or multi-item batch) via the API. */
+export async function createPurchaseTransaction(
+  request: APIRequestContext,
+  token: string,
+  data: {
+    memberId: string
+    productTypeId: string
+    date?: string
+    items: PurchaseItemInput[]
+  }
+): Promise<CreatedPurchaseTransaction> {
+  const date = data.date ?? todayDate()
+  const res = await request.post(`${BASE}/api/purchases`, {
+    headers: apiHeaders(token),
+    data: {
+      date,
+      items: data.items.map((item) => ({
+        memberId: item.memberId ?? data.memberId,
+        productTypeId: item.productTypeId ?? data.productTypeId,
+        date: item.date ?? date,
+        grossWeight: item.grossWeight,
+        containerWeight: item.containerWeight ?? 0,
+        pricePerUnit: item.pricePerUnit,
+      })),
+    },
+  })
+  if (!res.ok()) {
+    const body = await res.text()
+    throw new Error(`Failed to create purchase transaction: ${res.status()} ${body}`)
+  }
+  const body = (await res.json()) as CreatedPurchaseTransaction
+  return body
+}
+
+type PurchaseTransactionQuery = {
+  startDate?: string
+  endDate?: string
+  memberId?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+/** Fetches grouped purchase transactions from the API. */
+export async function getPurchaseTransactions(
+  request: APIRequestContext,
+  token: string,
+  params: PurchaseTransactionQuery = {}
+): Promise<{
+  transactions: Array<{
+    purchaseNo: string
+    totalAmount: number
+    purchases: Array<{ id: string }>
+    member: { id: string; name: string; code: string }
+  }>
+  pagination: { page: number; limit: number; total: number; totalPages: number }
+}> {
+  const qs = new URLSearchParams()
+  if (params.startDate) qs.set('startDate', params.startDate)
+  if (params.endDate) qs.set('endDate', params.endDate)
+  if (params.memberId) qs.set('memberId', params.memberId)
+  if (params.search) qs.set('search', params.search)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+
+  const query = qs.toString()
+  const res = await request.get(
+    `${BASE}/api/purchases/transactions${query ? `?${query}` : ''}`,
+    { headers: apiHeaders(token) }
+  )
+  if (!res.ok()) {
+    throw new Error(`Failed to get purchase transactions: ${res.status()}`)
+  }
+  return res.json()
+}
+
+/** Updates a purchase record via the API. */
+export async function updatePurchase(
+  request: APIRequestContext,
+  token: string,
+  id: string,
+  data: {
+    memberId: string
+    productTypeId: string
+    date: string
+    grossWeight: number
+    containerWeight?: number
+    pricePerUnit?: number
+  }
+): Promise<{ id: string; totalAmount: number; netWeight: number }> {
+  const res = await request.put(`${BASE}/api/purchases/${id}`, {
+    headers: apiHeaders(token),
+    data: {
+      ...data,
+      containerWeight: data.containerWeight ?? 0,
+    },
+  })
+  if (!res.ok()) {
+    const body = await res.text()
+    throw new Error(`Failed to update purchase: ${res.status()} ${body}`)
+  }
+  return res.json()
+}
+
 /** Returns a unique suffix based on current timestamp for test data. */
 export function uniqueSuffix(): string {
   return Date.now().toString().slice(-6)
