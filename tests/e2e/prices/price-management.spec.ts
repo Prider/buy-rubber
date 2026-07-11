@@ -9,19 +9,24 @@ test.describe('Price management', () => {
 
   test('can open add product type modal', async ({ page }) => {
     await page.goto('/prices')
+    await expect(page.getByRole('heading', { name: 'ประเภทสินค้า' })).toBeVisible()
 
-    const addButton = page.getByRole('button', { name: 'เพิ่มประเภท' })
+    const addButton = page.getByRole('button', { name: /เพิ่มประเภท|ครบจำนวนสูงสุด/ })
+    await expect(addButton).toBeVisible()
     if (await addButton.isEnabled()) {
       await addButton.click()
       await expect(page.getByRole('heading', { name: 'เพิ่มประเภทสินค้า' })).toBeVisible()
     } else {
-      await expect(page.getByText(/ครบจำนวนสูงสุด|สามารถเพิ่มประเภทสินค้าได้สูงสุด/i)).toBeVisible()
+      await expect(
+        page.getByText('สามารถเพิ่มประเภทสินค้าได้สูงสุด 10 รายการ')
+      ).toBeVisible()
     }
   })
 
   test('product type cards are listed', async ({ page }) => {
     await page.goto('/prices')
-    await expect(page.getByText(/\d+ รายการ/)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'ประเภทสินค้า' })).toBeVisible()
+    await expect(page.locator('main').getByText(/\d+\s*รายการ/).first()).toBeVisible()
   })
 
   test('Set daily price per product type', async ({ request }) => {

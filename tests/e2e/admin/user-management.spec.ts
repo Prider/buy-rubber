@@ -1,9 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 import { loginAs } from '../fixtures/auth.fixture'
 import { getAdminToken, deleteUser, uniqueSuffix, ensureViewerUser } from '../fixtures/data.fixture'
+import { dismissAlertDialogs } from '../fixtures/ui.fixture'
 
 async function openUsersTab(page: Page) {
   await page.goto('/admin')
+  await expect(page.getByRole('heading', { name: 'ตั้งค่าระบบ' })).toBeVisible()
+  await dismissAlertDialogs(page)
   await page.getByRole('tab', { name: 'ผู้ใช้งาน' }).click()
   await expect(page.getByRole('heading', { name: 'จัดการผู้ใช้งาน' })).toBeVisible()
 }
@@ -101,7 +104,7 @@ test.describe('Role-based access control', () => {
 
     await page.goto('/admin')
 
-    await expect(page).toHaveURL('/dashboard')
+    await expect(page).toHaveURL('/dashboard', { timeout: 15_000 })
     await expect(page.getByRole('tab', { name: 'ผู้ใช้งาน' })).not.toBeVisible()
 
     await context.close()

@@ -8,6 +8,7 @@ import {
   uniqueSuffix,
   type SlipSettings,
 } from '../fixtures/data.fixture'
+import { dismissAlertDialogs } from '../fixtures/ui.fixture'
 
 const E2E_PORT = process.env.PLAYWRIGHT_PORT ?? '3099'
 
@@ -27,6 +28,7 @@ async function gotoAdminPage(page: Page) {
 
 async function openUsersTab(page: Page) {
   await gotoAdminPage(page)
+  await dismissAlertDialogs(page)
   const usersReq = page.waitForResponse((r) => r.url().includes('/api/users') && r.ok())
   await page.getByRole('tab', { name: 'ผู้ใช้งาน' }).click()
   await expect(page.getByRole('heading', { name: 'จัดการผู้ใช้งาน' })).toBeVisible()

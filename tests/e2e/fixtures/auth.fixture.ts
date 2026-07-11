@@ -25,13 +25,42 @@ export { expect }
  * Logs in directly via the UI. Used only in specs that explicitly test
  * the authentication flow (auth/login.spec.ts).
  */
+async function waitForLoginPrefill(page: Page) {
+  const usernameInput = page.getByPlaceholder('กรอกชื่อผู้ใช้')
+  await usernameInput.waitFor({ state: 'visible' })
+  // Web login pre-fills demo credentials in useEffect; wait so fill() does not race it.
+  await page.waitForFunction(
+    () => {
+      const input = document.querySelector<HTMLInputElement>(
+        'input[placeholder="กรอกชื่อผู้ใช้"]'
+      )
+      if (!input) return false
+      const isElectron =
+        typeof window !== 'undefined' &&
+        (window as Window & { electron?: { isElectron?: boolean } }).electron?.isElectron ===
+          true
+      return isElectron || input.value.length > 0
+    },
+    { timeout: 5000 }
+  )
+}
+
 export async function submitLogin(
   page: Page,
   username: string,
   password: string
 ) {
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill(username)
-  await page.getByPlaceholder('กรอกรหัสผ่าน').fill(password)
+  await waitForLoginPrefill(page)
+
+  const usernameInput = page.getByPlaceholder('กรอกชื่อผู้ใช้')
+  const passwordInput = page.getByPlaceholder('กรอกรหัสผ่าน')
+
+  if ((await usernameInput.inputValue()) !== username) {
+    await usernameInput.fill(username)
+  }
+  if ((await passwordInput.inputValue()) !== password) {
+    await passwordInput.fill(password)
+  }
 
   const loginReq = page.waitForResponse(
     (r) => r.url().includes('/api/auth/login') && r.request().method() === 'POST'

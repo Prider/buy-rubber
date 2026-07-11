@@ -99,6 +99,9 @@ test.describe('Members CRUD', () => {
     createdMemberId = created.id
 
     await page.goto('/members')
+    const searchInput = page.getByPlaceholder(/ค้นหา/i)
+    await searchInput.fill(memberName)
+    await page.waitForResponse((r) => r.url().includes('/api/members') && r.ok())
     await expect(page.getByText(memberName)).toBeVisible()
 
     const row = page.getByRole('row').filter({ hasText: memberName })

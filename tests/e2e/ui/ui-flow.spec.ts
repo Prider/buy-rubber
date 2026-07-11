@@ -163,8 +163,7 @@ test.describe('UI flow', () => {
     for (const route of WEB_NAV_ROUTES) {
       const link = page.locator(`[data-nav-link="${route.href}"]`)
       await expect(link, `Nav link missing: ${route.name}`).toBeVisible()
-      await link.click()
-      await expect(page).toHaveURL(route.href)
+      await Promise.all([page.waitForURL(route.href), link.click()])
       await route.verify(page)
     }
   })

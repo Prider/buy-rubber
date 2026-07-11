@@ -2,8 +2,16 @@
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import { prisma } from './prisma';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { prisma, resetPrismaConnection } from './prisma';
 import { logger } from './logger';
+
+const execFileAsync = promisify(execFile);
+
+async function sqliteCommand(dbPath: string, command: string): Promise<void> {
+  await execFileAsync('sqlite3', [dbPath, command]);
+}
 
 function getBackupDir(): string {
   // Get the database path first
@@ -169,8 +177,13 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
       cwd: process.cwd()
     });
 
-    // สำรองไฟล์ฐานข้อมูล (async - non-blocking)
-    await fsPromises.copyFile(dbPath, backupPath);
+    // สำรองไฟล์ฐานข้อมูล (prefer SQLite online backup when available)
+    try {
+      await sqliteCommand(dbPath, `.backup '${backupPath.replace(/'/g, "''")}'`);
+    } catch (sqliteBackupError) {
+      logger.warn('SQLite online backup failed, falling back to copyFile', { error: sqliteBackupError });
+      await fsPromises.copyFile(dbPath, backupPath);
+    }
 
     // ตรวจสอบขนาดไฟล์ (async)
     const stats = await fsPromises.stat(backupPath);
@@ -287,10 +300,10 @@ export async function restoreBackup(backupId: string) {
     } catch (disconnectError) {
       logger.warn('Error disconnecting Prisma (may not be connected)', disconnectError);
     }
-    
+
     // Small delay to ensure connections are closed
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise(resolve => setTimeout(resolve, 200));
+
     // เรียกคืนข้อมูล - replace the database file (async)
     logger.info('Copying backup file to database location');
     try {
@@ -301,20 +314,26 @@ export async function restoreBackup(backupId: string) {
       } catch {
         beforeSize = 0;
       }
-      
-      await fsPromises.copyFile(backup.filePath, dbPath);
-      
+
+      const escapedBackupPath = backup.filePath.replace(/'/g, "''");
+      try {
+        await sqliteCommand(dbPath, `.restore '${escapedBackupPath}'`);
+      } catch (sqliteRestoreError) {
+        logger.warn('SQLite restore failed, falling back to copyFile', { error: sqliteRestoreError });
+        await fsPromises.copyFile(backup.filePath, dbPath);
+      }
+
       const afterStats = await fsPromises.stat(dbPath);
       const afterSize = afterStats.size;
       const finalBackupSize = backupSize;
-      
+
       logger.info('Database file replaced successfully', {
         beforeSize,
         afterSize,
         backupSize: finalBackupSize,
         sizesMatch: afterSize === finalBackupSize
       });
-      
+
       console.log(backup.filePath,'========== COPY SUCCESS ==========', dbPath);
       console.log('Before size:', beforeSize);
       console.log('After size:', afterSize);
@@ -329,13 +348,8 @@ export async function restoreBackup(backupId: string) {
       throw new Error(`Failed to replace database file: ${copyError}`);
     }
 
-    // Try to reconnect (but don't fail if it doesn't work)
-    try {
-      await prisma.$connect();
-      logger.info('Prisma reconnected successfully');
-    } catch (reconnectError) {
-      logger.warn('Could not reconnect Prisma (app restart required)', reconnectError);
-    }
+    await resetPrismaConnection();
+    logger.info('Prisma reconnected after restore');
 
     logger.info('Backup restored successfully', { fileName: backup.fileName });
     return {
@@ -346,10 +360,9 @@ export async function restoreBackup(backupId: string) {
     };
   } catch (error: any) {
     logger.error('Backup restore failed', error);
-    
-    // Try to reconnect even if restore failed
+
     try {
-      await prisma.$connect();
+      await resetPrismaConnection();
     } catch (reconnectError) {
       logger.error('Failed to reconnect after restore error', reconnectError);
     }

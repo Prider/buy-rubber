@@ -115,7 +115,7 @@ test.describe('Dashboard dark mode persistence', () => {
       localStorage.setItem('theme', 'light')
       document.documentElement.classList.remove('dark')
     })
-    await page.reload()
+    await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
 
     await page.getByRole('button', { name: 'เปลี่ยนเป็นโหมดมืด' }).click()
@@ -126,7 +126,7 @@ test.describe('Dashboard dark mode persistence', () => {
       .poll(() => page.evaluate(() => localStorage.getItem('theme')))
       .toBe('dark')
 
-    await page.reload()
+    await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
     await expect
       .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
@@ -143,7 +143,7 @@ test.describe('Dashboard dark mode persistence', () => {
       .poll(() => page.evaluate(() => localStorage.getItem('theme')))
       .toBe('light')
 
-    await page.reload()
+    await page.reload({ waitUntil: 'domcontentloaded' })
     await expect
       .poll(() => page.evaluate(() => document.documentElement.classList.contains('dark')))
       .toBe(false)

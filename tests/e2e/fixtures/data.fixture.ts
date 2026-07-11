@@ -119,20 +119,33 @@ export async function createMember(
     tapperName?: string
   }
 ): Promise<MemberRecord> {
-  const codeRes = await request.get(`${BASE}/api/members/next-code`, {
-    headers: apiHeaders(token),
-  })
-  const { code } = await codeRes.json()
+  const maxAttempts = 3
 
-  const createRes = await request.post(`${BASE}/api/members`, {
-    headers: apiHeaders(token),
-    data: { code, ...data },
-  })
-  if (!createRes.ok()) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const codeRes = await request.get(`${BASE}/api/members/next-code`, {
+      headers: apiHeaders(token),
+    })
+    const { code } = await codeRes.json()
+
+    const createRes = await request.post(`${BASE}/api/members`, {
+      headers: apiHeaders(token),
+      data: { code, ...data },
+    })
+
+    if (createRes.ok()) {
+      return createRes.json()
+    }
+
     const body = await createRes.text()
-    throw new Error(`Failed to create member: ${createRes.status()} ${body}`)
+    const isDuplicateCode =
+      createRes.status() === 400 && body.includes('รหัสสมาชิกนี้มีอยู่แล้ว')
+
+    if (!isDuplicateCode || attempt === maxAttempts - 1) {
+      throw new Error(`Failed to create member: ${createRes.status()} ${body}`)
+    }
   }
-  return createRes.json()
+
+  throw new Error('Failed to create member after retries')
 }
 
 /** Fetches a member by ID via the API. */
@@ -176,9 +189,13 @@ export async function deleteMember(
   id: string,
   token: string
 ): Promise<void> {
-  await request.delete(`${BASE}/api/members/${id}`, {
+  const res = await request.delete(`${BASE}/api/members/${id}`, {
     headers: apiHeaders(token),
   })
+  if (!res.ok() && res.status() !== 404) {
+    const body = await res.text()
+    throw new Error(`Failed to delete member: ${res.status()} ${body}`)
+  }
 }
 
 export type CreatedSale = {
@@ -349,20 +366,61 @@ export async function deleteUser(
   })
 }
 
-/** Ensures the demo viewer account exists for login/RBAC tests. */
+/** Ensures the demo viewer account exists with viewer role for login/RBAC tests. */
 export async function ensureViewerUser(request: APIRequestContext): Promise<void> {
+  const demoCredentials = { username: 'demo', password: 'demo@123' }
+
   const loginRes = await request.post(`${BASE}/api/auth/login`, {
-    data: { username: 'demo', password: 'demo@123' },
+    data: demoCredentials,
   })
-  if (loginRes.ok()) return
+
+  if (loginRes.ok()) {
+    const body = (await loginRes.json()) as { user?: { id?: string; role?: string } }
+    if (body.user?.role === 'viewer') {
+      return
+    }
+
+    if (body.user?.id) {
+      await resetDemoViewerUser(request, body.user.id)
+      return
+    }
+  }
 
   const adminToken = await getAdminToken(request)
+  const usersRes = await request.get(`${BASE}/api/users`, {
+    headers: apiHeaders(adminToken),
+  })
+
+  if (usersRes.ok()) {
+    const body = (await usersRes.json()) as { users?: Array<{ id: string; username: string }> }
+    const demoUser = body.users?.find((user) => user.username === 'demo')
+    if (demoUser) {
+      await resetDemoViewerUser(request, demoUser.id, adminToken)
+      return
+    }
+  }
+
   const createRes = await request.post(`${BASE}/api/users`, {
-    headers: { Authorization: `Bearer ${adminToken}` },
-    data: { username: 'demo', password: 'demo@123', role: 'viewer' },
+    headers: apiHeaders(adminToken),
+    data: { ...demoCredentials, role: 'viewer' },
   })
   if (!createRes.ok() && createRes.status() !== 409) {
     throw new Error(`Failed to ensure demo viewer user: ${createRes.status()}`)
+  }
+}
+
+async function resetDemoViewerUser(
+  request: APIRequestContext,
+  userId: string,
+  adminToken?: string
+): Promise<void> {
+  const token = adminToken ?? (await getAdminToken(request))
+  const updateRes = await request.put(`${BASE}/api/users/${userId}`, {
+    headers: apiHeaders(token),
+    data: { role: 'viewer', password: 'demo@123' },
+  })
+  if (!updateRes.ok()) {
+    throw new Error(`Failed to reset demo viewer user: ${updateRes.status()}`)
   }
 }
 

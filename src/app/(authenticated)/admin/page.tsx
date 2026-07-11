@@ -101,12 +101,11 @@ export default function AdminSettingsPage() {
       return;
     }
     if (!user) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
     if (!canAccessAdminPage) {
-      router.push('/dashboard');
-      return;
+      router.replace('/dashboard');
     }
   }, [user, isLoading, router, canAccessAdminPage]);
 
@@ -138,14 +137,15 @@ export default function AdminSettingsPage() {
         setSlipCompanyName(slipDefaults.companyName);
         setSlipCompanyAddress(slipDefaults.companyAddress);
         setSlipPaperSize('80mm');
-        showError('โหลดข้อมูลสลิปไม่สำเร็จ', err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
+        // Slip preload is non-blocking; defaults apply until the Slip tab is opened.
+        console.warn('Failed to load slip settings', err);
       } finally {
         setSlipLoading(false);
       }
     };
 
     loadSlipSettings();
-  }, [canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName, showError]);
+  }, [canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName]);
 
   const handleSaveSlipSettings = async () => {
     try {
@@ -210,11 +210,12 @@ export default function AdminSettingsPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-  if (!canAccessAdminPage) {
-    return null;
+  if (!user || !canAccessAdminPage) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <GamerLoader className="py-12" message="กำลังเปลี่ยนหน้า..." />
+      </div>
+    );
   }
 
   return (

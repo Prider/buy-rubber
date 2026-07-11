@@ -59,22 +59,12 @@ class ApiClient {
     if (this.config.mode === 'client' && this.config.serverUrl) {
       return this.config.serverUrl;
     }
-    
-    // Server mode - determine if we should use localhost or relative URLs
+
+    // In the browser, use same-origin relative URLs so any dev/e2e port works.
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
-      
-      // If running locally, use localhost with port
-      if (isLocalhost) {
-        return `http://localhost:${this.config.clientPort || 3000}`;
-      }
-      
-      // If deployed (Vercel, etc.), use relative URLs (same origin)
-      // Empty string means axios will use the current origin
       return '';
     }
-    
+
     // Server-side rendering - default to localhost
     return `http://localhost:${this.config.clientPort || 3000}`;
   }

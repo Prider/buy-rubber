@@ -90,11 +90,11 @@ test.describe.serial('Sales flow', () => {
   }
 
   async function expandSalesForm(page: Page) {
-    const formCard = page.getByTestId('sales-form-card')
-    const isExpanded = await formCard.locator('[aria-expanded="true"]').count()
-    if (isExpanded === 0) {
-      await formCard.locator('button[id="sales-form-card-toggle"]').click()
+    const toggle = page.locator('#sales-form-card-toggle')
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+      await toggle.click()
     }
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
   }
 
   async function fillSalesForm(

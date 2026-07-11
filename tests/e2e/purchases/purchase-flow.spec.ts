@@ -69,16 +69,13 @@ test.describe('Purchase flow', () => {
   })
 
   async function gotoPurchasesPage(page: Page) {
-    const membersReq = page.waitForResponse((r) => r.url().includes('/api/members') && r.ok())
-    const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types') && r.ok())
-    const pricesReq = page.waitForResponse((r) => r.url().includes('/api/prices/daily') && r.ok())
-    const slipSettingsReq = page.waitForResponse(
-      (r) => r.url().includes('/api/slip/settings') && r.ok()
-    )
+    const membersReq = page.waitForResponse((r) => r.url().includes('/api/members'))
+    const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types'))
+    const pricesReq = page.waitForResponse((r) => r.url().includes('/api/prices/daily'))
 
     await page.goto('/purchases')
     await expect(page.getByText('บันทึกการรับซื้อ')).toBeVisible()
-    await Promise.all([membersReq, productTypesReq, pricesReq, slipSettingsReq])
+    await Promise.all([membersReq, productTypesReq, pricesReq])
   }
 
   async function selectMember(page: Page) {
