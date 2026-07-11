@@ -152,7 +152,7 @@ Manual Desktop ──┘
 |-------|------|----------|
 | Login & session | `tests/e2e/auth/login.spec.ts` | Login, validation, session, logout |
 | Members | `tests/e2e/members/member-crud.spec.ts` | CRUD, search |
-| Expenses | `tests/e2e/expenses/expense-crud.spec.ts` | CRUD, summary cards |
+| Expenses | `tests/e2e/expenses/expense-flow.spec.ts` | REQ-EXP-01–04 flow |
 | Sales | `tests/e2e/sales/sales-crud.spec.ts` | CRUD, total preview |
 | Prices | `tests/e2e/prices/price-management.spec.ts` | Daily prices, history |
 | Reports | `tests/e2e/reports/report-generate.spec.ts` | Filters, PDF button, dashboard |
@@ -518,10 +518,10 @@ Maps each test case to a **business requirement**, **module**, **priority**, and
 | STK-04 | REQ-STK-05 | Stock decreases on sale | Stock | P0 | Not Started | — | Web, Desktop |
 | STK-05 | REQ-STK-06 | Prevent or warn on negative stock | Stock | P1 | Not Started | — | Web, Desktop |
 | STK-06 | REQ-STK-07 | Maintain average cost per kg | Stock | P1 | Not Started | — | Web, Desktop |
-| EXP-01 | REQ-EXP-01 | Record daily expense | Expenses | P1 | Automated | `tests/e2e/expenses/expense-crud.spec.ts` | Web, Desktop |
-| EXP-02 | REQ-EXP-02 | Today's expense summary updates | Expenses | P1 | Automated | `tests/e2e/expenses/expense-crud.spec.ts` | Web, Desktop |
-| EXP-03 | REQ-EXP-03 | Delete expense | Expenses | P1 | Automated | `tests/e2e/expenses/expense-crud.spec.ts` | Web, Desktop |
-| EXP-04 | REQ-EXP-04 | Expense categories available | Expenses | P2 | Partial | `src/app/api/expenses/__tests__/route.test.ts` | Web, Desktop |
+| EXP-01 | REQ-EXP-01 | Record daily expense | Expenses | P1 | Automated | `tests/e2e/expenses/expense-flow.spec.ts` | Web, Desktop |
+| EXP-02 | REQ-EXP-02 | Today's expense summary updates | Expenses | P1 | Automated | `tests/e2e/expenses/expense-flow.spec.ts` | Web, Desktop |
+| EXP-03 | REQ-EXP-03 | Delete expense | Expenses | P1 | Automated | `tests/e2e/expenses/expense-flow.spec.ts` | Web, Desktop |
+| EXP-04 | REQ-EXP-04 | Expense categories available | Expenses | P2 | Automated | `tests/e2e/expenses/expense-flow.spec.ts` | Web, Desktop |
 | RPT-01 | REQ-RPT-01 | Filter reports by date range | Reports | P1 | Automated | `tests/e2e/reports/report-generate.spec.ts` | Web, Desktop |
 | RPT-02 | REQ-RPT-02 | Purchase report totals accurate | Reports | P1 | Manual | — | Web, Desktop |
 | RPT-03 | REQ-RPT-03 | Export report as PDF | Reports | P1 | Partial | `tests/e2e/reports/report-generate.spec.ts` | Web, Desktop |
