@@ -488,6 +488,12 @@ export async function setSlipSettings(
 type StockPositionRow = {
   productTypeId: string
   quantityKg: number
+  avgCostPerKg?: number
+}
+
+export type StockPosition = {
+  quantityKg: number
+  avgCostPerKg: number
 }
 
 /** Returns current stock quantity (kg) for a product type. */
@@ -496,6 +502,16 @@ export async function getStockQuantity(
   productTypeId: string,
   token?: string
 ): Promise<number> {
+  const position = await getStockPosition(request, productTypeId, token)
+  return position.quantityKg
+}
+
+/** Returns current stock quantity and average cost for a product type. */
+export async function getStockPosition(
+  request: APIRequestContext,
+  productTypeId: string,
+  token?: string
+): Promise<StockPosition> {
   const res = await request.get(`${BASE}/api/stock/positions`, {
     headers: token ? apiHeaders(token) : undefined,
   })
@@ -504,7 +520,46 @@ export async function getStockQuantity(
   }
   const positions = (await res.json()) as StockPositionRow[]
   const row = positions.find((p) => p.productTypeId === productTypeId)
-  return row?.quantityKg ?? 0
+  return {
+    quantityKg: row?.quantityKg ?? 0,
+    avgCostPerKg: row?.avgCostPerKg ?? 0,
+  }
+}
+
+export type StockLedgerEntry = {
+  id: string
+  refType: string
+  refNo: string | null
+  qtyChangeKg: number
+  unitCostPerKg: number | null
+  balanceQtyKg: number
+  balanceAvgCostPerKg: number
+  date: string
+}
+
+/** Fetches stock ledger entries and position for a product type. */
+export async function getStockLedger(
+  request: APIRequestContext,
+  productTypeId: string,
+  token?: string,
+  params: { page?: number; limit?: number } = {}
+): Promise<{
+  productType: { id: string; code: string; name: string }
+  position: StockPosition
+  entries: StockLedgerEntry[]
+  pagination: { page: number; limit: number; total: number; totalPages: number }
+}> {
+  const qs = new URLSearchParams({ productTypeId })
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+
+  const res = await request.get(`${BASE}/api/stock/ledger?${qs.toString()}`, {
+    headers: token ? apiHeaders(token) : undefined,
+  })
+  if (!res.ok()) {
+    throw new Error(`Failed to get stock ledger: ${res.status()}`)
+  }
+  return res.json()
 }
 
 type ProductTypeRow = { id: string; code: string; name: string }
