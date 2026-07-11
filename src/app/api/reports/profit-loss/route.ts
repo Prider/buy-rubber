@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { fetchProfitLossAggregates } from './aggregates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,9 +17,6 @@ interface PeriodAccumulator {
   salePriceWeighted: number;
   saleWeight: number;
 }
-
-type PurchaseSaleAgg = { period: Date; total: number; weighted_price: number; weight: number };
-type ExpenseAgg = { period: Date; total: number };
 
 function parseDateOrNull(raw: string | null): Date | null {
   if (!raw) return null;
@@ -47,6 +44,17 @@ function keyFromDate(date: Date, mode: ViewMode): string {
   }
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function periodKeyFromAggregate(period: Date | string | null | undefined, mode: ViewMode): string {
+  if (period == null) return '';
+  if (typeof period === 'string') {
+    return mode === 'monthly' ? period.slice(0, 7) : period.slice(0, 10);
+  }
+  if (period instanceof Date && !Number.isNaN(period.getTime())) {
+    return keyFromDate(period, mode);
+  }
+  return '';
 }
 
 function createPeriodMap(startDate: Date, endDate: Date, mode: ViewMode): Map<string, PeriodAccumulator> {
@@ -108,42 +116,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
     }
 
-    // Push all aggregation to the DB with DATE_TRUNC — returns one row per period,
-    // never loading individual Sale/Purchase/Expense rows into Node.js memory.
-    const truncUnit = viewMode === 'daily' ? 'day' : 'month';
-
-    const [saleAggs, purchaseAggs, expenseAggs] = await Promise.all([
-      prisma.$queryRaw<PurchaseSaleAgg[]>`
-        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
-               COALESCE(SUM("totalAmount"), 0)::float  AS total,
-               COALESCE(SUM("pricePerUnit" * weight), 0)::float AS weighted_price,
-               COALESCE(SUM(weight), 0)::float          AS weight
-        FROM "Sale"
-        WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY 1
-      `,
-      prisma.$queryRaw<PurchaseSaleAgg[]>`
-        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
-               COALESCE(SUM("totalAmount"), 0)::float          AS total,
-               COALESCE(SUM("finalPrice" * "netWeight"), 0)::float AS weighted_price,
-               COALESCE(SUM("netWeight"), 0)::float             AS weight
-        FROM "Purchase"
-        WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY 1
-      `,
-      prisma.$queryRaw<ExpenseAgg[]>`
-        SELECT DATE_TRUNC(${truncUnit}, date) AS period,
-               COALESCE(SUM(amount), 0)::float AS total
-        FROM "Expense"
-        WHERE date >= ${startDate} AND date <= ${endDate}
-        GROUP BY 1
-      `,
-    ]);
+    const [saleAggs, purchaseAggs, expenseAggs] = await fetchProfitLossAggregates(
+      startDate,
+      endDate,
+      viewMode,
+    );
 
     const periodMap = createPeriodMap(startDate, endDate, viewMode);
 
     for (const row of saleAggs) {
-      const key = keyFromDate(new Date(row.period), viewMode);
+      const key = periodKeyFromAggregate(row.period, viewMode);
+      if (!key) continue;
       const acc = periodMap.get(key);
       if (!acc) continue;
       acc.sales += Number(row.total);
@@ -152,7 +135,8 @@ export async function GET(request: NextRequest) {
     }
 
     for (const row of purchaseAggs) {
-      const key = keyFromDate(new Date(row.period), viewMode);
+      const key = periodKeyFromAggregate(row.period, viewMode);
+      if (!key) continue;
       const acc = periodMap.get(key);
       if (!acc) continue;
       acc.purchases += Number(row.total);
@@ -161,7 +145,8 @@ export async function GET(request: NextRequest) {
     }
 
     for (const row of expenseAggs) {
-      const key = keyFromDate(new Date(row.period), viewMode);
+      const key = periodKeyFromAggregate(row.period, viewMode);
+      if (!key) continue;
       const acc = periodMap.get(key);
       if (!acc) continue;
       acc.expenses += Number(row.total);
