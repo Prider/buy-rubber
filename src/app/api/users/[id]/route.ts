@@ -120,18 +120,29 @@ export async function DELETE(
       }, { status: 403 });
     }
 
-    const success = await userStore.deleteUser(params.id);
-    if (!success) {
+    const result = await userStore.deleteUser(params.id);
+    if (!result) {
       return NextResponse.json({
         success: false,
         message: 'User not found'
       }, { status: 404 });
     }
 
+    if (result === 'deactivated') {
+      console.log('User deactivated (has linked records):', params.id);
+      return NextResponse.json({
+        success: true,
+        action: 'deactivated',
+        message:
+          'ผู้ใช้งานมีประวัติการทำรายการ จึงปิดการใช้งานแทนการลบ (ไม่สามารถลบได้เพราะมีข้อมูลที่เกี่ยวข้อง)',
+      });
+    }
+
     console.log('User deleted successfully from Prisma:', params.id);
 
     return NextResponse.json({
       success: true,
+      action: 'deleted',
       message: 'User deleted successfully'
     });
 

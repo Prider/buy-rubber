@@ -399,23 +399,80 @@ describe('userStore', () => {
   });
 
   describe('deleteUser', () => {
-    it('should delete user successfully', async () => {
+    it('should delete user successfully when no linked records', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'user-1',
+        username: 'testuser',
+        role: 'user',
+        _count: { purchases: 0, sales: 0 },
+      } as any);
       vi.mocked(prisma.user.delete).mockResolvedValue({} as any);
 
       const result = await userStore.deleteUser('user-1');
 
-      expect(result).toBe(true);
+      expect(result).toBe('deleted');
       expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: 'user-1' },
       });
     });
 
-    it('should return false when deletion fails', async () => {
-      vi.mocked(prisma.user.delete).mockRejectedValue(new Error('Delete failed'));
+    it('should deactivate user when they have linked purchases or sales', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'user-1',
+        username: 'testuser',
+        role: 'user',
+        _count: { purchases: 2, sales: 0 },
+      } as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
 
       const result = await userStore.deleteUser('user-1');
 
-      expect(result).toBe(false);
+      expect(result).toBe('deactivated');
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: false },
+      });
+    });
+
+    it('should deactivate when hard delete fails', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'user-1',
+        username: 'testuser',
+        role: 'user',
+        _count: { purchases: 0, sales: 0 },
+      } as any);
+      vi.mocked(prisma.user.delete).mockRejectedValue(new Error('Delete failed'));
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+      const result = await userStore.deleteUser('user-1');
+
+      expect(result).toBe('deactivated');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: false },
+      });
+    });
+
+    it('should return null when user does not exist', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      const result = await userStore.deleteUser('missing');
+
+      expect(result).toBeNull();
+    });
+
+    it('should throw when deleting root user', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'root-1',
+        username: 'root',
+        role: 'root',
+        _count: { purchases: 0, sales: 0 },
+      } as any);
+
+      await expect(userStore.deleteUser('root-1')).rejects.toThrow(
+        'Cannot delete root user'
+      );
     });
   });
 

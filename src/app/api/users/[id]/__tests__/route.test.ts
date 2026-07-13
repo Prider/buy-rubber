@@ -415,7 +415,7 @@ describe('DELETE /api/users/[id]', () => {
   describe('Successful deletion', () => {
     it('should delete a user', async () => {
       const token = createAdminToken();
-      vi.mocked(userStore.deleteUser).mockResolvedValue(true);
+      vi.mocked(userStore.deleteUser).mockResolvedValue('deleted');
 
       const request = new NextRequest('http://localhost:3000/api/users/user-1', {
         method: 'DELETE',
@@ -436,7 +436,7 @@ describe('DELETE /api/users/[id]', () => {
   describe('Error handling', () => {
     it('should return 404 when user does not exist', async () => {
       const token = createAdminToken();
-      vi.mocked(userStore.deleteUser).mockResolvedValue(false);
+      vi.mocked(userStore.deleteUser).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/users/nonexistent', {
         method: 'DELETE',
@@ -476,7 +476,7 @@ describe('DELETE /api/users/[id]', () => {
   describe('Logging', () => {
     it('should log the DELETE request', async () => {
       const token = createAdminToken();
-      vi.mocked(userStore.deleteUser).mockResolvedValue(true);
+      vi.mocked(userStore.deleteUser).mockResolvedValue('deleted');
 
       const request = new NextRequest('http://localhost:3000/api/users/user-1', {
         method: 'DELETE',
@@ -493,7 +493,7 @@ describe('DELETE /api/users/[id]', () => {
   describe('Edge cases', () => {
     it('should handle empty string id', async () => {
       const token = createAdminToken();
-      vi.mocked(userStore.deleteUser).mockResolvedValue(false);
+      vi.mocked(userStore.deleteUser).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/users/', {
         method: 'DELETE',
@@ -511,7 +511,7 @@ describe('DELETE /api/users/[id]', () => {
     it('should handle UUID format id', async () => {
       const token = createAdminToken();
       const uuidId = '550e8400-e29b-41d4-a716-446655440000';
-      vi.mocked(userStore.deleteUser).mockResolvedValue(true);
+      vi.mocked(userStore.deleteUser).mockResolvedValue('deleted');
 
       const request = new NextRequest(`http://localhost:3000/api/users/${uuidId}`, {
         method: 'DELETE',

@@ -173,8 +173,15 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
 
       const data = await response.json();
       if (data.success) {
-        setUsers(users.filter((u) => u.id !== userId));
-        setSuccess('ลบผู้ใช้งานสำเร็จ');
+        if (data.action === 'deactivated') {
+          setUsers(
+            users.map((u) => (u.id === userId ? { ...u, isActive: false } : u))
+          );
+          setSuccess(data.message || 'ปิดการใช้งานผู้ใช้สำเร็จ (มีประวัติการทำรายการ)');
+        } else {
+          setUsers(users.filter((u) => u.id !== userId));
+          setSuccess('ลบผู้ใช้งานสำเร็จ');
+        }
       } else {
         setError(data.message || 'ไม่สามารถลบผู้ใช้งานได้');
       }

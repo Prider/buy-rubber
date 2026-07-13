@@ -175,33 +175,56 @@ class UserStore {
     return user as User;
   }
 
-  async deleteUser(id: string): Promise<boolean> {
+  /**
+   * Removes a user when they have no linked records.
+   * If purchases/sales exist, deactivates instead (FK-safe soft delete).
+   */
+  async deleteUser(id: string): Promise<'deleted' | 'deactivated' | null> {
     console.log('Deleting user from Prisma:', id);
 
-    try {
-      const existingUser = await prisma.user.findUnique({
-        where: { id }
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { purchases: true, sales: true } },
+      },
+    });
+
+    if (!existingUser) {
+      return null;
+    }
+
+    if (isProtectedSystemUser(existingUser)) {
+      throw new Error('Cannot delete root user');
+    }
+
+    const hasLinkedRecords =
+      existingUser._count.purchases > 0 || existingUser._count.sales > 0;
+
+    if (hasLinkedRecords) {
+      // Keep history; hard delete would violate Purchase/Sale foreign keys.
+      await prisma.user.update({
+        where: { id },
+        data: { isActive: false },
       });
+      console.log('User deactivated (has linked records):', id);
+      return 'deactivated';
+    }
 
-      if (!existingUser) {
-        return false;
-      }
-
-      if (isProtectedSystemUser(existingUser)) {
-        throw new Error('Cannot delete root user');
-      }
-
+    try {
       await prisma.user.delete({
-        where: { id }
+        where: { id },
       });
       console.log('User deleted from Prisma:', id);
-      return true;
+      return 'deleted';
     } catch (error) {
-      if (error instanceof Error && error.message === 'Cannot delete root user') {
-        throw error;
-      }
-      console.error('Error deleting user:', error);
-      return false;
+      // Expense.userId is not a Prisma relation but may still block in some DBs;
+      // fall back to soft-delete if any constraint remains.
+      console.error('Hard delete failed, deactivating instead:', error);
+      await prisma.user.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      return 'deactivated';
     }
   }
 
