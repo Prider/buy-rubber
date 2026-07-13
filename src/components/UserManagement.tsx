@@ -125,13 +125,18 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
 
     try {
       const token = localStorage.getItem('auth_token');
+      const { password, ...rest } = editForm;
+      const payload: UpdateUserRequest = {
+        ...rest,
+        ...(password?.trim() ? { password: password.trim() } : {}),
+      };
       const response = await fetch(`/api/users/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -199,6 +204,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
     setEditingUser(user);
     setEditForm({
       username: user.username,
+      password: '',
       role: user.role,
       isActive: user.isActive,
     });

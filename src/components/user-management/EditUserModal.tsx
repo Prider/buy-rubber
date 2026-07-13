@@ -37,6 +37,20 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             />
           </div>
           <div>
+            <label className="label">รหัสผ่านใหม่</label>
+            <input
+              type="password"
+              value={form.password ?? ''}
+              onChange={(e) => onChange('password', e.target.value)}
+              className="input"
+              placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"
+              autoComplete="new-password"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              เว้นว่างไว้หากต้องการใช้รหัสผ่านเดิม
+            </p>
+          </div>
+          <div>
             <label className="label">สิทธิ์</label>
             <select
               value={form.role}
@@ -48,18 +62,45 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               <option value="admin">ผู้ดูแล (สิทธิ์เต็ม)</option>
             </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              checked={form.isActive}
-              onChange={(e) => onChange('isActive', e.target.checked)}
-              className="form-checkbox text-primary-600"
-            />
-            <label htmlFor="isActive" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              เปิดใช้งาน
-            </label>
-          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={form.isActive}
+            id="isActive"
+            onClick={() => onChange('isActive', !form.isActive)}
+            className={`w-full flex items-center justify-between gap-4 rounded-lg border-2 px-4 py-3.5 text-left transition-colors ${
+              form.isActive
+                ? 'border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-950/40'
+                : 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/40'
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                สถานะบัญชี
+              </p>
+              <p
+                className={`mt-0.5 text-sm font-medium ${
+                  form.isActive
+                    ? 'text-green-700 dark:text-green-400'
+                    : 'text-red-700 dark:text-red-400'
+                }`}
+              >
+                {form.isActive ? 'เปิดใช้งาน — สามารถเข้าสู่ระบบได้' : 'ปิดใช้งาน — ไม่สามารถเข้าสู่ระบบได้'}
+              </p>
+            </div>
+            <span
+              aria-hidden="true"
+              className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
+                form.isActive ? 'bg-green-500' : 'bg-red-400 dark:bg-red-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${
+                  form.isActive ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </span>
+          </button>
           <div className="flex space-x-3">
             <button type="submit" className="btn btn-primary flex-1">
               บันทึกการแก้ไข
