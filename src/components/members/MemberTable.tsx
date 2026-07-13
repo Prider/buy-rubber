@@ -83,7 +83,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   onViewServiceFees,
 }) => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'root';
 
   // Memoize row class
   const rowClassName = useMemo(

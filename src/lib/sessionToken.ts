@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+import { isAdminLike } from '@/types/user';
 
 export interface DecodedTokenPayload {
   userId: string;
@@ -130,5 +131,5 @@ export function verifyAdminRole(request: NextRequest): boolean {
   }
 
   const user = getVerifiedUserFromToken(token);
-  return user?.role === 'admin';
+  return isAdminLike(user?.role);
 }

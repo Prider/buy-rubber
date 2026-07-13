@@ -121,11 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hasRole = useCallback((role: UserRole): boolean => {
-    return user?.role === role;
-  }, [user?.role]);
+    if (!user) return false;
+    if (user.role === role) return true;
+    // root inherits admin access checks
+    if (role === 'admin' && user.role === 'root') return true;
+    return false;
+  }, [user]);
 
   const hasAnyRole = useCallback((roles: UserRole[]): boolean => {
-    return user ? roles.includes(user.role) : false;
+    if (!user) return false;
+    if (roles.includes(user.role)) return true;
+    if (user.role === 'root' && roles.includes('admin')) return true;
+    return false;
   }, [user]);
 
   const value: AuthContextType = useMemo(() => ({

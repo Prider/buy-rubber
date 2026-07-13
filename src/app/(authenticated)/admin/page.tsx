@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>('connection');
-  const canAccessAdminPage = user?.role === 'admin';
+  const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
 
   // Redirect if not authenticated or not admin
   useEffect(() => {

@@ -83,6 +83,17 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
+    if (
+      error instanceof Error &&
+      (error.message === 'Cannot create root user' ||
+        error.message === 'Invalid role')
+    ) {
+      return NextResponse.json({
+        success: false,
+        message: error.message
+      }, { status: 403 });
+    }
+
     return NextResponse.json({
       success: false,
       message: 'Internal server error'

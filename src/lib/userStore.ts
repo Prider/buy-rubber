@@ -1,4 +1,11 @@
-import { User, CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  ASSIGNABLE_ROLES,
+  ROOT_USERNAME,
+  isProtectedSystemUser,
+} from '@/types/user';
 import { prisma } from '@/lib/prisma';
 
 // Simple hash function (replace with bcrypt in production)
@@ -12,11 +19,24 @@ function simpleHash(password: string): string {
   return hash.toString();
 }
 
+export { simpleHash };
+
 // Prisma-based user store
 class UserStore {
   async createUser(userData: CreateUserRequest): Promise<User> {
     console.log('Creating user in Prisma:', userData.username);
-    
+
+    if (
+      userData.role === 'root' ||
+      userData.username.toLowerCase() === ROOT_USERNAME
+    ) {
+      throw new Error('Cannot create root user');
+    }
+
+    if (!ASSIGNABLE_ROLES.includes(userData.role)) {
+      throw new Error('Invalid role');
+    }
+
     // Check if username already exists
     const existingUser = await prisma.user.findUnique({
       where: { username: userData.username }
@@ -27,7 +47,7 @@ class UserStore {
     }
 
     const hashedPassword = simpleHash(userData.password);
-    
+
     const user = await prisma.user.create({
       data: {
         username: userData.username,
@@ -38,7 +58,7 @@ class UserStore {
     });
 
     console.log('User created in Prisma:', user.id, user.username);
-    
+
     return user as User;
   }
 
@@ -74,7 +94,7 @@ class UserStore {
 
   async updateUser(id: string, updates: UpdateUserRequest): Promise<User | null> {
     console.log('Updating user in Prisma:', id, updates);
-    
+
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id }
@@ -85,32 +105,63 @@ class UserStore {
       return null;
     }
 
+    if (isProtectedSystemUser(existingUser)) {
+      // Root may only change their own password (via changePassword or password-only update).
+      const keys = Object.keys(updates).filter(
+        (k) => updates[k as keyof UpdateUserRequest] !== undefined
+      );
+      const onlyPassword =
+        keys.length === 1 && keys[0] === 'password' && !!updates.password;
+
+      if (!onlyPassword) {
+        throw new Error('Cannot modify root user');
+      }
+    }
+
+    if (updates.role === 'root') {
+      throw new Error('Cannot assign root role');
+    }
+
+    if (
+      updates.role !== undefined &&
+      !ASSIGNABLE_ROLES.includes(updates.role)
+    ) {
+      throw new Error('Invalid role');
+    }
+
+    if (
+      updates.username &&
+      updates.username.toLowerCase() === ROOT_USERNAME
+    ) {
+      throw new Error('Cannot use reserved username');
+    }
+
     // Check if username is being changed and already exists
     if (updates.username && updates.username !== existingUser.username) {
       const userWithSameUsername = await prisma.user.findUnique({
         where: { username: updates.username }
       });
-      
+
       if (userWithSameUsername && userWithSameUsername.id !== id) {
         throw new Error('Username already exists');
       }
     }
 
     // Prepare update data
-    const updateData: any = {};
-    
+    const updateData: Record<string, unknown> = {};
+
     if (updates.username !== undefined) {
       updateData.username = updates.username;
     }
-    
+
     if (updates.password) {
       updateData.password = simpleHash(updates.password);
     }
-    
+
     if (updates.role !== undefined) {
       updateData.role = updates.role;
     }
-    
+
     if (updates.isActive !== undefined) {
       updateData.isActive = updates.isActive;
     }
@@ -126,14 +177,29 @@ class UserStore {
 
   async deleteUser(id: string): Promise<boolean> {
     console.log('Deleting user from Prisma:', id);
-    
+
     try {
+      const existingUser = await prisma.user.findUnique({
+        where: { id }
+      });
+
+      if (!existingUser) {
+        return false;
+      }
+
+      if (isProtectedSystemUser(existingUser)) {
+        throw new Error('Cannot delete root user');
+      }
+
       await prisma.user.delete({
         where: { id }
       });
       console.log('User deleted from Prisma:', id);
       return true;
     } catch (error) {
+      if (error instanceof Error && error.message === 'Cannot delete root user') {
+        throw error;
+      }
       console.error('Error deleting user:', error);
       return false;
     }
@@ -143,16 +209,16 @@ class UserStore {
     try {
       console.log('Authenticating user from Prisma:', username);
       console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
-      
+
       const user = await prisma.user.findUnique({
         where: { username }
       });
-      
+
       if (!user) {
         console.log('User not found in Prisma:', username);
         return null;
       }
-      
+
       if (!user.isActive) {
         console.log('User is inactive:', username);
         return null;
@@ -160,14 +226,14 @@ class UserStore {
 
       const hashedPassword = simpleHash(password);
       const isValidPassword = hashedPassword === user.password;
-      
+
       console.log('Password check:', {
         username,
         providedPasswordHash: hashedPassword,
         storedPasswordHash: user.password,
         isValid: isValidPassword
       });
-      
+
       return isValidPassword ? (user as User) : null;
     } catch (error) {
       console.error('Error in authenticateUser:', error);
@@ -183,7 +249,7 @@ class UserStore {
     const user = await prisma.user.findUnique({
       where: { id }
     });
-    
+
     if (!user) {
       return false;
     }
@@ -194,7 +260,7 @@ class UserStore {
     }
 
     const hashedNewPassword = simpleHash(newPassword);
-    
+
     await prisma.user.update({
       where: { id },
       data: {

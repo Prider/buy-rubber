@@ -12,7 +12,7 @@ interface UseTransactionActionsProps {
 export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps) => {
   const { user } = useAuth();
   const { showWarning, showSuccess, showError, showConfirm } = useAlert();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'root';
 
   const handlePrint = useCallback((transaction: PurchaseTransaction) => {
     printTransactionSlip(transaction);

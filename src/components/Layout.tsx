@@ -108,7 +108,7 @@ export default function Layout({ children }: LayoutProps) {
       return false;
     }
     // Check if item is admin-only and user is not admin
-    if (item.adminOnly && user?.role !== 'admin') {
+    if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') {
       return false;
     }
     return true;

@@ -64,7 +64,7 @@ export default function BackupPage() {
       return;
     }
     
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'admin' && user.role !== 'root') {
       router.push('/dashboard');
       return;
     }
@@ -190,7 +190,7 @@ export default function BackupPage() {
       </div>
     );
   }
-  if (user && user.role !== 'admin') {
+  if (user && user.role !== 'admin' && user.role !== 'root') {
     return null;
   }
   if (!isElectron) {

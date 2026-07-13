@@ -9,7 +9,7 @@ export default function ModeSwitcher() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'root';
 
   const getModeDisplay = () => {
     if (isServerMode) {

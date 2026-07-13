@@ -1,5 +1,22 @@
 // User types and interfaces
-export type UserRole = 'admin' | 'user' | 'viewer';
+export type UserRole = 'root' | 'admin' | 'user' | 'viewer';
+
+/** Roles that can be assigned via the admin UI / API (root is seed-only). */
+export const ASSIGNABLE_ROLES: UserRole[] = ['viewer', 'user', 'admin'];
+
+export const ROOT_USERNAME = 'root';
+
+export function isAdminLike(role: string | undefined | null): boolean {
+  return role === 'admin' || role === 'root';
+}
+
+/** System root account — cannot be created, deleted, demoted, or deactivated in-app. */
+export function isProtectedSystemUser(user: {
+  role?: string | null;
+  username?: string | null;
+}): boolean {
+  return user.role === 'root' || user.username === ROOT_USERNAME;
+}
 
 export interface User {
   id: string;
@@ -59,19 +76,22 @@ export type Permission =
   | 'locations.update'
   | 'admin.settings';
 
+const ADMIN_PERMISSIONS: Permission[] = [
+  'user.create',
+  'user.read',
+  'user.update',
+  'user.delete',
+  'dashboard.read',
+  'prices.read',
+  'prices.update',
+  'locations.read',
+  'locations.update',
+  'admin.settings'
+];
+
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  admin: [
-    'user.create',
-    'user.read',
-    'user.update',
-    'user.delete',
-    'dashboard.read',
-    'prices.read',
-    'prices.update',
-    'locations.read',
-    'locations.update',
-    'admin.settings'
-  ],
+  root: [...ADMIN_PERMISSIONS],
+  admin: [...ADMIN_PERMISSIONS],
   user: [
     'dashboard.read',
     'prices.read',

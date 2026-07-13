@@ -85,6 +85,19 @@ export async function PUT(
       }, { status: 409 });
     }
 
+    if (
+      error instanceof Error &&
+      (error.message === 'Cannot modify root user' ||
+        error.message === 'Cannot assign root role' ||
+        error.message === 'Cannot use reserved username' ||
+        error.message === 'Invalid role')
+    ) {
+      return NextResponse.json({
+        success: false,
+        message: error.message
+      }, { status: 403 });
+    }
+
     return NextResponse.json({
       success: false,
       message: 'Internal server error'
@@ -124,6 +137,14 @@ export async function DELETE(
 
   } catch (error) {
     console.error('Delete user error:', error);
+
+    if (error instanceof Error && error.message === 'Cannot delete root user') {
+      return NextResponse.json({
+        success: false,
+        message: error.message
+      }, { status: 403 });
+    }
+
     return NextResponse.json({
       success: false,
       message: 'Internal server error'

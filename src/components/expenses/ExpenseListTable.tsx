@@ -25,7 +25,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   onPageChange,
 }) => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'root';
   // Memoize category icon function
   const getCategoryIcon = useCallback((category: string) => {
     switch (category) {
