@@ -1,108 +1,71 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 import { formatCurrency } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-
-type ViewMode = 'daily' | 'monthly';
-
-interface ProfitLossRow {
-  period: string;
-  sales: number;
-  purchases: number;
-  expenses: number;
-  purchasePricePerKg: number;
-  salePricePerKg: number;
-  net: number;
-}
-
-interface ReportResponse {
-  periods: ProfitLossRow[];
-  totals: {
-    sales: number;
-    purchases: number;
-    expenses: number;
-    net: number;
-  };
-}
-
-function toInputDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function periodLabel(period: string, mode: ViewMode): string {
-  if (mode === 'monthly') {
-    const [year, month] = period.split('-').map(Number);
-    return new Date(year, (month || 1) - 1, 1).toLocaleDateString('th-TH', {
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-  return new Date(period).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
-}
+import { downloadProfitLossExcel } from './exportExcel';
+import { downloadProfitLossPdf } from './exportPdf';
+import { ProfitLossChart } from './ProfitLossChart';
+import {
+  EMPTY_TOTALS,
+  type ProfitLossReportResponse,
+  type ProfitLossRow,
+  type ProfitLossTotals,
+  type ViewMode,
+} from './types';
+import {
+  getExportExcelButtonText,
+  getExportPdfButtonText,
+  getNetResultLabel,
+  isExportDisabled,
+} from './ui';
+import { isDateRangeInvalid, periodLabel, toInputDate } from './utils';
 
 export default function ProfitLossReportPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const reportRef = useRef<HTMLDivElement>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [loading, setLoading] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [rows, setRows] = useState<ProfitLossRow[]>([]);
-  const [totals, setTotals] = useState({ sales: 0, purchases: 0, expenses: 0, net: 0 });
+  const [totals, setTotals] = useState<ProfitLossTotals>(EMPTY_TOTALS);
   const [error, setError] = useState('');
 
   const now = useMemo(() => new Date(), []);
-  const [startDate, setStartDate] = useState<string>(toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
-  const [endDate, setEndDate] = useState<string>(toInputDate(now));
+  const [startDate, setStartDate] = useState(() => toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+  const [endDate, setEndDate] = useState(() => toInputDate(now));
 
   const chartData = useMemo(
-    () =>
-      rows.map((row) => ({
-        ...row,
-        periodLabel: periodLabel(row.period, viewMode),
-      })),
+    () => rows.map((row) => ({ ...row, periodLabel: periodLabel(row.period, viewMode) })),
     [rows, viewMode]
   );
 
   const hasRows = rows.length > 0;
   const isProfit = totals.net >= 0;
-  const rangeInvalid = new Date(startDate) > new Date(endDate);
+  const rangeInvalid = isDateRangeInvalid(startDate, endDate);
+  const exportBusy = exportingPdf || exportingExcel;
 
   const fetchData = useCallback(async () => {
     if (rangeInvalid) return;
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get<ReportResponse>('/api/reports/profit-loss', {
+      const response = await axios.get<ProfitLossReportResponse>('/api/reports/profit-loss', {
         params: { startDate, endDate, view: viewMode },
       });
       setRows(response.data.periods || []);
-      setTotals(response.data.totals || { sales: 0, purchases: 0, expenses: 0, net: 0 });
+      setTotals(response.data.totals || EMPTY_TOTALS);
     } catch (err) {
       logger.error('Failed to load profit-loss report', err);
       setError('ไม่สามารถโหลดรายงานกำไร/ขาดทุนได้');
       setRows([]);
-      setTotals({ sales: 0, purchases: 0, expenses: 0, net: 0 });
+      setTotals(EMPTY_TOTALS);
     } finally {
       setLoading(false);
     }
@@ -110,9 +73,7 @@ export default function ProfitLossReportPage() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!user) {
-      router.push('/login');
-    }
+    if (!user) router.push('/login');
   }, [isLoading, router, user]);
 
   useEffect(() => {
@@ -120,88 +81,26 @@ export default function ProfitLossReportPage() {
     void fetchData();
   }, [endDate, fetchData, isLoading, rangeInvalid, startDate, user, viewMode]);
 
-  const handleExportExcel = useCallback(() => {
-    const tableRows = rows
-      .map(
-        (row) => `
-          <tr>
-            <td>${periodLabel(row.period, viewMode)}</td>
-            <td>${row.sales.toFixed(2)}</td>
-            <td>${row.purchases.toFixed(2)}</td>
-            <td>${row.expenses.toFixed(2)}</td>
-            <td>${row.net.toFixed(2)}</td>
-          </tr>
-        `
-      )
-      .join('');
-
-    const html = `
-      <html>
-        <head><meta charset="utf-8" /></head>
-        <body>
-          <table border="1">
-            <thead>
-              <tr>
-                <th>Period</th>
-                <th>Sales</th>
-                <th>Purchases</th>
-                <th>Expenses</th>
-                <th>Net</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-              <tr>
-                <td><b>Total</b></td>
-                <td><b>${totals.sales.toFixed(2)}</b></td>
-                <td><b>${totals.purchases.toFixed(2)}</b></td>
-                <td><b>${totals.expenses.toFixed(2)}</b></td>
-                <td><b>${totals.net.toFixed(2)}</b></td>
-              </tr>
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `profit-loss-${startDate}-to-${endDate}.xls`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [endDate, rows, startDate, totals, viewMode]);
+  const handleExportExcel = useCallback(async () => {
+    if (!hasRows || exportBusy) return;
+    setExportingExcel(true);
+    try {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      downloadProfitLossExcel({ rows, totals, viewMode, startDate, endDate });
+    } finally {
+      setExportingExcel(false);
+    }
+  }, [endDate, exportBusy, hasRows, rows, startDate, totals, viewMode]);
 
   const handleExportPdf = useCallback(async () => {
-    if (!reportRef.current) return;
-    const canvas = await html2canvas(reportRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-    });
-
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const imgData = canvas.toDataURL('image/png');
-
-    let heightLeft = imgHeight;
-    let position = 0;
-    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      doc.addPage();
-      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    if (!hasRows || exportBusy) return;
+    setExportingPdf(true);
+    try {
+      await downloadProfitLossPdf({ rows, totals, startDate, endDate, viewMode });
+    } finally {
+      setExportingPdf(false);
     }
-
-    doc.save(`profit-loss-${startDate}-to-${endDate}.pdf`);
-  }, [endDate, startDate]);
+  }, [endDate, exportBusy, hasRows, rows, startDate, totals, viewMode]);
 
   if (isLoading) {
     return (
@@ -224,18 +123,18 @@ export default function ProfitLossReportPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={handleExportPdf}
-            disabled={!hasRows || loading}
+            onClick={() => void handleExportPdf()}
+            disabled={isExportDisabled({ hasRows, loading, exportBusy })}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white"
           >
-            Export PDF
+            {getExportPdfButtonText(exportingPdf)}
           </button>
           <button
-            onClick={handleExportExcel}
-            disabled={!hasRows || loading}
+            onClick={() => void handleExportExcel()}
+            disabled={isExportDisabled({ hasRows, loading, exportBusy })}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white"
           >
-            Export Excel
+            {getExportExcelButtonText(exportingExcel)}
           </button>
         </div>
       </div>
@@ -290,7 +189,7 @@ export default function ProfitLossReportPage() {
         </div>
       )}
 
-      <div ref={reportRef} className="space-y-6">
+      <div className="space-y-6">
         <div
           className={`rounded-2xl p-5 border ${
             isProfit
@@ -300,41 +199,11 @@ export default function ProfitLossReportPage() {
         >
           <p className="text-sm text-gray-600 dark:text-gray-300">ผลลัพธ์สุทธิ (ยอดขาย - ยอดรับซื้อ - ค่าใช้จ่าย)</p>
           <p className={`text-3xl font-bold mt-1 ${isProfit ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
-            {isProfit ? 'Profit:' : 'Loss:'} {formatCurrency(totals.net)}
+            {getNetResultLabel(totals.net)}: {formatCurrency(totals.net)}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-          <div className="h-[360px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="periodLabel" />
-                <YAxis />
-                <Tooltip formatter={(value: number) => formatCurrency(Number(value))} />
-                <Legend />
-                <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#2563eb" strokeWidth={2} dot={false} />
-                <Line
-                  type="monotone"
-                  dataKey="purchasePricePerKg"
-                  name="Purchase price/kg"
-                  stroke="#dc2626"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="salePricePerKg"
-                  name="Sale price/kg"
-                  stroke="#16a34a"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Blue = Expenses, Red = Purchase price/kg, Green = Sale price/kg</p>
-        </div>
+        <ProfitLossChart data={chartData} />
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
@@ -360,7 +229,11 @@ export default function ProfitLossReportPage() {
                       <td className="px-4 py-3">{formatCurrency(row.sales)}</td>
                       <td className="px-4 py-3">{formatCurrency(row.purchases)}</td>
                       <td className="px-4 py-3">{formatCurrency(row.expenses)}</td>
-                      <td className={`px-4 py-3 font-semibold ${profit ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                      <td
+                        className={`px-4 py-3 font-semibold ${
+                          profit ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                        }`}
+                      >
                         {formatCurrency(row.net)}
                       </td>
                     </tr>
@@ -371,7 +244,11 @@ export default function ProfitLossReportPage() {
                   <td className="px-4 py-3">{formatCurrency(totals.sales)}</td>
                   <td className="px-4 py-3">{formatCurrency(totals.purchases)}</td>
                   <td className="px-4 py-3">{formatCurrency(totals.expenses)}</td>
-                  <td className={`px-4 py-3 ${totals.net >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                  <td
+                    className={`px-4 py-3 ${
+                      totals.net >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                    }`}
+                  >
                     {formatCurrency(totals.net)}
                   </td>
                 </tr>
