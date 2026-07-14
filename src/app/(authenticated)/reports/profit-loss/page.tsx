@@ -60,13 +60,6 @@ function periodLabel(period: string, mode: ViewMode): string {
   return new Date(period).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
 }
 
-function escapeCsvValue(raw: string): string {
-  if (raw.includes(',') || raw.includes('"') || raw.includes('\n')) {
-    return `"${raw.replace(/"/g, '""')}"`;
-  }
-  return raw;
-}
-
 export default function ProfitLossReportPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -126,41 +119,6 @@ export default function ProfitLossReportPage() {
     if (isLoading || !user || rangeInvalid) return;
     void fetchData();
   }, [endDate, fetchData, isLoading, rangeInvalid, startDate, user, viewMode]);
-
-  const handleExportCsv = useCallback(() => {
-    const header = ['Period', 'Sales', 'Purchases', 'Expenses', 'Net'];
-    const lines = [header.join(',')];
-
-    for (const row of rows) {
-      lines.push(
-        [
-          escapeCsvValue(periodLabel(row.period, viewMode)),
-          row.sales.toFixed(2),
-          row.purchases.toFixed(2),
-          row.expenses.toFixed(2),
-          row.net.toFixed(2),
-        ].join(',')
-      );
-    }
-
-    lines.push(
-      [
-        'Total',
-        totals.sales.toFixed(2),
-        totals.purchases.toFixed(2),
-        totals.expenses.toFixed(2),
-        totals.net.toFixed(2),
-      ].join(',')
-    );
-
-    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `profit-loss-${startDate}-to-${endDate}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [endDate, rows, startDate, totals, viewMode]);
 
   const handleExportExcel = useCallback(() => {
     const tableRows = rows
@@ -271,13 +229,6 @@ export default function ProfitLossReportPage() {
             className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white"
           >
             Export PDF
-          </button>
-          <button
-            onClick={handleExportCsv}
-            disabled={!hasRows || loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white"
-          >
-            Export CSV
           </button>
           <button
             onClick={handleExportExcel}
