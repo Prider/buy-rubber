@@ -206,6 +206,42 @@ describe('GET /api/reports/profit-loss', () => {
     });
   });
 
+  describe('period mapping (weekly)', () => {
+    it('groups results by Monday YYYY-MM-DD key in weekly mode', async () => {
+      // 2024-01-01 is a Monday
+      prisma.$queryRaw
+        .mockResolvedValueOnce([{ period: new Date(2024, 0, 1), total: 7000, weighted_price: 0, weight: 0 }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      const response = await GET(req({ view: 'weekly', startDate: '2024-01-01', endDate: '2024-01-07' }));
+      const body = await response.json();
+
+      expect(body.view).toBe('weekly');
+      const period = body.periods.find((p: any) => p.period === '2024-01-01');
+      expect(period).toBeDefined();
+      expect(period.sales).toBe(7000);
+    });
+
+    it('generates one period entry per week in the range', async () => {
+      // Mon 2024-01-01 through Sun 2024-01-14 → two weeks
+      const response = await GET(req({ view: 'weekly', startDate: '2024-01-01', endDate: '2024-01-14' }));
+      const body = await response.json();
+
+      expect(body.periods).toHaveLength(2);
+      expect(body.periods.map((p: any) => p.period)).toEqual(['2024-01-01', '2024-01-08']);
+    });
+
+    it('starts the first week on Monday even when range starts mid-week', async () => {
+      // Wed 2024-01-03 → week still keyed as Monday 2024-01-01
+      const response = await GET(req({ view: 'weekly', startDate: '2024-01-03', endDate: '2024-01-05' }));
+      const body = await response.json();
+
+      expect(body.periods).toHaveLength(1);
+      expect(body.periods[0].period).toBe('2024-01-01');
+    });
+  });
+
   // ─── Totals ────────────────────────────────────────────────────────────────
 
   describe('totals', () => {

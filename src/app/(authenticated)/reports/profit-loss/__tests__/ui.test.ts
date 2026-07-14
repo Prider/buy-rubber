@@ -3,10 +3,19 @@ import {
   getExportExcelButtonText,
   getExportPdfButtonText,
   getNetResultLabel,
+  getViewModeLabel,
   isExportDisabled,
 } from '../ui';
 
 describe('profit-loss ui helpers', () => {
+  describe('getViewModeLabel', () => {
+    it('returns Thai labels for each view mode', () => {
+      expect(getViewModeLabel('monthly')).toBe('รายเดือน');
+      expect(getViewModeLabel('weekly')).toBe('รายสัปดาห์');
+      expect(getViewModeLabel('daily')).toBe('รายวัน');
+    });
+  });
+
   describe('getExportPdfButtonText', () => {
     it('shows idle label by default', () => {
       expect(getExportPdfButtonText(false)).toBe('Export PDF');

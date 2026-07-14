@@ -1,3 +1,11 @@
+import type { ViewMode } from './types';
+
+export function getViewModeLabel(viewMode: ViewMode): string {
+  if (viewMode === 'monthly') return 'รายเดือน';
+  if (viewMode === 'weekly') return 'รายสัปดาห์';
+  return 'รายวัน';
+}
+
 export function getExportPdfButtonText(exportingPdf: boolean): string {
   return exportingPdf ? 'กำลังสร้าง PDF...' : 'Export PDF';
 }

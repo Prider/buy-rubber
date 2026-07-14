@@ -15,6 +15,14 @@ export function periodLabel(period: string, mode: ViewMode): string {
       year: 'numeric',
     });
   }
+  if (mode === 'weekly') {
+    const [year, month, day] = period.split('-').map(Number);
+    const start = new Date(year, (month || 1) - 1, day || 1);
+    const end = new Date(year, (month || 1) - 1, (day || 1) + 6);
+    const fmt = (date: Date) =>
+      date.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
+    return `${fmt(start)} – ${fmt(end)}`;
+  }
   return new Date(period).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
 }
 

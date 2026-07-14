@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { isPostgresDatabase } from '@/lib/dbProvider';
 
-export type ViewMode = 'daily' | 'monthly';
+export type ViewMode = 'daily' | 'weekly' | 'monthly';
 
 export type PurchaseSaleAgg = {
   period: Date | string;
@@ -16,10 +16,26 @@ export type ExpenseAgg = {
   total: number;
 };
 
+function postgresTruncUnit(viewMode: ViewMode): 'day' | 'week' | 'month' {
+  if (viewMode === 'daily') return 'day';
+  if (viewMode === 'weekly') return 'week';
+  return 'month';
+}
+
 function sqlitePeriodExpr(viewMode: ViewMode) {
-  return viewMode === 'daily'
-    ? Prisma.sql`strftime('%Y-%m-%d', "date" / 1000, 'unixepoch')`
-    : Prisma.sql`strftime('%Y-%m', "date" / 1000, 'unixepoch')`;
+  if (viewMode === 'daily') {
+    return Prisma.sql`strftime('%Y-%m-%d', "date" / 1000, 'unixepoch')`;
+  }
+  if (viewMode === 'weekly') {
+    // Monday-start week to match Postgres DATE_TRUNC('week')
+    return Prisma.sql`strftime(
+      '%Y-%m-%d',
+      "date" / 1000,
+      'unixepoch',
+      '-' || ((CAST(strftime('%w', "date" / 1000, 'unixepoch') AS INTEGER) + 6) % 7) || ' days'
+    )`;
+  }
+  return Prisma.sql`strftime('%Y-%m', "date" / 1000, 'unixepoch')`;
 }
 
 async function fetchPostgresSaleAggregates(
@@ -27,7 +43,7 @@ async function fetchPostgresSaleAggregates(
   endDate: Date,
   viewMode: ViewMode,
 ): Promise<PurchaseSaleAgg[]> {
-  const truncUnit = viewMode === 'daily' ? 'day' : 'month';
+  const truncUnit = postgresTruncUnit(viewMode);
   return prisma.$queryRaw<PurchaseSaleAgg[]>`
     SELECT DATE_TRUNC(${truncUnit}, date) AS period,
            COALESCE(SUM("totalAmount"), 0)::float AS total,
@@ -61,7 +77,7 @@ async function fetchPostgresPurchaseAggregates(
   endDate: Date,
   viewMode: ViewMode,
 ): Promise<PurchaseSaleAgg[]> {
-  const truncUnit = viewMode === 'daily' ? 'day' : 'month';
+  const truncUnit = postgresTruncUnit(viewMode);
   return prisma.$queryRaw<PurchaseSaleAgg[]>`
     SELECT DATE_TRUNC(${truncUnit}, date) AS period,
            COALESCE(SUM("totalAmount"), 0)::float AS total,
@@ -95,7 +111,7 @@ async function fetchPostgresExpenseAggregates(
   endDate: Date,
   viewMode: ViewMode,
 ): Promise<ExpenseAgg[]> {
-  const truncUnit = viewMode === 'daily' ? 'day' : 'month';
+  const truncUnit = postgresTruncUnit(viewMode);
   return prisma.$queryRaw<ExpenseAgg[]>`
     SELECT DATE_TRUNC(${truncUnit}, date) AS period,
            COALESCE(SUM(amount), 0)::float AS total

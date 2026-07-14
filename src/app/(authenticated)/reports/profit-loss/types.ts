@@ -1,4 +1,4 @@
-export type ViewMode = 'daily' | 'monthly';
+export type ViewMode = 'daily' | 'weekly' | 'monthly';
 
 export interface ProfitLossRow {
   period: string;

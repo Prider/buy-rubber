@@ -23,6 +23,13 @@ describe('profit-loss utils', () => {
       const label = periodLabel('2026-07-14', 'daily');
       expect(label.length).toBeGreaterThan(0);
     });
+
+    it('formats weekly periods as a date range', () => {
+      // Monday 2026-07-13 → Sunday 2026-07-19
+      const label = periodLabel('2026-07-13', 'weekly');
+      expect(label).toContain('–');
+      expect(label.length).toBeGreaterThan(0);
+    });
   });
 
   describe('isDateRangeInvalid', () => {

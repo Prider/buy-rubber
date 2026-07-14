@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatCurrency } from '@/lib/utils';
 import type { ProfitLossRow, ProfitLossTotals, ViewMode } from './types';
+import { getViewModeLabel } from './ui';
 import { periodLabel } from './utils';
 
 /** Row slots available after header/summary on page 1 */
@@ -136,7 +137,7 @@ export function generateProfitLossPdfHtml({
     minute: '2-digit',
   });
   const rangeLabel = `${new Date(startDate).toLocaleDateString('th-TH')} – ${new Date(endDate).toLocaleDateString('th-TH')}`;
-  const viewLabel = viewMode === 'monthly' ? 'รายเดือน' : 'รายวัน';
+  const viewLabel = getViewModeLabel(viewMode);
   const netLabel = totals.net >= 0 ? 'Net Profit' : 'Net Loss';
   const pageLabel = page.totalPages > 1 ? `หน้า ${page.pageNumber}/${page.totalPages}` : '';
 

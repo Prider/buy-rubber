@@ -5,7 +5,7 @@ import { fetchProfitLossAggregates } from './aggregates';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type ViewMode = 'daily' | 'monthly';
+type ViewMode = 'daily' | 'weekly' | 'monthly';
 
 interface PeriodAccumulator {
   period: string;
@@ -16,6 +16,24 @@ interface PeriodAccumulator {
   purchaseWeight: number;
   salePriceWeighted: number;
   saleWeight: number;
+}
+
+function emptyAccumulator(period: string): PeriodAccumulator {
+  return {
+    period,
+    sales: 0,
+    purchases: 0,
+    expenses: 0,
+    purchasePriceWeighted: 0,
+    purchaseWeight: 0,
+    salePriceWeighted: 0,
+    saleWeight: 0,
+  };
+}
+
+function parseViewMode(raw: string | null): ViewMode {
+  if (raw === 'daily' || raw === 'weekly') return raw;
+  return 'monthly';
 }
 
 function parseDateOrNull(raw: string | null): Date | null {
@@ -36,20 +54,32 @@ function endOfDay(date: Date): Date {
   return d;
 }
 
+/** Monday as week start, matching Postgres DATE_TRUNC('week'). */
+function startOfWeek(date: Date): Date {
+  const d = startOfDay(date);
+  const day = d.getDay(); // 0=Sun … 6=Sat
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - daysFromMonday);
+  return d;
+}
+
 function keyFromDate(date: Date, mode: ViewMode): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const target = mode === 'weekly' ? startOfWeek(date) : date;
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, '0');
   if (mode === 'monthly') {
     return `${year}-${month}`;
   }
-  const day = String(date.getDate()).padStart(2, '0');
+  const day = String(target.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
 function periodKeyFromAggregate(period: Date | string | null | undefined, mode: ViewMode): string {
   if (period == null) return '';
   if (typeof period === 'string') {
-    return mode === 'monthly' ? period.slice(0, 7) : period.slice(0, 10);
+    if (mode === 'monthly') return period.slice(0, 7);
+    // daily / weekly keys are YYYY-MM-DD (week = Monday)
+    return period.slice(0, 10);
   }
   if (period instanceof Date && !Number.isNaN(period.getTime())) {
     return keyFromDate(period, mode);
@@ -65,33 +95,25 @@ function createPeriodMap(startDate: Date, endDate: Date, mode: ViewMode): Map<st
     cursor.setDate(1);
     while (cursor <= endDate) {
       const key = keyFromDate(cursor, mode);
-      map.set(key, {
-        period: key,
-        sales: 0,
-        purchases: 0,
-        expenses: 0,
-        purchasePriceWeighted: 0,
-        purchaseWeight: 0,
-        salePriceWeighted: 0,
-        saleWeight: 0,
-      });
+      map.set(key, emptyAccumulator(key));
       cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return map;
+  }
+
+  if (mode === 'weekly') {
+    const weekCursor = startOfWeek(cursor);
+    while (weekCursor <= endDate) {
+      const key = keyFromDate(weekCursor, mode);
+      map.set(key, emptyAccumulator(key));
+      weekCursor.setDate(weekCursor.getDate() + 7);
     }
     return map;
   }
 
   while (cursor <= endDate) {
     const key = keyFromDate(cursor, mode);
-    map.set(key, {
-      period: key,
-      sales: 0,
-      purchases: 0,
-      expenses: 0,
-      purchasePriceWeighted: 0,
-      purchaseWeight: 0,
-      salePriceWeighted: 0,
-      saleWeight: 0,
-    });
+    map.set(key, emptyAccumulator(key));
     cursor.setDate(cursor.getDate() + 1);
   }
 
@@ -101,8 +123,7 @@ function createPeriodMap(startDate: Date, endDate: Date, mode: ViewMode): Map<st
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const viewParam = searchParams.get('view');
-    const viewMode: ViewMode = viewParam === 'daily' ? 'daily' : 'monthly';
+    const viewMode = parseViewMode(searchParams.get('view'));
 
     const parsedStart = parseDateOrNull(searchParams.get('startDate'));
     const parsedEnd = parseDateOrNull(searchParams.get('endDate'));
