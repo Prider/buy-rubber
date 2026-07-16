@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -10,7 +10,6 @@ import {
   computePagination,
   getTodayDate,
   normalizeSaleRow,
-  paginateRows,
   parseRequiredNumber,
   SELLING_TYPES,
   toInputDate,
@@ -18,30 +17,59 @@ import {
   type SaleFormData,
   type SaleRow,
   type SaleRowApi,
+  type SalesPagination,
 } from './page.utils';
 
 type SalesFieldError = Partial<Record<'weight' | 'pricePerUnit', string>>;
 
 type StockPositionMap = Record<string, { quantityKg: number; avgCostPerKg: number }>;
 
+type SalesListResponse =
+  | SaleRowApi[]
+  | {
+      data: SaleRowApi[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    };
+
+const PAGE_SIZE = 10;
+
+function emptyPagination(page = 1): SalesPagination {
+  return {
+    page,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+    hasMore: false,
+  };
+}
+
 export function useSalesPageController() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { showConfirm } = useAlert();
 
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<SalesFieldError>({});
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [stockPositionMap, setStockPositionMap] = useState<StockPositionMap>({});
   const [sales, setSales] = useState<SaleRow[]>([]);
+  const [pagination, setPagination] = useState<SalesPagination>(emptyPagination);
   const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
   const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const pageSize = 10;
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  const lookupsLoadedRef = useRef(false);
+  const salesAbortRef = useRef<AbortController | null>(null);
 
   const [formData, setFormData] = useState<SaleFormData>(() => ({
     date: getTodayDate(),
@@ -55,16 +83,6 @@ export function useSalesPageController() {
     expenseNote: '',
     sellingType: SELLING_TYPES[0],
   }));
-
-  const pagination = useMemo(
-    () => computePagination(sales.length, currentPage, pageSize),
-    [sales.length, currentPage, pageSize],
-  );
-
-  const paginatedSales = useMemo(
-    () => paginateRows(sales, currentPage, pageSize),
-    [sales, currentPage, pageSize],
-  );
 
   const hasValidationError = useMemo(() => Object.keys(fieldErrors).length > 0, [fieldErrors]);
 
@@ -94,12 +112,6 @@ export function useSalesPageController() {
     return sales.find((row) => row.id === editingSaleId)?.saleNo ?? null;
   }, [editingSaleId, sales]);
 
-  useEffect(() => {
-    if (pagination.page > pagination.totalPages) {
-      setCurrentPage(pagination.totalPages);
-    }
-  }, [pagination.page, pagination.totalPages]);
-
   const handleClearSearch = useCallback(() => {
     setSearchTerm('');
   }, []);
@@ -108,48 +120,95 @@ export function useSalesPageController() {
     setSearchTerm(e.target.value);
   }, []);
 
-  const loadData = useCallback(async () => {
+  const applyStockPositions = useCallback((rows: Array<{
+    productTypeId: string;
+    quantityKg: number;
+    avgCostPerKg: number;
+  }>) => {
+    const nextMap: StockPositionMap = {};
+    for (const row of rows) {
+      nextMap[row.productTypeId] = {
+        quantityKg: row.quantityKg ?? 0,
+        avgCostPerKg: row.avgCostPerKg ?? 0,
+      };
+    }
+    setStockPositionMap(nextMap);
+  }, []);
+
+  const loadLookups = useCallback(async () => {
+    const [stockPositionsRes, productTypesRes] = await Promise.all([
+      fetch('/api/stock/positions'),
+      fetch('/api/product-types'),
+    ]);
+
+    if (productTypesRes.ok) {
+      const types = await productTypesRes.json();
+      setProductTypes(types);
+    }
+
+    if (stockPositionsRes.ok) {
+      const rows = (await stockPositionsRes.json()) as Array<{
+        productTypeId: string;
+        quantityKg: number;
+        avgCostPerKg: number;
+      }>;
+      applyStockPositions(rows);
+    }
+  }, [applyStockPositions]);
+
+  const loadSales = useCallback(async (page: number, search: string) => {
+    salesAbortRef.current?.abort();
+    const controller = new AbortController();
+    salesAbortRef.current = controller;
+
     try {
-      setLoading(true);
-      const salesUrl = debouncedSearchTerm
-        ? `/api/sales?search=${encodeURIComponent(debouncedSearchTerm)}`
-        : '/api/sales';
-      const [stockPositionsRes, productTypesRes, salesListRes] = await Promise.all([
-        fetch('/api/stock/positions'),
-        fetch('/api/product-types'),
-        fetch(salesUrl),
-      ]);
-
-      if (productTypesRes.ok) {
-        const types = await productTypesRes.json();
-        setProductTypes(types);
+      setListLoading(true);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (search.trim()) {
+        params.set('search', search.trim());
       }
 
-      if (stockPositionsRes.ok) {
-        const rows = (await stockPositionsRes.json()) as Array<{
-          productTypeId: string;
-          quantityKg: number;
-          avgCostPerKg: number;
-        }>;
-        const nextMap: StockPositionMap = {};
-        for (const row of rows) {
-          nextMap[row.productTypeId] = {
-            quantityKg: row.quantityKg ?? 0,
-            avgCostPerKg: row.avgCostPerKg ?? 0,
-          };
-        }
-        setStockPositionMap(nextMap);
+      const salesListRes = await fetch(`/api/sales?${params.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (!salesListRes.ok) {
+        setError('ไม่สามารถโหลดข้อมูลได้');
+        return;
       }
 
-      if (salesListRes.ok) {
-        const saleRows = (await salesListRes.json()) as SaleRowApi[];
-        setSales(saleRows.map(normalizeSaleRow));
+      const body = (await salesListRes.json()) as SalesListResponse;
+
+      if (Array.isArray(body)) {
+        setSales(body.map(normalizeSaleRow));
+        setPagination(computePagination(body.length, page, PAGE_SIZE));
+      } else {
+        setSales((body.data ?? []).map(normalizeSaleRow));
+        const p = body.pagination;
+        setPagination({
+          page: p.page,
+          limit: p.limit,
+          total: p.total,
+          totalPages: p.totalPages || 1,
+          hasMore: p.page < p.totalPages,
+        });
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError('ไม่สามารถโหลดข้อมูลได้');
     } finally {
-      setLoading(false);
+      if (salesAbortRef.current === controller) {
+        salesAbortRef.current = null;
+        setListLoading(false);
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
   useEffect(() => {
@@ -158,12 +217,37 @@ export function useSalesPageController() {
       router.push('/login');
       return;
     }
-    loadData();
-  }, [isLoading, user, router, loadData]);
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (!lookupsLoadedRef.current) {
+          setInitialLoading(true);
+          await loadLookups();
+          if (cancelled) return;
+          lookupsLoadedRef.current = true;
+        }
+
+        await loadSales(currentPage, debouncedSearchTerm);
+      } catch {
+        if (!cancelled) setError('ไม่สามารถโหลดข้อมูลได้');
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      salesAbortRef.current?.abort();
+    };
+  }, [isLoading, user, router, currentPage, debouncedSearchTerm, loadLookups, loadSales]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+    if (pagination.page > pagination.totalPages) {
+      setCurrentPage(pagination.totalPages);
+    }
+  }, [pagination.page, pagination.totalPages]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -193,6 +277,18 @@ export function useSalesPageController() {
     setEditingSaleId(null);
     setFieldErrors({});
   }, []);
+
+  const refreshStock = useCallback(async () => {
+    const stockRes = await fetch('/api/stock/positions');
+    if (stockRes.ok) {
+      const rows = (await stockRes.json()) as Array<{
+        productTypeId: string;
+        quantityKg: number;
+        avgCostPerKg: number;
+      }>;
+      applyStockPositions(rows);
+    }
+  }, [applyStockPositions]);
 
   const handleSave = useCallback(async () => {
     if (!user?.id) {
@@ -248,20 +344,30 @@ export function useSalesPageController() {
         return;
       }
 
-      if (isEditing) {
-        const normalized = normalizeSaleRow(data as SaleRowApi);
-        setSales((prev) => prev.map((row) => (row.id === normalized.id ? normalized : row)));
-      } else {
-        setSales((prev) => [normalizeSaleRow(data as SaleRowApi), ...prev]);
+      resetForm();
+      if (!isEditing) {
         setCurrentPage(1);
       }
-      resetForm();
+      await Promise.all([
+        loadSales(isEditing ? currentPage : 1, debouncedSearchTerm),
+        refreshStock(),
+      ]);
     } catch {
       setError(editingSaleId ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย');
     } finally {
       setSaving(false);
     }
-  }, [editingSaleId, formData, resetForm, selectedStockInfo?.quantityKg, user?.id]);
+  }, [
+    currentPage,
+    debouncedSearchTerm,
+    editingSaleId,
+    formData,
+    loadSales,
+    refreshStock,
+    resetForm,
+    selectedStockInfo?.quantityKg,
+    user?.id,
+  ]);
 
   const handleEdit = useCallback(
     (row: SaleRow) => {
@@ -314,45 +420,46 @@ export function useSalesPageController() {
           return;
         }
 
-        setSales((prev) => prev.filter((row) => row.id !== saleId));
         if (editingSaleId === saleId) {
           resetForm();
         }
 
-        const stockRes = await fetch('/api/stock/positions');
-        if (stockRes.ok) {
-          const rows = (await stockRes.json()) as Array<{
-            productTypeId: string;
-            quantityKg: number;
-            avgCostPerKg: number;
-          }>;
-          const nextMap: StockPositionMap = {};
-          for (const row of rows) {
-            nextMap[row.productTypeId] = {
-              quantityKg: row.quantityKg ?? 0,
-              avgCostPerKg: row.avgCostPerKg ?? 0,
-            };
-          }
-          setStockPositionMap(nextMap);
+        const nextPage =
+          sales.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+        if (nextPage !== currentPage) {
+          setCurrentPage(nextPage);
+        } else {
+          await loadSales(currentPage, debouncedSearchTerm);
         }
+        await refreshStock();
       } catch {
         setError('ไม่สามารถลบรายการขาย');
       } finally {
         setDeletingSaleId(null);
       }
     },
-    [editingSaleId, resetForm, sales, showConfirm],
+    [
+      currentPage,
+      debouncedSearchTerm,
+      editingSaleId,
+      loadSales,
+      refreshStock,
+      resetForm,
+      sales,
+      showConfirm,
+    ],
   );
 
   return {
     isLoading,
-    loading,
+    loading: initialLoading,
+    listLoading,
     saving,
     error,
     fieldErrors,
     productTypes,
     formData,
-    paginatedSales,
+    paginatedSales: sales,
     pagination,
     searchTerm,
     editingSaleId,

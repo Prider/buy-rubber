@@ -109,8 +109,6 @@ export async function GET(request: NextRequest) {
       createdAt: true,
       updatedAt: true,
       productType: { select: { id: true, code: true, name: true } },
-      // Avoid returning sensitive user fields (e.g. password hash)
-      user: { select: { id: true, username: true } },
     };
 
     const orderBy = [{ date: 'desc' }, { createdAt: 'desc' }];

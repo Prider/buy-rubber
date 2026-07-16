@@ -97,10 +97,29 @@ export function computePagination(total: number, currentPage: number, pageSize: 
   };
 }
 
-export function paginateRows<T>(rows: T[], currentPage: number, pageSize: number): T[] {
-  const start = (currentPage - 1) * pageSize;
-  const end = start + pageSize;
-  return rows.slice(start, end);
+/** Page buttons to render (avoids allocating Array(totalPages) for large datasets). */
+export function getVisiblePageNumbers(
+  currentPage: number,
+  totalPages: number,
+): Array<number | 'ellipsis'> {
+  if (totalPages <= 1) return totalPages === 1 ? [1] : [];
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(totalPages);
+  for (let p = currentPage - 1; p <= currentPage + 1; p++) {
+    if (p >= 1 && p <= totalPages) pages.add(p);
+  }
+
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result: Array<number | 'ellipsis'> = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i]! - sorted[i - 1]! > 1) {
+      result.push('ellipsis');
+    }
+    result.push(sorted[i]!);
+  }
+  return result;
 }
 
 export function normalizeSaleRow(row: SaleRowApi): SaleRow {

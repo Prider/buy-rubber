@@ -9,6 +9,7 @@ export default function SalesPage() {
   const {
     isLoading,
     loading,
+    listLoading,
     saving,
     error,
     fieldErrors,
@@ -68,7 +69,7 @@ export default function SalesPage() {
           compact
           sales={paginatedSales}
           pagination={pagination}
-          loading={loading || saving}
+          loading={listLoading || saving}
           searchTerm={searchTerm}
           editingSaleId={editingSaleId}
           deletingSaleId={deletingSaleId}

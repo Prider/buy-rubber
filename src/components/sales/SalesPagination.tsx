@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
+import { getVisiblePageNumbers } from '@/app/(authenticated)/sales/page.utils';
 
 interface PaginationInfo {
   page: number;
@@ -28,6 +29,11 @@ export default function SalesPagination({
   compact = false,
 }: SalesPaginationProps) {
   const { page, limit, total, totalPages } = pagination;
+
+  const visiblePages = useMemo(
+    () => getVisiblePageNumbers(page, totalPages),
+    [page, totalPages],
+  );
 
   if (totalPages <= 1) return null;
 
@@ -72,34 +78,11 @@ export default function SalesPagination({
           </button>
 
           <div className="flex items-center gap-1">
-            {[...Array(totalPages)].map((_, i) => {
-              const pageNum = i + 1;
-
-              if (
-                pageNum === 1 ||
-                pageNum === totalPages ||
-                (pageNum >= page - 1 && pageNum <= page + 1)
-              ) {
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => onPageChange(pageNum)}
-                    disabled={loading}
-                    className={`${pageBtnClass} ${
-                      page === pageNum
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              }
-
-              if (pageNum === page - 2 || pageNum === page + 2) {
+            {visiblePages.map((item, index) => {
+              if (item === 'ellipsis') {
                 return (
                   <span
-                    key={pageNum}
+                    key={`ellipsis-${index}`}
                     className={embedded && compact ? 'px-1.5 text-sm text-gray-500' : 'px-2 text-gray-500'}
                   >
                     ...
@@ -107,7 +90,20 @@ export default function SalesPagination({
                 );
               }
 
-              return null;
+              return (
+                <button
+                  key={item}
+                  onClick={() => onPageChange(item)}
+                  disabled={loading}
+                  className={`${pageBtnClass} ${
+                    page === item
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {item}
+                </button>
+              );
             })}
           </div>
 
