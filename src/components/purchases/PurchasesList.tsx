@@ -96,7 +96,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
         {loading && <span className="animate-pulse">กำลังค้นหา...</span>}
         {!loading && (
           <span>
-            แสดง <span className="font-semibold text-blue-600 dark:text-blue-400">{transactions.length}</span> จาก {pagination.total} รายการ
+            แสดง <span className="font-semibold text-blue-600 dark:text-blue-400">{transactions.length}</span> จาก {pagination.total} รายการ ในวัน 90 วัน
           </span>
         )}
       </div>
