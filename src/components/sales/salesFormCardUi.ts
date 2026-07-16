@@ -2,7 +2,7 @@
 
 export function getSalesFormCardBorderClass(isEditing: boolean): string {
   return isEditing
-    ? 'border-violet-300 dark:border-violet-500'
+    ? 'border-violet-500 ring-2 ring-violet-300 dark:border-violet-400 dark:ring-violet-500/40'
     : 'border-gray-100 dark:border-gray-700';
 }
 

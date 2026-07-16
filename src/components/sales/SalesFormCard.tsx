@@ -124,7 +124,9 @@ export default function SalesFormCard({
     `${layout.inputClass} ${
       fieldErrors[field]
         ? 'border-red-500 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-500'
-        : ''
+        : isEditing && field === 'pricePerUnit'
+          ? 'border-violet-500 ring-2 ring-violet-300 focus:border-violet-500 focus:ring-violet-400 dark:border-violet-400 dark:ring-violet-500/50'
+          : ''
     }`;
 
   return (
