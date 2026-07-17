@@ -102,7 +102,7 @@
   },
   "build": {
     "appId": "com.punsook.innotech",
-    "productName": "Punsook Innotech",
+    "productName": "POS",
     "asar": false,
     "directories": {
       "output": "dist"
@@ -151,7 +151,7 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Punsook Innotech",
+      "shortcutName": "POS",
       "runAfterFinish": false,
       "include": "build/installer.nsh"
     },
