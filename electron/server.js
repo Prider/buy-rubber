@@ -28,11 +28,11 @@ const fs = require('fs');
         // Not in Electron context yet; fall back to macOS Application Support
       }
   
-      // Fallback: ~/Library/Application Support/Punsook Innotech/server.log (macOS)
+      // Fallback: ~/Library/Application Support/pos.punsook.innotech/server.log (macOS)
       try {
         const os = require('os');
         const homeDir = os.homedir();
-        const fallbackDir = path.join(homeDir, 'Library', 'Application Support', 'Punsook Innotech');
+        const fallbackDir = path.join(homeDir, 'Library', 'Application Support', 'pos.punsook.innotech');
         fs.mkdirSync(fallbackDir, { recursive: true });
         return path.join(fallbackDir, 'server.log');
       } catch (_) {

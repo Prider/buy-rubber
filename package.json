@@ -3,7 +3,7 @@
   "version": "1.4.7",
   "description": "ระบบบริหารจัดการรับซื้อยาง (Rubber Purchasing Management System)",
   "main": "electron/main.js",
-  "author": "Punsook Innotech",
+  "author": "pos.punsook.innotech",
   "scripts": {
     "dev": "prisma generate && next dev",
     "build": "bash scripts/vercel-build.sh",
@@ -12,7 +12,7 @@
     "switch:sqlite": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.sqlite.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → SQLite');\" && npx prisma generate",
     "switch:postgres": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → PostgreSQL');\" && npx prisma generate",
     "electron:dev": "npm run switch:sqlite && concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run setup:postgres:local && next build && npx prisma generate && electron-builder",
+    "electron:build": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder",
     "web:dev": "cross-env SKIP_ENV_VALIDATION=true next dev -H 0.0.0.0",
     "web:build": "cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build",
     "web:start": "next start -H 0.0.0.0 -p 3000",
@@ -26,6 +26,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:customer": "tsx prisma/seedCustomer.ts",
     "db:seed:sales:for:test": "tsx prisma/seedSale.ts",
     "db:seed:purchases:for:test": "tsx prisma/seedPurchase.ts",
     "db:rebuild-stock": "node electron/rebuild-stock.js",
@@ -102,7 +103,7 @@
   },
   "build": {
     "appId": "com.punsook.innotech",
-    "productName": "POS",
+    "productName": "pos.punsook.innotech",
     "asar": false,
     "directories": {
       "output": "dist"
@@ -151,7 +152,7 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "POS",
+      "shortcutName": "pos.punsook.innotech",
       "runAfterFinish": false,
       "include": "build/installer.nsh"
     },

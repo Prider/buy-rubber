@@ -2,6 +2,12 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Must run before app.ready / any getPath('userData') calls.
+// Electron defaults to package.json "name" (punsook-innotech); override to a fixed folder.
+const USER_DATA_DIR_NAME = 'pos.punsook.innotech';
+app.setName(USER_DATA_DIR_NAME);
+app.setPath('userData', path.join(app.getPath('appData'), USER_DATA_DIR_NAME));
+
 // Create a debug log file for main process
 function mainLog(message) {
   try {
