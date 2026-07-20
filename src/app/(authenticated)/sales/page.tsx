@@ -23,7 +23,6 @@ export default function SalesPage() {
     selectedStockInfo,
     editingSaleNo,
     hasValidationError,
-    isSubmitReady,
     setCurrentPage,
     handleSearchChange,
     handleClearSearch,
@@ -50,7 +49,6 @@ export default function SalesPage() {
           error={error}
           fieldErrors={fieldErrors}
           hasValidationError={hasValidationError}
-          isSubmitReady={isSubmitReady}
           productTypes={productTypes}
           formData={formData}
           selectedStockKg={selectedStockInfo?.quantityKg ?? null}

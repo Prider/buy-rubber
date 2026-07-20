@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { formatCurrency } from '@/lib/utils';
-import { computeTotalPreview } from '@/app/(authenticated)/sales/page.utils';
+import { computeTotalPreview, isSalesFormSubmitReady } from '@/app/(authenticated)/sales/page.utils';
 import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
 import {
   getSalesFormCardBorderClass,
@@ -70,7 +70,6 @@ export interface SalesFormCardProps {
   selectedAvgCostPerKg?: number | null;
   fieldErrors?: Partial<Record<SalesFormFieldName, string>>;
   hasValidationError?: boolean;
-  isSubmitReady?: boolean;
   saving: boolean;
   isEditing?: boolean;
   editingSaleNo?: string | null;
@@ -105,7 +104,6 @@ export default function SalesFormCard({
   selectedAvgCostPerKg = null,
   fieldErrors = {},
   hasValidationError = false,
-  isSubmitReady = false,
   saving,
   isEditing = false,
   editingSaleNo = null,
@@ -115,6 +113,7 @@ export default function SalesFormCard({
 }: SalesFormCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
+  const submitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
@@ -265,6 +264,7 @@ export default function SalesFormCard({
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   name="pricePerUnit"
                   value={formData.pricePerUnit}
                   onChange={onInputChange}
@@ -336,13 +336,13 @@ export default function SalesFormCard({
                       : 'min-w-[18rem] px-5 py-2.5 text-sm sm:min-w-[22rem]'
                   }`}
                 >
-                  ยอดรวมประมาณการ: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
+                  ยอดรวม: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
                 </div>
                 <button
                   type="button"
                   data-testid="sales-form-save"
                   onClick={onSave}
-                  disabled={saving || hasValidationError || !isSubmitReady}
+                  disabled={saving || hasValidationError || !submitReady}
                   className={`shrink-0 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 ${
                     compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
                   }`}

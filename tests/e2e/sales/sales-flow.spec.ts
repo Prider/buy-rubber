@@ -335,7 +335,7 @@ test.describe.serial('Sales flow', () => {
       expenseCost: String(expenseCost),
     })
 
-    await expect(formCard.getByText(/ยอดรวมประมาณการ/)).toBeVisible()
+    await expect(formCard.getByText(/ยอดรวม/)).toBeVisible()
     await expect(formCard.getByText(formatCurrency(expectedPreview))).toBeVisible()
 
     const saveReq = page.waitForResponse(

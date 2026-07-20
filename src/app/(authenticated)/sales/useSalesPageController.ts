@@ -9,6 +9,7 @@ import {
   buildSalePayload,
   computePagination,
   getTodayDate,
+  isSalesFormSubmitReady,
   normalizeSaleRow,
   parseRequiredNumber,
   SELLING_TYPES,
@@ -86,21 +87,7 @@ export function useSalesPageController() {
 
   const hasValidationError = useMemo(() => Object.keys(fieldErrors).length > 0, [fieldErrors]);
 
-  const isSubmitReady = useMemo(() => {
-    if (
-      !formData.companyName.trim() ||
-      !formData.productTypeId ||
-      !formData.weight ||
-      !formData.pricePerUnit ||
-      !formData.sellingType
-    ) {
-      return false;
-    }
-
-    const weight = parseRequiredNumber(formData.weight);
-    const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
-    return weight != null && pricePerUnit != null;
-  }, [formData]);
+  const isSubmitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
 
   const selectedStockInfo = useMemo(() => {
     if (!formData.productTypeId) return null;
@@ -296,27 +283,28 @@ export function useSalesPageController() {
       return;
     }
 
-    if (
-      !formData.companyName ||
-      !formData.productTypeId ||
-      !formData.weight ||
-      !formData.pricePerUnit ||
-      !formData.sellingType
-    ) {
-      setError('กรุณากรอกข้อมูลที่จำเป็น');
-      return;
-    }
-
-    const weight = parseRequiredNumber(formData.weight);
-    const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
-    if (weight == null || pricePerUnit == null) {
+    if (!isSalesFormSubmitReady(formData)) {
+      const weight = parseRequiredNumber(formData.weight);
+      const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
+      if (
+        !formData.companyName.trim() ||
+        !formData.productTypeId ||
+        formData.weight.trim() === '' ||
+        formData.pricePerUnit.trim() === '' ||
+        !formData.sellingType
+      ) {
+        setError('กรุณากรอกข้อมูลที่จำเป็น');
+        return;
+      }
       setFieldErrors({
-        ...(weight == null ? { weight: 'invalid' } : {}),
-        ...(pricePerUnit == null ? { pricePerUnit: 'invalid' } : {}),
+        ...(weight == null || weight <= 0 ? { weight: 'invalid' } : {}),
+        ...(pricePerUnit == null || pricePerUnit < 0 ? { pricePerUnit: 'invalid' } : {}),
       });
       setError('กรุณากรอกน้ำหนักและราคาให้ถูกต้อง');
       return;
     }
+
+    const weight = parseRequiredNumber(formData.weight)!;
 
     const isEditing = Boolean(editingSaleId);
     const selectedStockKg = selectedStockInfo?.quantityKg ?? null;

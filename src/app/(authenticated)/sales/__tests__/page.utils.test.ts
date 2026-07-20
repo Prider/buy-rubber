@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   computePagination,
   getVisiblePageNumbers,
+  isSalesFormSubmitReady,
   normalizeSaleRow,
+  parseRequiredNumber,
 } from '../page.utils';
 
 describe('sales page.utils pagination', () => {
@@ -53,6 +55,39 @@ describe('sales page.utils pagination', () => {
 
     it('returns empty when there are no pages', () => {
       expect(getVisiblePageNumbers(1, 0)).toEqual([]);
+    });
+  });
+
+  describe('parseRequiredNumber', () => {
+    it('accepts zero as a valid value', () => {
+      expect(parseRequiredNumber('0')).toBe(0);
+    });
+  });
+
+  describe('isSalesFormSubmitReady', () => {
+    const base = {
+      date: '2026-07-20',
+      companyName: 'บริษัท A',
+      productTypeId: 'pt-1',
+      weight: '100',
+      rubberPercent: '',
+      pricePerUnit: '50',
+      expenseType: '',
+      expenseCost: '',
+      expenseNote: '',
+      sellingType: 'จ่ายสด',
+    };
+
+    it('is ready when pricePerUnit is 0', () => {
+      expect(isSalesFormSubmitReady({ ...base, pricePerUnit: '0' })).toBe(true);
+    });
+
+    it('is not ready when pricePerUnit is empty', () => {
+      expect(isSalesFormSubmitReady({ ...base, pricePerUnit: '' })).toBe(false);
+    });
+
+    it('is not ready when pricePerUnit is negative', () => {
+      expect(isSalesFormSubmitReady({ ...base, pricePerUnit: '-1' })).toBe(false);
     });
   });
 

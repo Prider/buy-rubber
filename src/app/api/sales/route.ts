@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     if (!data.weight || Number(data.weight) <= 0) {
       return NextResponse.json({ error: 'กรุณาระบุน้ำหนักที่ขาย' }, { status: 400 });
     }
-    if (data.pricePerUnit === undefined || data.pricePerUnit === null || Number(data.pricePerUnit) <= 0) {
+    if (data.pricePerUnit === undefined || data.pricePerUnit === null || Number(data.pricePerUnit) < 0) {
       return NextResponse.json({ error: 'กรุณาระบุราคา' }, { status: 400 });
     }
     if (!data.sellingType) {

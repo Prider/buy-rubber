@@ -78,6 +78,24 @@ export function parseRequiredNumber(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** True when required sale fields are filled. Allows pricePerUnit === 0. */
+export function isSalesFormSubmitReady(formData: SaleFormData): boolean {
+  if (
+    !formData.companyName.trim() ||
+    !formData.productTypeId ||
+    formData.weight.trim() === '' ||
+    formData.pricePerUnit.trim() === '' ||
+    !formData.sellingType
+  ) {
+    return false;
+  }
+
+  const weight = parseRequiredNumber(formData.weight);
+  const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
+  // weight must be > 0; price may be 0 (e.g. free / sample sale)
+  return weight != null && weight > 0 && pricePerUnit != null && pricePerUnit >= 0;
+}
+
 export function computeTotalPreview(formData: SaleFormData): number {
   const w = parseRequiredNumber(formData.weight) ?? 0;
   const p = parseRequiredNumber(formData.pricePerUnit) ?? 0;
