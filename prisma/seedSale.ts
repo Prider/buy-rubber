@@ -49,6 +49,24 @@ async function main() {
     process.exit(1);
   }
 
+  // Ensure destination companies exist for COMPANY_NAMES
+  const companyIds: string[] = [];
+  for (let i = 0; i < COMPANY_NAMES.length; i++) {
+    const name = COMPANY_NAMES[i];
+    const code = `C${String(i + 1).padStart(3, '0')}`;
+    const existing = await prisma.destinationCompany.findFirst({
+      where: { name },
+    });
+    if (existing) {
+      companyIds.push(existing.id);
+    } else {
+      const created = await prisma.destinationCompany.create({
+        data: { code, name },
+      });
+      companyIds.push(created.id);
+    }
+  }
+
   const deleted = await prisma.sale.deleteMany({});
   console.log(`   - ลบรายการขายเดิม: ${deleted.count} รายการ`);
 
@@ -92,6 +110,7 @@ async function main() {
         createdAt: date,
         userId: recordUser.id,
         companyName: COMPANY_NAMES[j % COMPANY_NAMES.length],
+        destinationCompanyId: companyIds[j % companyIds.length],
         productTypeId: productType.id,
         weight,
         rubberPercent,

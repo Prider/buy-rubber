@@ -44,6 +44,19 @@ model Member {
   purchases      Purchase[]
 }
 
+// บริษัทปลายทาง (ผู้ซื้อ)
+model DestinationCompany {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  phone     String?
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+}
+
 // ประเภทสินค้ายาง
 model ProductType {
   id                 String             @id @default(uuid())
@@ -177,29 +190,32 @@ model Backup {
 
 // การขาย
 model Sale {
-  id            String      @id @default(uuid())
-  saleNo        String      @unique
-  date          DateTime    @default(now())
-  userId        String
-  companyName   String
-  productTypeId String
-  weight        Float
-  rubberPercent Float?
-  pricePerUnit  Float
-  expenseType   String?
-  expenseCost   Float?
-  sellingType   String
-  totalAmount   Float
-  notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  user          User        @relation(fields: [userId], references: [id])
-  productType   ProductType @relation(fields: [productTypeId], references: [id])
+  id                    String              @id @default(uuid())
+  saleNo                String              @unique
+  date                  DateTime            @default(now())
+  userId                String
+  companyName           String // denormalized from DestinationCompany.name at save time
+  destinationCompanyId  String?
+  productTypeId         String
+  weight                Float
+  rubberPercent         Float?
+  pricePerUnit          Float
+  expenseType           String?
+  expenseCost           Float?
+  sellingType           String
+  totalAmount           Float
+  notes                 String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  user                  User                @relation(fields: [userId], references: [id])
+  productType           ProductType         @relation(fields: [productTypeId], references: [id])
+  destinationCompany    DestinationCompany? @relation(fields: [destinationCompanyId], references: [id])
 
   @@index([date])
   @@index([userId])
   @@index([productTypeId])
   @@index([saleNo])
+  @@index([destinationCompanyId])
 }
 
 // สต็อกปัจจุบัน

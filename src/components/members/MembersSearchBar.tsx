@@ -5,6 +5,7 @@ interface MembersSearchBarProps {
   isLoading: boolean;
   resultCount: number;
   totalCount: number;
+  placeholder?: string;
 }
 
 /**
@@ -18,6 +19,7 @@ export const MembersSearchBar = ({
   isLoading,
   resultCount,
   totalCount,
+  placeholder = 'ค้นหาสมาชิกตามชื่อ, รหัส, เบอร์โทร, ที่อยู่ หรือชื่อคนตัด...',
 }: MembersSearchBarProps) => {
   return (
     <div className="mb-6">
@@ -36,7 +38,7 @@ export const MembersSearchBar = ({
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                  placeholder="ค้นหาสมาชิกตามชื่อ, รหัส, เบอร์โทร, ที่อยู่ หรือชื่อคนตัด..."
+                  placeholder={placeholder}
                 />
                 {searchTerm && (
                   <button

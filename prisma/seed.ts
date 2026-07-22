@@ -41,6 +41,9 @@ async function main() {
   await prisma.sale.deleteMany({});
   console.log('   - ลบข้อมูลการขาย');
 
+  await prisma.destinationCompany.deleteMany({});
+  console.log('   - ลบบริษัทปลายทาง');
+
   await prisma.member.deleteMany({});
   console.log('   - ลบข้อมูลสมาชิก');
 
@@ -147,6 +150,18 @@ async function main() {
     }),
   ]);
   console.log('✅ สร้างประเภทสินค้า:', productTypes.length, 'ประเภท');
+
+  // สร้างบริษัทปลายทางตัวอย่าง
+  const destinationCompany = await prisma.destinationCompany.create({
+    data: {
+      code: 'C001',
+      name: 'เคลียร์สต๊อก',
+      phone: '074123456',
+      address: 'อ.เมือง จ.สงขลา',
+      isActive: true,
+    },
+  });
+  console.log('✅ สร้างบริษัทปลายทาง:', destinationCompany.code, '-', destinationCompany.name);
 
   // สร้างค่าใช้จ่ายตัวอย่าง
   console.log('💸 สร้างข้อมูลค่าใช้จ่าย...');

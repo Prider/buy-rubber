@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import {
   apiHeaders,
+  createDestinationCompany,
   createMember,
   createPurchaseTransaction,
   deleteMember,
@@ -83,10 +84,13 @@ test.describe.serial('Sales flow', () => {
     const salesReq = page.waitForResponse((r) => r.url().includes('/api/sales') && r.ok())
     const stockReq = page.waitForResponse((r) => r.url().includes('/api/stock/positions') && r.ok())
     const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types') && r.ok())
+    const companiesReq = page.waitForResponse(
+      (r) => r.url().includes('/api/destination-companies') && r.ok()
+    )
 
     await page.goto('/sales')
     await expect(page.getByTestId('sales-form-card')).toBeVisible()
-    await Promise.all([salesReq, stockReq, productTypesReq])
+    await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
   }
 
   async function expandSalesForm(page: Page) {
@@ -95,6 +99,14 @@ test.describe.serial('Sales flow', () => {
       await toggle.click()
     }
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  }
+
+  async function selectCompany(page: Page, companyName: string) {
+    const search = page.getByTestId('sales-company-search')
+    await search.click()
+    await search.fill(companyName)
+    await page.getByRole('button', { name: new RegExp(companyName) }).first().click()
+    await expect(search).toHaveValue(new RegExp(companyName))
   }
 
   async function fillSalesForm(
@@ -107,7 +119,7 @@ test.describe.serial('Sales flow', () => {
       expenseCost?: string
     }
   ) {
-    await page.locator('[name="companyName"]').fill(data.companyName)
+    await selectCompany(page, data.companyName)
     await page.locator('[name="productTypeId"]').selectOption({ value: productType.id })
     await page.locator('[name="weight"]').fill(data.weight)
     await page.locator('[name="pricePerUnit"]').fill(data.pricePerUnit)
@@ -120,13 +132,18 @@ test.describe.serial('Sales flow', () => {
     }
   }
 
-  test('REQ-SAL-01: create sale with correct total', async ({ page }) => {
+  async function createCompanyForTest(request: Parameters<typeof createDestinationCompany>[0], name: string) {
+    return createDestinationCompany(request, adminToken, { name })
+  }
+
+  test('REQ-SAL-01: create sale with correct total', async ({ page, request }) => {
     const suffix = uniqueSuffix()
     const companyName = `E2E SAL01 ${suffix}`
     const weight = 100
     const pricePerUnit = 50
     const expectedTotal = computeSaleTotal(weight, pricePerUnit)
 
+    await createCompanyForTest(request, companyName)
     await gotoSalesPage(page)
     await expandSalesForm(page)
     await fillSalesForm(page, {
@@ -160,6 +177,7 @@ test.describe.serial('Sales flow', () => {
 
     const stockBefore = await getStockQuantity(request, productType.id, adminToken)
 
+    await createCompanyForTest(request, companyName)
     await gotoSalesPage(page)
     await expandSalesForm(page)
     await fillSalesForm(page, {
@@ -190,11 +208,12 @@ test.describe.serial('Sales flow', () => {
     const originalPrice = 45
     const updatedPrice = 55
 
+    const company = await createCompanyForTest(request, companyName)
     const createRes = await request.post(`${E2E_BASE_URL}/api/sales`, {
       headers: apiHeaders(adminToken),
       data: {
         date: todayDate(),
-        companyName,
+        destinationCompanyId: company.id,
         productTypeId: productType.id,
         weight,
         pricePerUnit: originalPrice,
@@ -235,11 +254,12 @@ test.describe.serial('Sales flow', () => {
 
     const stockBefore = await getStockQuantity(request, productType.id, adminToken)
 
+    const company = await createCompanyForTest(request, companyName)
     const createRes = await request.post(`${E2E_BASE_URL}/api/sales`, {
       headers: apiHeaders(adminToken),
       data: {
         date: todayDate(),
-        companyName,
+        destinationCompanyId: company.id,
         productTypeId: productType.id,
         weight: saleWeight,
         pricePerUnit: 50,
@@ -283,6 +303,7 @@ test.describe.serial('Sales flow', () => {
       view: 'daily',
     })
 
+    await createCompanyForTest(request, companyName)
     await gotoSalesPage(page)
     await expandSalesForm(page)
     await fillSalesForm(page, {
@@ -315,7 +336,7 @@ test.describe.serial('Sales flow', () => {
     expect(profitAfter.sales - profitBefore.sales).not.toBeCloseTo(grossRevenue, 2)
   })
 
-  test('REQ-SAL-06: sale form shows live total preview', async ({ page }) => {
+  test('REQ-SAL-06: sale form shows live total preview', async ({ page, request }) => {
     const suffix = uniqueSuffix()
     const companyName = `E2E SAL06 ${suffix}`
     const weight = 100
@@ -323,6 +344,7 @@ test.describe.serial('Sales flow', () => {
     const expenseCost = 500
     const expectedPreview = computeSaleTotal(weight, pricePerUnit, expenseCost)
 
+    await createCompanyForTest(request, companyName)
     await gotoSalesPage(page)
     await expandSalesForm(page)
 

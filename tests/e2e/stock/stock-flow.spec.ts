@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import {
   apiHeaders,
+  createDestinationCompany,
   createMember,
   createPurchaseTransaction,
   createSale,
@@ -106,10 +107,13 @@ test.describe.serial('Stock flow', () => {
     const salesReq = page.waitForResponse((r) => r.url().includes('/api/sales') && r.ok())
     const stockReq = page.waitForResponse((r) => r.url().includes('/api/stock/positions') && r.ok())
     const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types') && r.ok())
+    const companiesReq = page.waitForResponse(
+      (r) => r.url().includes('/api/destination-companies') && r.ok()
+    )
 
     await page.goto('/sales')
     await expect(page.getByTestId('sales-form-card')).toBeVisible()
-    await Promise.all([salesReq, stockReq, productTypesReq])
+    await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
   }
 
   async function expandSalesForm(page: Page) {
@@ -206,11 +210,17 @@ test.describe.serial('Stock flow', () => {
   test('REQ-STK-06: prevent sale exceeding available stock', async ({ page, request }) => {
     const stockBefore = await getStockQuantity(request, productType.id, adminToken)
     const oversellWeight = stockBefore + 100
+    const companyName = `E2E STK06 ${uniqueSuffix()}`
+    const company = await createDestinationCompany(request, adminToken, { name: companyName })
 
     await gotoSalesPage(page)
     await expandSalesForm(page)
 
-    await page.locator('[name="companyName"]').fill(`E2E STK06 ${uniqueSuffix()}`)
+    const search = page.getByTestId('sales-company-search')
+    await search.click()
+    await search.fill(companyName)
+    await page.getByRole('button', { name: new RegExp(companyName) }).first().click()
+
     await page.locator('[name="productTypeId"]').selectOption({ value: productType.id })
     await page.locator('[name="weight"]').fill(String(oversellWeight))
     await page.locator('[name="pricePerUnit"]').fill('50')
@@ -225,7 +235,7 @@ test.describe.serial('Stock flow', () => {
       headers: apiHeaders(adminToken),
       data: {
         date: todayDate(),
-        companyName: `E2E STK06 API ${uniqueSuffix()}`,
+        destinationCompanyId: company.id,
         productTypeId: productType.id,
         weight: oversellWeight,
         pricePerUnit: 50,

@@ -117,6 +117,7 @@ export const CACHE_TTL = {
   DASHBOARD_LONG: 30 * 1000,     // 30 seconds (same — "long" variant removed)
   PRODUCT_TYPES: 5 * 60 * 1000,  // 5 minutes (changes rarely)
   MEMBERS: 30 * 1000,            // 30 seconds
+  DESTINATION_COMPANIES: 30 * 1000, // 30 seconds
 } as const;
 
 // Helper function to generate cache key from request params

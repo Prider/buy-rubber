@@ -24,6 +24,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
   { name: 'ประวัติการรับซื้อ', href: '/purchases-list', icon: '📋' },
   { name: 'สมาชิก', href: '/members', icon: '👥' },
+  { name: 'บริษัทปลายทาง', href: '/destination-companies', icon: '🏢' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   // { name: 'ประเภทสินค้า', href: '/prices', icon: '💳' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },

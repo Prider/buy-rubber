@@ -208,6 +208,68 @@ export type CreatedSale = {
   productTypeId: string
 }
 
+export type CreatedDestinationCompany = {
+  id: string
+  code: string
+  name: string
+}
+
+/** Creates a destination company via the API. */
+export async function createDestinationCompany(
+  request: APIRequestContext,
+  token: string,
+  data: { name: string; code?: string; phone?: string; address?: string }
+): Promise<CreatedDestinationCompany> {
+  let code = data.code
+  if (!code) {
+    const nextRes = await request.get(`${BASE}/api/destination-companies/next-code`, {
+      headers: apiHeaders(token),
+    })
+    if (!nextRes.ok()) {
+      throw new Error(`Failed to get next company code: ${nextRes.status()}`)
+    }
+    const nextBody = (await nextRes.json()) as { code: string }
+    code = nextBody.code
+  }
+
+  const res = await request.post(`${BASE}/api/destination-companies`, {
+    headers: apiHeaders(token),
+    data: {
+      code,
+      name: data.name,
+      phone: data.phone ?? '',
+      address: data.address ?? '',
+    },
+  })
+  if (!res.ok()) {
+    const body = await res.text()
+    throw new Error(`Failed to create destination company: ${res.status()} ${body}`)
+  }
+  return res.json() as Promise<CreatedDestinationCompany>
+}
+
+/** Finds an existing active company by name, or creates one. */
+export async function ensureDestinationCompany(
+  request: APIRequestContext,
+  token: string,
+  name: string
+): Promise<CreatedDestinationCompany> {
+  const listRes = await request.get(
+    `${BASE}/api/destination-companies?active=true&limit=1000&search=${encodeURIComponent(name)}`,
+    { headers: apiHeaders(token) }
+  )
+  if (listRes.ok()) {
+    const body = (await listRes.json()) as {
+      companies: CreatedDestinationCompany[]
+    }
+    const exact = body.companies?.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase()
+    )
+    if (exact) return exact
+  }
+  return createDestinationCompany(request, token, { name })
+}
+
 /** Creates a sale via the API. */
 export async function createSale(
   request: APIRequestContext,
@@ -221,12 +283,18 @@ export async function createSale(
     sellingType?: string
     expenseType?: string | null
     expenseCost?: number | null
+    destinationCompanyId?: string
   }
 ): Promise<CreatedSale> {
+  const destinationCompanyId =
+    data.destinationCompanyId ??
+    (await ensureDestinationCompany(request, token, data.companyName)).id
+
   const res = await request.post(`${BASE}/api/sales`, {
     headers: apiHeaders(token),
     data: {
       date: data.date ?? todayDate(),
+      destinationCompanyId,
       companyName: data.companyName,
       productTypeId: data.productTypeId,
       weight: data.weight,

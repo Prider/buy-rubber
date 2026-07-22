@@ -76,6 +76,23 @@ describe('useSalesPageController', () => {
         } as Response;
       }
 
+      if (url.includes('/api/destination-companies')) {
+        return {
+          ok: true,
+          json: async () => ({
+            companies: [
+              {
+                id: 'dc-1',
+                code: 'C001',
+                name: 'บริษัท ทดสอบ',
+                isActive: true,
+              },
+            ],
+            pagination: { page: 1, limit: 1000, total: 1, totalPages: 1, hasMore: false },
+          }),
+        } as Response;
+      }
+
       if (url.includes('/api/sales')) {
         const parsed = new URL(url, 'http://localhost');
         const page = Number(parsed.searchParams.get('page') || '1');

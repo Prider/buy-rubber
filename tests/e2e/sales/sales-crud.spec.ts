@@ -2,6 +2,7 @@ import { test, expect, type Page, type APIRequestContext } from '@playwright/tes
 import {
   E2E_BASE_URL,
   apiHeaders,
+  createDestinationCompany,
   createMember,
   createPurchaseTransaction,
   deleteMember,
@@ -63,9 +64,12 @@ async function gotoSalesPage(page: Page) {
   const salesReq = page.waitForResponse((r) => r.url().includes('/api/sales') && r.ok())
   const stockReq = page.waitForResponse((r) => r.url().includes('/api/stock/positions') && r.ok())
   const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types') && r.ok())
+  const companiesReq = page.waitForResponse(
+    (r) => r.url().includes('/api/destination-companies') && r.ok()
+  )
 
   await page.goto('/sales')
-  await Promise.all([salesReq, stockReq, productTypesReq])
+  await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
   await expect(page.getByTestId('sales-form-card')).toBeVisible()
 }
 
@@ -75,6 +79,14 @@ async function expandSalesForm(page: Page) {
     await toggle.click()
   }
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+}
+
+async function selectCompany(page: Page, companyName: string) {
+  const search = page.getByTestId('sales-company-search')
+  await search.click()
+  await search.fill(companyName)
+  await page.getByRole('button', { name: new RegExp(companyName) }).first().click()
+  await expect(search).toHaveValue(new RegExp(companyName))
 }
 
 test.describe('Sales CRUD', () => {
@@ -101,10 +113,11 @@ test.describe('Sales CRUD', () => {
     const suffix = uniqueSuffix()
     const companyName = `บริษัททดสอบ ${suffix}`
 
+    await createDestinationCompany(request, adminToken, { name: companyName })
     await gotoSalesPage(page)
     await expandSalesForm(page)
 
-    await page.locator('[name="companyName"]').fill(companyName)
+    await selectCompany(page, companyName)
 
     await selectProductTypeWithStock(page, request, adminToken)
 
@@ -132,12 +145,13 @@ test.describe('Sales CRUD', () => {
     const weight = 100
 
     const productTypeId = await ensureProductTypeWithStock(request, adminToken, weight)
+    const company = await createDestinationCompany(request, adminToken, { name: companyName })
 
     const createRes = await request.post(`${E2E_BASE_URL}/api/sales`, {
       headers: apiHeaders(adminToken),
       data: {
         date: todayDate(),
-        companyName,
+        destinationCompanyId: company.id,
         productTypeId,
         weight,
         pricePerUnit: 45,
@@ -171,12 +185,13 @@ test.describe('Sales CRUD', () => {
     const weight = 50
 
     const productTypeId = await ensureProductTypeWithStock(request, adminToken, weight)
+    const company = await createDestinationCompany(request, adminToken, { name: companyName })
 
     const createRes = await request.post(`${E2E_BASE_URL}/api/sales`, {
       headers: apiHeaders(adminToken),
       data: {
         date: todayDate(),
-        companyName,
+        destinationCompanyId: company.id,
         productTypeId,
         weight,
         pricePerUnit: 40,
@@ -200,17 +215,21 @@ test.describe('Sales CRUD', () => {
   })
 
   test('sales form shows total preview', async ({ page, request }) => {
+    const companyName = `บริษัทพรีวิว ${uniqueSuffix()}`
+    await createDestinationCompany(request, adminToken, { name: companyName })
+
     await gotoSalesPage(page)
     await expandSalesForm(page)
 
     const formCard = page.getByTestId('sales-form-card')
 
+    await selectCompany(page, companyName)
     await selectProductTypeWithStock(page, request, adminToken)
 
     await page.locator('[name="weight"]').fill('100')
     await page.locator('[name="pricePerUnit"]').fill('50')
 
-    await expect(page.getByText(/ยอดรวมประมาณการ/)).toBeVisible()
+    await expect(formCard.getByText(/ยอดรวม/)).toBeVisible()
     await expect(formCard.getByText(/5,000/)).toBeVisible()
   })
 })

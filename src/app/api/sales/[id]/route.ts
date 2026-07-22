@@ -36,8 +36,8 @@ export async function PUT(
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 
-    if (!data.companyName || !String(data.companyName).trim()) {
-      return NextResponse.json({ error: 'กรุณากรอกชื่อบริษัทปลายทาง' }, { status: 400 });
+    if (!data.destinationCompanyId || !String(data.destinationCompanyId).trim()) {
+      return NextResponse.json({ error: 'กรุณาเลือกบริษัทปลายทาง' }, { status: 400 });
     }
     if (!data.productTypeId) {
       return NextResponse.json({ error: 'กรุณาเลือกประเภทสินค้า' }, { status: 400 });
@@ -52,9 +52,15 @@ export async function PUT(
       return NextResponse.json({ error: 'กรุณาเลือกรูปแบบการขาย' }, { status: 400 });
     }
 
-    const productType = await prisma.productType.findUnique({ where: { id: data.productTypeId } });
+    const [productType, destinationCompany] = await Promise.all([
+      prisma.productType.findUnique({ where: { id: data.productTypeId } }),
+      prisma.destinationCompany.findUnique({ where: { id: String(data.destinationCompanyId) } }),
+    ]);
     if (!productType) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
+    }
+    if (!destinationCompany) {
+      return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง' }, { status: 404 });
     }
 
     const weight = Number(data.weight);
@@ -74,7 +80,8 @@ export async function PUT(
       where: { id: params.id },
       data: {
         date: data.date ? new Date(data.date) : sale.date,
-        companyName: String(data.companyName).trim(),
+        companyName: destinationCompany.name,
+        destinationCompanyId: destinationCompany.id,
         productTypeId: data.productTypeId,
         weight,
         rubberPercent:

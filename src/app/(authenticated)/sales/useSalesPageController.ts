@@ -20,6 +20,7 @@ import {
   type SaleRowApi,
   type SalesPagination,
 } from './page.utils';
+import type { DestinationCompany } from '@/types/destinationCompany';
 
 type SalesFieldError = Partial<Record<'weight' | 'pricePerUnit', string>>;
 
@@ -60,6 +61,7 @@ export function useSalesPageController() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<SalesFieldError>({});
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [destinationCompanies, setDestinationCompanies] = useState<DestinationCompany[]>([]);
   const [stockPositionMap, setStockPositionMap] = useState<StockPositionMap>({});
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [pagination, setPagination] = useState<SalesPagination>(emptyPagination);
@@ -69,11 +71,15 @@ export function useSalesPageController() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const [companySearchTerm, setCompanySearchTerm] = useState('');
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+
   const lookupsLoadedRef = useRef(false);
   const salesAbortRef = useRef<AbortController | null>(null);
 
   const [formData, setFormData] = useState<SaleFormData>(() => ({
     date: getTodayDate(),
+    destinationCompanyId: '',
     companyName: '',
     productTypeId: '',
     weight: '',
@@ -99,6 +105,16 @@ export function useSalesPageController() {
     return sales.find((row) => row.id === editingSaleId)?.saleNo ?? null;
   }, [editingSaleId, sales]);
 
+  const filteredCompanies = useMemo(() => {
+    const active = destinationCompanies.filter((c) => c.isActive);
+    const term = companySearchTerm.toLowerCase();
+    return active.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.code.toLowerCase().includes(term),
+    );
+  }, [companySearchTerm, destinationCompanies]);
+
   const handleClearSearch = useCallback(() => {
     setSearchTerm('');
   }, []);
@@ -123,14 +139,20 @@ export function useSalesPageController() {
   }, []);
 
   const loadLookups = useCallback(async () => {
-    const [stockPositionsRes, productTypesRes] = await Promise.all([
+    const [stockPositionsRes, productTypesRes, companiesRes] = await Promise.all([
       fetch('/api/stock/positions'),
       fetch('/api/product-types'),
+      fetch('/api/destination-companies?active=true&limit=1000'),
     ]);
 
     if (productTypesRes.ok) {
       const types = await productTypesRes.json();
       setProductTypes(types);
+    }
+
+    if (companiesRes.ok) {
+      const body = await companiesRes.json();
+      setDestinationCompanies(body.companies ?? []);
     }
 
     if (stockPositionsRes.ok) {
@@ -248,9 +270,51 @@ export function useSalesPageController() {
     }
   }, []);
 
+  const handleCompanySearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCompanySearchTerm(value);
+      setShowCompanyDropdown(true);
+
+      // Clear selection if search term no longer matches selected company (same as members)
+      if (formData.destinationCompanyId) {
+        const selected = destinationCompanies.find((c) => c.id === formData.destinationCompanyId);
+        if (selected && !value.includes(selected.code)) {
+          setFormData((prev) => ({
+            ...prev,
+            destinationCompanyId: '',
+            companyName: '',
+          }));
+        }
+      }
+    },
+    [destinationCompanies, formData.destinationCompanyId],
+  );
+
+  const handleCompanySelect = useCallback((company: DestinationCompany) => {
+    setCompanySearchTerm(`${company.code} - ${company.name}`);
+    setShowCompanyDropdown(false);
+    setFormData((prev) => ({
+      ...prev,
+      destinationCompanyId: company.id,
+      companyName: company.name,
+    }));
+  }, []);
+
+  const clearCompanySearch = useCallback(() => {
+    setCompanySearchTerm('');
+    setShowCompanyDropdown(false);
+    setFormData((prev) => ({
+      ...prev,
+      destinationCompanyId: '',
+      companyName: '',
+    }));
+  }, []);
+
   const resetForm = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
+      destinationCompanyId: '',
       companyName: '',
       productTypeId: '',
       weight: '',
@@ -261,6 +325,8 @@ export function useSalesPageController() {
       expenseNote: '',
       sellingType: SELLING_TYPES[0],
     }));
+    setCompanySearchTerm('');
+    setShowCompanyDropdown(false);
     setEditingSaleId(null);
     setFieldErrors({});
   }, []);
@@ -287,7 +353,7 @@ export function useSalesPageController() {
       const weight = parseRequiredNumber(formData.weight);
       const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
       if (
-        !formData.companyName.trim() ||
+        !formData.destinationCompanyId ||
         !formData.productTypeId ||
         formData.weight.trim() === '' ||
         formData.pricePerUnit.trim() === '' ||
@@ -366,9 +432,19 @@ export function useSalesPageController() {
       }
       setError('');
       setEditingSaleId(row.id);
+
+      const companyId = row.destinationCompanyId ?? '';
+      const matched = destinationCompanies.find((c) => c.id === companyId)
+        ?? destinationCompanies.find((c) => c.name === row.companyName);
+
+      setCompanySearchTerm(
+        matched ? `${matched.code} - ${matched.name}` : row.companyName,
+      );
+      setShowCompanyDropdown(false);
       setFormData({
         date: toInputDate(row.date),
-        companyName: row.companyName,
+        destinationCompanyId: matched?.id ?? companyId,
+        companyName: matched?.name ?? row.companyName,
         productTypeId: row.productTypeId,
         weight: String(row.weight),
         rubberPercent: row.rubberPercent != null ? String(row.rubberPercent) : '',
@@ -379,7 +455,7 @@ export function useSalesPageController() {
         sellingType: row.sellingType,
       });
     },
-    [editingSaleId, resetForm],
+    [destinationCompanies, editingSaleId, resetForm],
   );
 
   const handleDelete = useCallback(
@@ -456,6 +532,13 @@ export function useSalesPageController() {
     editingSaleNo,
     hasValidationError,
     isSubmitReady,
+    companySearchTerm,
+    showCompanyDropdown,
+    filteredCompanies,
+    setShowCompanyDropdown,
+    handleCompanySearchChange,
+    handleCompanySelect,
+    clearCompanySearch,
     setCurrentPage,
     handleSearchChange,
     handleClearSearch,

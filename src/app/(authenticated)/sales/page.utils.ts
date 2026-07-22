@@ -9,6 +9,7 @@ export interface SaleRow {
   saleNo: string;
   date: string;
   companyName: string;
+  destinationCompanyId?: string | null;
   productTypeId: string;
   productType?: { name: string; code: string };
   weight: number;
@@ -23,6 +24,7 @@ export interface SaleRow {
 
 export interface SaleFormData {
   date: string;
+  destinationCompanyId: string;
   companyName: string;
   productTypeId: string;
   weight: string;
@@ -81,7 +83,7 @@ export function parseRequiredNumber(v: string): number | null {
 /** True when required sale fields are filled. Allows pricePerUnit === 0. */
 export function isSalesFormSubmitReady(formData: SaleFormData): boolean {
   if (
-    !formData.companyName.trim() ||
+    !formData.destinationCompanyId ||
     !formData.productTypeId ||
     formData.weight.trim() === '' ||
     formData.pricePerUnit.trim() === '' ||
@@ -148,6 +150,7 @@ export function normalizeSaleRow(row: SaleRowApi): SaleRow {
 export function buildSalePayload(formData: SaleFormData) {
   return {
     date: formData.date,
+    destinationCompanyId: formData.destinationCompanyId,
     companyName: formData.companyName.trim(),
     productTypeId: formData.productTypeId,
     weight: parseRequiredNumber(formData.weight),

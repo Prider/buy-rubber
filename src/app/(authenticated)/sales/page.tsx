@@ -23,6 +23,13 @@ export default function SalesPage() {
     selectedStockInfo,
     editingSaleNo,
     hasValidationError,
+    companySearchTerm,
+    showCompanyDropdown,
+    filteredCompanies,
+    setShowCompanyDropdown,
+    handleCompanySearchChange,
+    handleCompanySelect,
+    clearCompanySearch,
     setCurrentPage,
     handleSearchChange,
     handleClearSearch,
@@ -43,7 +50,11 @@ export default function SalesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden">
-      <div className="w-full min-w-0 shrink-0 overflow-x-auto">
+      <div
+        className={`w-full min-w-0 shrink-0 ${
+          showCompanyDropdown ? 'relative z-50 overflow-visible' : 'overflow-x-auto'
+        }`}
+      >
         <SalesFormCard
           compact
           error={error}
@@ -56,13 +67,20 @@ export default function SalesPage() {
           saving={saving}
           isEditing={Boolean(editingSaleId)}
           editingSaleNo={editingSaleNo}
+          companySearchTerm={companySearchTerm}
+          showCompanyDropdown={showCompanyDropdown}
+          filteredCompanies={filteredCompanies}
+          onCompanySearchChange={handleCompanySearchChange}
+          onCompanySelect={handleCompanySelect}
+          onClearCompanySearch={clearCompanySearch}
+          onShowCompanyDropdown={setShowCompanyDropdown}
           onInputChange={handleInputChange}
           onSave={handleSave}
           onCancelEdit={resetForm}
         />
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <SalesTable
           compact
           sales={paginatedSales}

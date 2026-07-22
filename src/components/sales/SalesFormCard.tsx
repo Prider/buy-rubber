@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useRef, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { computeTotalPreview, isSalesFormSubmitReady } from '@/app/(authenticated)/sales/page.utils';
 import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
@@ -10,6 +11,7 @@ import {
   getSalesFormLayoutClasses,
   getSalesFormSaveButtonText,
 } from '@/components/sales/salesFormCardUi';
+import type { DestinationCompany } from '@/types/destinationCompany';
 
 interface ProductType {
   id: string;
@@ -19,6 +21,7 @@ interface ProductType {
 
 interface SaleFormData {
   date: string;
+  destinationCompanyId: string;
   companyName: string;
   productTypeId: string;
   weight: string;
@@ -31,6 +34,7 @@ interface SaleFormData {
 }
 type SalesFormFieldName =
   | 'date'
+  | 'destinationCompanyId'
   | 'companyName'
   | 'productTypeId'
   | 'weight'
@@ -46,7 +50,7 @@ function Field({
   children,
   className = '',
 }: {
-  label: string;
+  label: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
@@ -73,6 +77,13 @@ export interface SalesFormCardProps {
   saving: boolean;
   isEditing?: boolean;
   editingSaleNo?: string | null;
+  companySearchTerm: string;
+  showCompanyDropdown: boolean;
+  filteredCompanies: DestinationCompany[];
+  onCompanySearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onCompanySelect: (company: DestinationCompany) => void;
+  onClearCompanySearch: () => void;
+  onShowCompanyDropdown: (show: boolean) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSave: () => void;
   onCancelEdit?: () => void;
@@ -107,17 +118,29 @@ export default function SalesFormCard({
   saving,
   isEditing = false,
   editingSaleNo = null,
+  companySearchTerm,
+  showCompanyDropdown,
+  filteredCompanies,
+  onCompanySearchChange,
+  onCompanySelect,
+  onClearCompanySearch,
+  onShowCompanyDropdown,
   onInputChange,
   onSave,
   onCancelEdit,
 }: SalesFormCardProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const hideDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const companySearchRef = useRef<HTMLInputElement>(null);
+  const companyDropdownRef = useRef<HTMLDivElement>(null);
   const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
   const submitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
   const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
+  const companyDisabled = isEditing; // same as other non-price fields
   const isFieldDisabled = (field: SalesFormFieldName) => isEditing && field !== 'pricePerUnit';
   const getInputClass = (field: SalesFormFieldName) =>
     `${layout.inputClass} ${
@@ -128,10 +151,87 @@ export default function SalesFormCard({
           : ''
     }`;
 
+  const clearHideTimeout = () => {
+    if (hideDropdownTimeoutRef.current) {
+      clearTimeout(hideDropdownTimeoutRef.current);
+      hideDropdownTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleDropdownHide = () => {
+    clearHideTimeout();
+    hideDropdownTimeoutRef.current = setTimeout(() => {
+      onShowCompanyDropdown(false);
+    }, 150);
+  };
+
+  const handleCompanySearchFocus = () => {
+    if (companyDisabled) return;
+    clearHideTimeout();
+    onShowCompanyDropdown(true);
+  };
+
+  const focusCompanyOption = (index: number) => {
+    const options = companyDropdownRef.current?.querySelectorAll<HTMLButtonElement>('[data-company-option]');
+    if (!options || options.length === 0) return;
+    const targetIndex = Math.max(0, Math.min(index, options.length - 1));
+    options[targetIndex]?.focus();
+  };
+
+  const handleCompanySearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (companyDisabled) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      onShowCompanyDropdown(true);
+      focusCompanyOption(0);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onShowCompanyDropdown(false);
+    }
+  };
+
+  const handleCompanyOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusCompanyOption(index + 1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (index === 0) {
+        companySearchRef.current?.focus();
+      } else {
+        focusCompanyOption(index - 1);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      onShowCompanyDropdown(false);
+      companySearchRef.current?.focus();
+    }
+  };
+
+  const handleCompanySelectWithClose = (company: DestinationCompany) => {
+    onCompanySelect(company);
+    clearHideTimeout();
+    onShowCompanyDropdown(false);
+  };
+
   return (
     <div
       data-testid="sales-form-card"
-      className={`flex w-full flex-col overflow-hidden rounded-2xl border bg-white shadow-lg dark:bg-gray-800 ${cardBorderClass}`}
+      className={`flex w-full flex-col rounded-2xl border bg-white shadow-lg dark:bg-gray-800 ${
+        isOpen ? 'overflow-visible' : 'overflow-hidden'
+      } ${cardBorderClass}`}
     >
       <button
         type="button"
@@ -162,7 +262,7 @@ export default function SalesFormCard({
         aria-labelledby="sales-form-card-toggle"
         className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
       >
-        <div className="min-h-0 overflow-hidden">
+        <div className={`min-h-0 ${isOpen ? 'overflow-visible' : 'overflow-hidden'}`}>
           <div className={layout.bodyPad}>
             {error ? (
               <div
@@ -175,7 +275,9 @@ export default function SalesFormCard({
             ) : null}
 
             <div
-              className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 overflow-x-auto pb-0.5`}
+              className={`relative flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 pb-0.5 ${
+                showCompanyDropdown && !companyDisabled ? 'z-50' : 'z-10'
+              }`}
             >
               <Field label="วันที่" className="min-w-[9.5rem] max-w-[10rem]">
                 <input
@@ -187,15 +289,121 @@ export default function SalesFormCard({
                   className={getInputClass('date')}
                 />
               </Field>
-              <Field label="ชื่อบริษัทปลายทาง" className="min-w-[10rem] flex-[1.25]">
-                <input
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={onInputChange}
-                  disabled={isFieldDisabled('companyName')}
-                  className={getInputClass('companyName')}
-                  placeholder="เช่น บริษัท A"
-                />
+              <Field
+                label={
+                  <>
+                    ชื่อบริษัทปลายทาง <span className="text-red-500">*</span>
+                  </>
+                }
+                className="relative z-50 min-w-[12rem] flex-[1.5]"
+              >
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    ref={companySearchRef}
+                    type="text"
+                    data-testid="sales-company-search"
+                    value={companySearchTerm}
+                    onChange={onCompanySearchChange}
+                    onFocus={handleCompanySearchFocus}
+                    onBlur={scheduleDropdownHide}
+                    onKeyDown={handleCompanySearchKeyDown}
+                    disabled={companyDisabled}
+                    className={`${getInputClass('destinationCompanyId')} pl-8 pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    placeholder="ค้นหาบริษัทตามชื่อหรือรหัส"
+                    autoComplete="off"
+                  />
+                  {companySearchTerm && !companyDisabled ? (
+                    <button
+                      type="button"
+                      onClick={onClearCompanySearch}
+                      disabled={saving}
+                      className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="ล้างการค้นหาบริษัท"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ) : null}
+
+                  {/* Dropdown — same pattern as PurchaseEntryCard member selector */}
+                  {showCompanyDropdown && !companyDisabled && filteredCompanies.length > 0 ? (
+                    <div
+                      ref={companyDropdownRef}
+                      className="absolute left-0 right-0 top-full z-[100] mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl max-h-48 overflow-y-auto"
+                      onMouseEnter={clearHideTimeout}
+                      onMouseLeave={scheduleDropdownHide}
+                    >
+                      {filteredCompanies.map((company, index) => (
+                        <button
+                          key={company.id}
+                          type="button"
+                          data-company-option
+                          data-testid={`sales-company-option-${company.id}`}
+                          onClick={() => handleCompanySelectWithClose(company)}
+                          onFocus={clearHideTimeout}
+                          onBlur={scheduleDropdownHide}
+                          onKeyDown={(event) => handleCompanyOptionKeyDown(event, index)}
+                          disabled={saving}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {company.code} - {company.name}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {/* No results — redirect to create company */}
+                  {showCompanyDropdown &&
+                  !companyDisabled &&
+                  companySearchTerm &&
+                  filteredCompanies.length === 0 ? (
+                    <div
+                      className="absolute left-0 right-0 top-full z-[100] mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl p-3"
+                      onMouseEnter={clearHideTimeout}
+                      onMouseLeave={scheduleDropdownHide}
+                    >
+                      <div className="text-center text-gray-500 dark:text-gray-400">
+                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <p className="text-xs font-medium mb-2">ไม่พบบริษัทที่ตรงกับคำค้นหา</p>
+                        <button
+                          type="button"
+                          onClick={() => router.push('/destination-companies?showAddModal=true')}
+                          disabled={saving}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                            />
+                          </svg>
+                          เพิ่มบริษัทใหม่
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </Field>
               <Field label="รูปแบบการขาย" className="min-w-[8.5rem] max-w-[10rem]">
                 <select
@@ -275,7 +483,7 @@ export default function SalesFormCard({
             </div>
 
             <div
-              className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 overflow-x-auto border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
+              className={`relative z-0 flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
             >
               <Field label="ชนิดค่าใช้จ่าย" className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
                 <select

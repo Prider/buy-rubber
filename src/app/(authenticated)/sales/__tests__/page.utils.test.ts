@@ -67,6 +67,7 @@ describe('sales page.utils pagination', () => {
   describe('isSalesFormSubmitReady', () => {
     const base = {
       date: '2026-07-20',
+      destinationCompanyId: 'dc-1',
       companyName: 'บริษัท A',
       productTypeId: 'pt-1',
       weight: '100',
@@ -88,6 +89,10 @@ describe('sales page.utils pagination', () => {
 
     it('is not ready when pricePerUnit is negative', () => {
       expect(isSalesFormSubmitReady({ ...base, pricePerUnit: '-1' })).toBe(false);
+    });
+
+    it('is not ready when destination company is missing', () => {
+      expect(isSalesFormSubmitReady({ ...base, destinationCompanyId: '' })).toBe(false);
     });
   });
 
