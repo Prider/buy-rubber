@@ -1,11 +1,5 @@
 import { ReportType } from '@/hooks/useReportData';
-
-interface ProductType {
-  id: string;
-  code: string;
-  name: string;
-  isActive: boolean;
-}
+import { ReportGroupOption } from '@/lib/reportProductTypeGroups';
 
 interface ReportFilterCardProps {
   reportType: ReportType;
@@ -16,7 +10,8 @@ interface ReportFilterCardProps {
   setEndDate: (date: string) => void;
   loading: boolean;
   onGenerate: () => void;
-  productTypes?: ProductType[];
+  reportGroups?: ReportGroupOption[];
+  onManageGroups?: () => void;
 }
 
 export default function ReportFilterCard({
@@ -28,7 +23,8 @@ export default function ReportFilterCard({
   setEndDate,
   loading,
   onGenerate,
-  productTypes = [],
+  reportGroups = [],
+  onManageGroups,
 }: ReportFilterCardProps) {
   const isDateRangeInvalid =
     startDate && endDate ? new Date(startDate) > new Date(endDate) : false;
@@ -36,13 +32,24 @@ export default function ReportFilterCard({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-            <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+              <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+            </div>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">ตัวกรองรายงาน</h2>
           </div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">ตัวกรองรายงาน</h2>
+          {onManageGroups && (
+            <button
+              type="button"
+              onClick={onManageGroups}
+              className="rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
+            >
+              จัดการกลุ่มรายงาน
+            </button>
+          )}
         </div>
       </div>
       
@@ -59,9 +66,9 @@ export default function ReportFilterCard({
                 className="input w-full pl-3 pr-3 py-1.5 appearance-none bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
               >
                 <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
-                {productTypes.map((pt) => (
-                  <option key={pt.id} value={`daily_purchase:${pt.id}`}>
-                    📊 รายงานรับซื้อประจำวัน - {pt.name}
+                {reportGroups.map((group) => (
+                  <option key={group.id} value={group.reportType}>
+                    📊 รายงานรับซื้อประจำวัน - {group.label}
                   </option>
                 ))}
                 <option value="member_summary">👥 สรุปรายสมาชิกที่รับซื้อยาง</option>

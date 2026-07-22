@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  experimental: {
+    instrumentationHook: true,
+  },
   // Disable image optimization for Electron
   images: {
     unoptimized: true,

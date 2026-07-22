@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReportData } from '@/hooks/useReportData';
+import { useReportProductTypeGroups } from '@/hooks/useReportProductTypeGroups';
 import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import {
@@ -13,6 +14,10 @@ import {
   generateExpenseTableHTML,
 } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
+import ReportGroupManagementModal, {
+  useReportGroupManagementModal,
+} from '@/components/reports/ReportGroupManagementModal';
+import { getDailyPurchaseGroupId } from '@/lib/reportProductTypeGroups';
 import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
 import DailyPurchaseTable from '@/components/reports/DailyPurchaseTable';
 import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
@@ -28,6 +33,17 @@ export default function ReportsPage() {
   const { user, isLoading } = useAuth();
   const { showWarning } = useAlert();
   const [tablePage, setTablePage] = useState(1);
+  const groupManager = useReportProductTypeGroups();
+  const {
+    groups: reportGroupRecords,
+    loading: groupsLoading,
+    saving: groupsSaving,
+    loadGroups,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+  } = groupManager;
+  const groupModal = useReportGroupManagementModal();
   const {
     loading,
     reportType,
@@ -39,11 +55,16 @@ export default function ReportsPage() {
     data,
     expenseSummary,
     productTypes,
+    reportGroups,
     generateReport,
     getTotalAmount,
     getTotalWeight,
     getReportTitle,
-  } = useReportData();
+  } = useReportData(reportGroupRecords);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -84,6 +105,17 @@ export default function ReportsPage() {
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
+
+  const handleGroupsChanged = useCallback(async () => {
+    const nextGroups = await loadGroups();
+    const selectedGroupId = getDailyPurchaseGroupId(reportType);
+    if (
+      selectedGroupId &&
+      !nextGroups.some((group) => group.id === selectedGroupId)
+    ) {
+      setReportType('daily_purchase');
+    }
+  }, [loadGroups, reportType, setReportType]);
 
   const handlePrintPreview = useCallback(() => {
     if (!hasData || !data) return;
@@ -185,7 +217,21 @@ export default function ReportsPage() {
         setEndDate={setEndDate}
         loading={loading}
         onGenerate={generateReport}
+        reportGroups={reportGroups}
+        onManageGroups={groupModal.open}
+      />
+
+      <ReportGroupManagementModal
+        isOpen={groupModal.isOpen}
+        onClose={groupModal.close}
         productTypes={productTypes}
+        groups={reportGroupRecords}
+        loading={groupsLoading}
+        saving={groupsSaving}
+        onCreateGroup={createGroup}
+        onUpdateGroup={updateGroup}
+        onDeleteGroup={deleteGroup}
+        onRefresh={handleGroupsChanged}
       />
 
       {/* Report Result */}

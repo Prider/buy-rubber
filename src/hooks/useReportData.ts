@@ -1,8 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
+import {
+  buildReportGroupOptions,
+  findReportGroupById,
+  getDailyPurchaseGroupId,
+  getGroupLabel,
+  isDailyPurchaseReport,
+  ReportProductTypeGroupRecord,
+  resolveGroupProductTypeIds,
+} from '@/lib/reportProductTypeGroups';
 
-export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string; // string for product-type-specific reports like 'daily_purchase:productTypeId'
+export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string; // string for grouped daily purchase reports like 'daily_purchase:group:{id}'
 
 interface ExpenseCategorySummary {
   category: string;
@@ -17,7 +26,7 @@ interface ProductType {
   isActive: boolean;
 }
 
-export function useReportData() {
+export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[] = []) {
   const [loading, setLoading] = useState(false);
   const [reportType, setReportType] = useState<ReportType>('daily_purchase');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
@@ -59,19 +68,27 @@ export function useReportData() {
     setExpenseSummary([]);
   }, []);
 
+  const reportGroups = useMemo(
+    () => buildReportGroupOptions(reportGroupRecords),
+    [reportGroupRecords]
+  );
+
   const generateReport = useCallback(async () => {
     setLoading(true);
     try {
       let response;
       
-      // Check if this is a product-type-specific daily purchase report
-      const isProductTypeSpecific = reportType.startsWith('daily_purchase:');
-      const productTypeId = isProductTypeSpecific ? reportType.split(':')[1] : null;
+      const groupId = getDailyPurchaseGroupId(reportType);
+      const isGroupedDailyPurchase = Boolean(groupId);
       
-      if (reportType === 'daily_purchase' || isProductTypeSpecific) {
-        const params: { startDate: string; endDate: string; productTypeId?: string } = { startDate, endDate };
-        if (productTypeId) {
-          params.productTypeId = productTypeId;
+      if (reportType === 'daily_purchase' || isGroupedDailyPurchase) {
+        const params: { startDate: string; endDate: string; productTypeIds?: string } = { startDate, endDate };
+        if (groupId) {
+          const group = findReportGroupById(reportGroupRecords, groupId);
+          const productTypeIds = group ? resolveGroupProductTypeIds(group) : [];
+          if (productTypeIds.length > 0) {
+            params.productTypeIds = productTypeIds.join(',');
+          }
         }
         response = await axios.get('/api/purchases', { params });
         setData(response.data);
@@ -140,13 +157,12 @@ export function useReportData() {
     } finally {
       setLoading(false);
     }
-  }, [reportType, startDate, endDate]);
+  }, [reportType, startDate, endDate, reportGroupRecords]);
 
   const getTotalAmount = useCallback(() => {
     if (!data || !Array.isArray(data)) return 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
-    if (isDailyPurchase) {
+    if (isDailyPurchaseReport(reportType)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
     } else if (reportType === 'member_summary') {
@@ -161,8 +177,7 @@ export function useReportData() {
 
   const getTotalWeight = useCallback(() => {
     if (!data || !Array.isArray(data)) return 0;
-    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
-    if (isDailyPurchase) {
+    if (isDailyPurchaseReport(reportType)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.reduce((sum: number, item: any) => sum + (item.dryWeight || 0), 0);
     } else if (reportType === 'member_summary') {
@@ -173,11 +188,11 @@ export function useReportData() {
   }, [data, reportType]);
 
   const getReportTitle = useCallback(() => {
-    if (reportType.startsWith('daily_purchase:')) {
-      const productTypeId = reportType.split(':')[1];
-      const productType = productTypes.find(pt => pt.id === productTypeId);
-      if (productType) {
-        return `รายงานรับซื้อประจำวัน - ${productType.name}`;
+    const groupId = getDailyPurchaseGroupId(reportType);
+    if (groupId) {
+      const group = findReportGroupById(reportGroupRecords, groupId);
+      if (group) {
+        return `รายงานรับซื้อประจำวัน - ${getGroupLabel(group)}`;
       }
       return 'รายงานรับซื้อประจำวัน';
     }
@@ -192,7 +207,7 @@ export function useReportData() {
       default:
         return 'รายงาน';
     } 
-  }, [reportType, productTypes]);
+  }, [reportType, reportGroupRecords]);
 
   return {
     loading,
@@ -205,6 +220,7 @@ export function useReportData() {
     data,
     expenseSummary,
     productTypes,
+    reportGroups,
     generateReport,
     getTotalAmount,
     getTotalWeight,

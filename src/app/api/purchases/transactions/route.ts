@@ -1,102 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import type { Prisma } from '@prisma/client';
+import {
+  buildTransactionPrismaWhere,
+  countTransactionGroups,
+  fetchPaginatedTransactionGroups,
+  parseTransactionDateRange,
+  purchaseTransactionInclude,
+  resolveSearchMemberIds,
+  serviceFeeTransactionSelect,
+  type TransactionQueryFilters,
+} from '@/lib/purchases/transactionQuery';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const DEFAULT_DATE_RANGE_DAYS = 90;
 
 // GET /api/purchases/transactions - Get purchase transactions grouped by purchaseNo with service fees
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
     const memberId = searchParams.get('memberId');
     const searchTerm = searchParams.get('search');
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 200);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 200);
 
-    logger.info('GET /api/purchases/transactions', { startDate, endDate, memberId, searchTerm, page, limit });
+    logger.info('GET /api/purchases/transactions', {
+      startDate: startDateParam,
+      endDate: endDateParam,
+      memberId,
+      searchTerm,
+      page,
+      limit,
+    });
 
-    // Build base WHERE clause
-    const where: Prisma.PurchaseWhereInput = {};
+    const { startDate, endDate } = parseTransactionDateRange(startDateParam, endDateParam);
+    const searchMemberIds = await resolveSearchMemberIds(searchTerm, memberId);
 
-    if (!startDate && !endDate) {
-      const defaultEndDate = new Date();
-      defaultEndDate.setHours(23, 59, 59, 999);
-      const defaultStartDate = new Date();
-      defaultStartDate.setDate(defaultStartDate.getDate() - DEFAULT_DATE_RANGE_DAYS);
-      defaultStartDate.setHours(0, 0, 0, 0);
-      where.date = { gte: defaultStartDate, lte: defaultEndDate };
-    } else {
-      const dateFilter: Prisma.DateTimeFilter = {};
-      if (startDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        dateFilter.gte = start;
-      }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        dateFilter.lte = end;
-      }
-      where.date = dateFilter;
-    }
+    const filters: TransactionQueryFilters = {
+      startDate,
+      endDate,
+      memberId: memberId || undefined,
+      searchTerm: searchTerm || undefined,
+      searchMemberIds,
+    };
 
-    if (memberId) {
-      where.memberId = memberId;
-    }
+    const prismaWhere = buildTransactionPrismaWhere(filters);
 
-    // Push search into the DB: pre-fetch matching memberIds so the groupBy WHERE can filter them
-    if (searchTerm) {
-      const orConditions: Prisma.PurchaseWhereInput[] = [
-        { purchaseNo: { contains: searchTerm } },
-      ];
-
-      // Only search by member name/code when not already filtered to a specific member
-      if (!memberId) {
-        const matchingMembers = await prisma.member.findMany({
-          where: {
-            OR: [
-              { name: { contains: searchTerm } },
-              { code: { contains: searchTerm } },
-            ],
-          },
-          select: { id: true },
-        });
-        if (matchingMembers.length > 0) {
-          orConditions.push({ memberId: { in: matchingMembers.map((m) => m.id) } });
-        }
-      }
-
-      where.OR = orConditions;
-    }
-
-    // Count and paginate entirely in the DB — no in-memory sort/filter/slice
-    const [totalGroups, paginatedGroups] = await Promise.all([
-      // Lightweight count: returns only {purchaseNo} per group
-      prisma.purchase.groupBy({ by: ['purchaseNo'], where }),
-      // Paginated result: DB applies sort and offset
-      prisma.purchase.groupBy({
-        by: ['purchaseNo', 'memberId'],
-        where,
-        _max: { createdAt: true, date: true },
-        _sum: { totalAmount: true },
-        orderBy: [
-          { _max: { createdAt: 'desc' } },
-          { _max: { date: 'desc' } },
-          { purchaseNo: 'desc' },
-        ],
-        take: limit,
-        skip: (page - 1) * limit,
-      }),
+    const [total, paginatedGroups] = await Promise.all([
+      countTransactionGroups(filters),
+      fetchPaginatedTransactionGroups(filters, page, limit),
     ]);
 
-    const total = totalGroups.length;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     if (paginatedGroups.length === 0) {
       return NextResponse.json({
@@ -105,18 +62,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const paginatedPurchaseNos = paginatedGroups.map((g) => g.purchaseNo);
-    const paginatedMemberIds = [...new Set(paginatedGroups.map((g) => g.memberId))];
+    const paginatedPurchaseNos = paginatedGroups.map((group) => group.purchaseNo);
+    const paginatedMemberIds = [...new Set(paginatedGroups.map((group) => group.memberId))];
 
-    // Fetch full detail only for the current page (≤ limit groups)
     const [purchases, serviceFees, members] = await Promise.all([
       prisma.purchase.findMany({
-        where: { purchaseNo: { in: paginatedPurchaseNos } },
-        include: { member: true, productType: true, user: true },
+        where: {
+          ...prismaWhere,
+          purchaseNo: { in: paginatedPurchaseNos },
+        },
+        include: purchaseTransactionInclude,
         orderBy: [{ createdAt: 'desc' }, { date: 'desc' }, { purchaseNo: 'desc' }],
       }),
       prisma.serviceFee.findMany({
         where: { purchaseNo: { in: paginatedPurchaseNos } },
+        select: serviceFeeTransactionSelect,
         orderBy: { date: 'desc' },
       }),
       prisma.member.findMany({
@@ -125,15 +85,14 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const memberMap = new Map(members.map((m) => [m.id, m]));
+    const memberMap = new Map(members.map((member) => [member.id, member]));
 
-    // Pre-group service fees by purchaseNo to avoid an O(n²) filter inside the loop
     const serviceFeesByNo = new Map<string, typeof serviceFees>();
-    for (const sf of serviceFees) {
-      if (!sf.purchaseNo) continue;
-      const arr = serviceFeesByNo.get(sf.purchaseNo) ?? [];
-      arr.push(sf);
-      serviceFeesByNo.set(sf.purchaseNo, arr);
+    for (const serviceFee of serviceFees) {
+      if (!serviceFee.purchaseNo) continue;
+      const existing = serviceFeesByNo.get(serviceFee.purchaseNo) ?? [];
+      existing.push(serviceFee);
+      serviceFeesByNo.set(serviceFee.purchaseNo, existing);
     }
 
     type TxEntry = {
@@ -152,15 +111,15 @@ export async function GET(request: NextRequest) {
       if (existing) {
         existing.purchases.push(purchase);
         existing.totalAmount += purchase.totalAmount;
-        const pTime = new Date(purchase.createdAt || purchase.date).getTime();
-        const eTime = new Date(existing.createdAt || existing.date).getTime();
-        if (pTime > eTime) {
+        const purchaseTime = new Date(purchase.createdAt || purchase.date).getTime();
+        const existingTime = new Date(existing.createdAt || existing.date).getTime();
+        if (purchaseTime > existingTime) {
           existing.createdAt = purchase.createdAt;
           existing.date = purchase.date;
         }
       } else {
         const fees = serviceFeesByNo.get(purchase.purchaseNo) ?? [];
-        const serviceFeesTotal = fees.reduce((sum, sf) => sum + sf.amount, 0);
+        const serviceFeesTotal = fees.reduce((sum, fee) => sum + fee.amount, 0);
         transactionsMap.set(purchase.purchaseNo, {
           purchaseNo: purchase.purchaseNo,
           date: purchase.date,
@@ -173,22 +132,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Return transactions in the DB-sorted order from paginatedGroups
     const transactions = paginatedGroups
       .map((group) => {
-        const tx = transactionsMap.get(group.purchaseNo);
-        if (!tx) return undefined;
+        const transaction = transactionsMap.get(group.purchaseNo);
+        if (!transaction) return undefined;
+
         return {
-          ...tx,
-          member: tx.member || memberMap.get(group.memberId) || null,
-          sortTime: group._max.createdAt
-            ? new Date(group._max.createdAt).getTime()
-            : group._max.date
-              ? new Date(group._max.date).getTime()
+          ...transaction,
+          member: transaction.member || memberMap.get(group.memberId) || null,
+          sortTime: group.maxCreatedAt
+            ? new Date(group.maxCreatedAt).getTime()
+            : group.maxDate
+              ? new Date(group.maxDate).getTime()
               : 0,
         };
       })
-      .filter((t): t is NonNullable<typeof t> => t !== undefined);
+      .filter((transaction): transaction is NonNullable<typeof transaction> => transaction !== undefined);
 
     logger.info('GET /api/purchases/transactions - Success', { count: transactions.length, total });
 

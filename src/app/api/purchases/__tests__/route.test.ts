@@ -246,6 +246,24 @@ describe('GET /api/purchases', () => {
       );
     });
 
+    it('should filter purchases by multiple productTypeIds', async () => {
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase]);
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/purchases?productTypeIds=product-1,product-2'
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            productTypeId: { in: ['product-1', 'product-2'] },
+          }),
+        })
+      );
+    });
+
     it('should filter purchases by isPaid (true)', async () => {
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase]);
 

@@ -23,10 +23,11 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
     const memberId = searchParams.get('memberId');
     const productTypeId = searchParams.get('productTypeId');
+    const productTypeIds = searchParams.get('productTypeIds');
     const isPaid = searchParams.get('isPaid');
     const limit = searchParams.get('limit');
 
-    logger.info('GET /api/purchases', { startDate, endDate, memberId, productTypeId, isPaid, limit });
+    logger.info('GET /api/purchases', { startDate, endDate, memberId, productTypeId, productTypeIds, isPaid, limit });
 
     const where: any = {};
 
@@ -46,7 +47,14 @@ export async function GET(request: NextRequest) {
       where.memberId = memberId;
     }
 
-    if (productTypeId) {
+    if (productTypeIds) {
+      const ids = productTypeIds.split(',').map((id) => id.trim()).filter(Boolean);
+      if (ids.length === 1) {
+        where.productTypeId = ids[0];
+      } else if (ids.length > 1) {
+        where.productTypeId = { in: ids };
+      }
+    } else if (productTypeId) {
       where.productTypeId = productTypeId;
     }
 

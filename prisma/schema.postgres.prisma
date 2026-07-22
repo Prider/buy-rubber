@@ -71,6 +71,7 @@ model ProductType {
   sales              Sale[]
   stockPositions     StockPosition[]
   stockLedgerEntries StockLedgerEntry[]
+  reportGroupMembers ReportProductTypeGroupMember[]
 }
 
 // ราคาสินค้าตามประเภทประจำวัน
@@ -130,6 +131,8 @@ model Purchase {
   @@index([memberId])
   @@index([productTypeId])
   @@index([memberId, date])
+  @@index([date, createdAt])
+  @@index([date, purchaseNo])
 }
 
 // ค่าใช้จ่ายประจำวัน
@@ -267,4 +270,29 @@ model StockLedgerEntry {
   @@index([date])
   @@index([refType])
   @@index([refId])
+}
+
+// กลุ่มประเภทสินค้าสำหรับรายงานรับซื้อประจำวัน (ผู้ใช้กำหนดเอง)
+model ReportProductTypeGroup {
+  id           String                         @id @default(uuid())
+  name         String?
+  sortOrder    Int                            @default(0)
+  isActive     Boolean                        @default(true)
+  createdAt    DateTime                       @default(now())
+  updatedAt    DateTime                       @updatedAt
+  productTypes ReportProductTypeGroupMember[]
+
+  @@index([isActive, sortOrder])
+}
+
+model ReportProductTypeGroupMember {
+  id            String                 @id @default(uuid())
+  groupId       String
+  productTypeId String
+  group         ReportProductTypeGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  productType   ProductType            @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, productTypeId])
+  @@index([groupId])
+  @@index([productTypeId])
 }
