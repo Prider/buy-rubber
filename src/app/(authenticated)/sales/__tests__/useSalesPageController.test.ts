@@ -53,6 +53,7 @@ function mockSale(id: string) {
     sellingType: 'จ่ายสด',
     totalAmount: 4500,
     notes: null,
+    expenses: [],
   };
 }
 

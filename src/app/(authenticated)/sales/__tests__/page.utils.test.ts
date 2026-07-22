@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildSalePayload,
   computePagination,
+  computeTotalPreview,
+  expensesFromSaleRow,
+  formatExpenseTypeLabel,
   getVisiblePageNumbers,
   isSalesFormSubmitReady,
   normalizeSaleRow,
@@ -73,9 +77,7 @@ describe('sales page.utils pagination', () => {
       weight: '100',
       rubberPercent: '',
       pricePerUnit: '50',
-      expenseType: '',
-      expenseCost: '',
-      expenseNote: '',
+      expenses: [] as Array<{ id: string; type: string; amount: string; note: string }>,
       sellingType: 'จ่ายสด',
     };
 
@@ -93,6 +95,52 @@ describe('sales page.utils pagination', () => {
 
     it('is not ready when destination company is missing', () => {
       expect(isSalesFormSubmitReady({ ...base, destinationCompanyId: '' })).toBe(false);
+    });
+
+    it('is not ready when expense has amount but no type', () => {
+      expect(
+        isSalesFormSubmitReady({
+          ...base,
+          expenses: [{ id: '1', type: '', amount: '100', note: '' }],
+        }),
+      ).toBe(false);
+    });
+
+    it('is ready with multiple valid expenses', () => {
+      expect(
+        isSalesFormSubmitReady({
+          ...base,
+          expenses: [
+            { id: '1', type: 'ค่าขนส่ง', amount: '100', note: '' },
+            { id: '2', type: 'ค่าแรง', amount: '50', note: 'note' },
+          ],
+        }),
+      ).toBe(true);
+    });
+  });
+
+  describe('computeTotalPreview / buildSalePayload', () => {
+    it('sums multiple expense lines in total preview', () => {
+      const formData = {
+        date: '2026-07-20',
+        destinationCompanyId: 'dc-1',
+        companyName: 'บริษัท A',
+        productTypeId: 'pt-1',
+        weight: '100',
+        rubberPercent: '',
+        pricePerUnit: '50',
+        expenses: [
+          { id: '1', type: 'ค่าขนส่ง', amount: '200', note: 'a' },
+          { id: '2', type: 'ค่าแรง', amount: '300', note: 'b' },
+        ],
+        sellingType: 'จ่ายสด',
+      };
+      expect(computeTotalPreview(formData)).toBe(4500); // 5000 - 500
+      const payload = buildSalePayload(formData);
+      expect(payload.expenseCost).toBe(500);
+      expect(payload.expenseType).toBe('ค่าขนส่ง (+1)');
+      expect(payload.expenses).toHaveLength(2);
+      expect(payload.notes).toBe('a; b');
     });
   });
 
@@ -115,6 +163,69 @@ describe('sales page.utils pagination', () => {
           notes: 'note',
         }).expenseNote,
       ).toBe('note');
+    });
+  });
+
+  describe('formatExpenseTypeLabel', () => {
+    it('shows first type with count when multiple expense lines', () => {
+      expect(
+        formatExpenseTypeLabel('หลายรายการ', [
+          { id: '1', type: 'ค่าขนส่ง', amount: 100, note: null, sortOrder: 0 },
+          { id: '2', type: 'ค่าแรง', amount: 50, note: null, sortOrder: 1 },
+        ]),
+      ).toBe('ค่าขนส่ง (+1)');
+    });
+
+    it('falls back to expenseType when no lines', () => {
+      expect(formatExpenseTypeLabel('ค่าขนส่ง', [])).toBe('ค่าขนส่ง');
+      expect(formatExpenseTypeLabel(null, null)).toBe('-');
+    });
+  });
+
+  describe('expensesFromSaleRow', () => {
+    it('maps API expense lines', () => {
+      const lines = expensesFromSaleRow({
+        id: '1',
+        saleNo: 'SAL-1',
+        date: '2026-01-01',
+        companyName: 'Co',
+        productTypeId: 'pt',
+        weight: 10,
+        rubberPercent: null,
+        pricePerUnit: 40,
+        expenseType: 'หลายรายการ',
+        expenseCost: 150,
+        sellingType: 'จ่ายสด',
+        totalAmount: 250,
+        expenseNote: null,
+        expenses: [
+          { id: 'e1', type: 'ค่าขนส่ง', amount: 100, note: 'a', sortOrder: 0 },
+          { id: 'e2', type: 'ค่าแรง', amount: 50, note: null, sortOrder: 1 },
+        ],
+      });
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toMatchObject({ id: 'e1', type: 'ค่าขนส่ง', amount: '100', note: 'a' });
+    });
+
+    it('falls back to legacy single fields', () => {
+      const lines = expensesFromSaleRow({
+        id: '1',
+        saleNo: 'SAL-1',
+        date: '2026-01-01',
+        companyName: 'Co',
+        productTypeId: 'pt',
+        weight: 10,
+        rubberPercent: null,
+        pricePerUnit: 40,
+        expenseType: 'ค่าขนส่ง',
+        expenseCost: 200,
+        sellingType: 'จ่ายสด',
+        totalAmount: 200,
+        expenseNote: 'เก่า',
+      });
+      expect(lines).toEqual([
+        { id: 'legacy-1', type: 'ค่าขนส่ง', amount: '200', note: 'เก่า' },
+      ]);
     });
   });
 });

@@ -124,11 +124,15 @@ test.describe.serial('Sales flow', () => {
     await page.locator('[name="weight"]').fill(data.weight)
     await page.locator('[name="pricePerUnit"]').fill(data.pricePerUnit)
 
-    if (data.expenseType) {
-      await page.locator('[name="expenseType"]').selectOption(data.expenseType)
-    }
-    if (data.expenseCost) {
-      await page.locator('[name="expenseCost"]').fill(data.expenseCost)
+    if (data.expenseType || data.expenseCost) {
+      await page.getByTestId('sales-add-expense').click()
+      const row = page.getByTestId('sales-expense-row-0')
+      if (data.expenseType) {
+        await row.locator('select').selectOption(data.expenseType)
+      }
+      if (data.expenseCost) {
+        await row.locator('input[type="number"]').fill(data.expenseCost)
+      }
     }
   }
 

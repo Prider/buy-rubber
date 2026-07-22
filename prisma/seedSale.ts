@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'] as const;
-const EXPENSE_TYPES = ['ค่าขนส่ง', 'ค่าแรง', 'ค่าบริการ', 'อื่นๆ'];
+const EXPENSE_TYPES = ['ค่าขนส่ง', 'ค่าแรง', 'ค่าบริการ', 'ภาษี', 'อื่นๆ'];
 const COMPANY_NAMES = [
   'บริษัท ยางไทย จำกัด',
   'ห้างหุ้นส่วนจำกัด รับซื้อยางใต้',

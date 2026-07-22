@@ -5,7 +5,7 @@ import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
 
 export const runtime = 'nodejs';
 
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 1000;
 
 export async function GET(request: NextRequest) {

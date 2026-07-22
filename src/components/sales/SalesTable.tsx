@@ -3,6 +3,7 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import type { ChangeEvent } from 'react';
 import SalesPagination from '@/components/sales/SalesPagination';
+import { formatExpenseTypeLabel, type SaleExpenseApi } from '@/app/(authenticated)/sales/page.utils';
 
 interface SaleRow {
   id: string;
@@ -17,6 +18,7 @@ interface SaleRow {
   expenseType: string | null;
   expenseCost: number | null;
   expenseNote: string | null;
+  expenses?: SaleExpenseApi[];
   sellingType: string;
   totalAmount: number;
 }
@@ -42,7 +44,7 @@ interface SalesTableProps {
   onClearSearch?: () => void;
   editingSaleId?: string | null;
   deletingSaleId?: string | null;
-  onEdit?: (row: SaleRow) => void;
+  onEdit?: (row: SaleRow) => void | Promise<void>;
   onDelete?: (saleId: string) => void;
 }
 
@@ -179,7 +181,7 @@ export default function SalesTable({
                   <td className={`${cellPad} text-right`}>{formatNumber(row.weight)}</td>
                   <td className={`${cellPad} text-right`}>{row.rubberPercent != null ? formatNumber(row.rubberPercent) : '-'}</td>
                   <td className={`${cellPad} text-right`}>{formatNumber(row.pricePerUnit)}</td>
-                  <td className={cellPad}>{row.expenseType || '-'}</td>
+                  <td className={cellPad}>{formatExpenseTypeLabel(row.expenseType, row.expenses)}</td>
                   <td className={`${cellPad} text-right`}>{row.expenseCost != null ? formatNumber(row.expenseCost) : '-'}</td>
                   <td className={cellPad}>{row.expenseNote || '-'}</td>
                   <td className={cellPad}>{row.sellingType}</td>

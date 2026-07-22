@@ -11,6 +11,9 @@ vi.mock('@/lib/prisma', () => ({
       findMany: (...args: unknown[]) => findMany(...args),
       count: (...args: unknown[]) => count(...args),
     },
+    productType: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
 }));
 
@@ -109,7 +112,7 @@ describe('GET /api/sales', () => {
     );
   });
 
-  it('returns a bare array without skip/take when page is omitted', async () => {
+  it('returns a capped bare array when page is omitted', async () => {
     const rows = [makeSale('1')];
     findMany.mockResolvedValue(rows);
 
@@ -120,9 +123,8 @@ describe('GET /api/sales', () => {
     expect(Array.isArray(body)).toBe(true);
     expect(body).toHaveLength(1);
     expect(findMany).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        skip: expect.anything(),
-        take: expect.anything(),
+      expect.objectContaining({
+        take: 1000,
       }),
     );
     expect(count).not.toHaveBeenCalled();

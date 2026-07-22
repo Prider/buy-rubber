@@ -210,12 +210,27 @@ model Sale {
   user                  User                @relation(fields: [userId], references: [id])
   productType           ProductType         @relation(fields: [productTypeId], references: [id])
   destinationCompany    DestinationCompany? @relation(fields: [destinationCompanyId], references: [id])
+  expenses              SaleExpense[]
 
   @@index([date])
   @@index([userId])
   @@index([productTypeId])
   @@index([saleNo])
   @@index([destinationCompanyId])
+  @@index([date, createdAt])
+}
+
+// ค่าใช้จ่ายรายการขาย (หลายรายการต่อหนึ่งการขาย)
+model SaleExpense {
+  id        String @id @default(uuid())
+  saleId    String
+  type      String // ค่าขนส่ง, ค่าแรง, ค่าบริการ, อื่นๆ
+  amount    Float
+  note      String?
+  sortOrder Int    @default(0)
+  sale      Sale   @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
 }
 
 // สต็อกปัจจุบัน

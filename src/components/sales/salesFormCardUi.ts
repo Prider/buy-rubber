@@ -24,9 +24,7 @@ export function getSalesFormLayoutClasses(compact: boolean) {
     inputClass: compact
       ? 'w-full min-w-0 px-2.5 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600'
       : 'w-full min-w-0 px-3 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600',
-    titleClass: compact
-      ? 'text-base font-bold text-gray-900 dark:text-white'
-      : 'text-xl font-bold text-gray-900 dark:text-white',
+    titleClass: compact ? 'text-base font-bold' : 'text-xl font-bold',
     bodyPad: compact ? 'p-2.5 flex flex-col gap-2 min-w-0' : 'p-4 flex flex-col gap-3 min-w-0',
     rowGap: compact ? 'gap-2' : 'gap-3',
     headerBtnPad: compact ? 'px-4 py-2' : 'px-6 py-4',

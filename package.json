@@ -30,6 +30,7 @@
     "db:migrate:old": "node scripts/migrate-old-db.js",
     "db:seed:sales:for:test": "tsx prisma/seedSale.ts",
     "db:seed:purchases:for:test": "tsx prisma/seedPurchase.ts",
+    "db:seed:companies:for:test": "tsx prisma/seedCompany.ts",
     "db:rebuild-stock": "node electron/rebuild-stock.js",
     "test": "vitest",
     "test:ui": "vitest --ui",

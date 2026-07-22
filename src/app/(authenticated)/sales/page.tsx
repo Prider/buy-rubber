@@ -30,6 +30,9 @@ export default function SalesPage() {
     handleCompanySearchChange,
     handleCompanySelect,
     clearCompanySearch,
+    handleAddExpense,
+    handleRemoveExpense,
+    handleExpenseChange,
     setCurrentPage,
     handleSearchChange,
     handleClearSearch,
@@ -74,6 +77,9 @@ export default function SalesPage() {
           onCompanySelect={handleCompanySelect}
           onClearCompanySearch={clearCompanySearch}
           onShowCompanyDropdown={setShowCompanyDropdown}
+          onAddExpense={handleAddExpense}
+          onRemoveExpense={handleRemoveExpense}
+          onExpenseChange={handleExpenseChange}
           onInputChange={handleInputChange}
           onSave={handleSave}
           onCancelEdit={resetForm}

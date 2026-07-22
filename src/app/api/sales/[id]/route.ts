@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { reverseSaleFromStock } from '@/lib/stock/stockService';
+import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +22,56 @@ type SaleDelegate = {
 
 const asSale = prisma as unknown as { sale?: SaleDelegate };
 
+const saleDetailSelect = {
+  id: true,
+  saleNo: true,
+  date: true,
+  userId: true,
+  companyName: true,
+  destinationCompanyId: true,
+  productTypeId: true,
+  weight: true,
+  rubberPercent: true,
+  pricePerUnit: true,
+  expenseType: true,
+  expenseCost: true,
+  sellingType: true,
+  totalAmount: true,
+  notes: true,
+  createdAt: true,
+  updatedAt: true,
+  productType: { select: { id: true, code: true, name: true } },
+  expenses: {
+    select: { id: true, type: true, amount: true, note: true, sortOrder: true },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+};
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    if (!asSale.sale) {
+      return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
+    }
+
+    const sale = await prisma.sale.findUnique({
+      where: { id: params.id },
+      select: saleDetailSelect,
+    });
+
+    if (!sale) {
+      return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
+    }
+
+    return NextResponse.json(sale);
+  } catch (error) {
+    logger.error('GET /api/sales/[id] failed', error);
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลการขาย' }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -30,7 +81,10 @@ export async function PUT(
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
-    const sale = await asSale.sale.findUnique({ where: { id: params.id } });
+    const sale = await asSale.sale.findUnique({
+      where: { id: params.id },
+      select: { id: true, saleNo: true, date: true, productTypeId: true, weight: true },
+    });
 
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
@@ -52,9 +106,20 @@ export async function PUT(
       return NextResponse.json({ error: 'กรุณาเลือกรูปแบบการขาย' }, { status: 400 });
     }
 
+    const parsedExpenses = parseSaleExpensesFromBody(data);
+    if (parsedExpenses.error) {
+      return NextResponse.json({ error: parsedExpenses.error }, { status: 400 });
+    }
+
     const [productType, destinationCompany] = await Promise.all([
-      prisma.productType.findUnique({ where: { id: data.productTypeId } }),
-      prisma.destinationCompany.findUnique({ where: { id: String(data.destinationCompanyId) } }),
+      prisma.productType.findUnique({
+        where: { id: data.productTypeId },
+        select: { id: true },
+      }),
+      prisma.destinationCompany.findUnique({
+        where: { id: String(data.destinationCompanyId) },
+        select: { id: true, name: true },
+      }),
     ]);
     if (!productType) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
@@ -65,40 +130,40 @@ export async function PUT(
 
     const weight = Number(data.weight);
     const pricePerUnit = Number(data.pricePerUnit);
-    const expenseCost =
-      data.expenseCost === undefined || data.expenseCost === null || data.expenseCost === ''
-        ? null
-        : Number(data.expenseCost);
-
-    if (expenseCost !== null && (Number.isNaN(expenseCost) || expenseCost < 0)) {
-      return NextResponse.json({ error: 'ค่าใช้จ่ายไม่ถูกต้อง' }, { status: 400 });
-    }
-
+    const { expenses, expenseCost, expenseType, notes } = parsedExpenses;
     const totalAmount = weight * pricePerUnit - (expenseCost || 0);
 
-    const updated = await asSale.sale.update({
-      where: { id: params.id },
-      data: {
-        date: data.date ? new Date(data.date) : sale.date,
-        companyName: destinationCompany.name,
-        destinationCompanyId: destinationCompany.id,
-        productTypeId: data.productTypeId,
-        weight,
-        rubberPercent:
-          data.rubberPercent !== '' && data.rubberPercent !== null && data.rubberPercent !== undefined
-            ? Number(data.rubberPercent)
-            : null,
-        pricePerUnit,
-        expenseType: data.expenseType ? String(data.expenseType) : null,
-        expenseCost,
-        sellingType: String(data.sellingType),
-        totalAmount,
-        notes: data.notes ? String(data.notes) : null,
-      },
-      include: {
-        productType: true,
-        user: { select: { id: true, username: true } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      return tx.sale.update({
+        where: { id: params.id },
+        data: {
+          date: data.date ? new Date(data.date) : sale.date,
+          companyName: destinationCompany.name,
+          destinationCompanyId: destinationCompany.id,
+          productTypeId: data.productTypeId,
+          weight,
+          rubberPercent:
+            data.rubberPercent !== '' && data.rubberPercent !== null && data.rubberPercent !== undefined
+              ? Number(data.rubberPercent)
+              : null,
+          pricePerUnit,
+          expenseType,
+          expenseCost,
+          sellingType: String(data.sellingType),
+          totalAmount,
+          notes,
+          expenses: {
+            deleteMany: {},
+            create: expenses.map((e, index) => ({
+              type: e.type,
+              amount: e.amount,
+              note: e.note,
+              sortOrder: index,
+            })),
+          },
+        },
+        select: saleDetailSelect,
+      });
     });
 
     return NextResponse.json(updated);
@@ -116,7 +181,10 @@ export async function DELETE(
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
-    const sale = await asSale.sale.findUnique({ where: { id: params.id } });
+    const sale = await asSale.sale.findUnique({
+      where: { id: params.id },
+      select: { id: true, saleNo: true, productTypeId: true, weight: true },
+    });
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
@@ -133,6 +201,7 @@ export async function DELETE(
         date: new Date(),
         notes: `คืนสต็อกจากการลบรายการขาย ${sale.saleNo}`,
       });
+      // SaleExpense rows cascade on delete via schema
       await txSale.delete({ where: { id: params.id } });
     });
 

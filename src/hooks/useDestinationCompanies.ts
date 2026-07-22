@@ -9,13 +9,15 @@ import {
   DeleteDestinationCompanyResponse,
 } from '@/types/destinationCompany';
 
+const PAGE_SIZE = 10;
+
 export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
   const [companies, setCompanies] = useState<DestinationCompany[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
-    limit: 30,
+    limit: PAGE_SIZE,
     total: 0,
     totalPages: 0,
     hasMore: false,
@@ -28,7 +30,7 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
 
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '30',
+        limit: String(PAGE_SIZE),
       });
       if (search) params.append('search', search);
 

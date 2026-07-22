@@ -283,6 +283,7 @@ export async function createSale(
     sellingType?: string
     expenseType?: string | null
     expenseCost?: number | null
+    expenses?: Array<{ type: string; amount: number; note?: string | null }>
     destinationCompanyId?: string
   }
 ): Promise<CreatedSale> {
@@ -290,19 +291,26 @@ export async function createSale(
     data.destinationCompanyId ??
     (await ensureDestinationCompany(request, token, data.companyName)).id
 
+  const payload: Record<string, unknown> = {
+    date: data.date ?? todayDate(),
+    destinationCompanyId,
+    companyName: data.companyName,
+    productTypeId: data.productTypeId,
+    weight: data.weight,
+    pricePerUnit: data.pricePerUnit,
+    sellingType: data.sellingType ?? 'จ่ายสด',
+  }
+
+  if (data.expenses) {
+    payload.expenses = data.expenses
+  } else {
+    payload.expenseType = data.expenseType ?? null
+    payload.expenseCost = data.expenseCost ?? null
+  }
+
   const res = await request.post(`${BASE}/api/sales`, {
     headers: apiHeaders(token),
-    data: {
-      date: data.date ?? todayDate(),
-      destinationCompanyId,
-      companyName: data.companyName,
-      productTypeId: data.productTypeId,
-      weight: data.weight,
-      pricePerUnit: data.pricePerUnit,
-      sellingType: data.sellingType ?? 'จ่ายสด',
-      expenseType: data.expenseType ?? null,
-      expenseCost: data.expenseCost ?? null,
-    },
+    data: payload,
   })
   if (!res.ok()) {
     const body = await res.text()
@@ -324,21 +332,39 @@ export async function deleteSale(
   })
 }
 
-/** Sums sale totalAmount for a date range via the sales API. */
+/** Sums sale totalAmount for a date range via the sales API (paginated). */
 export async function getSalesRevenueTotal(
   request: APIRequestContext,
   token: string,
   params: { startDate: string; endDate: string }
 ): Promise<number> {
-  const qs = new URLSearchParams({ startDate: params.startDate, endDate: params.endDate })
-  const res = await request.get(`${BASE}/api/sales?${qs.toString()}`, {
-    headers: apiHeaders(token),
-  })
-  if (!res.ok()) {
-    throw new Error(`Failed to get sales: ${res.status()}`)
+  let page = 1
+  let total = 0
+  const limit = 200
+
+  for (;;) {
+    const qs = new URLSearchParams({
+      startDate: params.startDate,
+      endDate: params.endDate,
+      page: String(page),
+      limit: String(limit),
+    })
+    const res = await request.get(`${BASE}/api/sales?${qs.toString()}`, {
+      headers: apiHeaders(token),
+    })
+    if (!res.ok()) {
+      throw new Error(`Failed to get sales: ${res.status()}`)
+    }
+    const body = (await res.json()) as {
+      data: Array<{ totalAmount: number }>
+      pagination: { totalPages: number }
+    }
+    total += body.data.reduce((sum, sale) => sum + (sale.totalAmount ?? 0), 0)
+    if (page >= body.pagination.totalPages) break
+    page += 1
   }
-  const sales = (await res.json()) as Array<{ totalAmount: number }>
-  return sales.reduce((sum, sale) => sum + (sale.totalAmount ?? 0), 0)
+
+  return total
 }
 
 /** Fetches profit-loss report totals for a date range. */

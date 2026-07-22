@@ -3,10 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
+import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+/** Cap for unpaginated callers (e.g. date-range totals). */
+const UNPAGINATED_MAX = 1000;
 
 type SaleRecord = {
   id: string;
@@ -28,6 +31,7 @@ type SaleRecord = {
   updatedAt: Date;
   productType?: { id: string; code: string; name: string };
   user?: { id: string; username: string };
+  expenses?: Array<{ id: string; type: string; amount: number; note: string | null; sortOrder: number }>;
 };
 
 type SaleDelegate = {
@@ -37,6 +41,28 @@ type SaleDelegate = {
 };
 
 const asSale = prisma as unknown as { sale?: SaleDelegate };
+
+/** List select — no nested expenses (use denormalized expenseType / GET by id for lines). */
+const saleListSelect = {
+  id: true,
+  saleNo: true,
+  date: true,
+  userId: true,
+  companyName: true,
+  destinationCompanyId: true,
+  productTypeId: true,
+  weight: true,
+  rubberPercent: true,
+  pricePerUnit: true,
+  expenseType: true,
+  expenseCost: true,
+  sellingType: true,
+  totalAmount: true,
+  notes: true,
+  createdAt: true,
+  updatedAt: true,
+  productType: { select: { id: true, code: true, name: true } },
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,7 +82,7 @@ export async function GET(request: NextRequest) {
     const page = paginated ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
     const limit = paginated
       ? Math.min(MAX_LIMIT, Math.max(1, parseInt(limitParam || String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT))
-      : undefined;
+      : UNPAGINATED_MAX;
 
     if (startDate) {
       const start = new Date(startDate);
@@ -82,36 +108,24 @@ export async function GET(request: NextRequest) {
     if (search) {
       const s = String(search).trim();
       if (s) {
+        // Prefetch matching product types to avoid relation joins in the Sale query
+        const matchingProductTypes = await prisma.productType.findMany({
+          where: {
+            OR: [{ name: { contains: s } }, { code: { contains: s } }],
+          },
+          select: { id: true },
+          take: 50,
+        });
+        const productTypeIds = matchingProductTypes.map((pt) => pt.id);
+
         where.OR = [
           { saleNo: { contains: s } },
           { companyName: { contains: s } },
           { sellingType: { contains: s } },
-          { productType: { is: { name: { contains: s } } } },
-          { productType: { is: { code: { contains: s } } } },
+          ...(productTypeIds.length > 0 ? [{ productTypeId: { in: productTypeIds } }] : []),
         ];
       }
     }
-
-    const saleSelect = {
-      id: true,
-      saleNo: true,
-      date: true,
-      userId: true,
-      companyName: true,
-      destinationCompanyId: true,
-      productTypeId: true,
-      weight: true,
-      rubberPercent: true,
-      pricePerUnit: true,
-      expenseType: true,
-      expenseCost: true,
-      sellingType: true,
-      totalAmount: true,
-      notes: true,
-      createdAt: true,
-      updatedAt: true,
-      productType: { select: { id: true, code: true, name: true } },
-    };
 
     const orderBy = [{ date: 'desc' }, { createdAt: 'desc' }];
 
@@ -122,7 +136,7 @@ export async function GET(request: NextRequest) {
               data: [],
               pagination: {
                 page,
-                limit: limit ?? DEFAULT_LIMIT,
+                limit,
                 total: 0,
                 totalPages: 1,
               },
@@ -131,11 +145,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (paginated && limit !== undefined) {
+    if (paginated) {
       const [sales, total] = await Promise.all([
         asSale.sale.findMany({
           where,
-          select: saleSelect,
+          select: saleListSelect,
           orderBy,
           skip: (page - 1) * limit,
           take: limit,
@@ -154,10 +168,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Unpaginated callers still get a hard cap to avoid loading the full table
     const sales = await asSale.sale.findMany({
       where,
-      select: saleSelect,
+      select: saleListSelect,
       orderBy,
+      take: limit,
     });
 
     return NextResponse.json(sales);
@@ -196,13 +212,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'กรุณาเลือกรูปแบบการขาย' }, { status: 400 });
     }
 
+    const parsedExpenses = parseSaleExpensesFromBody(data);
+    if (parsedExpenses.error) {
+      return NextResponse.json({ error: parsedExpenses.error }, { status: 400 });
+    }
+
     const [user, productType, destinationCompany] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
       prisma.productType.findUnique({ where: { id: data.productTypeId } }),
       prisma.destinationCompany.findUnique({ where: { id: String(data.destinationCompanyId) } }),
     ]);
 
-    if (!user) return NextResponse.json({ error: 'ไม่พบข้อมูลผู้ใช้' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: 'ไม่พบข้อมูลผู้ใช้',
+          details: 'Session หมดอายุหรือฐานข้อมูลถูกสร้างใหม่ กรุณาออกจากระบบแล้วเข้าสู่ระบบอีกครั้ง',
+        },
+        { status: 404 },
+      );
+    }
     if (!productType) return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
     if (!destinationCompany || !destinationCompany.isActive) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง หรือถูกปิดการใช้งาน' }, { status: 404 });
@@ -212,24 +241,17 @@ export async function POST(request: NextRequest) {
     const saleNo = generateDocumentNumber('SAL', saleDate);
     const weight = Number(data.weight);
     const pricePerUnit = Number(data.pricePerUnit);
-    const expenseCost = data.expenseCost === undefined || data.expenseCost === null || data.expenseCost === ''
-      ? null
-      : Number(data.expenseCost);
-    if (expenseCost !== null && (Number.isNaN(expenseCost) || expenseCost < 0)) {
-      return NextResponse.json({ error: 'ค่าใช้จ่ายไม่ถูกต้อง' }, { status: 400 });
-    }
+    const { expenses, expenseCost, expenseType, notes } = parsedExpenses;
 
-    // totalAmount is net amount after expenses (if provided)
     const totalAmount = weight * pricePerUnit - (expenseCost || 0);
 
     const sale = await prisma.$transaction(async (tx) => {
-      // Deduct stock first; if insufficient, throw to abort sale creation.
       await applySaleToStock(tx, {
         productTypeId: data.productTypeId,
         qtyKg: weight,
         refNo: saleNo,
         date: saleDate,
-        notes: data.notes ? String(data.notes) : null,
+        notes,
       });
 
       const txSale = (tx as unknown as { sale?: SaleDelegate }).sale;
@@ -251,16 +273,27 @@ export async function POST(request: NextRequest) {
               ? Number(data.rubberPercent)
               : null,
           pricePerUnit,
-          expenseType: data.expenseType ? String(data.expenseType) : null,
-          expenseCost: expenseCost,
+          expenseType,
+          expenseCost,
           sellingType: String(data.sellingType),
           totalAmount,
-          notes: data.notes ? String(data.notes) : null,
+          notes,
+          expenses: {
+            create: expenses.map((e, index) => ({
+              type: e.type,
+              amount: e.amount,
+              note: e.note,
+              sortOrder: index,
+            })),
+          },
         },
         include: {
-          productType: true,
-          // Avoid exposing sensitive user fields like password hashes
+          productType: { select: { id: true, code: true, name: true } },
           user: { select: { id: true, username: true } },
+          expenses: {
+            select: { id: true, type: true, amount: true, note: true, sortOrder: true },
+            orderBy: { sortOrder: 'asc' },
+          },
         },
       });
     });
@@ -285,4 +318,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการบันทึกการขาย' }, { status: 500 });
   }
 }
-

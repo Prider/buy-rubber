@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAlert } from '@/hooks/useAlert';
+import { clearAuthSession } from '@/lib/sessionToken';
 import {
   buildSalePayload,
   computePagination,
+  createEmptyExpenseLine,
+  expensesFromSaleRow,
   getTodayDate,
   isSalesFormSubmitReady,
   normalizeSaleRow,
@@ -15,6 +18,7 @@ import {
   SELLING_TYPES,
   toInputDate,
   type ProductType,
+  type SaleExpenseLine,
   type SaleFormData,
   type SaleRow,
   type SaleRowApi,
@@ -85,9 +89,7 @@ export function useSalesPageController() {
     weight: '',
     rubberPercent: '',
     pricePerUnit: '',
-    expenseType: '',
-    expenseCost: '',
-    expenseNote: '',
+    expenses: [],
     sellingType: SELLING_TYPES[0],
   }));
 
@@ -320,9 +322,7 @@ export function useSalesPageController() {
       weight: '',
       rubberPercent: '',
       pricePerUnit: '',
-      expenseType: '',
-      expenseCost: '',
-      expenseNote: '',
+      expenses: [],
       sellingType: SELLING_TYPES[0],
     }));
     setCompanySearchTerm('');
@@ -330,6 +330,30 @@ export function useSalesPageController() {
     setEditingSaleId(null);
     setFieldErrors({});
   }, []);
+
+  const handleAddExpense = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      expenses: [...prev.expenses, createEmptyExpenseLine()],
+    }));
+  }, []);
+
+  const handleRemoveExpense = useCallback((expenseId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      expenses: prev.expenses.filter((e) => e.id !== expenseId),
+    }));
+  }, []);
+
+  const handleExpenseChange = useCallback(
+    (expenseId: string, field: keyof Omit<SaleExpenseLine, 'id'>, value: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        expenses: prev.expenses.map((e) => (e.id === expenseId ? { ...e, [field]: value } : e)),
+      }));
+    },
+    [],
+  );
 
   const refreshStock = useCallback(async () => {
     const stockRes = await fetch('/api/stock/positions');
@@ -392,9 +416,19 @@ export function useSalesPageController() {
         body: JSON.stringify(isEditing ? payload : { ...payload, userId: user.id }),
       });
 
-      const data = (await res.json()) as SaleRowApi & { error?: string };
+      const data = (await res.json()) as SaleRowApi & { error?: string; details?: string };
       if (!res.ok) {
-        setError(data.error || (isEditing ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย'));
+        if (data.error === 'ไม่พบข้อมูลผู้ใช้') {
+          clearAuthSession();
+          setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+          router.push('/login');
+          return;
+        }
+        setError(
+          data.details
+            ? `${data.error}: ${data.details}`
+            : data.error || (isEditing ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย'),
+        );
         return;
       }
 
@@ -419,12 +453,13 @@ export function useSalesPageController() {
     loadSales,
     refreshStock,
     resetForm,
+    router,
     selectedStockInfo?.quantityKg,
     user?.id,
   ]);
 
   const handleEdit = useCallback(
-    (row: SaleRow) => {
+    async (row: SaleRow) => {
       if (editingSaleId === row.id) {
         setError('');
         resetForm();
@@ -441,6 +476,18 @@ export function useSalesPageController() {
         matched ? `${matched.code} - ${matched.name}` : row.companyName,
       );
       setShowCompanyDropdown(false);
+
+      let expenses = expensesFromSaleRow(row);
+      try {
+        const detailRes = await fetch(`/api/sales/${row.id}`);
+        if (detailRes.ok) {
+          const detail = (await detailRes.json()) as SaleRowApi;
+          expenses = expensesFromSaleRow(normalizeSaleRow(detail));
+        }
+      } catch {
+        // Fall back to list-row data (legacy / denormalized fields)
+      }
+
       setFormData({
         date: toInputDate(row.date),
         destinationCompanyId: matched?.id ?? companyId,
@@ -449,9 +496,7 @@ export function useSalesPageController() {
         weight: String(row.weight),
         rubberPercent: row.rubberPercent != null ? String(row.rubberPercent) : '',
         pricePerUnit: String(row.pricePerUnit),
-        expenseType: row.expenseType ?? '',
-        expenseCost: row.expenseCost != null ? String(row.expenseCost) : '',
-        expenseNote: row.expenseNote ?? '',
+        expenses,
         sellingType: row.sellingType,
       });
     },
@@ -539,6 +584,9 @@ export function useSalesPageController() {
     handleCompanySearchChange,
     handleCompanySelect,
     clearCompanySearch,
+    handleAddExpense,
+    handleRemoveExpense,
+    handleExpenseChange,
     setCurrentPage,
     handleSearchChange,
     handleClearSearch,

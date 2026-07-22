@@ -3,7 +3,12 @@
 import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
-import { computeTotalPreview, isSalesFormSubmitReady } from '@/app/(authenticated)/sales/page.utils';
+import {
+  computeTotalPreview,
+  isSalesFormSubmitReady,
+  type SaleExpenseLine,
+  type SaleFormData,
+} from '@/app/(authenticated)/sales/page.utils';
 import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
 import {
   getSalesFormCardBorderClass,
@@ -19,19 +24,6 @@ interface ProductType {
   name: string;
 }
 
-interface SaleFormData {
-  date: string;
-  destinationCompanyId: string;
-  companyName: string;
-  productTypeId: string;
-  weight: string;
-  rubberPercent: string;
-  pricePerUnit: string;
-  expenseType: string;
-  expenseCost: string;
-  expenseNote: string;
-  sellingType: string;
-}
 type SalesFormFieldName =
   | 'date'
   | 'destinationCompanyId'
@@ -40,9 +32,6 @@ type SalesFormFieldName =
   | 'weight'
   | 'rubberPercent'
   | 'pricePerUnit'
-  | 'expenseType'
-  | 'expenseCost'
-  | 'expenseNote'
   | 'sellingType';
 
 function Field({
@@ -84,6 +73,9 @@ export interface SalesFormCardProps {
   onCompanySelect: (company: DestinationCompany) => void;
   onClearCompanySearch: () => void;
   onShowCompanyDropdown: (show: boolean) => void;
+  onAddExpense: () => void;
+  onRemoveExpense: (expenseId: string) => void;
+  onExpenseChange: (expenseId: string, field: keyof Omit<SaleExpenseLine, 'id'>, value: string) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSave: () => void;
   onCancelEdit?: () => void;
@@ -125,6 +117,9 @@ export default function SalesFormCard({
   onCompanySelect,
   onClearCompanySearch,
   onShowCompanyDropdown,
+  onAddExpense,
+  onRemoveExpense,
+  onExpenseChange,
   onInputChange,
   onSave,
   onCancelEdit,
@@ -242,7 +237,11 @@ export default function SalesFormCard({
         className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40 ${layout.headerBtnPad} border-b border-gray-200 dark:border-gray-600`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h2 className={`min-w-0 ${layout.titleClass}`}>{titleText}</h2>
+          <h2 className={`min-w-0 ${layout.titleClass}`}>
+            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+              {titleText}
+            </span>
+          </h2>
           {!isOpen && error ? (
             <span
               className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-200"
@@ -483,45 +482,90 @@ export default function SalesFormCard({
             </div>
 
             <div
-              className={`relative z-0 flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
+              className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
             >
-              <Field label="ชนิดค่าใช้จ่าย" className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
-                <select
-                  name="expenseType"
-                  value={formData.expenseType}
-                  onChange={onInputChange}
-                  disabled={isFieldDisabled('expenseType')}
-                  className={getInputClass('expenseType')}
-                >
-                  <option value="">ไม่ระบุ</option>
-                  {EXPENSE_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">ค่าใช้จ่าย</span>
+                {!isEditing ? (
+                  <button
+                    type="button"
+                    data-testid="sales-add-expense"
+                    onClick={onAddExpense}
+                    disabled={saving}
+                    className={`shrink-0 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50 ${
+                      compact ? 'px-3 py-1 text-sm font-medium' : 'px-4 py-2 text-base font-medium'
+                    }`}
+                  >
+                    + เพิ่มค่าใช้จ่าย
+                  </button>
+                ) : null}
+              </div>
+
+              {formData.expenses.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isEditing ? 'ไม่มีค่าใช้จ่าย' : 'ยังไม่มีค่าใช้จ่าย — กด “เพิ่มค่าใช้จ่าย” หากต้องการ'}
+                </p>
+              ) : (
+                <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
+                  {formData.expenses.map((line, index) => (
+                    <div
+                      key={line.id}
+                      data-testid={`sales-expense-row-${index}`}
+                      className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0`}
+                    >
+                      <Field label={index === 0 ? 'ชนิดค่าใช้จ่าย' : ''} className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
+                        <select
+                          value={line.type}
+                          onChange={(e) => onExpenseChange(line.id, 'type', e.target.value)}
+                          disabled={isEditing || saving}
+                          className={getInputClass('sellingType')}
+                        >
+                          <option value="">เลือกชนิด</option>
+                          {EXPENSE_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label={index === 0 ? 'จำนวนเงิน (บาท)' : ''} className="min-w-[7.5rem] max-w-[9rem]">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={line.amount}
+                          onChange={(e) => onExpenseChange(line.id, 'amount', e.target.value)}
+                          disabled={isEditing || saving}
+                          className={getInputClass('sellingType')}
+                        />
+                      </Field>
+                      <Field label={index === 0 ? 'หมายเหตุ' : ''} className="min-w-[12rem] max-w-[20rem] flex-[1.5]">
+                        <input
+                          value={line.note}
+                          onChange={(e) => onExpenseChange(line.id, 'note', e.target.value)}
+                          disabled={isEditing || saving}
+                          placeholder="เช่น ค่าขนส่ง..."
+                          className={getInputClass('sellingType')}
+                        />
+                      </Field>
+                      {!isEditing ? (
+                        <button
+                          type="button"
+                          aria-label="ลบค่าใช้จ่าย"
+                          onClick={() => onRemoveExpense(line.id)}
+                          disabled={saving}
+                          className={`shrink-0 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30 ${
+                            compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'
+                          }`}
+                        >
+                          ลบ
+                        </button>
+                      ) : null}
+                    </div>
                   ))}
-                </select>
-              </Field>
-              <Field label="ค่าใช้จ่าย (บาท)" className="min-w-[7.5rem] max-w-[9rem]">
-                <input
-                  type="number"
-                  step="0.01"
-                  name="expenseCost"
-                  value={formData.expenseCost}
-                  onChange={onInputChange}
-                  disabled={isFieldDisabled('expenseCost')}
-                  className={getInputClass('expenseCost')}
-                />
-              </Field>
-              <Field label="หมายเหตุค่าใช้จ่าย" className="min-w-[10rem] flex-[1.5]">
-                <input
-                  name="expenseNote"
-                  value={formData.expenseNote}
-                  onChange={onInputChange}
-                  disabled={isFieldDisabled('expenseNote')}
-                  placeholder="เช่น ค่าขนส่ง..."
-                  className={getInputClass('expenseNote')}
-                />
-              </Field>
+                </div>
+              )}
+
               <div
                 className={`flex w-full shrink-0 flex-wrap items-center xl:ml-auto xl:w-auto xl:justify-end ${compact ? 'gap-2' : 'gap-3 pb-0.5'}`}
               >

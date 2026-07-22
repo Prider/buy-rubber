@@ -4,6 +4,21 @@ export interface ProductType {
   name: string;
 }
 
+export interface SaleExpenseLine {
+  id: string;
+  type: string;
+  amount: string;
+  note: string;
+}
+
+export interface SaleExpenseApi {
+  id?: string;
+  type: string;
+  amount: number;
+  note?: string | null;
+  sortOrder?: number;
+}
+
 export interface SaleRow {
   id: string;
   saleNo: string;
@@ -18,6 +33,7 @@ export interface SaleRow {
   expenseType: string | null;
   expenseCost: number | null;
   expenseNote: string | null;
+  expenses?: SaleExpenseApi[];
   sellingType: string;
   totalAmount: number;
 }
@@ -30,15 +46,14 @@ export interface SaleFormData {
   weight: string;
   rubberPercent: string;
   pricePerUnit: string;
-  expenseType: string;
-  expenseCost: string;
-  expenseNote: string;
+  expenses: SaleExpenseLine[];
   sellingType: string;
 }
 
 export type SaleRowApi = Omit<SaleRow, 'expenseNote'> & {
   notes?: string | null;
   expenseNote?: string | null;
+  expenses?: SaleExpenseApi[];
 };
 
 export interface SalesPagination {
@@ -50,6 +65,15 @@ export interface SalesPagination {
 }
 
 export const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'];
+
+export function createEmptyExpenseLine(): SaleExpenseLine {
+  return {
+    id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: '',
+    amount: '',
+    note: '',
+  };
+}
 
 export function getTodayDate(): string {
   const now = new Date();
@@ -80,6 +104,14 @@ export function parseRequiredNumber(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Sum expense line amounts (empty/invalid lines count as 0). */
+export function sumExpenses(expenses: SaleExpenseLine[]): number {
+  return expenses.reduce((sum, line) => {
+    const amount = parseOptionalNumber(line.amount);
+    return sum + (amount != null && amount >= 0 ? amount : 0);
+  }, 0);
+}
+
 /** True when required sale fields are filled. Allows pricePerUnit === 0. */
 export function isSalesFormSubmitReady(formData: SaleFormData): boolean {
   if (
@@ -94,14 +126,24 @@ export function isSalesFormSubmitReady(formData: SaleFormData): boolean {
 
   const weight = parseRequiredNumber(formData.weight);
   const pricePerUnit = parseRequiredNumber(formData.pricePerUnit);
-  // weight must be > 0; price may be 0 (e.g. free / sample sale)
-  return weight != null && weight > 0 && pricePerUnit != null && pricePerUnit >= 0;
+  if (weight == null || weight <= 0 || pricePerUnit == null || pricePerUnit < 0) {
+    return false;
+  }
+
+  // Expense lines with amount must have a type; negative amounts invalid
+  for (const line of formData.expenses) {
+    const amount = parseOptionalNumber(line.amount);
+    if (amount != null && amount < 0) return false;
+    if (amount != null && amount > 0 && !line.type.trim()) return false;
+  }
+
+  return true;
 }
 
 export function computeTotalPreview(formData: SaleFormData): number {
   const w = parseRequiredNumber(formData.weight) ?? 0;
   const p = parseRequiredNumber(formData.pricePerUnit) ?? 0;
-  const expenseCost = parseOptionalNumber(formData.expenseCost) ?? 0;
+  const expenseCost = sumExpenses(formData.expenses);
   const total = w * p - expenseCost;
   return total > 0 ? total : 0;
 }
@@ -143,11 +185,78 @@ export function getVisiblePageNumbers(
 }
 
 export function normalizeSaleRow(row: SaleRowApi): SaleRow {
-  const { notes, expenseNote, ...rest } = row;
-  return { ...rest, expenseNote: expenseNote ?? notes ?? null };
+  const { notes, expenseNote, expenses, ...rest } = row;
+  return {
+    ...rest,
+    expenseNote: expenseNote ?? notes ?? null,
+    expenses: expenses ?? [],
+  };
+}
+
+/** Map API sale (or legacy single fields) into form expense lines. */
+export function expensesFromSaleRow(row: SaleRow): SaleExpenseLine[] {
+  if (row.expenses && row.expenses.length > 0) {
+    return row.expenses.map((e, index) => ({
+      id: e.id ?? `exp-${index}`,
+      type: e.type || '',
+      amount: e.amount != null ? String(e.amount) : '',
+      note: e.note ?? '',
+    }));
+  }
+
+  // Legacy fallback: single expenseType / expenseCost / notes
+  if (row.expenseType || (row.expenseCost != null && row.expenseCost > 0) || row.expenseNote) {
+    return [
+      {
+        id: `legacy-${row.id}`,
+        type: row.expenseType || '',
+        amount: row.expenseCost != null ? String(row.expenseCost) : '',
+        note: row.expenseNote || '',
+      },
+    ];
+  }
+
+  return [];
+}
+
+export function formatExpenseTypeLabel(
+  expenseType: string | null,
+  expenses?: SaleExpenseApi[] | null,
+): string {
+  if (expenses && expenses.length > 1) {
+    const first = expenses[0]?.type || expenseType || '-';
+    return `${first} (+${expenses.length - 1})`;
+  }
+  if (expenses && expenses.length === 1) {
+    return expenses[0]?.type || expenseType || '-';
+  }
+  return expenseType || '-';
 }
 
 export function buildSalePayload(formData: SaleFormData) {
+  const expenseLines = formData.expenses
+    .map((line) => {
+      const amount = parseOptionalNumber(line.amount);
+      return {
+        type: line.type.trim(),
+        amount: amount ?? 0,
+        note: line.note.trim() ? line.note.trim() : null,
+      };
+    })
+    .filter((line) => line.type || line.amount > 0 || line.note);
+
+  const expenseCost = expenseLines.reduce((sum, line) => sum + line.amount, 0);
+  const firstType = expenseLines.find((l) => l.type)?.type || null;
+  const notes = expenseLines
+    .map((l) => l.note)
+    .filter(Boolean)
+    .join('; ');
+
+  const expenseType =
+    expenseLines.length > 1 && firstType
+      ? `${firstType} (+${expenseLines.length - 1})`
+      : firstType;
+
   return {
     date: formData.date,
     destinationCompanyId: formData.destinationCompanyId,
@@ -156,9 +265,10 @@ export function buildSalePayload(formData: SaleFormData) {
     weight: parseRequiredNumber(formData.weight),
     rubberPercent: formData.rubberPercent === '' ? null : parseFloat(formData.rubberPercent),
     pricePerUnit: parseRequiredNumber(formData.pricePerUnit),
-    expenseType: formData.expenseType || null,
-    expenseCost: parseOptionalNumber(formData.expenseCost),
-    notes: formData.expenseNote.trim() ? formData.expenseNote : null,
+    expenses: expenseLines,
+    expenseType,
+    expenseCost: expenseCost > 0 ? expenseCost : null,
+    notes: notes || null,
     sellingType: formData.sellingType,
   };
 }
