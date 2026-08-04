@@ -4,6 +4,8 @@ import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AlertProvider } from '@/contexts/AlertContext';
+import { LicenseProvider } from '@/contexts/LicenseContext';
+import LicenseGate from '@/components/LicenseGate';
 
 export const metadata: Metadata = {
   title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อยาง',
@@ -41,15 +43,17 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <AuthProvider>
-          <AppModeProvider>
-            <DarkModeProvider>
-              <AlertProvider>
-                {children}
-              </AlertProvider>
-            </DarkModeProvider>
-          </AppModeProvider>
-        </AuthProvider>
+        <LicenseProvider>
+          <AuthProvider>
+            <AppModeProvider>
+              <DarkModeProvider>
+                <AlertProvider>
+                  <LicenseGate>{children}</LicenseGate>
+                </AlertProvider>
+              </DarkModeProvider>
+            </AppModeProvider>
+          </AuthProvider>
+        </LicenseProvider>
       </body>
     </html>
   );

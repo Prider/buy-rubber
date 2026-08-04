@@ -175,6 +175,40 @@ ipcMain.handle('get-db-path', () => {
   return path.join(userDataPath, 'prisma', 'dev.db');
 });
 
+function getLicenseFilePath() {
+  return path.join(app.getPath('userData'), 'license.lkey');
+}
+
+ipcMain.handle('license:read', () => {
+  const licensePath = getLicenseFilePath();
+  try {
+    if (!fs.existsSync(licensePath)) return null;
+    return fs.readFileSync(licensePath, 'utf8');
+  } catch (error) {
+    mainLog('license:read failed: ' + (error && error.message));
+    return null;
+  }
+});
+
+ipcMain.handle('license:write', (_event, contents) => {
+  if (typeof contents !== 'string' || !contents.trim()) {
+    throw new Error('License file contents required');
+  }
+  const licensePath = getLicenseFilePath();
+  fs.writeFileSync(licensePath, contents, 'utf8');
+  return true;
+});
+
+ipcMain.handle('license:clear', () => {
+  const licensePath = getLicenseFilePath();
+  try {
+    if (fs.existsSync(licensePath)) fs.unlinkSync(licensePath);
+  } catch (error) {
+    mainLog('license:clear failed: ' + (error && error.message));
+  }
+  return true;
+});
+
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
