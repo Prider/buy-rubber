@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import {
+  computeSaleProfitPreview,
   computeTotalPreview,
   isSalesFormSubmitReady,
   type SaleExpenseLine,
@@ -130,6 +131,10 @@ export default function SalesFormCard({
   const companySearchRef = useRef<HTMLInputElement>(null);
   const companyDropdownRef = useRef<HTMLDivElement>(null);
   const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
+  const profitPreview = useMemo(
+    () => computeSaleProfitPreview(formData, selectedAvgCostPerKg),
+    [formData, selectedAvgCostPerKg],
+  );
   const submitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
@@ -446,10 +451,32 @@ export default function SalesFormCard({
                   className={getInputClass('rubberPercent')}
                 />
               </Field>
-              <Field label="น้ำหนัก (กก.)" className="min-w-[7rem] max-w-[8rem]">
+              <Field label="น้ำหนัก (กก.)" className="min-w-[8.5rem] max-w-[10rem]">
                 {formData.productTypeId ? (
-                  <div className="mb-1 text-[11px] text-red-500 dark:text-red-400">
-                    คงเหลือ: <span className="font-semibold">{selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'}</span> กก.
+                  <div className="mb-1 flex items-center gap-1 text-[11px] text-red-500 dark:text-red-400">
+                    <span className="min-w-0 truncate">
+                      คงเหลือ:{' '}
+                      <span className="font-semibold">
+                        {selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'}
+                      </span>{' '}
+                      กก.
+                    </span>
+                    {selectedStockKg != null && !isFieldDisabled('weight') ? (
+                      <button
+                        type="button"
+                        data-testid="sales-fill-weight-stock"
+                        title="เติมน้ำหนักคงเหลือทั้งหมด"
+                        disabled={saving}
+                        onClick={() => {
+                          onInputChange({
+                            target: { name: 'weight', value: String(selectedStockKg) },
+                          } as React.ChangeEvent<HTMLInputElement>);
+                        }}
+                        className="shrink-0 rounded border border-red-300 bg-red-50 px-1 py-0.5 text-[10px] font-medium leading-none text-red-600 hover:bg-red-100 disabled:opacity-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                      >
+                        ทั้งหมด
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
                 <input
@@ -462,10 +489,31 @@ export default function SalesFormCard({
                   className={getInputClass('weight')}
                 />
               </Field>
-              <Field label="ราคา/กก." className="min-w-[7rem] max-w-[8rem]">
+              <Field label="ราคา/กก." className="min-w-[8.5rem] max-w-[10rem]">
                 {formData.productTypeId ? (
-                  <div className="mb-1 text-[11px] text-red-500 dark:text-red-500">
-                    ต้นทุนเฉลี่ย: <span className="font-semibold">{selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}</span>
+                  <div className="mb-1 flex items-center gap-1 text-[11px] text-red-500 dark:text-red-400">
+                    <span className="min-w-0 truncate">
+                      ต้นทุนเฉลี่ย:{' '}
+                      <span className="font-semibold">
+                        {selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}
+                      </span>
+                    </span>
+                    {selectedAvgCostPerKg != null && !isFieldDisabled('pricePerUnit') ? (
+                      <button
+                        type="button"
+                        data-testid="sales-fill-price-avg-cost"
+                        title="เติมราคาด้วยต้นทุนเฉลี่ย"
+                        disabled={saving}
+                        onClick={() => {
+                          onInputChange({
+                            target: { name: 'pricePerUnit', value: String(selectedAvgCostPerKg) },
+                          } as React.ChangeEvent<HTMLInputElement>);
+                        }}
+                        className="shrink-0 rounded border border-red-300 bg-red-50 px-1 py-0.5 text-[10px] font-medium leading-none text-red-600 hover:bg-red-100 disabled:opacity-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                      >
+                        ต้นทุนเฉลี่ย
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
                 <input
@@ -589,6 +637,24 @@ export default function SalesFormCard({
                   }`}
                 >
                   ยอดรวม: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
+                  {profitPreview != null ? (
+                    <>
+                      <span className="mx-2 text-gray-300 dark:text-gray-500">|</span>
+                      กำไร/ขาดทุน:{' '}
+                      <span
+                        className={`font-semibold ${
+                          profitPreview > 1e-6
+                            ? 'text-green-600 dark:text-green-400'
+                            : profitPreview < -1e-6
+                              ? 'text-red-600 dark:text-red-400'
+                              : ''
+                        }`}
+                      >
+                        {profitPreview > 1e-6 ? '+' : ''}
+                        {formatCurrency(profitPreview)}
+                      </span>
+                    </>
+                  ) : null}
                 </div>
                 <button
                   type="button"

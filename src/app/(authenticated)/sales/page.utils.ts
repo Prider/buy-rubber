@@ -36,6 +36,12 @@ export interface SaleRow {
   expenses?: SaleExpenseApi[];
   sellingType: string;
   totalAmount: number;
+  /** Avg stock cost/kg at sale time (from ledger); null if unknown. */
+  unitCostPerKg?: number | null;
+  /** weight × unitCostPerKg at sale time. */
+  costOfGoods?: number | null;
+  /** totalAmount − costOfGoods (revenue after expenses minus COGS). */
+  profitLoss?: number | null;
 }
 
 export interface SaleFormData {
@@ -146,6 +152,31 @@ export function computeTotalPreview(formData: SaleFormData): number {
   const expenseCost = sumExpenses(formData.expenses);
   const total = w * p - expenseCost;
   return total > 0 ? total : 0;
+}
+
+/** Net profit/loss for one sale: totalAmount (already net of expenses) minus that sale's COGS.
+ * Unlike the stock page (product-level rollup using current avg cost × all sold kg),
+ * this is always for a single sale transaction.
+ */
+export function computeSaleProfitLoss(
+  totalAmount: number,
+  costOfGoods: number | null | undefined,
+): number | null {
+  if (costOfGoods == null || !Number.isFinite(costOfGoods)) return null;
+  if (!Number.isFinite(totalAmount)) return null;
+  return totalAmount - costOfGoods;
+}
+
+/** Live P/L preview while entering a sale: (weight × price − expenses) − (weight × avgCost). */
+export function computeSaleProfitPreview(
+  formData: SaleFormData,
+  avgCostPerKg: number | null | undefined,
+): number | null {
+  if (avgCostPerKg == null || !Number.isFinite(avgCostPerKg) || avgCostPerKg < 0) return null;
+  const weight = parseRequiredNumber(formData.weight);
+  if (weight == null || weight <= 0) return null;
+  const totalAmount = computeTotalPreview(formData);
+  return computeSaleProfitLoss(totalAmount, weight * avgCostPerKg);
 }
 
 export function computePagination(total: number, currentPage: number, pageSize: number): SalesPagination {

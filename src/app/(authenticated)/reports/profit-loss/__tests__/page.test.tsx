@@ -91,6 +91,7 @@ describe('ProfitLossReportPage', () => {
     expect(screen.getByTestId('profit-loss-chart')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Export Excel' })).toBeEnabled();
+    expect(screen.getAllByRole('link', { name: 'ดูต่อกองตามสินค้า' }).length).toBeGreaterThan(0);
   });
 
   it('calls downloadProfitLossPdf when Export PDF is clicked', async () => {

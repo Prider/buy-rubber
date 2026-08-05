@@ -3,7 +3,13 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import type { ChangeEvent } from 'react';
 import SalesPagination from '@/components/sales/SalesPagination';
-import { formatExpenseTypeLabel, type SaleExpenseApi } from '@/app/(authenticated)/sales/page.utils';
+import {
+  computeSaleProfitLoss,
+  formatExpenseTypeLabel,
+  type SaleExpenseApi,
+} from '@/app/(authenticated)/sales/page.utils';
+
+const PNL_EPS = 1e-6;
 
 interface SaleRow {
   id: string;
@@ -21,6 +27,34 @@ interface SaleRow {
   expenses?: SaleExpenseApi[];
   sellingType: string;
   totalAmount: number;
+  /** Cost/kg locked for this sale (ledger at sale time), not current stock avg. */
+  unitCostPerKg?: number | null;
+  /** COGS for this sale only. */
+  costOfGoods?: number | null;
+  profitLoss?: number | null;
+}
+
+/** Per-sale P/L cell — value must be for this row only (not product-level stock P/L). */
+function SaleProfitLossCell({ value }: { value: number | null | undefined }) {
+  if (value == null || !Number.isFinite(value)) {
+    return <span className="text-gray-400 dark:text-gray-500">–</span>;
+  }
+
+  const isGain = value > PNL_EPS;
+  const isLoss = value < -PNL_EPS;
+  const cls = isGain
+    ? 'text-green-600 dark:text-green-400 font-semibold tabular-nums'
+    : isLoss
+      ? 'text-red-600 dark:text-red-400 font-semibold tabular-nums'
+      : 'text-gray-600 dark:text-gray-400 tabular-nums';
+  const prefix = isGain ? '+' : '';
+
+  return (
+    <span className={cls}>
+      {prefix}
+      {formatCurrency(value)}
+    </span>
+  );
 }
 
 interface PaginationInfo {
@@ -154,18 +188,28 @@ export default function SalesTable({
               <th className={`${cellPad} text-left`}>หมายเหตุค่าใช้จ่าย</th>
               <th className={`${cellPad} text-left`}>รูปแบบขาย</th>
               <th className={`${cellPad} text-right`}>ยอดรวม</th>
+              <th className={`${cellPad} text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
+                กำไร/ขาดทุน
+              </th>
               {(onEdit || onDelete) && <th className={`${cellPad} text-center`}>จัดการ</th>}
             </tr>
           </thead>
           <tbody>
             {sales.length === 0 ? (
               <tr>
-                <td colSpan={onEdit || onDelete ? 13 : 12} className={`${cellPad} py-8 text-center text-gray-500`}>
+                <td colSpan={onEdit || onDelete ? 14 : 13} className={`${cellPad} py-8 text-center text-gray-500`}>
                   ยังไม่มีข้อมูลการขาย
                 </td>
               </tr>
             ) : (
-              sales.map((row) => (
+              sales.map((row) => {
+                // Prefer API field; recompute from this row's COGS so P/L stays per-transaction.
+                const profitLoss =
+                  row.profitLoss != null && Number.isFinite(row.profitLoss)
+                    ? row.profitLoss
+                    : computeSaleProfitLoss(row.totalAmount, row.costOfGoods);
+
+                return (
                 <tr
                   key={row.id}
                   className={`${
@@ -186,6 +230,9 @@ export default function SalesTable({
                   <td className={cellPad}>{row.expenseNote || '-'}</td>
                   <td className={cellPad}>{row.sellingType}</td>
                   <td className={`${cellPad} text-right font-semibold`}>{formatCurrency(row.totalAmount)}</td>
+                  <td className={`${cellPad} text-right`}>
+                    <SaleProfitLossCell value={profitLoss} />
+                  </td>
                   {(onEdit || onDelete) && (
                     <td className={`${cellPad} text-center`}>
                       <div className="inline-flex items-center gap-2">
@@ -217,7 +264,8 @@ export default function SalesTable({
                     </td>
                   )}
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

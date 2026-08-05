@@ -137,6 +137,7 @@ export default function StockDetailPage() {
             {error}
           </div>
         ) : null}
+
         <div className="overflow-auto mb-4">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">

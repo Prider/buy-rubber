@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSalePayload,
   computePagination,
+  computeSaleProfitLoss,
+  computeSaleProfitPreview,
   computeTotalPreview,
   expensesFromSaleRow,
   formatExpenseTypeLabel,
@@ -141,6 +143,60 @@ describe('sales page.utils pagination', () => {
       expect(payload.expenseType).toBe('ค่าขนส่ง (+1)');
       expect(payload.expenses).toHaveLength(2);
       expect(payload.notes).toBe('a; b');
+    });
+  });
+
+  describe('computeSaleProfitLoss', () => {
+    it('returns totalAmount minus cost of goods for that sale', () => {
+      expect(computeSaleProfitLoss(4800, 4000)).toBe(800);
+    });
+
+    it('returns a negative value for a loss', () => {
+      expect(computeSaleProfitLoss(3000, 4000)).toBe(-1000);
+    });
+
+    it('returns null when cost of goods is unknown', () => {
+      expect(computeSaleProfitLoss(4500, null)).toBeNull();
+      expect(computeSaleProfitLoss(4500, undefined)).toBeNull();
+    });
+
+    it('differs per sale when totals or COGS differ (not a product rollup)', () => {
+      const saleA = computeSaleProfitLoss(5000, 4000); // +1000
+      const saleB = computeSaleProfitLoss(4500, 4000); // +500
+      expect(saleA).not.toBe(saleB);
+      expect(saleA).toBe(1000);
+      expect(saleB).toBe(500);
+    });
+  });
+
+  describe('computeSaleProfitPreview', () => {
+    const formBase = {
+      date: '2026-07-20',
+      destinationCompanyId: 'dc-1',
+      companyName: 'บริษัท A',
+      productTypeId: 'pt-1',
+      weight: '100',
+      rubberPercent: '',
+      pricePerUnit: '50',
+      expenses: [] as Array<{ id: string; type: string; amount: string; note: string }>,
+      sellingType: 'จ่ายสด',
+    };
+
+    it('computes this transaction only: (price − avgCost) × weight − expenses', () => {
+      expect(computeSaleProfitPreview(formBase, 40)).toBe(1000); // (50-40)*100
+      expect(
+        computeSaleProfitPreview(
+          {
+            ...formBase,
+            expenses: [{ id: '1', type: 'ค่าขนส่ง', amount: '200', note: '' }],
+          },
+          40,
+        ),
+      ).toBe(800); // 1000 - 200
+    });
+
+    it('returns null without avg cost for this sale', () => {
+      expect(computeSaleProfitPreview(formBase, null)).toBeNull();
     });
   });
 

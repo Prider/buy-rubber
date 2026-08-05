@@ -51,12 +51,12 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
   const hasRows = data.length > 0;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Trend overview</h2>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            Expenses vs purchase &amp; sale price per kg
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">แนวโน้ม</h2>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -69,7 +69,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
         </div>
       </div>
 
-      <div className="h-[420px]">
+      <div className="h-[280px]">
         {hasRows ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 8 }}>
