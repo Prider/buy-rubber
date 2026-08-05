@@ -14,6 +14,17 @@ interface ReportFilterCardProps {
   onManageGroups?: () => void;
 }
 
+const inputClass =
+  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40';
+
+function openDatePicker(input: HTMLInputElement) {
+  try {
+    input.showPicker?.();
+  } catch {
+    // showPicker can throw if the input is not user-activated in some browsers
+  }
+}
+
 export default function ReportFilterCard({
   reportType,
   setReportType,
@@ -26,138 +37,103 @@ export default function ReportFilterCard({
   reportGroups = [],
   onManageGroups,
 }: ReportFilterCardProps) {
-  const isDateRangeInvalid =
-    startDate && endDate ? new Date(startDate) > new Date(endDate) : false;
+  const isDateRangeInvalid = startDate && endDate ? new Date(startDate) > new Date(endDate) : false;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-              <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">ตัวกรองรายงาน</h2>
-          </div>
-          {onManageGroups && (
-            <button
-              type="button"
-              onClick={onManageGroups}
-              className="rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
-            >
-              จัดการกลุ่มรายงาน
-            </button>
-          )}
-        </div>
+    <div className="relative z-20 space-y-3 overflow-visible">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">ตัวกรองรายงาน</p>
+        {onManageGroups ? (
+          <button
+            type="button"
+            onClick={onManageGroups}
+            className="text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
+          >
+            จัดการกลุ่มรายงาน
+          </button>
+        ) : null}
       </div>
-      
-      <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <div className="lg:col-span-3">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              ประเภทรายงาน
-            </label>
-            <div className="relative">
-              <select
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value as ReportType)}
-                className="input w-full pl-3 pr-3 py-1.5 appearance-none bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
-              >
-                <option value="daily_purchase">📊 รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
-                {reportGroups.map((group) => (
-                  <option key={group.id} value={group.reportType}>
-                    📊 รายงานรับซื้อประจำวัน - {group.label}
-                  </option>
-                ))}
-                <option value="member_summary">👥 สรุปรายสมาชิกที่รับซื้อยาง</option>
-                <option value="expense_summary">💸 รายงานค่าใช้จ่ายที่เกิดขึ้น</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              วันที่เริ่มต้น
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className={`input w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm ${
-                  isDateRangeInvalid
-                    ? 'border-red-400 focus:border-red-500 dark:border-red-500'
-                    : 'border-gray-200 dark:border-gray-600 focus:border-indigo-500'
-                }`}
-              />
-            </div>
-          </div>
+      <div className="grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+        <div className="sm:col-span-2 lg:col-span-1">
+          <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
+            ประเภทรายงาน
+          </label>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value as ReportType)}
+            className={inputClass}
+          >
+            <option value="daily_purchase">รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
+            {reportGroups.map((group) => (
+              <option key={group.id} value={group.reportType}>
+                รายงานรับซื้อประจำวัน - {group.label}
+              </option>
+            ))}
+            <option value="member_summary">สรุปรายสมาชิกที่รับซื้อยาง</option>
+            <option value="expense_summary">รายงานค่าใช้จ่ายที่เกิดขึ้น</option>
+          </select>
+        </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              วันที่สิ้นสุด
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={`input w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-700 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm ${
-                  isDateRangeInvalid
-                    ? 'border-red-400 focus:border-red-500 dark:border-red-500'
-                    : 'border-gray-200 dark:border-gray-600 focus:border-indigo-500'
-                }`}
-              />
-            </div>
-          </div>
+        <div className="relative z-20 min-w-0">
+          <label
+            htmlFor="report-start-date"
+            className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            วันที่เริ่มต้น
+          </label>
+          <input
+            id="report-start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} relative z-20 cursor-pointer ${
+              isDateRangeInvalid ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100' : ''
+            }`}
+          />
+        </div>
 
-          <div className="flex flex-col">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 opacity-0 pointer-events-none">
-              &nbsp;
-            </label>
-            <button
-              onClick={onGenerate}
-              disabled={loading || isDateRangeInvalid}
-              className="group w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 text-white rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:cursor-not-allowed transform hover:-translate-y-0.5 disabled:transform-none disabled:shadow-none"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>กำลังสร้าง...</span>
-                </>
-              ) : (
-                <>
-                  <svg 
-                    className="w-4 h-4 transition-transform group-hover:scale-110 group-hover:rotate-3" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
-                    />
-                  </svg>
-                  <span>สร้างรายงาน</span>
-                </>
-              )}
-            </button>
-          </div>
+        <div className="relative z-20 min-w-0">
+          <label
+            htmlFor="report-end-date"
+            className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            วันที่สิ้นสุด
+          </label>
+          <input
+            id="report-end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} relative z-20 cursor-pointer ${
+              isDateRangeInvalid ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100' : ''
+            }`}
+          />
+        </div>
+
+        <div className="relative">
+          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+            สร้าง
+          </span>
+          <button
+            type="button"
+            onClick={onGenerate}
+            disabled={loading || isDateRangeInvalid}
+            className="w-full rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          >
+            {loading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
+          </button>
+          {isDateRangeInvalid ? (
+            <p className="pointer-events-none absolute left-0 top-full mt-1.5 text-xs text-rose-600">
+              วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
-

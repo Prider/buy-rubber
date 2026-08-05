@@ -408,7 +408,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Page content — flex-1 + min-h-0 so pages (e.g. sales table) can fill remaining viewport height */}
         <main
-          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-6"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6"
           ref={mainContentRef}
         >
           {children}
