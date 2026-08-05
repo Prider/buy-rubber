@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReportData } from '@/hooks/useReportData';
@@ -67,20 +68,14 @@ export default function ReportsPage() {
   }, [loadGroups]);
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking user
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
     if (!user) {
       router.push('/login');
-      return;
     }
   }, [user, isLoading, router]);
 
   const totalPages = useMemo(() => {
-    if (!data || data.length === 0) {
-      return 1;
-    }
+    if (!data || data.length === 0) return 1;
     return Math.max(1, Math.ceil(data.length / PAGE_SIZE));
   }, [data]);
 
@@ -89,13 +84,11 @@ export default function ReportsPage() {
   const dateRangeLabel = useMemo(
     () =>
       `ระหว่างวันที่ ${new Date(startDate).toLocaleDateString('th-TH')} - ${new Date(endDate).toLocaleDateString('th-TH')}`,
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   const paginatedData = useMemo(() => {
-    if (!data) {
-      return [];
-    }
+    if (!data) return [];
     const startIndex = (tablePage - 1) * PAGE_SIZE;
     return data.slice(startIndex, startIndex + PAGE_SIZE);
   }, [data, tablePage]);
@@ -109,10 +102,7 @@ export default function ReportsPage() {
   const handleGroupsChanged = useCallback(async () => {
     const nextGroups = await loadGroups();
     const selectedGroupId = getDailyPurchaseGroupId(reportType);
-    if (
-      selectedGroupId &&
-      !nextGroups.some((group) => group.id === selectedGroupId)
-    ) {
+    if (selectedGroupId && !nextGroups.some((group) => group.id === selectedGroupId)) {
       setReportType('daily_purchase');
     }
   }, [loadGroups, reportType, setReportType]);
@@ -122,13 +112,14 @@ export default function ReportsPage() {
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      showWarning('ไม่สามารถเปิดหน้าต่างใหม่ได้', 'กรุณาอนุญาตให้เปิดหน้าต่างใหม่เพื่อดูตัวอย่างการพิมพ์\n\nหากใช้เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตสำหรับเว็บไซต์นี้');
+      showWarning(
+        'ไม่สามารถเปิดหน้าต่างใหม่ได้',
+        'กรุณาอนุญาตให้เปิดหน้าต่างใหม่เพื่อดูตัวอย่างการพิมพ์\n\nหากใช้เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตสำหรับเว็บไซต์นี้',
+      );
       return;
     }
 
     const reportTitle = getReportTitle();
-    const dateRange = dateRangeLabel;
-
     let tableContent = '';
     const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
     if (isDailyPurchase) {
@@ -139,7 +130,7 @@ export default function ReportsPage() {
       tableContent = generateExpenseTableHTML(data, expenseSummary);
     }
 
-    const htmlContent = generatePrintPreviewHTML(reportTitle, dateRange, tableContent, data.length);
+    const htmlContent = generatePrintPreviewHTML(reportTitle, dateRangeLabel, tableContent, data.length);
     printWindow.document.write(htmlContent);
     printWindow.document.close();
   }, [data, dateRangeLabel, expenseSummary, getReportTitle, hasData, reportType, showWarning]);
@@ -157,29 +148,31 @@ export default function ReportsPage() {
       totalWeight: getTotalWeight(),
       expenseSummary,
     });
-  }, [data, endDate, expenseSummary, getReportTitle, getTotalAmount, getTotalWeight, hasData, reportType, startDate]);
+  }, [
+    data,
+    endDate,
+    expenseSummary,
+    getReportTitle,
+    getTotalAmount,
+    getTotalWeight,
+    hasData,
+    reportType,
+    startDate,
+  ]);
 
   useEffect(() => {
     setTablePage(1);
   }, [reportType, startDate, endDate]);
 
-  // Adjust tablePage when data or totalPages changes, but avoid infinite loop
   useEffect(() => {
     if (!data || data.length === 0) {
       setTablePage(1);
       return;
     }
-    // Only adjust if current page is out of bounds
     const maxPage = Math.max(1, totalPages);
-    setTablePage((currentPage) => {
-      if (currentPage > maxPage) {
-        return maxPage;
-      }
-      return currentPage;
-    });
+    setTablePage((currentPage) => (currentPage > maxPage ? maxPage : currentPage));
   }, [data, totalPages]);
 
-  // Show loader while auth is loading
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -189,25 +182,31 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* Header Section */}
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
+    <div className="w-full space-y-8 pb-10">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
               รายงาน
             </span>
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">รายงานและวิเคราะห์กิจการรับซื้อยาง</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            รับซื้อ · สมาชิก · ค่าใช้จ่าย
+          </p>
         </div>
+
+        <Link
+          href="/reports/profit-loss"
+          className="inline-flex items-center gap-2 self-start rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 sm:self-auto"
+        >
+          ดูกำไร / ขาดทุน
+          <span aria-hidden className="text-base leading-none">
+            →
+          </span>
+        </Link>
       </div>
 
-      {/* Filter Card */}
       <ReportFilterCard
         reportType={reportType}
         setReportType={setReportType}
@@ -234,10 +233,8 @@ export default function ReportsPage() {
         onRefresh={handleGroupsChanged}
       />
 
-      {/* Report Result */}
       {data && (
         <>
-          {/* Print Styles */}
           <style jsx global>{`
             @media print {
               body * {
@@ -260,7 +257,8 @@ export default function ReportsPage() {
                 border-collapse: collapse;
                 width: 100%;
               }
-              th, td {
+              th,
+              td {
                 border: 1px solid #000;
                 padding: 8px;
                 text-align: left;
@@ -272,7 +270,6 @@ export default function ReportsPage() {
             }
           `}</style>
 
-          {/* Summary Cards */}
           <ReportSummaryCards
             data={data}
             reportType={reportType}
@@ -281,36 +278,36 @@ export default function ReportsPage() {
             expenseSummary={expenseSummary}
           />
 
-          {/* Report Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow duration-300" id="print-area">
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-600 bg-clip-text text-transparent animate-gradient">
-                      {getReportTitle()}
-                    </span>
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {dateRangeLabel}
-                  </p>
-                </div>
-                <ReportActionButtons
-                  onPreview={handlePrintPreview}
-                  onDownloadPDF={handleDownloadPDF}
-                  onPrint={handlePrint}
-                  disabled={!hasData}
-                />
+          <section
+            id="print-area"
+            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getReportTitle()}</h2>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{dateRangeLabel}</p>
               </div>
+              <ReportActionButtons
+                onPreview={handlePrintPreview}
+                onDownloadPDF={handleDownloadPDF}
+                onPrint={handlePrint}
+                disabled={!hasData}
+              />
             </div>
-            
-            <div className="p-6">
+
+            <div className="p-5">
               {(reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:')) && (
                 <DailyPurchaseTable data={paginatedData} offset={rowOffset} />
               )}
-              {reportType === 'member_summary' && <MemberSummaryTable data={paginatedData} offset={rowOffset} />}
+              {reportType === 'member_summary' && (
+                <MemberSummaryTable data={paginatedData} offset={rowOffset} />
+              )}
               {reportType === 'expense_summary' && (
-                <ExpenseReportTable data={paginatedData} categorySummary={expenseSummary} totalAmount={getTotalAmount()} />
+                <ExpenseReportTable
+                  data={paginatedData}
+                  categorySummary={expenseSummary}
+                  totalAmount={getTotalAmount()}
+                />
               )}
               {hasData && totalPages > 1 && (
                 <PaginationControls
@@ -321,10 +318,17 @@ export default function ReportsPage() {
                 />
               )}
             </div>
-          </div>
+          </section>
         </>
       )}
+
+      {!data && !loading ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            เลือกประเภทรายงานและช่วงวันที่ แล้วกดสร้างรายงาน
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
-

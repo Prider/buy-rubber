@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
+import { ListPagination } from '@/components/pagination/ListPagination';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { getExportExcelButtonText, getExportPdfButtonText, isExportDisabled } from '../ui';
@@ -13,7 +14,8 @@ import { downloadGangsExcel } from './exportExcel';
 import { downloadGangsPdf } from './exportPdf';
 
 const PNL_EPS = 1e-6;
-const gangLimit = 10;
+const PAGE_SIZE = 15;
+const EXPORT_LIMIT = 200;
 
 type ProductType = { id: string; code: string; name: string; isActive?: boolean };
 
@@ -26,6 +28,18 @@ type GangCycle = {
   cogs: number;
   profitLoss: number;
   salesCount: number;
+};
+
+type GangsPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+type GangsApiResponse = {
+  data: GangCycle[];
+  pagination: GangsPagination;
 };
 
 function formatThaiDate(value: string | Date | null | undefined): string {
@@ -54,6 +68,19 @@ function ProfitLossText({ value, className = '' }: { value: number; className?: 
   );
 }
 
+function summarizeGangs(rows: GangCycle[]) {
+  return rows.reduce(
+    (acc, g) => {
+      acc.soldKg += g.soldKg || 0;
+      acc.revenue += g.revenue || 0;
+      acc.cogs += g.cogs || 0;
+      acc.profitLoss += g.profitLoss || 0;
+      return acc;
+    },
+    { soldKg: 0, revenue: 0, cogs: 0, profitLoss: 0 },
+  );
+}
+
 export default function ProfitLossGangsReportPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,24 +98,20 @@ export default function ProfitLossGangsReportPage() {
   const [error, setError] = useState('');
   const [gangsError, setGangsError] = useState('');
   const [gangs, setGangs] = useState<GangCycle[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<GangsPagination>({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  });
 
   const selectedProductType = useMemo(
     () => productTypes.find((pt) => pt.id === selectedProductTypeId) ?? null,
     [productTypes, selectedProductTypeId],
   );
 
-  const summary = useMemo(() => {
-    return gangs.reduce(
-      (acc, g) => {
-        acc.soldKg += g.soldKg || 0;
-        acc.revenue += g.revenue || 0;
-        acc.cogs += g.cogs || 0;
-        acc.profitLoss += g.profitLoss || 0;
-        return acc;
-      },
-      { soldKg: 0, revenue: 0, cogs: 0, profitLoss: 0 },
-    );
-  }, [gangs]);
+  const summary = useMemo(() => summarizeGangs(gangs), [gangs]);
 
   const hasRows = gangs.length > 0;
   const exportBusy = exportingPdf || exportingExcel;
@@ -124,6 +147,10 @@ export default function ProfitLossGangsReportPage() {
   }, [isLoading, productTypeIdFromQuery, router, user]);
 
   useEffect(() => {
+    setPage(1);
+  }, [selectedProductTypeId]);
+
+  useEffect(() => {
     if (!selectedProductTypeId) return;
 
     const loadGangs = async () => {
@@ -131,50 +158,84 @@ export default function ProfitLossGangsReportPage() {
         setGangsLoading(true);
         setGangsError('');
 
-        const res = await axios.get<{ data: GangCycle[] }>('/api/stock/gangs', {
-          params: { productTypeId: selectedProductTypeId, page: 1, limit: gangLimit },
+        const res = await axios.get<GangsApiResponse>('/api/stock/gangs', {
+          params: {
+            productTypeId: selectedProductTypeId,
+            page,
+            limit: PAGE_SIZE,
+          },
         });
 
         setGangs(res.data.data || []);
+        setPagination(
+          res.data.pagination || {
+            page,
+            limit: PAGE_SIZE,
+            total: res.data.data?.length ?? 0,
+            totalPages: 1,
+          },
+        );
       } catch (e) {
         logger.error('Failed to load gangs report', e);
         setGangsError('ไม่สามารถโหลดกำไร/ขาดทุนต่อกองได้');
+        setGangs([]);
       } finally {
         setGangsLoading(false);
       }
     };
 
     void loadGangs();
+  }, [page, selectedProductTypeId]);
+
+  const fetchAllGangsForExport = useCallback(async (): Promise<GangCycle[]> => {
+    if (!selectedProductTypeId) return [];
+
+    const res = await axios.get<GangsApiResponse>('/api/stock/gangs', {
+      params: {
+        productTypeId: selectedProductTypeId,
+        page: 1,
+        limit: EXPORT_LIMIT,
+      },
+    });
+
+    return res.data.data || [];
   }, [selectedProductTypeId]);
 
   const handleExportExcel = useCallback(async () => {
     if (!hasRows || !selectedProductType || exportBusy) return;
     setExportingExcel(true);
     try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      const rows = await fetchAllGangsForExport();
+      if (rows.length === 0) return;
       downloadGangsExcel({
-        rows: gangs,
-        summary,
+        rows,
+        summary: summarizeGangs(rows),
         product: { code: selectedProductType.code, name: selectedProductType.name },
       });
+    } catch (e) {
+      logger.error('Failed to export gangs excel', e);
     } finally {
       setExportingExcel(false);
     }
-  }, [exportBusy, gangs, hasRows, selectedProductType, summary]);
+  }, [exportBusy, fetchAllGangsForExport, hasRows, selectedProductType]);
 
   const handleExportPdf = useCallback(async () => {
     if (!hasRows || !selectedProductType || exportBusy) return;
     setExportingPdf(true);
     try {
+      const rows = await fetchAllGangsForExport();
+      if (rows.length === 0) return;
       await downloadGangsPdf({
-        rows: gangs,
-        summary,
+        rows,
+        summary: summarizeGangs(rows),
         product: { code: selectedProductType.code, name: selectedProductType.name },
       });
+    } catch (e) {
+      logger.error('Failed to export gangs pdf', e);
     } finally {
       setExportingPdf(false);
     }
-  }, [exportBusy, gangs, hasRows, selectedProductType, summary]);
+  }, [exportBusy, fetchAllGangsForExport, hasRows, selectedProductType]);
 
   if (isLoading || loading) {
     return (
@@ -203,9 +264,7 @@ export default function ProfitLossGangsReportPage() {
                 กำไร / ขาดทุนต่อกอง
               </span>
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              ล่าสุด {gangLimit} กอง · ตามรอบสต็อกที่ขายจนหมด
-            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">ตามรอบสต็อกที่ขายจนหมด</p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -258,14 +317,14 @@ export default function ProfitLossGangsReportPage() {
         </div>
       ) : null}
 
-      {/* Summary */}
+      {/* Summary (current page) */}
       {!error && !gangsError && gangs.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'ขายได้', value: `${formatNumber(summary.soldKg)} กก.` },
-            { label: 'รายได้', value: formatCurrency(summary.revenue) },
-            { label: 'ต้นทุน', value: formatCurrency(summary.cogs) },
-            { label: 'สุทธิ', value: null as string | null, pnl: summary.profitLoss },
+            { label: 'ขายได้ (หน้านี้)', value: `${formatNumber(summary.soldKg)} กก.` },
+            { label: 'รายได้ (หน้านี้)', value: formatCurrency(summary.revenue) },
+            { label: 'ต้นทุน (หน้านี้)', value: formatCurrency(summary.cogs) },
+            { label: 'สุทธิ (หน้านี้)', value: null as string | null, pnl: summary.profitLoss },
           ].map((item) => (
             <div
               key={item.label}
@@ -298,10 +357,10 @@ export default function ProfitLossGangsReportPage() {
             ) : null}
           </div>
           {gangsLoading ? (
-            <span className="text-xs text-gray-400 animate-pulse">กำลังโหลด...</span>
+            <span className="animate-pulse text-xs text-gray-400">กำลังโหลด...</span>
           ) : (
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-              {gangs.length} กอง
+              {pagination.total} กอง
             </span>
           )}
         </div>
@@ -371,6 +430,12 @@ export default function ProfitLossGangsReportPage() {
           </ul>
         )}
       </section>
+
+      <ListPagination
+        pagination={pagination}
+        loading={gangsLoading}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

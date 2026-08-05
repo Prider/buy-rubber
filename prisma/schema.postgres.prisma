@@ -71,6 +71,7 @@ model ProductType {
   sales              Sale[]
   stockPositions     StockPosition[]
   stockLedgerEntries StockLedgerEntry[]
+  stockGangs         StockGang[]
   reportGroupMembers ReportProductTypeGroupMember[]
 }
 
@@ -207,6 +208,10 @@ model Sale {
   expenseCost           Float?
   sellingType           String
   totalAmount           Float
+  // Avg stock cost/kg at sale time (denormalized for list P/L)
+  unitCostPerKg         Float?
+  // weight * unitCostPerKg at sale time
+  costOfGoods           Float?
   notes                 String?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
@@ -269,7 +274,28 @@ model StockLedgerEntry {
   @@index([productTypeId, refType])
   @@index([date])
   @@index([refType])
+  @@index([refType, refNo])
   @@index([refId])
+}
+
+// กองสต็อกที่คำนวณไว้ล่วงหน้า (balance 0 → >0 → 0) สำหรับรายงานกำไร/ขาดทุนต่อกอง
+model StockGang {
+  id            String      @id @default(uuid())
+  productTypeId String
+  gangNo        Int
+  startDate     DateTime
+  endDate       DateTime?
+  soldKg        Float       @default(0)
+  cogs          Float       @default(0)
+  saleNosJson   String      @default("[]")
+  salesCount    Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  productType   ProductType @relation(fields: [productTypeId], references: [id])
+
+  @@unique([productTypeId, gangNo])
+  @@index([productTypeId, gangNo])
+  @@index([productTypeId, startDate])
 }
 
 // กลุ่มประเภทสินค้าสำหรับรายงานรับซื้อประจำวัน (ผู้ใช้กำหนดเอง)

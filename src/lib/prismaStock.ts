@@ -1,7 +1,7 @@
 /**
  * Stock-related Prisma delegates. Some TS/IDE setups fail to expose `stockPosition` /
- * `stockLedgerEntry` on `PrismaClient` (symbol index on the generated class). Runtime
- * always has these after `npx prisma generate`.
+ * `stockLedgerEntry` / `stockGang` on `PrismaClient` (symbol index on the generated class).
+ * Runtime always has these after `npx prisma generate`.
  */
 import { prisma } from '@/lib/prisma';
 
@@ -19,7 +19,22 @@ type StockLedgerDelegate = {
 	createMany(args?: unknown): Promise<unknown>;
 };
 
-const asStock = prisma as unknown as { stockPosition: StockPositionDelegate; stockLedgerEntry: StockLedgerDelegate };
+type StockGangDelegate = {
+	findMany(args?: unknown): Promise<unknown[]>;
+	findFirst(args?: unknown): Promise<unknown | null>;
+	count(args?: unknown): Promise<number>;
+	deleteMany(args?: unknown): Promise<unknown>;
+	createMany(args?: unknown): Promise<unknown>;
+	create(args?: unknown): Promise<unknown>;
+	update(args?: unknown): Promise<unknown>;
+};
+
+const asStock = prisma as unknown as {
+	stockPosition: StockPositionDelegate;
+	stockLedgerEntry: StockLedgerDelegate;
+	stockGang: StockGangDelegate;
+};
 
 export const stockPosition = asStock.stockPosition;
 export const stockLedgerEntry = asStock.stockLedgerEntry;
+export const stockGang = asStock.stockGang;

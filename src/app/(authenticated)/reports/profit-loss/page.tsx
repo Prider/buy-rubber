@@ -26,10 +26,18 @@ import {
 } from './ui';
 import { isDateRangeInvalid, periodLabel, toInputDate } from './utils';
 
-const PNL_EPS = 1e-6;
-
 const inputClass =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40';
+
+function openDatePicker(input: HTMLInputElement) {
+  try {
+    input.showPicker?.();
+  } catch {
+    // ignore
+  }
+}
+
+const PNL_EPS = 1e-6;
 
 function pnlTone(value: number): string {
   if (value > PNL_EPS) return 'text-emerald-600 dark:text-emerald-400';
@@ -177,8 +185,8 @@ export default function ProfitLossReportPage() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
-        <div>
+      <div className="relative z-20 grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+        <div className="relative z-20 min-w-0">
           <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
             วันที่เริ่มต้น
           </label>
@@ -186,10 +194,12 @@ export default function ProfitLossReportPage() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className={inputClass}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} cursor-pointer`}
           />
         </div>
-        <div>
+        <div className="relative z-20 min-w-0">
           <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
             วันที่สิ้นสุด
           </label>
@@ -197,7 +207,9 @@ export default function ProfitLossReportPage() {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className={inputClass}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} cursor-pointer`}
           />
         </div>
         <div>
@@ -214,7 +226,10 @@ export default function ProfitLossReportPage() {
             <option value="daily">รายวัน</option>
           </select>
         </div>
-        <div>
+        <div className="relative">
+          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+            อัปเดต
+          </span>
           <button
             type="button"
             onClick={() => void fetchData()}
@@ -224,7 +239,9 @@ export default function ProfitLossReportPage() {
             {loading ? 'กำลังโหลด...' : 'อัปเดตรายงาน'}
           </button>
           {rangeInvalid ? (
-            <p className="mt-1.5 text-xs text-rose-600">วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด</p>
+            <p className="pointer-events-none absolute left-0 top-full mt-1.5 text-xs text-rose-600">
+              วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด
+            </p>
           ) : null}
         </div>
       </div>

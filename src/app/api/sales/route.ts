@@ -26,12 +26,18 @@ type SaleRecord = {
   expenseCost: number | null;
   sellingType: string;
   totalAmount: number;
+  unitCostPerKg: number | null;
+  costOfGoods: number | null;
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
   productType?: { id: string; code: string; name: string };
   user?: { id: string; username: string };
   expenses?: Array<{ id: string; type: string; amount: number; note: string | null; sortOrder: number }>;
+};
+
+type SaleWithProfit = SaleRecord & {
+  profitLoss: number | null;
 };
 
 type SaleDelegate = {
@@ -58,11 +64,36 @@ const saleListSelect = {
   expenseCost: true,
   sellingType: true,
   totalAmount: true,
+  unitCostPerKg: true,
+  costOfGoods: true,
   notes: true,
   createdAt: true,
   updatedAt: true,
   productType: { select: { id: true, code: true, name: true } },
 };
+
+/** Derive P/L from denormalized Sale COGS columns (no ledger join). */
+function withSaleProfitLoss(sales: SaleRecord[]): SaleWithProfit[] {
+  return sales.map((sale) => {
+    const unitCostPerKg =
+      sale.unitCostPerKg != null && Number.isFinite(Number(sale.unitCostPerKg))
+        ? Number(sale.unitCostPerKg)
+        : null;
+    let costOfGoods =
+      sale.costOfGoods != null && Number.isFinite(Number(sale.costOfGoods))
+        ? Number(sale.costOfGoods)
+        : null;
+    if (costOfGoods == null && unitCostPerKg != null) {
+      costOfGoods = sale.weight * unitCostPerKg;
+    }
+    return {
+      ...sale,
+      unitCostPerKg,
+      costOfGoods,
+      profitLoss: costOfGoods != null ? sale.totalAmount - costOfGoods : null,
+    };
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -157,8 +188,10 @@ export async function GET(request: NextRequest) {
         asSale.sale.count({ where }),
       ]);
 
+      const data = withSaleProfitLoss(sales);
+
       return NextResponse.json({
-        data: sales,
+        data,
         pagination: {
           page,
           limit,
@@ -176,7 +209,7 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
-    return NextResponse.json(sales);
+    return NextResponse.json(withSaleProfitLoss(sales));
   } catch (error) {
     logger.error('GET /api/sales failed', error);
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลการขาย' }, { status: 500 });
@@ -246,7 +279,7 @@ export async function POST(request: NextRequest) {
     const totalAmount = weight * pricePerUnit - (expenseCost || 0);
 
     const sale = await prisma.$transaction(async (tx) => {
-      await applySaleToStock(tx, {
+      const stockCost = await applySaleToStock(tx, {
         productTypeId: data.productTypeId,
         qtyKg: weight,
         refNo: saleNo,
@@ -277,6 +310,8 @@ export async function POST(request: NextRequest) {
           expenseCost,
           sellingType: String(data.sellingType),
           totalAmount,
+          unitCostPerKg: stockCost?.unitCostPerKg ?? null,
+          costOfGoods: stockCost?.costOfGoods ?? null,
           notes,
           expenses: {
             create: expenses.map((e, index) => ({

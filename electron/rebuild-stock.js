@@ -19,6 +19,7 @@ async function rebuildStock(databaseUrl) {
   );
 
   try {
+    await prisma.stockGang.deleteMany({});
     await prisma.stockLedgerEntry.deleteMany({});
     await prisma.stockPosition.deleteMany({});
 
@@ -158,9 +159,78 @@ async function rebuildStock(databaseUrl) {
       });
     }
 
+    // Materialize StockGang rows from ledger (balance 0 → >0 → 0)
+    const byProduct = new Map();
+    for (const e of ledgerEntries) {
+      if (!byProduct.has(e.productTypeId)) byProduct.set(e.productTypeId, []);
+      byProduct.get(e.productTypeId).push(e);
+    }
+
+    let gangCount = 0;
+    const gangRows = [];
+    for (const [productTypeId, entries] of byProduct.entries()) {
+      let prevBalance = 0;
+      let inGang = false;
+      let gangCounter = 0;
+      let current = null;
+
+      for (const e of entries) {
+        const currBalance = Number(e.balanceQtyKg) || 0;
+        if (!inGang && prevBalance <= EPS && currBalance > EPS) {
+          inGang = true;
+          gangCounter += 1;
+          current = {
+            productTypeId,
+            gangNo: gangCounter,
+            startDate: e.date,
+            endDate: null,
+            soldKg: 0,
+            cogs: 0,
+            saleNos: [],
+          };
+          gangRows.push(current);
+        }
+
+        if (inGang && e.refType === 'SALE' && e.refNo) {
+          const cogsAdd =
+            e.totalCost != null && Number.isFinite(Number(e.totalCost)) ? Number(e.totalCost) : 0;
+          const soldKgAdd = Number(e.qtyChangeKg) < 0 ? -Number(e.qtyChangeKg) : Number(e.qtyChangeKg);
+          current.soldKg += soldKgAdd;
+          current.cogs += cogsAdd;
+          if (!current.saleNos.includes(e.refNo)) current.saleNos.push(e.refNo);
+        }
+
+        if (inGang && prevBalance > EPS && currBalance <= EPS) {
+          current.endDate = e.date;
+          inGang = false;
+          current = null;
+        }
+
+        prevBalance = currBalance;
+      }
+      gangCount += gangCounter;
+    }
+
+    for (let i = 0; i < gangRows.length; i += chunkSize) {
+      const chunk = gangRows.slice(i, i + chunkSize);
+      await prisma.stockGang.createMany({
+        data: chunk.map((g) => ({
+          productTypeId: g.productTypeId,
+          gangNo: g.gangNo,
+          startDate: g.startDate,
+          endDate: g.endDate,
+          soldKg: g.soldKg,
+          cogs: g.cogs,
+          saleNosJson: JSON.stringify(g.saleNos),
+          salesCount: g.saleNos.length,
+        })),
+      });
+    }
+
     return {
       positions: positionsData.length,
       ledgerEntries: ledgerEntries.length,
+      gangs: gangCount,
       purchases: purchases.length,
       sales: sales.length,
     };
@@ -178,6 +248,7 @@ if (require.main === module) {
         '✅ rebuildStock: done',
         `positions=${result.positions}`,
         `ledgerEntries=${result.ledgerEntries}`,
+        `gangs=${result.gangs}`,
       );
     })
     .catch((error) => {

@@ -32,6 +32,9 @@ async function main() {
   console.log('   - ลบค่าใช้จ่าย');
   
   // ลบข้อมูลหลักหลังจากลบข้อมูลที่อ้างอิงแล้ว
+  await prisma.stockGang.deleteMany({});
+  console.log('   - ลบกองสต็อก');
+
   await prisma.stockLedgerEntry.deleteMany({});
   console.log('   - ลบรายการสต็อก');
 

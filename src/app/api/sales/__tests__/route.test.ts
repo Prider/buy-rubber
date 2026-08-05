@@ -36,7 +36,7 @@ vi.mock('@/lib/stock/stockService', () => ({
   StockInsufficientError: class StockInsufficientError extends Error {},
 }));
 
-function makeSale(id: string) {
+function baseSale(id: string) {
   return {
     id,
     saleNo: `SAL-${id}`,
@@ -51,10 +51,25 @@ function makeSale(id: string) {
     expenseCost: null,
     sellingType: 'จ่ายสด',
     totalAmount: 4500,
+    unitCostPerKg: null as number | null,
+    costOfGoods: null as number | null,
     notes: null,
     createdAt: new Date('2026-07-01'),
     updatedAt: new Date('2026-07-01'),
     productType: { id: 'pt-1', code: 'R1', name: 'ยาง' },
+  };
+}
+
+function makeSale(id: string, overrides: Partial<ReturnType<typeof baseSale>> = {}) {
+  return { ...baseSale(id), ...overrides };
+}
+
+function withIsoDates<T extends { date: Date; createdAt: Date; updatedAt: Date }>(row: T) {
+  return {
+    ...row,
+    date: row.date.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
@@ -74,12 +89,12 @@ describe('GET /api/sales', () => {
 
     expect(res.status).toBe(200);
     expect(body).toEqual({
-      data: pageRows.map((row) => ({
-        ...row,
-        date: row.date.toISOString(),
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      })),
+      data: pageRows.map((row) =>
+        withIsoDates({
+          ...row,
+          profitLoss: null,
+        }),
+      ),
       pagination: {
         page: 3,
         limit: 10,
@@ -95,6 +110,59 @@ describe('GET /api/sales', () => {
       }),
     );
     expect(count).toHaveBeenCalledTimes(1);
+  });
+
+  it('attaches profit/loss from denormalized Sale COGS columns', async () => {
+    const sale = makeSale('1', {
+      weight: 100,
+      pricePerUnit: 50,
+      totalAmount: 4800,
+      expenseCost: 200,
+      unitCostPerKg: 40,
+      costOfGoods: 4000,
+    });
+    findMany.mockResolvedValue([sale]);
+    count.mockResolvedValue(1);
+
+    const req = new NextRequest('http://localhost/api/sales?page=1&limit=10');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data[0]).toMatchObject({
+      unitCostPerKg: 40,
+      costOfGoods: 4000,
+      profitLoss: 800,
+    });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          unitCostPerKg: true,
+          costOfGoods: true,
+        }),
+      }),
+    );
+  });
+
+  it('derives costOfGoods from unitCostPerKg when costOfGoods is null', async () => {
+    const sale = makeSale('1', {
+      weight: 100,
+      totalAmount: 5000,
+      unitCostPerKg: 40,
+      costOfGoods: null,
+    });
+    findMany.mockResolvedValue([sale]);
+    count.mockResolvedValue(1);
+
+    const req = new NextRequest('http://localhost/api/sales?page=1&limit=10');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(body.data[0]).toMatchObject({
+      unitCostPerKg: 40,
+      costOfGoods: 4000,
+      profitLoss: 1000,
+    });
   });
 
   it('caps limit at 200', async () => {
@@ -122,6 +190,11 @@ describe('GET /api/sales', () => {
 
     expect(Array.isArray(body)).toBe(true);
     expect(body).toHaveLength(1);
+    expect(body[0]).toMatchObject({
+      profitLoss: null,
+      costOfGoods: null,
+      unitCostPerKg: null,
+    });
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         take: 1000,

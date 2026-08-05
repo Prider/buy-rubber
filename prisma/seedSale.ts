@@ -98,6 +98,8 @@ async function main() {
         : null;
       const rawTotal = weight * pricePerUnit - (expenseCost ?? 0);
       const totalAmount = parseFloat((rawTotal > 0 ? rawTotal : weight * pricePerUnit).toFixed(2));
+      const unitCostPerKg = parseFloat((pricePerUnit - 2 - ((j % 500) / 100)).toFixed(2));
+      const costOfGoods = parseFloat((weight * unitCostPerKg).toFixed(2));
 
       const year = date.getFullYear();
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -119,6 +121,8 @@ async function main() {
         expenseCost,
         sellingType: SELLING_TYPES[j % SELLING_TYPES.length],
         totalAmount,
+        unitCostPerKg,
+        costOfGoods,
         notes:
           hasExpense && j % 3 === 0
             ? `หมายเหตุค่าใช้จ่ายรายการที่ ${j + 1}`

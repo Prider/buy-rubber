@@ -12,6 +12,7 @@ type SaleRecord = {
   date: Date;
   productTypeId: string;
   weight: number;
+  unitCostPerKg: number | null;
 };
 
 type SaleDelegate = {
@@ -37,6 +38,8 @@ const saleDetailSelect = {
   expenseCost: true,
   sellingType: true,
   totalAmount: true,
+  unitCostPerKg: true,
+  costOfGoods: true,
   notes: true,
   createdAt: true,
   updatedAt: true,
@@ -83,7 +86,7 @@ export async function PUT(
     }
     const sale = await asSale.sale.findUnique({
       where: { id: params.id },
-      select: { id: true, saleNo: true, date: true, productTypeId: true, weight: true },
+      select: { id: true, saleNo: true, date: true, productTypeId: true, weight: true, unitCostPerKg: true },
     });
 
     if (!sale) {
@@ -133,6 +136,13 @@ export async function PUT(
     const { expenses, expenseCost, expenseType, notes } = parsedExpenses;
     const totalAmount = weight * pricePerUnit - (expenseCost || 0);
 
+    // Edit does not re-apply stock; keep original unit cost and scale COGS with weight.
+    const existingUnitCost =
+      sale.unitCostPerKg != null && Number.isFinite(Number(sale.unitCostPerKg))
+        ? Number(sale.unitCostPerKg)
+        : null;
+    const costOfGoods = existingUnitCost != null ? weight * existingUnitCost : null;
+
     const updated = await prisma.$transaction(async (tx) => {
       return tx.sale.update({
         where: { id: params.id },
@@ -151,6 +161,8 @@ export async function PUT(
           expenseCost,
           sellingType: String(data.sellingType),
           totalAmount,
+          unitCostPerKg: existingUnitCost,
+          costOfGoods,
           notes,
           expenses: {
             deleteMany: {},

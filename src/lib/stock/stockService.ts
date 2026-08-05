@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import {
+  applySaleToOpenStockGang,
+  openStockGangIfNeeded,
+  rebuildStockGangs,
+} from '@/lib/stock/stockGangs';
+
 const EPS = 1e-6;
 
 export class StockInsufficientError extends Error {
@@ -76,6 +82,13 @@ export async function applyPurchaseToStock(
       notes: notes ?? undefined,
     },
   });
+
+  await openStockGangIfNeeded(tx, {
+    productTypeId,
+    prevQtyKg: oldQty,
+    nextQtyKg: newQty,
+    date,
+  });
 }
 
 export async function applySaleToStock(
@@ -87,7 +100,7 @@ export async function applySaleToStock(
     date: Date;
     notes?: string | null;
   },
-) {
+): Promise<{ unitCostPerKg: number; costOfGoods: number } | undefined> {
   const { productTypeId, qtyKg, refNo, date, notes } = input;
 
   if (!Number.isFinite(qtyKg) || qtyKg < 0) return;
@@ -110,6 +123,7 @@ export async function applySaleToStock(
 
   const newQty = Math.max(0, availableKg - qtyKg);
   const newAvg = newQty <= EPS ? 0 : avgCostPerKg;
+  const cogs = qtyKg * avgCostPerKg;
 
   await tx.stockPosition.update({
     where: { productTypeId },
@@ -123,13 +137,24 @@ export async function applySaleToStock(
       refNo,
       qtyChangeKg: -qtyKg,
       unitCostPerKg: avgCostPerKg,
-      totalCost: qtyKg * avgCostPerKg,
+      totalCost: cogs,
       balanceQtyKg: newQty,
       balanceAvgCostPerKg: newAvg,
       date,
       notes: notes ?? undefined,
     },
   });
+
+  await applySaleToOpenStockGang(tx, {
+    productTypeId,
+    nextQtyKg: newQty,
+    date,
+    saleNo: refNo,
+    soldKg: qtyKg,
+    cogs,
+  });
+
+  return { unitCostPerKg: avgCostPerKg, costOfGoods: cogs };
 }
 
 /** Restore quantity and average cost when a sale is deleted (inverse of applySaleToStock). */
@@ -197,6 +222,9 @@ export async function reverseSaleFromStock(
       notes: notes ?? undefined,
     },
   });
+
+  // Deletes can reopen / reshuffle cycles — rebuild from ledger for correctness.
+  await rebuildStockGangs(tx, productTypeId);
 }
 
 /**
@@ -311,5 +339,6 @@ export async function reversePurchaseFromStock(
       notes: notes ?? undefined,
     },
   });
-}
 
+  await rebuildStockGangs(tx, productTypeId);
+}
