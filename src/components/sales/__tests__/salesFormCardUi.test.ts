@@ -42,7 +42,7 @@ describe('salesFormCardUi', () => {
     });
 
     it('shows labels when not saving', () => {
-      expect(getSalesFormSaveButtonText(false, false)).toBe('บันทึก Selling Transactions');
+      expect(getSalesFormSaveButtonText(false, false)).toBe('บันทึกการขาย');
       expect(getSalesFormSaveButtonText(false, true)).toBe('บันทึกการแก้ไข');
     });
   });
@@ -51,13 +51,15 @@ describe('salesFormCardUi', () => {
     it('returns compact-friendly padding when compact', () => {
       const c = getSalesFormLayoutClasses(true);
       expect(c.headerBtnPad).toContain('px-4');
-      expect(c.rowGap).toBe('gap-2');
+      expect(c.rowGap).toBe('gap-3');
+      expect(c.inputClass).toContain('rounded-xl');
     });
 
     it('returns roomier layout when not compact', () => {
       const c = getSalesFormLayoutClasses(false);
-      expect(c.headerBtnPad).toContain('px-6');
-      expect(c.rowGap).toBe('gap-3');
+      expect(c.headerBtnPad).toContain('px-5');
+      expect(c.rowGap).toBe('gap-4');
+      expect(c.inputClass).toContain('rounded-xl');
     });
   });
 });

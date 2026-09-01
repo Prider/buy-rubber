@@ -53,11 +53,7 @@ export default function SalesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden">
-      <div
-        className={`w-full min-w-0 shrink-0 ${
-          showCompanyDropdown ? 'relative z-50 overflow-visible' : 'overflow-x-auto'
-        }`}
-      >
+      <div className={`w-full min-w-0 shrink-0 ${showCompanyDropdown ? 'relative z-50' : ''}`}>
         <SalesFormCard
           compact
           error={error}

@@ -35,20 +35,72 @@ type SalesFormFieldName =
   | 'pricePerUnit'
   | 'sellingType';
 
+function openDatePicker(input: HTMLInputElement) {
+  try {
+    input.showPicker?.();
+  } catch {
+    // showPicker can throw if the input is not user-activated in some browsers
+  }
+}
+
 function Field({
   label,
+  hint,
+  action,
   children,
   className = '',
 }: {
-  label: ReactNode;
+  label?: ReactNode;
+  hint?: ReactNode;
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
+  const showHeader = label != null && label !== '';
   return (
-    <div className={`flex flex-col gap-1 min-w-[7rem] flex-1 ${className}`}>
-      <label className="block text-xs font-medium whitespace-nowrap">{label}</label>
+    <div className={`flex min-w-0 flex-col ${className}`}>
+      {showHeader ? (
+        <div className="mb-1.5 flex min-h-[1.25rem] items-center justify-between gap-2">
+          <label className="block truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+            {label}
+          </label>
+          {hint || action ? (
+            <div className="flex min-w-0 shrink items-center gap-1.5">
+              {hint}
+              {action}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {children}
     </div>
+  );
+}
+
+function HintButton({
+  children,
+  disabled,
+  onClick,
+  testId,
+  title,
+}: {
+  children: ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+  testId: string;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      className="shrink-0 text-[11px] font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -85,7 +137,7 @@ export interface SalesFormCardProps {
 function ChevronIcon({ open, className = 'h-5 w-5' }: { open: boolean; className?: string }) {
   return (
     <svg
-      className={`shrink-0 text-gray-500 transition-transform duration-300 dark:text-gray-400 ${open ? 'rotate-180' : 'rotate-0'} ${className}`}
+      className={`shrink-0 text-gray-400 transition-transform duration-300 dark:text-gray-500 ${open ? 'rotate-180' : 'rotate-0'} ${className}`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -141,14 +193,14 @@ export default function SalesFormCard({
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
   const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
-  const companyDisabled = isEditing; // same as other non-price fields
+  const companyDisabled = isEditing;
   const isFieldDisabled = (field: SalesFormFieldName) => isEditing && field !== 'pricePerUnit';
   const getInputClass = (field: SalesFormFieldName) =>
     `${layout.inputClass} ${
       fieldErrors[field]
-        ? 'border-red-500 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-500'
+        ? 'border-red-500 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-100'
         : isEditing && field === 'pricePerUnit'
-          ? 'border-violet-500 ring-2 ring-violet-300 focus:border-violet-500 focus:ring-violet-400 dark:border-violet-400 dark:ring-violet-500/50'
+          ? 'border-violet-400 ring-2 ring-violet-200 focus:border-violet-500 focus:ring-violet-100 dark:border-violet-400 dark:ring-violet-500/40'
           : ''
     }`;
 
@@ -227,10 +279,18 @@ export default function SalesFormCard({
     onShowCompanyDropdown(false);
   };
 
+  const fillField = (name: 'weight' | 'pricePerUnit', value: number) => {
+    onInputChange({
+      target: { name, value: String(value) },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const btnClass = compact ? 'px-3.5 py-2 text-sm' : 'px-4 py-2.5 text-sm';
+
   return (
     <div
       data-testid="sales-form-card"
-      className={`flex w-full flex-col rounded-2xl border bg-white shadow-lg dark:bg-gray-800 ${
+      className={`flex w-full flex-col rounded-2xl border bg-white shadow-sm dark:bg-gray-800 ${
         isOpen ? 'overflow-visible' : 'overflow-hidden'
       } ${cardBorderClass}`}
     >
@@ -240,14 +300,17 @@ export default function SalesFormCard({
         aria-expanded={isOpen}
         aria-controls={PANEL_ID}
         onClick={() => setIsOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/40 ${layout.headerBtnPad} border-b border-gray-200 dark:border-gray-600`}
+        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-700/30 ${layout.headerBtnPad} ${
+          isOpen ? 'border-b border-gray-100 dark:border-gray-700' : ''
+        }`}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h2 className={`min-w-0 ${layout.titleClass}`}>
-            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              {titleText}
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <h2 className={`min-w-0 truncate ${layout.titleClass}`}>{titleText}</h2>
+          {isEditing ? (
+            <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-200">
+              กำลังแก้ไข
             </span>
-          </h2>
+          ) : null}
           {!isOpen && error ? (
             <span
               className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-200"
@@ -271,8 +334,8 @@ export default function SalesFormCard({
           <div className={layout.bodyPad}>
             {error ? (
               <div
-                className={`shrink-0 rounded-lg border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 ${
-                  compact ? 'p-1.5 text-xs' : 'p-2 text-sm'
+                className={`shrink-0 rounded-xl border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 ${
+                  compact ? 'px-3 py-2 text-xs' : 'px-3.5 py-2.5 text-sm'
                 }`}
               >
                 {error}
@@ -280,18 +343,20 @@ export default function SalesFormCard({
             ) : null}
 
             <div
-              className={`relative flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0 pb-0.5 ${
+              className={`relative flex w-full min-w-0 flex-nowrap items-end ${layout.rowGap} ${
                 showCompanyDropdown && !companyDisabled ? 'z-50' : 'z-10'
               }`}
             >
-              <Field label="วันที่" className="min-w-[9.5rem] max-w-[10rem]">
+              <Field label="วันที่" className="w-[9.75rem] shrink-0">
                 <input
                   type="date"
                   name="date"
                   value={formData.date}
                   onChange={onInputChange}
+                  onClick={(e) => openDatePicker(e.currentTarget)}
+                  onFocus={(e) => openDatePicker(e.currentTarget)}
                   disabled={isFieldDisabled('date')}
-                  className={getInputClass('date')}
+                  className={`${getInputClass('date')} cursor-pointer`}
                 />
               </Field>
               <Field
@@ -300,11 +365,11 @@ export default function SalesFormCard({
                     ชื่อบริษัทปลายทาง <span className="text-red-500">*</span>
                   </>
                 }
-                className="relative z-50 min-w-[12rem] flex-[1.5]"
+                className="relative z-50 w-[18rem] shrink-0"
               >
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
@@ -318,7 +383,7 @@ export default function SalesFormCard({
                     onBlur={scheduleDropdownHide}
                     onKeyDown={handleCompanySearchKeyDown}
                     disabled={companyDisabled}
-                    className={`${getInputClass('destinationCompanyId')} pl-8 pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`${getInputClass('destinationCompanyId')} pl-9 pr-8`}
                     placeholder="ค้นหาบริษัทตามชื่อหรือรหัส"
                     autoComplete="off"
                   />
@@ -327,20 +392,19 @@ export default function SalesFormCard({
                       type="button"
                       onClick={onClearCompanySearch}
                       disabled={saving}
-                      className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-gray-300"
                       aria-label="ล้างการค้นหาบริษัท"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   ) : null}
 
-                  {/* Dropdown — same pattern as PurchaseEntryCard member selector */}
                   {showCompanyDropdown && !companyDisabled && filteredCompanies.length > 0 ? (
                     <div
                       ref={companyDropdownRef}
-                      className="absolute left-0 right-0 top-full z-[100] mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl max-h-48 overflow-y-auto"
+                      className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
                       onMouseEnter={clearHideTimeout}
                       onMouseLeave={scheduleDropdownHide}
                     >
@@ -355,62 +419,41 @@ export default function SalesFormCard({
                           onBlur={scheduleDropdownHide}
                           onKeyDown={(event) => handleCompanyOptionKeyDown(event, index)}
                           disabled={saving}
-                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full border-b border-gray-100 px-3 py-2 text-left text-sm last:border-b-0 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-700"
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
-                                {company.code} - {company.name}
-                              </div>
-                            </div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {company.code} - {company.name}
                           </div>
                         </button>
                       ))}
                     </div>
                   ) : null}
 
-                  {/* No results — redirect to create company */}
                   {showCompanyDropdown &&
                   !companyDisabled &&
                   companySearchTerm &&
                   filteredCompanies.length === 0 ? (
                     <div
-                      className="absolute left-0 right-0 top-full z-[100] mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl p-3"
+                      className="absolute left-0 right-0 top-full z-[100] mt-1 rounded-xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-600 dark:bg-gray-800"
                       onMouseEnter={clearHideTimeout}
                       onMouseLeave={scheduleDropdownHide}
                     >
-                      <div className="text-center text-gray-500 dark:text-gray-400">
-                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <p className="text-xs font-medium mb-2">ไม่พบบริษัทที่ตรงกับคำค้นหา</p>
-                        <button
-                          type="button"
-                          onClick={() => router.push('/destination-companies?showAddModal=true')}
-                          disabled={saving}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                            />
-                          </svg>
-                          เพิ่มบริษัทใหม่
-                        </button>
-                      </div>
+                      <p className="mb-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                        ไม่พบบริษัทที่ตรงกับคำค้นหา
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => router.push('/destination-companies?showAddModal=true')}
+                        disabled={saving}
+                        className="mx-auto flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        เพิ่มบริษัทใหม่
+                      </button>
                     </div>
                   ) : null}
                 </div>
               </Field>
-              <Field label="รูปแบบการขาย" className="min-w-[8.5rem] max-w-[10rem]">
+              <Field label="รูปแบบการขาย" className="w-[8.75rem] shrink-0">
                 <select
                   name="sellingType"
                   value={formData.sellingType}
@@ -425,7 +468,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="ประเภทสินค้า" className="!flex-none min-w-[8.5rem] max-w-[11rem] w-[10rem] shrink-0">
+              <Field label="ประเภทสินค้า" className="min-w-[9rem] flex-[1.1]">
                 <select
                   name="productTypeId"
                   value={formData.productTypeId}
@@ -441,7 +484,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="%ยาง" className="min-w-[6.5rem] max-w-[7rem]">
+              <Field label="%ยาง" className="w-[4.75rem] shrink-0">
                 <input
                   type="number"
                   step="0.01"
@@ -452,34 +495,29 @@ export default function SalesFormCard({
                   className={getInputClass('rubberPercent')}
                 />
               </Field>
-              <Field label="น้ำหนัก (กก.)" className="min-w-[8.5rem] max-w-[10rem]">
-                {formData.productTypeId ? (
-                  <div className="mb-1 flex items-center gap-1 text-[11px] text-red-500 dark:text-red-400">
-                    <span className="min-w-0 truncate">
-                      คงเหลือ:{' '}
-                      <span className="font-semibold">
-                        {selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'}
-                      </span>{' '}
-                      กก.
+              <Field
+                label="น้ำหนัก (กก.)"
+                className="min-w-[8.5rem] flex-1"
+                hint={
+                  formData.productTypeId ? (
+                    <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
+                      คงเหลือ {selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'} กก.
                     </span>
-                    {selectedStockKg != null && !isFieldDisabled('weight') ? (
-                      <button
-                        type="button"
-                        data-testid="sales-fill-weight-stock"
-                        title="เติมน้ำหนักคงเหลือทั้งหมด"
-                        disabled={saving}
-                        onClick={() => {
-                          onInputChange({
-                            target: { name: 'weight', value: String(selectedStockKg) },
-                          } as React.ChangeEvent<HTMLInputElement>);
-                        }}
-                        className="shrink-0 rounded border border-red-300 bg-red-50 px-1 py-0.5 text-[10px] font-medium leading-none text-red-600 hover:bg-red-100 disabled:opacity-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-                      >
-                        ทั้งหมด
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
+                  ) : undefined
+                }
+                action={
+                  formData.productTypeId && selectedStockKg != null && !isFieldDisabled('weight') ? (
+                    <HintButton
+                      testId="sales-fill-weight-stock"
+                      title="เติมน้ำหนักคงเหลือทั้งหมด"
+                      disabled={saving}
+                      onClick={() => fillField('weight', selectedStockKg)}
+                    >
+                      ทั้งหมด
+                    </HintButton>
+                  ) : undefined
+                }
+              >
                 <input
                   type="number"
                   step="0.01"
@@ -490,33 +528,31 @@ export default function SalesFormCard({
                   className={getInputClass('weight')}
                 />
               </Field>
-              <Field label="ราคา/กก." className="min-w-[8.5rem] max-w-[10rem]">
-                {formData.productTypeId ? (
-                  <div className="mb-1 flex items-center gap-1 text-[11px] text-red-500 dark:text-red-400">
-                    <span className="min-w-0 truncate">
-                      ต้นทุนเฉลี่ย:{' '}
-                      <span className="font-semibold">
-                        {selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}
-                      </span>
+              <Field
+                label="ราคา/กก."
+                className="min-w-[8.5rem] flex-1"
+                hint={
+                  formData.productTypeId ? (
+                    <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
+                      ต้นทุน {selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}
                     </span>
-                    {selectedAvgCostPerKg != null && !isFieldDisabled('pricePerUnit') ? (
-                      <button
-                        type="button"
-                        data-testid="sales-fill-price-avg-cost"
-                        title="เติมราคาด้วยต้นทุนเฉลี่ย"
-                        disabled={saving}
-                        onClick={() => {
-                          onInputChange({
-                            target: { name: 'pricePerUnit', value: String(selectedAvgCostPerKg) },
-                          } as React.ChangeEvent<HTMLInputElement>);
-                        }}
-                        className="shrink-0 rounded border border-red-300 bg-red-50 px-1 py-0.5 text-[10px] font-medium leading-none text-red-600 hover:bg-red-100 disabled:opacity-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-                      >
-                        ต้นทุนเฉลี่ย
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
+                  ) : undefined
+                }
+                action={
+                  formData.productTypeId &&
+                  selectedAvgCostPerKg != null &&
+                  !isFieldDisabled('pricePerUnit') ? (
+                    <HintButton
+                      testId="sales-fill-price-avg-cost"
+                      title="เติมราคาด้วยต้นทุนเฉลี่ย"
+                      disabled={saving}
+                      onClick={() => fillField('pricePerUnit', selectedAvgCostPerKg)}
+                    >
+                      ใช้ต้นทุน
+                    </HintButton>
+                  ) : undefined
+                }
+              >
                 <input
                   type="number"
                   step="0.01"
@@ -530,15 +566,13 @@ export default function SalesFormCard({
               </Field>
             </div>
 
-            <div
-              className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
-            >
+            <div className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 pt-3 dark:border-gray-700`}>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   ค่าใช้จ่าย
                   {formData.expenses.length > 0 ? (
-                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
-                      ({formData.expenses.length}/{MAX_SALE_EXPENSES})
+                    <span className="ml-1 font-normal text-gray-400 dark:text-gray-500">
+                      {formData.expenses.length}/{MAX_SALE_EXPENSES}
                     </span>
                   ) : null}
                 </span>
@@ -549,9 +583,7 @@ export default function SalesFormCard({
                     onClick={onAddExpense}
                     disabled={saving || atExpenseLimit}
                     title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
-                    className={`shrink-0 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50 ${
-                      compact ? 'px-3 py-1 text-sm font-medium' : 'px-4 py-2 text-base font-medium'
-                    }`}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
                   >
                     {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
                   </button>
@@ -559,18 +591,18 @@ export default function SalesFormCard({
               </div>
 
               {formData.expenses.length === 0 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {isEditing ? 'ไม่มีค่าใช้จ่าย' : 'ยังไม่มีค่าใช้จ่าย — กด “เพิ่มค่าใช้จ่าย” หากต้องการ'}
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {isEditing ? 'ไม่มีค่าใช้จ่าย' : 'ยังไม่มีค่าใช้จ่าย'}
                 </p>
               ) : (
-                <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
+                <div className="flex flex-col gap-2">
                   {formData.expenses.map((line, index) => (
                     <div
                       key={line.id}
                       data-testid={`sales-expense-row-${index}`}
-                      className={`flex flex-wrap xl:flex-nowrap items-end ${layout.rowGap} w-full min-w-0`}
+                      className="grid grid-cols-1 items-end gap-2 rounded-xl bg-gray-50 p-2.5 sm:grid-cols-[8.5rem_7.5rem_minmax(0,1fr)_auto] dark:bg-gray-900/40"
                     >
-                      <Field label={index === 0 ? 'ชนิดค่าใช้จ่าย' : ''} className="!flex-none min-w-[6.5rem] max-w-[8.5rem] w-[8rem] shrink-0">
+                      <Field label={index === 0 ? 'ชนิดค่าใช้จ่าย' : undefined}>
                         <select
                           value={line.type}
                           onChange={(e) => onExpenseChange(line.id, 'type', e.target.value)}
@@ -585,7 +617,7 @@ export default function SalesFormCard({
                           ))}
                         </select>
                       </Field>
-                      <Field label={index === 0 ? 'จำนวนเงิน (บาท)' : ''} className="min-w-[7.5rem] max-w-[9rem]">
+                      <Field label={index === 0 ? 'จำนวนเงิน (บาท)' : undefined}>
                         <input
                           type="number"
                           step="0.01"
@@ -596,7 +628,7 @@ export default function SalesFormCard({
                           className={getInputClass('sellingType')}
                         />
                       </Field>
-                      <Field label={index === 0 ? 'หมายเหตุ' : ''} className="min-w-[12rem] max-w-[20rem] flex-[1.5]">
+                      <Field label={index === 0 ? 'หมายเหตุ' : undefined}>
                         <input
                           value={line.note}
                           onChange={(e) => onExpenseChange(line.id, 'note', e.target.value)}
@@ -611,9 +643,7 @@ export default function SalesFormCard({
                           aria-label="ลบค่าใช้จ่าย"
                           onClick={() => onRemoveExpense(line.id)}
                           disabled={saving}
-                          className={`shrink-0 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30 ${
-                            compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'
-                          }`}
+                          className={`inline-flex items-center justify-center rounded-xl border border-gray-200 font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-300 ${btnClass}`}
                         >
                           ลบ
                         </button>
@@ -623,40 +653,20 @@ export default function SalesFormCard({
                 </div>
               )}
 
-              <div
-                className={`flex w-full shrink-0 flex-wrap items-center xl:ml-auto xl:w-auto xl:justify-end ${compact ? 'gap-2' : 'gap-3 pb-0.5'}`}
-              >
-                {isEditing && onCancelEdit ? (
-                  <button
-                    type="button"
-                    onClick={onCancelEdit}
-                    disabled={saving}
-                    className={`shrink-0 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 ${
-                      compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
-                    }`}
-                  >
-                    ยกเลิกการแก้ไข
-                  </button>
-                ) : null}
-                <div
-                  className={`rounded-lg bg-gray-50 whitespace-nowrap dark:bg-gray-700 ${
-                    compact
-                      ? 'min-w-0 px-3 py-1.5 text-xs sm:text-sm'
-                      : 'min-w-[18rem] px-5 py-2.5 text-sm sm:min-w-[22rem]'
-                  }`}
-                >
-                  ยอดรวม: <span className="font-semibold">{formatCurrency(totalPreview)}</span>
+              <div className={`flex w-full flex-wrap items-center justify-between ${compact ? 'gap-2' : 'gap-3'}`}>
+                <div className="min-w-0 text-sm text-gray-600 dark:text-gray-300">
+                  ยอดรวม <span className="font-semibold tabular-nums text-gray-900 dark:text-white">{formatCurrency(totalPreview)}</span>
                   {profitPreview != null ? (
                     <>
-                      <span className="mx-2 text-gray-300 dark:text-gray-500">|</span>
-                      กำไร/ขาดทุน:{' '}
+                      <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                      กำไร/ขาดทุน{' '}
                       <span
-                        className={`font-semibold ${
+                        className={`font-semibold tabular-nums ${
                           profitPreview > 1e-6
                             ? 'text-green-600 dark:text-green-400'
                             : profitPreview < -1e-6
                               ? 'text-red-600 dark:text-red-400'
-                              : ''
+                              : 'text-gray-900 dark:text-white'
                         }`}
                       >
                         {profitPreview > 1e-6 ? '+' : ''}
@@ -665,17 +675,27 @@ export default function SalesFormCard({
                     </>
                   ) : null}
                 </div>
-                <button
-                  type="button"
-                  data-testid="sales-form-save"
-                  onClick={onSave}
-                  disabled={saving || hasValidationError || !submitReady}
-                  className={`shrink-0 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 ${
-                    compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2'
-                  }`}
-                >
-                  {saveButtonText}
-                </button>
+                <div className="flex items-center gap-2">
+                  {isEditing && onCancelEdit ? (
+                    <button
+                      type="button"
+                      onClick={onCancelEdit}
+                      disabled={saving}
+                      className={`shrink-0 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 ${btnClass}`}
+                    >
+                      ยกเลิก
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    data-testid="sales-form-save"
+                    onClick={onSave}
+                    disabled={saving || hasValidationError || !submitReady}
+                    className={`shrink-0 rounded-xl bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 ${btnClass}`}
+                  >
+                    {saveButtonText}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
