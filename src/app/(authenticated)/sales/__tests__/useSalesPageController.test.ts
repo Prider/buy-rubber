@@ -244,4 +244,20 @@ describe('useSalesPageController', () => {
       expect(salesUrls.some((url) => url.includes('search='))).toBe(true);
     });
   });
+
+  it('caps sale expenses at 4 lines', async () => {
+    const { result } = renderHook(() => useSalesPageController());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    act(() => {
+      for (let i = 0; i < 6; i += 1) {
+        result.current.handleAddExpense();
+      }
+    });
+
+    expect(result.current.formData.expenses).toHaveLength(4);
+  });
 });

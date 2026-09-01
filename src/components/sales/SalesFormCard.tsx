@@ -10,7 +10,7 @@ import {
   type SaleExpenseLine,
   type SaleFormData,
 } from '@/app/(authenticated)/sales/page.utils';
-import { EXPENSE_TYPES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
+import { EXPENSE_TYPES, MAX_SALE_EXPENSES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
 import {
   getSalesFormCardBorderClass,
   getSalesFormCardTitle,
@@ -136,6 +136,7 @@ export default function SalesFormCard({
     [formData, selectedAvgCostPerKg],
   );
   const submitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
+  const atExpenseLimit = formData.expenses.length >= MAX_SALE_EXPENSES;
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
@@ -533,18 +534,26 @@ export default function SalesFormCard({
               className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 py-0.5 dark:border-gray-700 ${compact ? 'pt-1' : 'pb-1 pt-1'}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">ค่าใช้จ่าย</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  ค่าใช้จ่าย
+                  {formData.expenses.length > 0 ? (
+                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                      ({formData.expenses.length}/{MAX_SALE_EXPENSES})
+                    </span>
+                  ) : null}
+                </span>
                 {!isEditing ? (
                   <button
                     type="button"
                     data-testid="sales-add-expense"
                     onClick={onAddExpense}
-                    disabled={saving}
-                    className={`shrink-0 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50 ${
+                    disabled={saving || atExpenseLimit}
+                    title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
+                    className={`shrink-0 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50 ${
                       compact ? 'px-3 py-1 text-sm font-medium' : 'px-4 py-2 text-base font-medium'
                     }`}
                   >
-                    + เพิ่มค่าใช้จ่าย
+                    {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
                   </button>
                 ) : null}
               </div>

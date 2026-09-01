@@ -24,6 +24,7 @@ import {
   type SaleRowApi,
   type SalesPagination,
 } from './page.utils';
+import { MAX_SALE_EXPENSES } from '@/components/sales/salesFormCard.constants';
 import type { DestinationCompany } from '@/types/destinationCompany';
 
 type SalesFieldError = Partial<Record<'weight' | 'pricePerUnit', string>>;
@@ -332,10 +333,13 @@ export function useSalesPageController() {
   }, []);
 
   const handleAddExpense = useCallback(() => {
-    setFormData((prev) => ({
-      ...prev,
-      expenses: [...prev.expenses, createEmptyExpenseLine()],
-    }));
+    setFormData((prev) => {
+      if (prev.expenses.length >= MAX_SALE_EXPENSES) return prev;
+      return {
+        ...prev,
+        expenses: [...prev.expenses, createEmptyExpenseLine()],
+      };
+    });
   }, []);
 
   const handleRemoveExpense = useCallback((expenseId: string) => {
