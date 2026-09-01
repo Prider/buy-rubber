@@ -41,24 +41,30 @@ export default function ReportFilterCard({
 
   return (
     <div className="relative z-20 space-y-3 overflow-visible">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">ตัวกรองรายงาน</p>
-        {onManageGroups ? (
-          <button
-            type="button"
-            onClick={onManageGroups}
-            className="text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
-          >
-            จัดการกลุ่มรายงาน
-          </button>
-        ) : null}
-      </div>
-
       <div className="grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
         <div className="sm:col-span-2 lg:col-span-1">
-          <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
-            ประเภทรายงาน
-          </label>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              ประเภทรายงาน
+            </label>
+            {onManageGroups ? (
+              <button
+                type="button"
+                onClick={onManageGroups}
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                จัดการกลุ่มรายงาน
+              </button>
+            ) : null}
+          </div>
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as ReportType)}
