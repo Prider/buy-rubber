@@ -177,7 +177,7 @@ export default function ReportGroupManagementModal({
         <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-5 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">จัดการกลุ่มรายงาน</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">จัดการกลุ่มรายงานการรับซื้อยาง</h2>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก
               </p>
