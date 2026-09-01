@@ -305,7 +305,11 @@ export default function SalesFormCard({
         }`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <h2 className={`min-w-0 truncate ${layout.titleClass}`}>{titleText}</h2>
+          <h2 className={`min-w-0 truncate ${layout.titleClass}`}>
+            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+              {titleText}
+            </span>
+          </h2>
           {isEditing ? (
             <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-200">
               กำลังแก้ไข

@@ -52,6 +52,7 @@ describe('salesFormCardUi', () => {
       const c = getSalesFormLayoutClasses(true);
       expect(c.headerBtnPad).toContain('px-4');
       expect(c.rowGap).toBe('gap-3');
+      expect(c.titleClass).toContain('text-base');
       expect(c.inputClass).toContain('rounded-xl');
     });
 

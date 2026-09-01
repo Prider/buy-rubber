@@ -25,9 +25,7 @@ const INPUT_BASE =
 export function getSalesFormLayoutClasses(compact: boolean) {
   return {
     inputClass: compact ? `${INPUT_BASE} px-3 py-2` : `${INPUT_BASE} px-3.5 py-2.5`,
-    titleClass: compact
-      ? 'text-sm font-semibold text-gray-900 dark:text-white'
-      : 'text-base font-semibold text-gray-900 dark:text-white',
+    titleClass: compact ? 'text-base font-bold' : 'text-xl font-bold',
     bodyPad: compact
       ? 'px-4 pb-4 pt-3 flex flex-col gap-3 min-w-0'
       : 'px-5 pb-5 pt-4 flex flex-col gap-4 min-w-0',
