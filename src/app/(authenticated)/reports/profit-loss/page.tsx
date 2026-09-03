@@ -169,7 +169,7 @@ export default function ProfitLossReportPage() {
             type="button"
             onClick={() => void handleExportPdf()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-rose-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
@@ -177,7 +177,7 @@ export default function ProfitLossReportPage() {
             type="button"
             onClick={() => void handleExportExcel()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-teal-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
@@ -234,7 +234,7 @@ export default function ProfitLossReportPage() {
             type="button"
             onClick={() => void fetchData()}
             disabled={loading || rangeInvalid}
-            className="w-full rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
           >
             {loading ? 'กำลังโหลด...' : 'อัปเดตรายงาน'}
           </button>

@@ -1,8 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Button, Modal } from 'animal-island-ui';
 import { ReportProductTypeGroupRecord, getGroupLabel } from '@/lib/reportProductTypeGroups';
 import { useAlert } from '@/hooks/useAlert';
+
+const fieldClassName =
+  'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-medium text-gray-900 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-600 dark:disabled:text-gray-400';
 
 interface ProductTypeOption {
   id: string;
@@ -165,39 +169,50 @@ export default function ReportGroupManagementModal({
     [editingGroupId, onDeleteGroup, onRefresh, resetForm, showConfirm, showError, showSuccess],
   );
 
-  if (!isOpen) {
-    return null;
-  }
-
   const previewLabel = buildPreviewLabel(name, selectedProductTypeIds, productTypes);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">
-        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-5 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">จัดการกลุ่มรายงานการรับซื้อยาง</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full p-2 transition-colors hover:bg-white/60 dark:hover:bg-gray-700"
-            >
-              <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+    <Modal
+      open={isOpen}
+      className="app-island-modal"
+      title={
+        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+          จัดการกลุ่มรายงานการรับซื้อยาง
+        </span>
+      }
+      width={800}
+      typewriter={false}
+      onClose={onClose}
+      footer={
+        <>
+          <Button htmlType="button" onClick={onClose}>
+            ปิด
+          </Button>
+          {editingGroupId ? (
+            <Button htmlType="button" onClick={resetForm}>
+              ยกเลิกการแก้ไข
+            </Button>
+          ) : null}
+          <Button
+            type="primary"
+            htmlType="button"
+            onClick={handleSubmit}
+            disabled={saving || selectedProductTypeIds.length === 0}
+          >
+            {saving ? 'กำลังบันทึก...' : editingGroupId ? 'บันทึกการแก้ไข' : 'เพิ่มกลุ่ม'}
+          </Button>
+        </>
+      }
+    >
+      <div className="w-full text-base font-normal px-2">
+        <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
+          สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก
+        </p>
 
-        <div className="grid flex-1 gap-6 overflow-y-auto p-6 md:grid-cols-2">
+        <div className="grid w-full gap-6 md:grid-cols-2">
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                 ชื่อกลุ่ม (ไม่บังคับ)
               </label>
               <input
@@ -205,16 +220,16 @@ export default function ReportGroupManagementModal({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="เช่น ยางจอก + ยางพรก"
-                className="input w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700"
+                className={fieldClassName}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 ถ้าไม่ระบุ ระบบจะใช้ชื่อจากประเภทสินค้าที่เลือก
               </p>
             </div>
 
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   เลือกประเภทสินค้าในกลุ่ม
                 </label>
                 <div className="flex gap-2">
@@ -222,7 +237,7 @@ export default function ReportGroupManagementModal({
                     type="button"
                     onClick={selectAllProductTypes}
                     disabled={productTypes.length === 0}
-                    className="rounded-md border border-indigo-200 px-2 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/20"
+                    className="rounded-md border border-primary-200 px-2 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
                   >
                     เลือกทั้งหมด
                   </button>
@@ -244,7 +259,7 @@ export default function ReportGroupManagementModal({
                       key={productType.id}
                       className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
                         checked
-                          ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-900/20'
+                          ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
                           : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/40'
                       }`}
                     >
@@ -252,7 +267,7 @@ export default function ReportGroupManagementModal({
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleProductType(productType.id)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-800 dark:text-gray-200">{productType.name}</span>
                     </label>
@@ -261,29 +276,9 @@ export default function ReportGroupManagementModal({
               </div>
             </div>
 
-            <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-3 dark:border-indigo-800 dark:bg-indigo-900/10">
-              <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300">ตัวอย่างชื่อในรายงาน</p>
+            <div className="rounded-xl border border-dashed border-primary-200 bg-primary-50/60 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/10">
+              <p className="text-xs font-medium text-primary-700 dark:text-primary-300">ตัวอย่างชื่อในรายงาน</p>
               <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{previewLabel}</p>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={saving || selectedProductTypeIds.length === 0}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                {saving ? 'กำลังบันทึก...' : editingGroupId ? 'บันทึกการแก้ไข' : 'เพิ่มกลุ่ม'}
-              </button>
-              {editingGroupId && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                >
-                  ยกเลิกการแก้ไข
-                </button>
-              )}
             </div>
           </div>
 
@@ -306,18 +301,18 @@ export default function ReportGroupManagementModal({
                     key={group.id}
                     className="rounded-xl border border-gray-200 p-4 dark:border-gray-600"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-3">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">{getGroupLabel(group)}</p>
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                           {group.productTypes.map((productType) => productType.name).join(', ')}
                         </p>
                       </div>
-                      <div className="flex shrink-0 gap-2">
+                      <div className="flex justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => startEdit(group)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
                         >
                           แก้ไข
                         </button>
@@ -337,15 +332,6 @@ export default function ReportGroupManagementModal({
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
-}
-
-export function useReportGroupManagementModal() {
-  const [isOpen, setIsOpen] = useState(false);
-  return {
-    isOpen,
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
-  };
 }

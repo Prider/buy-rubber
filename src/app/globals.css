@@ -1,3 +1,6 @@
+@import '../styles/animal-island-modal.css';
+@import '../styles/animal-island-wallet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,11 +9,42 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    --animal-primary-color: #0284c7;
+    --animal-primary-color-hover: #0ea5e9;
+    --animal-primary-color-active: #0369a1;
+    --animal-error-color: #e05a5a;
+    --animal-error-color-hover: #e87878;
+    --animal-error-color-active: #c94444;
+    --animal-text-color: #111827;
+    --animal-border-color: #e5e7eb;
+    --animal-bg-color: #ffffff;
+    --animal-bg-color-secondary: #f3f4f6;
+    --animal-mask-bg: rgba(0, 0, 0, 0.6);
+    --animal-font-family: Nunito, 'Noto Sans SC', -apple-system, sans-serif;
+    --animal-font-size-sm: 12px;
+    --animal-font-size-base: 14px;
+    --animal-font-size-lg: 16px;
+    --animal-spacing-sm: 8px;
+    --animal-spacing-lg: 16px;
+    --animal-border-radius-sm: 16px;
+    --animal-border-radius-lg: 24px;
+    --animal-border-width: 2px;
+    --animal-shadow-sm: 0 2px 4px 0 rgba(61, 52, 40, 0.06);
+    --animal-shadow-base: 0 3px 10px 0 rgba(61, 52, 40, 0.1);
+    --animal-motion-duration-base: 0.25s;
+    --animal-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --animal-height-sm: 32px;
+    --animal-height-lg: 48px;
   }
   
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+    --animal-text-color: #f3f4f6;
+    --animal-border-color: #4b5563;
+    --animal-bg-color: #1f2937;
+    --animal-bg-color-secondary: #374151;
+    --animal-mask-bg: rgba(0, 0, 0, 0.6);
   }
   
   body {

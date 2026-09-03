@@ -129,7 +129,7 @@ export default function ReportFilterCard({
             type="button"
             onClick={onGenerate}
             disabled={loading || isDateRangeInvalid}
-            className="w-full rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
           >
             {loading ? 'กำลังสร้าง...' : 'สร้างรายงาน'}
           </button>

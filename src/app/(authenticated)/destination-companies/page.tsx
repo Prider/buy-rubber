@@ -18,7 +18,7 @@ import GamerLoader from '@/components/GamerLoader';
 
 const DestinationCompanyForm = dynamic(
   () =>
-    import('@/components/destination-companies/DestinationCompanyForm').then(
+    import(/* webpackPrefetch: true */ '@/components/destination-companies/DestinationCompanyForm').then(
       (mod) => mod.DestinationCompanyForm,
     ),
   { ssr: false, loading: () => null },

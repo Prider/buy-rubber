@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AnimalCursor from '@/components/AnimalCursor';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -43,17 +44,19 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <LicenseProvider>
-          <AuthProvider>
-            <AppModeProvider>
-              <DarkModeProvider>
-                <AlertProvider>
-                  <LicenseGate>{children}</LicenseGate>
-                </AlertProvider>
-              </DarkModeProvider>
-            </AppModeProvider>
-          </AuthProvider>
-        </LicenseProvider>
+        <AnimalCursor>
+          <LicenseProvider>
+            <AuthProvider>
+              <AppModeProvider>
+                <DarkModeProvider>
+                  <AlertProvider>
+                    <LicenseGate>{children}</LicenseGate>
+                  </AlertProvider>
+                </DarkModeProvider>
+              </AppModeProvider>
+            </AuthProvider>
+          </LicenseProvider>
+        </AnimalCursor>
       </body>
     </html>
   );

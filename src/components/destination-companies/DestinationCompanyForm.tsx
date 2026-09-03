@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Button, Modal } from 'animal-island-ui';
 import { DestinationCompanyFormProps, DestinationCompanyFormData } from '@/types/destinationCompany';
+
+const FORM_ID = 'destination-company-form';
+
+const fieldClassName =
+  'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-medium text-gray-900 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-600 dark:disabled:text-gray-400';
 
 export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
   isOpen,
@@ -53,6 +59,21 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
     }
   };
 
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    nextRef?: React.RefObject<HTMLElement | null>,
+    prevRef?: React.RefObject<HTMLElement | null>
+  ) => {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextRef?.current?.focus();
+    }
+    if (e.key === 'ArrowLeft' && prevRef?.current) {
+      e.preventDefault();
+      prevRef.current.focus();
+    }
+  };
+
   const hasChanges = useMemo(() => {
     if (!editingCompany) return true;
     const initialData = initialEditingDataRef.current;
@@ -64,49 +85,54 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
     );
   }, [editingCompany, localFormData]);
 
-  if (!isOpen) return null;
+  const canSubmit = !isLoading && hasChanges && Boolean(localFormData.name.trim());
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-gray-700 dark:to-gray-600">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(85vh-8rem)]">
+    <Modal
+      open={isOpen}
+      className="app-island-modal"
+      title={
+        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+          {editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'}
+        </span>
+      }
+      width={650}
+      typewriter={false}
+      onClose={onCancel}
+      footer={
+        <>
+          <Button htmlType="button" onClick={onCancel} disabled={isLoading}>
+            ยกเลิก
+          </Button>
+          <Button type="primary" htmlType="submit" form={FORM_ID} disabled={!canSubmit}>
+            {isLoading ? 'กำลังบันทึก...' : editingCompany ? 'บันทึกการแก้ไข' : 'เพิ่มบริษัท'}
+          </Button>
+        </>
+      }
+    >
+      <div className="w-full text-base font-normal">
+        <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
+          {editingCompany ? 'แก้ไขข้อมูลบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทางใหม่'}
+        </p>
+        <form id={FORM_ID} onSubmit={handleSubmit} className="w-full space-y-5 px-2">
           {validationError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 whitespace-pre-line">
               {validationError}
             </div>
           ) : null}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">รหัสบริษัท</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">รหัสบริษัท</label>
             <input
               type="text"
               value={localFormData.code}
               disabled
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+              className={fieldClassName}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
               ชื่อบริษัท <span className="text-red-500">*</span>
             </label>
             <input
@@ -114,56 +140,48 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
               type="text"
               value={localFormData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+              onKeyDown={(e) => handleKeyDown(e, phoneRef)}
+              className={fieldClassName}
               placeholder="เช่น บริษัท ยางไทย จำกัด"
               required
               autoFocus
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">เบอร์โทร</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เบอร์โทร</label>
             <input
               ref={phoneRef}
               type="text"
               value={localFormData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+              onKeyDown={(e) => handleKeyDown(e, addressRef, nameRef)}
+              className={fieldClassName}
               placeholder="เช่น 0812345678"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">ที่อยู่</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่</label>
             <textarea
               ref={addressRef}
               value={localFormData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                  return;
+                }
+                handleKeyDown(e, undefined, phoneRef);
+              }}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+              className={`${fieldClassName} resize-none`}
               placeholder="ที่อยู่บริษัท (ถ้ามี)"
             />
           </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isLoading}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
-              ยกเลิก
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !hasChanges || !localFormData.name.trim()}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isLoading ? 'กำลังบันทึก...' : editingCompany ? 'บันทึกการแก้ไข' : 'เพิ่มบริษัท'}
-            </button>
-          </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 };

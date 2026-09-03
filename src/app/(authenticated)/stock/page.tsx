@@ -13,8 +13,8 @@ import { usePriceData } from '@/hooks/usePriceData';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
 const ProductTypeFormModal = dynamic(
-  () => import('@/components/prices/ProductTypeFormModal'),
-  { ssr: false, loading: () => null }
+  () => import(/* webpackPrefetch: true */ '@/components/prices/ProductTypeFormModal'),
+  { ssr: false, loading: () => null },
 );
 
 type StockPositionRow = {

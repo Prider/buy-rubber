@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { Wallet } from 'animal-island-ui';
 import { formatCurrency } from '@/lib/utils';
 import {
   computeSaleProfitPreview,
@@ -16,6 +17,7 @@ import {
   getSalesFormCardTitle,
   getSalesFormLayoutClasses,
   getSalesFormSaveButtonText,
+  getSalesWalletStyle,
 } from '@/components/sales/salesFormCardUi';
 import type { DestinationCompany } from '@/types/destinationCompany';
 
@@ -657,15 +659,16 @@ export default function SalesFormCard({
                 </div>
               )}
 
-              <div className={`flex w-full flex-wrap items-center justify-between ${compact ? 'gap-2' : 'gap-3'}`}>
-                <div className="min-w-0 text-sm text-gray-600 dark:text-gray-300">
-                  ยอดรวม <span className="font-semibold tabular-nums text-gray-900 dark:text-white">{formatCurrency(totalPreview)}</span>
+              <div className={`flex w-full flex-nowrap items-end justify-between ${compact ? 'gap-2' : 'gap-3'}`}>
+                <div className="flex min-w-0 flex-nowrap items-end gap-3 text-sm text-gray-600 dark:text-gray-300">
+                  <span className="flex h-[36px] items-center">ยอดรวม</span>
+                  <Wallet value={totalPreview} size="small" style={getSalesWalletStyle(totalPreview)} />
                   {profitPreview != null ? (
-                    <>
+                    <div className="flex h-[36px] min-w-0 items-center">
                       <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                      กำไร/ขาดทุน{' '}
+                      กำไร/ขาดทุน
                       <span
-                        className={`font-semibold tabular-nums ${
+                        className={`px-2 font-semibold tabular-nums ${
                           profitPreview > 1e-6
                             ? 'text-green-600 dark:text-green-400'
                             : profitPreview < -1e-6
@@ -676,10 +679,10 @@ export default function SalesFormCard({
                         {profitPreview > 1e-6 ? '+' : ''}
                         {formatCurrency(profitPreview)}
                       </span>
-                    </>
+                    </div>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex h-[42px] items-center gap-2">
                   {isEditing && onCancelEdit ? (
                     <button
                       type="button"
@@ -695,7 +698,7 @@ export default function SalesFormCard({
                     data-testid="sales-form-save"
                     onClick={onSave}
                     disabled={saving || hasValidationError || !submitReady}
-                    className={`shrink-0 rounded-xl bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 ${btnClass}`}
+                    className={`shrink-0 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 ${btnClass}`}
                   >
                     {saveButtonText}
                   </button>

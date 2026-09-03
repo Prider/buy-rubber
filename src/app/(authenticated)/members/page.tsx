@@ -17,10 +17,9 @@ import { MemberFormData } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 
-// Lazy load modals for better performance
 const MemberForm = dynamic(
-  () => import('@/components/members/MemberForm').then((mod) => mod.MemberForm),
-  { ssr: false, loading: () => null }
+  () => import(/* webpackPrefetch: true */ '@/components/members/MemberForm').then((mod) => mod.MemberForm),
+  { ssr: false, loading: () => null },
 );
 
 const MemberPurchaseHistoryModal = dynamic(

@@ -9,12 +9,10 @@ import { usePriceData } from '@/hooks/usePriceData';
 import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
-// import TodayPricesDisplay from '@/components/prices/TodayPricesDisplay';
-// import PriceHistoryTable from '@/components/prices/PriceHistoryTable';
 
 const ProductTypeFormModal = dynamic(
-  () => import('@/components/prices/ProductTypeFormModal'),
-  { ssr: false, loading: () => null }
+  () => import(/* webpackPrefetch: true */ '@/components/prices/ProductTypeFormModal'),
+  { ssr: false, loading: () => null },
 );
 
 // const SetPriceFormModal = dynamic(

@@ -1,5 +1,7 @@
 /** Pure helpers for SalesFormCard — easy to unit test without React. */
 
+import type { CSSProperties } from 'react';
+
 export function getSalesFormCardBorderClass(isEditing: boolean): string {
   return isEditing
     ? 'border-violet-300 ring-1 ring-violet-200 dark:border-violet-500/40 dark:ring-violet-500/20'
@@ -17,6 +19,26 @@ export function getSalesFormCardTitle(
 export function getSalesFormSaveButtonText(saving: boolean, isEditing: boolean): string {
   if (saving) return isEditing ? 'กำลังบันทึกการแก้ไข...' : 'กำลังบันทึก...';
   return isEditing ? 'บันทึกการแก้ไข' : 'บันทึกการขาย';
+}
+
+const SMALL_WALLET_MIN_PX = 96;
+const SMALL_WALLET_PAD_PX = 28;
+
+/** Match animal-island-ui Wallet number formatting so pill width tracks the rendered text. */
+export function formatSalesWalletValue(value: number, thousandSeparator = ','): string {
+  if (!Number.isFinite(value)) return '00,000';
+  const sign = value < 0 ? '-' : '';
+  const [intPart, frac] = Math.abs(value).toString().split('.');
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+  return frac ? `${sign}${grouped}.${frac}` : `${sign}${grouped}`;
+}
+
+export function getSalesWalletStyle(value: number): CSSProperties {
+  const chars = formatSalesWalletValue(value).length;
+  const widthPx = Math.max(SMALL_WALLET_MIN_PX, chars * 8 + SMALL_WALLET_PAD_PX);
+  return {
+    ['--wallet-pill-w' as string]: `${widthPx}px`,
+  };
 }
 
 const INPUT_BASE =

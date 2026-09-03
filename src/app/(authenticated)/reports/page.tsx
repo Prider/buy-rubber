@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,9 +16,7 @@ import {
   generateExpenseTableHTML,
 } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
-import ReportGroupManagementModal, {
-  useReportGroupManagementModal,
-} from '@/components/reports/ReportGroupManagementModal';
+import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
 import { getDailyPurchaseGroupId } from '@/lib/reportProductTypeGroups';
 import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
 import DailyPurchaseTable from '@/components/reports/DailyPurchaseTable';
@@ -26,6 +25,11 @@ import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
 import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
+
+const ReportGroupManagementModal = dynamic(
+  () => import(/* webpackPrefetch: true */ '@/components/reports/ReportGroupManagementModal'),
+  { ssr: false, loading: () => null },
+);
 
 const PAGE_SIZE = 15;
 
@@ -198,7 +202,7 @@ export default function ReportsPage() {
 
         <Link
           href="/reports/profit-loss"
-          className="inline-flex items-center gap-2 self-start rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 sm:self-auto"
+          className="inline-flex items-center gap-2 self-start rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:self-auto"
         >
           ดูกำไร / ขาดทุน
           <span aria-hidden className="text-base leading-none">
