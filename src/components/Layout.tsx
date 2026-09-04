@@ -4,6 +4,7 @@ import { ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
+import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
@@ -131,51 +132,11 @@ export default function Layout({ children }: LayoutProps) {
             sidebarOpen ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
             <Link href="/dashboard" className="flex flex-col items-center justify-center space-y-2 group">
-              {/* Graph/Chart Icon */}
-              <svg 
-                className="w-10 h-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-                style={{ overflow: 'visible' }}
-              >
-                {/* Chart bars */}
-                <g>
-                  <rect 
-                    x="2" 
-                    y="11" 
-                    width="4" 
-                    height="7" 
-                    fill="#ec4899" 
-                    rx="1.5"
-                  />
-                  <rect 
-                    x="7" 
-                    y="7" 
-                    width="4" 
-                    height="11" 
-                    fill="#a855f7" 
-                    rx="1.5"
-                  />
-                  <rect 
-                    x="12" 
-                    y="5" 
-                    width="4" 
-                    height="13" 
-                    fill="#3b82f6" 
-                    rx="1.5"
-                  />
-                  <rect 
-                    x="17" 
-                    y="9" 
-                    width="4" 
-                    height="9" 
-                    fill="#10b981" 
-                    rx="1.5"
-                  />
-                </g>
-              </svg>
-
+              <Logo
+                className={`transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
+                  sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'
+                }`}
+              />
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}

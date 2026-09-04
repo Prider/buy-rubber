@@ -24,9 +24,8 @@ describe('GamerLoader', () => {
     expect(firstChild).toHaveClass('custom-class')
   })
 
-  it('shows loading animation bars', () => {
+  it('shows loading animation', () => {
     const { container } = render(<GamerLoader />)
-    // Check for animated color bars
     const animatedElements = container.querySelectorAll('[class*="animate-"]')
     expect(animatedElements.length).toBeGreaterThan(0)
   })

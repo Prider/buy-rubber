@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import Logo from '@/components/Logo';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -147,15 +148,7 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 overflow-hidden">
-                <div className="flex items-end justify-center gap-1.5 h-10">
-                  <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '40%' }} />
-                  <span className="w-2.5 bg-green-600 dark:bg-green-700 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(22,163,74,0.75)] dark:shadow-[0_0_14px_rgba(22,163,74,0.4)]" style={{ height: '70%' }} />
-                  <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '55%' }} />
-                  <span className="w-2.5 bg-green-600 dark:bg-green-700 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.45s] shadow-[0_0_14px_rgba(22,163,74,0.75)] dark:shadow-[0_0_14px_rgba(22,163,74,0.4)]" style={{ height: '80%' }} />
-                  <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite_0.6s] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '50%' }} />
-                </div>
-              </div>
+              <Logo className="h-10 w-auto" />
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">Punsook Innotech</h1>
               </div>
@@ -1299,15 +1292,7 @@ function LandingPage() {
             {/* Company Info */}
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 overflow-hidden">
-                  <div className="flex items-end justify-center gap-1.5 h-10">
-                    <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '40%' }} />
-                    <span className="w-2.5 bg-green-600 dark:bg-green-700 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.15s] shadow-[0_0_14px_rgba(22,163,74,0.75)] dark:shadow-[0_0_14px_rgba(22,163,74,0.4)]" style={{ height: '70%' }} />
-                    <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.8s_ease-in-out_infinite_0.3s] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '55%' }} />
-                    <span className="w-2.5 bg-green-600 dark:bg-green-700 rounded-sm animate-[bounce_1.7s_ease-in-out_infinite_0.45s] shadow-[0_0_14px_rgba(22,163,74,0.75)] dark:shadow-[0_0_14px_rgba(22,163,74,0.4)]" style={{ height: '80%' }} />
-                    <span className="w-2.5 bg-green-500 dark:bg-green-600 rounded-sm animate-[bounce_1.6s_ease-in-out_infinite_0.6s] shadow-[0_0_14px_rgba(34,197,94,0.75)] dark:shadow-[0_0_14px_rgba(34,197,94,0.4)]" style={{ height: '50%' }} />
-                  </div>
-                </div>
+                <Logo className="h-10 w-auto" />
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Punsook Innotech</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">

@@ -35,11 +35,16 @@ module.exports = {
           '0%': { transform: 'translateY(8px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        swim: {
+          '0%, 100%': { transform: 'translateX(1.5rem)' },
+          '50%': { transform: 'translateX(-1.5rem)' },
+        },
       },
       animation: {
         slideIn: 'slideIn 0.3s ease-out',
         fadeIn: 'fadeIn 0.3s ease-out',
         fadeInUp: 'fadeInUp 0.4s ease-out forwards',
+        swim: 'swim 1.6s ease-in-out infinite',
       },
     },
   },

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import Logo from '@/components/Logo';
 import { useLicense } from '@/contexts/LicenseContext';
 
 interface ActivateLicenseFormProps {
@@ -70,15 +71,18 @@ export default function ActivateLicenseForm({
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
           <div className="px-8 py-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {showSuccess ? 'เปิดใช้งานสำเร็จ' : 'เปิดใช้งานระบบ'}
-                </h1>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  {showSuccess
-                    ? 'ใบอนุญาตถูกต้อง พร้อมเข้าสู่ระบบ'
-                    : 'กรอก License Key เพื่อใช้งาน Punsook Innotech'}
-                </p>
+              <div className="flex items-center space-x-3">
+                <Logo className="h-12 w-auto" />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {showSuccess ? 'เปิดใช้งานสำเร็จ' : 'เปิดใช้งานระบบ'}
+                  </h1>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    {showSuccess
+                      ? 'ใบอนุญาตถูกต้อง พร้อมเข้าสู่ระบบ'
+                      : 'กรอก License Key เพื่อใช้งาน Punsook Innotech'}
+                  </p>
+                </div>
               </div>
               <DarkModeToggle />
             </div>
