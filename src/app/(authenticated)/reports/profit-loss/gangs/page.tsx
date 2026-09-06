@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
@@ -46,7 +45,13 @@ function formatThaiDate(value: string | Date | null | undefined): string {
   if (!value) return '–';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '–';
-  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+  const dateStr = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+  const timeStr = d.toLocaleTimeString('th-TH', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  return `${dateStr} ${timeStr}`;
 }
 
 function pnlTone(value: number): string {
@@ -248,66 +253,61 @@ export default function ProfitLossGangsReportPage() {
   return (
     <div className="w-full space-y-8 pb-10">
       {/* Header */}
-      <div className="space-y-4">
-        <Link
-          href="/reports/profit-loss"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <span aria-hidden>←</span>
-          รายงานกำไร / ขาดทุน
-        </Link>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+              กำไร / ขาดทุนต่อกอง
+            </span>
+          </h1>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                กำไร / ขาดทุนต่อกอง
-              </span>
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">ตามรอบสต็อกที่ขายจนหมด</p>
+          <div className="w-full sm:w-64">
+            <label
+              htmlFor="gang-product-type"
+              className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              สินค้า
+            </label>
+            <select
+              id="gang-product-type"
+              value={selectedProductTypeId}
+              onChange={(e) => setSelectedProductTypeId(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+            >
+              {productTypes.map((pt) => (
+                <option key={pt.id} value={pt.id}>
+                  {pt.code} — {pt.name}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="w-full sm:w-64">
-              <label
-                htmlFor="gang-product-type"
-                className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                สินค้า
-              </label>
-              <select
-                id="gang-product-type"
-                value={selectedProductTypeId}
-                onChange={(e) => setSelectedProductTypeId(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
-              >
-                {productTypes.map((pt) => (
-                  <option key={pt.id} value={pt.id}>
-                    {pt.code} — {pt.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => void handleExportPdf()}
-                disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
-                className="rounded-xl bg-rose-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                {getExportPdfButtonText(exportingPdf)}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleExportExcel()}
-                disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
-                className="rounded-xl bg-teal-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                {getExportExcelButtonText(exportingExcel)}
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/reports/profit-loss')}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
+          >
+            <span aria-hidden>←</span>
+            รายงานกำไร / ขาดทุน
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleExportPdf()}
+            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
+            className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
+          >
+            {getExportPdfButtonText(exportingPdf)}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleExportExcel()}
+            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
+            className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
+          >
+            {getExportExcelButtonText(exportingExcel)}
+          </button>
         </div>
       </div>
 
@@ -348,10 +348,10 @@ export default function ProfitLossGangsReportPage() {
       {/* Gang list */}
       <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
-          <div>
+          <div className="flex min-w-0 items-center gap-2">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">รายการกอง</h2>
             {selectedProductType ? (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                 {selectedProductType.code} · {selectedProductType.name}
               </p>
             ) : null}
