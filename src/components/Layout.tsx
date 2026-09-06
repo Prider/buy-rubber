@@ -4,6 +4,7 @@ import { ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
+import HeaderTime from './HeaderTime';
 import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,25 +44,12 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isElectron, setIsElectron] = useState(false);
-  const [todayText, setTodayText] = useState('');
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
   // Check if running in Electron
   useEffect(() => {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
-  }, []);
-
-  // Generate today's date text on the client only to avoid SSR/CSR locale differences
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const text = new Date().toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      weekday: 'short',
-    });
-    setTodayText(text);
   }, []);
 
   // Preload slip settings into localStorage so slipGenerator can render correctly
@@ -351,17 +339,7 @@ export default function Layout({ children }: LayoutProps) {
               <DarkModeToggle />
               
               {/* Date Display */}
-              <div className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <div
-                  className="text-sm text-gray-600 dark:text-gray-400"
-                  suppressHydrationWarning
-                >
-                  {todayText}
-                </div>
-              </div>
+              <HeaderTime />
             </div>
           </div>
         </header>

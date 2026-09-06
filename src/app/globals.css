@@ -1,5 +1,6 @@
 @import '../styles/animal-island-modal.css';
 @import '../styles/animal-island-wallet.css';
+@import '../styles/animal-island-time.css';
 
 @tailwind base;
 @tailwind components;

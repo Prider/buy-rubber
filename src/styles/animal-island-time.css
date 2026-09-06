@@ -1,0 +1,88 @@
+.animal-acDatetime-hVKh7{display:inline-flex;gap:20px;align-items:center;align-self:flex-start;width:fit-content;max-width:max-content;padding:16px 36px;background:linear-gradient(180deg,#fff,#f8f8f0);border:3px solid #d4cfc3;animation:animal-ac-fade-up-QZlzv .5s ease-out;border-radius:18px}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k{display:flex;flex-direction:column;align-items:center;padding-right:24px;border-right:3px solid rgba(159,146,125,.35)}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR{color:#6fba2c;font-weight:900;font-size:14px;letter-spacing:1.5px;text-transform:uppercase}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX{color:#8b7355;font-weight:800;font-size:22px}.animal-acDatetime-hVKh7 .animal-acTime-S-twb{display:flex;align-items:center;color:#8b7355;font-weight:900;font-size:48px;letter-spacing:2px}.animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ{position:relative;top:-.08em;margin:0 1px;font-size:48px;color:#8b7355;animation:animal-blink-MyzzY 1s step-end infinite}.animal-acDatetimeGame-qLTEG{display:inline-flex;flex-direction:column;align-items:center;width:fit-content;max-width:max-content;animation:animal-ac-fade-up-QZlzv .5s ease-out}.animal-acDatetimeGame-qLTEG .animal-gameTime-QW1WA{display:flex;align-items:center;color:#8b7355;font-weight:900;font-size:40px;letter-spacing:2px}.animal-acDatetimeGame-qLTEG .animal-gameTime-QW1WA .animal-gameColon-RSZVO{position:relative;top:-.08em;margin:0 1px;font-size:40px;color:#8b7355;animation:animal-blink-MyzzY 1s step-end infinite}.animal-acDatetimeGame-qLTEG .animal-gameDivider-zcIjk{width:calc(100% + 5px);height:3px;background:#9f927d59;border-radius:2px}.animal-acDatetimeGame-qLTEG .animal-gameDate-2f7fs{display:flex;align-items:center;gap:20px;margin-top:5px}.animal-acDatetimeGame-qLTEG .animal-gameDate-2f7fs .animal-gameMonthday-KauqB{color:#8b7355;font-weight:800;font-size:22px;letter-spacing:2px}.animal-acDatetimeGame-qLTEG .animal-gameDate-2f7fs .animal-gameWeekday-4cp3c{display:inline-flex;align-items:center;justify-content:center;padding:0 16px;height:27px;border-radius:999px;background:#fffbe7;color:#8b7355;font-weight:900;font-size:18px;line-height:1;letter-spacing:1px}@keyframes animal-blink-MyzzY{50%{opacity:0}}
+
+/* Compact Time HUD for the app header — colors match the rest of the app */
+.app-island-time .animal-acDatetime-hVKh7 {
+  gap: 8px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 0.5rem;
+  animation: none;
+  background: #f9fafb;
+}
+.app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k {
+  padding-right: 8px;
+  border-right-width: 1px;
+  border-right-color: #e5e7eb;
+}
+.app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR {
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0284c7;
+}
+.app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX {
+  font-size: 12px;
+  white-space: nowrap;
+  color: #4b5563;
+}
+.app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb,
+.app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ {
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #4b5563;
+}
+
+.dark .app-island-time .animal-acDatetime-hVKh7 {
+  background: #374151;
+}
+.dark .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k {
+  border-right-color: #4b5563;
+}
+.dark .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR {
+  color: #38bdf8;
+}
+.dark .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX,
+.dark .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb,
+.dark .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ {
+  color: #9ca3af;
+}
+
+.app-island-time,
+.app-island-title {
+  font-family: var(--animal-font-family);
+}
+
+.app-island-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  line-height: 1;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.app-island-title-brand,
+.app-island-title-sub {
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.app-island-title-brand {
+  color: #4b5563;
+}
+
+.app-island-title-sub {
+  color: #0284c7;
+}
+
+.dark .app-island-title-brand {
+  color: #9ca3af;
+}
+
+.dark .app-island-title-sub {
+  color: #38bdf8;
+}
+
+@media(max-width:768px){.animal-acDatetimeGame-qLTEG .animal-gameTime-QW1WA,.animal-acDatetimeGame-qLTEG .animal-gameTime-QW1WA .animal-gameColon-RSZVO{font-size:32px}.animal-acDatetimeGame-qLTEG .animal-gameMonthday-KauqB{font-size:14px}.animal-acDatetime-hVKh7{padding:12px 20px;gap:12px}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k{padding-right:12px}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR{font-size:11px}.animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX{font-size:16px}.animal-acDatetime-hVKh7 .animal-acTime-S-twb,.animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ{font-size:32px}}
