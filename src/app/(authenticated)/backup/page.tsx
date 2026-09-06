@@ -5,11 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
 import { useAlert } from '@/hooks/useAlert';
-// import { useBackupSettings } from './hooks/useBackupSettings';
 import { showRestoreSuccessMessage } from './utils';
 import { BACKUP_PAGE_SIZE } from './constants';
 import { BackupHeader } from './components/BackupHeader';
-// import { BackupSettings } from './components/BackupSettings';
 import { BackupList } from './components/BackupList';
 import GamerLoader from '@/components/GamerLoader';
 
@@ -201,21 +199,6 @@ export default function BackupPage() {
     <div className="space-y-8 pb-8">
       {/* Header */}
       <BackupHeader onCreateBackup={handleCreateBackup} loading={actionLoading} />
-
-      {/* Error Message */}
-      {/* {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-          <p className="text-red-700 dark:text-red-400">{error}</p>
-        </div>
-      )} */}
-
-      {/* Auto Backup Settings */}
-      {/* <BackupSettings
-        settings={settings}
-        loading={settingsLoading}
-        onUpdate={updateSettings}
-        onSave={saveSettings}
-      /> */}
 
       {/* Backups List */}
       <BackupList
