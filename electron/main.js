@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { loadElectronLicenseEnv } = require('./loadEnv');
+
+loadElectronLicenseEnv(path.join(__dirname, '..'));
 
 // Must run before app.ready / any getPath('userData') calls.
 // Electron defaults to package.json "name" (punsook-innotech); override to a fixed folder.

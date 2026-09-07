@@ -2,6 +2,9 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const path = require('path');
 const fs = require('fs');
+const { loadElectronLicenseEnv } = require('./loadEnv');
+
+loadElectronLicenseEnv();
 
 // Simple file logger that mirrors console to a log file in userData
 (() => {
@@ -196,9 +199,14 @@ const startServer = async (customAppPath = null, databasePath = null) => {
   
   // Use provided path, or detect it
   const appPath = customAppPath || getAppPath();
+  loadElectronLicenseEnv(appPath);
   console.log('Starting server from:', appPath);
   console.log('__dirname:', __dirname);
   console.log('process.cwd():', process.cwd());
+  console.log(
+    'LICENSE_VALIDATION_KEY:',
+    process.env.LICENSE_VALIDATION_KEY ? 'set' : 'MISSING'
+  );
 
   // Prefer WASM engine in packaged Electron to avoid native binary path issues
   try {

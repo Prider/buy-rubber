@@ -117,6 +117,7 @@
     },
     "files": [
       "electron/**/*",
+      "electron.env",
       ".next/**/*",
       "prisma/**/*",
       "node_modules/.prisma/**",

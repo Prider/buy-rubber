@@ -1,10 +1,16 @@
 /**
- * Seed 100,000 sample Sale rows into the existing database.
+ * Seed sample Sale rows into the existing database.
  * Run after main seed (needs at least one User and ProductType):
  *   npx tsx prisma/seedSale.ts
- *   npm run db:seed:sales
+ *   npm run db:seed:sales:for:test
  *
  * Clears existing sales first, then inserts fresh records (no stock/ledger updates).
+ *
+ * Optional env:
+ *   SALES=100000   number of sale rows (default 100000)
+ *
+ * Examples:
+ *   SALES=50 npm run db:seed:sales:for:test
  */
 import { PrismaClient } from '@prisma/client';
 
@@ -25,11 +31,11 @@ const COMPANY_NAMES = [
   'บริษัท เอเชียน รับเบอร์ จำกัด',
 ];
 
-const SALE_COUNT = 100_000;
+const SALE_COUNT = Math.max(1, parseInt(process.env.SALES || '100000', 10) || 100_000);
 const BATCH_SIZE = 1_000;
 
 async function main() {
-  console.log('🧾 seedSale: สร้างรายการขายตัวอย่าง...');
+  console.log(`🧾 seedSale: สร้างรายการขายตัวอย่าง... (${SALE_COUNT.toLocaleString()} รายการ)`);
 
   const users = await prisma.user.findMany({
     where: { isActive: true },
