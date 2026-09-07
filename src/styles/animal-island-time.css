@@ -2,34 +2,41 @@
 
 /* Compact Time HUD for the app header — colors match the rest of the app */
 .app-island-time .animal-acDatetime-hVKh7 {
-  gap: 8px;
-  padding: 4px 10px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 6px 14px;
   border: none;
   border-radius: 0.5rem;
   animation: none;
   background: #f9fafb;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k {
-  padding-right: 8px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  padding-right: 12px;
   border-right-width: 1px;
   border-right-color: #e5e7eb;
+  white-space: nowrap;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0;
   text-transform: none;
   color: #0284c7;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX {
-  font-size: 12px;
+  font-size: 16px;
   white-space: nowrap;
   color: #4b5563;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb,
 .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ {
-  font-size: 18px;
+  font-size: 26px;
   letter-spacing: 1px;
   color: #4b5563;
+  white-space: nowrap;
 }
 
 .dark .app-island-time .animal-acDatetime-hVKh7 {

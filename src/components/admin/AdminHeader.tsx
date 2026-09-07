@@ -1,8 +1,43 @@
-import React from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 
 interface AdminHeaderProps {
   title: string;
   subtitle: string;
+}
+
+function TypewriterText({ text, className }: { text: string; className?: string }) {
+  const [shown, setShown] = useState('');
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(text);
+      return;
+    }
+
+    setShown('');
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      setShown(text.slice(0, i));
+      if (i >= text.length) {
+        window.clearInterval(id);
+      }
+    }, 42);
+
+    return () => window.clearInterval(id);
+  }, [text]);
+
+  return (
+    <p className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {shown}
+        <span className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[0.12em] bg-current animate-pulse" />
+      </span>
+    </p>
+  );
 }
 
 export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
@@ -20,9 +55,10 @@ export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
             {title}
           </span>
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {subtitle}
-        </p>
+        <TypewriterText
+          text={subtitle}
+          className="text-sm text-gray-600 dark:text-gray-400"
+        />
       </div>
     </div>
   );

@@ -10,17 +10,14 @@ import { useAlert } from '@/hooks/useAlert';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
+import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
 import type { CartItem } from '@/components/purchases/types';
 import {
-  SLIP_PAPER_OPTIONS,
   SLIP_PAPER_SIZE_STORAGE_KEY,
   normalizeSlipPaperSize,
-  slipPageWidthMm,
-  slipPaperLabelFor,
-  slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
 
@@ -44,8 +41,6 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
     totalAmount: -150,
   },
 ];
-
-const PREVIEW_IFRAME_HEIGHT = 560;
 
 type AdminSettingsTab = 'connection' | 'slip' | 'users';
 
@@ -187,14 +182,6 @@ export default function AdminSettingsPage() {
     });
   }, [slipCompanyName, slipCompanyAddress, slipPaperSize]);
 
-  const previewScale = useMemo(() => {
-    const frameW = slipWidthPxFor(slipPaperSize);
-    return Math.min(1, 440 / frameW);
-  }, [slipPaperSize]);
-
-  /** Matches slip document width (paper-aligned), not including extra chrome. */
-  const previewFrameWidth = slipWidthPxFor(slipPaperSize);
-
   const handleSlipPaperSizeChange = (id: SlipPaperSizeId) => {
     setSlipPaperSize(id);
     if (typeof window !== 'undefined') {
@@ -289,124 +276,18 @@ export default function AdminSettingsPage() {
               )}
 
               {activeTab === 'slip' && (
-                <div
-                  id="admin-tabpanel-slip"
-                  role="tabpanel"
-                  aria-labelledby="admin-tab-slip"
-                >
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div>
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">ตั้งค่าข้อมูลใบรับซื้อ (Slip)</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          อัปเดตชื่อบริษัท ที่อยู่ และขนาดกระดาษสำหรับใบรับซื้อ
-                        </p>
-                      </div>
-                      {slipLoading ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">กำลังโหลด...</div>
-                      ) : (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          ตัวอย่างและขนาดกระดาษอัปเดตทันที · ชื่อ/ที่อยู่หลังบันทึก
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                          ชื่อบริษัท
-                        </label>
-                        <input
-                          type="text"
-                          value={slipCompanyName}
-                          onChange={(e) => setSlipCompanyName(e.target.value)}
-                          disabled={slipSaving}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                          ที่อยู่บริษัท
-                        </label>
-                        <textarea
-                          value={slipCompanyAddress}
-                          onChange={(e) => setSlipCompanyAddress(e.target.value)}
-                          disabled={slipSaving}
-                          rows={3}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                        />
-                      </div>
-
-                      <div className="space-y-1 lg:col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                          ขนาดกระดาษ
-                        </label>
-                        <select
-                          value={slipPaperSize}
-                          onChange={(e) => handleSlipPaperSizeChange(e.target.value as SlipPaperSizeId)}
-                          disabled={slipSaving || slipLoading}
-                          className="w-full max-w-md px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {SLIP_PAPER_OPTIONS.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          เลือกแล้วใช้กับตัวอย่างและการพิมพ์ทันทีบนเครื่องนี้ · บันทึกเพื่อเก็บค่าถาวรบนเซิร์ฟเวอร์
-                        </p>
-                      </div>
-
-                      <div className="space-y-2 lg:col-span-2">
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {slipPaperLabelFor(slipPaperSize)} · {slipPageWidthMm(slipPaperSize)} mm
-                            ({slipWidthPxFor(slipPaperSize)} px)
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-slate-100/80 dark:bg-slate-900/50 p-4 flex justify-center overflow-auto max-h-[600px]">
-                          <div
-                            className="relative overflow-hidden rounded-lg shadow-sm bg-white"
-                            style={{
-                              width: previewFrameWidth * previewScale,
-                              height: PREVIEW_IFRAME_HEIGHT * previewScale,
-                            }}
-                          >
-                            <iframe
-                              title="ตัวอย่างใบรับซื้อ"
-                              srcDoc={slipPreviewHtml}
-                              className="bg-white rounded-lg"
-                              style={{
-                                width: previewFrameWidth,
-                                height: PREVIEW_IFRAME_HEIGHT,
-                                border: 'none',
-                                transform: `scale(${previewScale})`,
-                                transformOrigin: 'top left',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={handleSaveSlipSettings}
-                        disabled={slipSaving}
-                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl"
-                      >
-                        {slipSaving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <SlipSettingsPanel
+                  companyName={slipCompanyName}
+                  companyAddress={slipCompanyAddress}
+                  paperSize={slipPaperSize}
+                  loading={slipLoading}
+                  saving={slipSaving}
+                  previewHtml={slipPreviewHtml}
+                  onCompanyNameChange={setSlipCompanyName}
+                  onCompanyAddressChange={setSlipCompanyAddress}
+                  onPaperSizeChange={handleSlipPaperSizeChange}
+                  onSave={handleSaveSlipSettings}
+                />
               )}
 
               {activeTab === 'users' && (

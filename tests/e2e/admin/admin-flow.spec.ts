@@ -236,7 +236,7 @@ test.describe('Admin flow', () => {
     await openSlipTab(page)
 
     const panel = slipPanel(page)
-    await panel.locator('select').selectOption('104mm')
+    await panel.getByRole('radio', { name: /104mm/ }).click()
 
     await expect(page.getByText(/104mm.*393 px/)).toBeVisible()
 
@@ -260,7 +260,7 @@ test.describe('Admin flow', () => {
 
     await page.reload()
     await page.getByRole('tab', { name: 'ใบรับซื้อ (Slip)' }).click()
-    await expect(slipPanel(page).locator('select')).toHaveValue('104mm')
+    await expect(slipPanel(page).getByRole('radio', { name: /104mm/ })).toBeChecked()
     await expect(page.getByText(/104mm.*393 px/)).toBeVisible()
   })
 })

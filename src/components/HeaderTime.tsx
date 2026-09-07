@@ -26,7 +26,7 @@ export default function HeaderTime() {
 
   return (
     <div className="app-island-time hidden lg:flex items-center" lang="th">
-      <div className="animal-acDatetime-hVKh7">
+      <div className="animal-acDatetime-hVKh7 flex-row items-center">
         <div className="animal-acDate-rhO3k">
           <span className="animal-acWeekday-bxDHR">{weekday}</span>
           <span className="animal-acMonthday-1jUmX">{monthday}</span>
