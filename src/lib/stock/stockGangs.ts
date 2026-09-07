@@ -199,8 +199,6 @@ export async function rebuildStockGangs(
   db: any,
   productTypeId?: string,
 ): Promise<{ productTypes: number; gangs: number }> {
-  const where = productTypeId ? { productTypeId } : {};
-
   if (productTypeId) {
     await db.stockGang.deleteMany({ where: { productTypeId } });
   } else {

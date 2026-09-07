@@ -18,7 +18,8 @@ export function patchHttpServerForApiPerformance() {
     return;
   }
 
-  const originalEmit = serverPrototype.emit;
+  type ServerEmit = (this: Server, event: string, ...args: unknown[]) => boolean;
+  const originalEmit = serverPrototype.emit as ServerEmit;
 
   serverPrototype.emit = function emitWithApiPerformance(
     this: Server,
@@ -44,8 +45,8 @@ export function patchHttpServerForApiPerformance() {
       }
     }
 
-    return originalEmit.apply(this, [event, ...args]);
-  };
+    return originalEmit.call(this, event, ...args);
+  } as typeof serverPrototype.emit;
 
   serverPrototype.__apiPerfPatched = true;
   patched = true;

@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit) || 1,
       },
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงกำไร/ขาดทุนต่อกอง' }, { status: 500 });
   }
 }
