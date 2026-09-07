@@ -18,6 +18,11 @@
  *
  *   npm run db:migrate:old -- --source /path/to/old/dev.db --install
  *
+ * Aligns old DBs with the current schema:
+ *   - additive tables (DestinationCompany, SaleExpense, StockGang, report groups)
+ *   - Sale.destinationCompanyId / unitCostPerKg / costOfGoods
+ *   - backfill companies, sale expense lines, stock ledger/gangs, sale COGS
+ *
  * Options:
  *   --source <path>   Required. Old prisma/dev.db (or backup file)
  *   --target <path>   Optional. Where to write the migrated DB
@@ -25,6 +30,7 @@
  *   --dry-run         Inspect + migrate in temp only (do not write target)
  */
 
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -37,6 +43,7 @@ const isWindows = process.platform === 'win32';
 const REQUIRED_TABLES = [
   'User',
   'Member',
+  'DestinationCompany',
   'ProductType',
   'Purchase',
   'Expense',
@@ -44,9 +51,13 @@ const REQUIRED_TABLES = [
   'Setting',
   'Backup',
   'Sale',
+  'SaleExpense',
   'StockPosition',
   'StockLedgerEntry',
+  'StockGang',
   'ProductPrice',
+  'ReportProductTypeGroup',
+  'ReportProductTypeGroupMember',
 ];
 
 /** Columns that may be missing on older DBs (added with safe defaults). */
@@ -63,6 +74,10 @@ const COMPAT_COLUMNS = {
   Sale: [
     { name: 'expenseType', sql: `ALTER TABLE Sale ADD COLUMN expenseType TEXT` },
     { name: 'expenseCost', sql: `ALTER TABLE Sale ADD COLUMN expenseCost REAL` },
+    { name: 'destinationCompanyId', sql: `ALTER TABLE Sale ADD COLUMN destinationCompanyId TEXT` },
+    { name: 'unitCostPerKg', sql: `ALTER TABLE Sale ADD COLUMN unitCostPerKg REAL` },
+    { name: 'costOfGoods', sql: `ALTER TABLE Sale ADD COLUMN costOfGoods REAL` },
+    { name: 'notes', sql: `ALTER TABLE Sale ADD COLUMN notes TEXT` },
   ],
   StockLedgerEntry: [
     { name: 'refId', sql: `ALTER TABLE StockLedgerEntry ADD COLUMN refId TEXT` },
@@ -333,19 +348,176 @@ async function reportCounts(prisma, label) {
   const models = [
     'user',
     'member',
+    'destinationCompany',
     'productType',
     'purchase',
     'sale',
+    'saleExpense',
     'expense',
     'serviceFee',
     'stockPosition',
     'stockLedgerEntry',
+    'stockGang',
+    'reportProductTypeGroup',
   ];
   log(`\n[COUNTS] ${label}:`);
   for (const m of models) {
     const n = await countSafe(prisma, m);
     log(`   ${m}: ${n === null ? 'n/a' : n}`);
   }
+}
+
+function nextCompanyCode(existingCodes) {
+  let max = 0;
+  for (const code of existingCodes) {
+    const m = /^C(\d+)$/.exec(code);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  let n = max + 1;
+  while (existingCodes.has(`C${String(n).padStart(3, '0')}`)) n += 1;
+  const code = `C${String(n).padStart(3, '0')}`;
+  existingCodes.add(code);
+  return code;
+}
+
+/**
+ * Create DestinationCompany rows from distinct Sale.companyName values
+ * and set Sale.destinationCompanyId.
+ */
+async function backfillDestinationCompanies(prisma) {
+  const existing = await prisma.destinationCompany.findMany({
+    select: { id: true, code: true, name: true },
+  });
+  const codes = new Set(existing.map((c) => c.code));
+  const byNameLower = new Map(existing.map((c) => [c.name.toLowerCase(), c]));
+
+  const nameRows = await prisma.$queryRawUnsafe(`
+    SELECT TRIM(companyName) AS name
+    FROM Sale
+    WHERE destinationCompanyId IS NULL
+      AND companyName IS NOT NULL
+      AND TRIM(companyName) != ''
+    GROUP BY TRIM(companyName)
+  `);
+
+  let created = 0;
+  let linked = 0;
+
+  for (const row of nameRows || []) {
+    const name = String(row.name || '').trim();
+    if (!name) continue;
+
+    let company = byNameLower.get(name.toLowerCase());
+    if (!company) {
+      company = await prisma.destinationCompany.create({
+        data: { code: nextCompanyCode(codes), name },
+      });
+      byNameLower.set(name.toLowerCase(), company);
+      created += 1;
+    }
+
+    const updated = await prisma.$executeRawUnsafe(
+      `UPDATE Sale
+       SET destinationCompanyId = ?
+       WHERE destinationCompanyId IS NULL
+         AND LOWER(TRIM(companyName)) = LOWER(?)`,
+      company.id,
+      name,
+    );
+    linked += Number(updated) || 0;
+  }
+
+  log(`  companies created=${created}, sales linked=${linked}`);
+  return { created, linked };
+}
+
+/**
+ * Create SaleExpense lines from legacy Sale.expenseType / expenseCost.
+ */
+async function backfillSaleExpenses(prisma) {
+  const sales = await prisma.$queryRawUnsafe(`
+    SELECT s.id AS id, s.expenseType AS expenseType, s.expenseCost AS expenseCost, s.notes AS notes
+    FROM Sale s
+    WHERE NOT EXISTS (SELECT 1 FROM SaleExpense e WHERE e.saleId = s.id)
+      AND (
+        (s.expenseCost IS NOT NULL AND s.expenseCost > 0)
+        OR (s.expenseType IS NOT NULL AND TRIM(s.expenseType) != '')
+      )
+  `);
+
+  const rows = (sales || []).map((sale) => ({
+    id: crypto.randomUUID(),
+    saleId: sale.id,
+    type: (sale.expenseType && String(sale.expenseType).trim()) || 'อื่นๆ',
+    amount: Number(sale.expenseCost) > 0 ? Number(sale.expenseCost) : 0,
+    note: sale.notes ? String(sale.notes) : null,
+    sortOrder: 0,
+  }));
+
+  const chunkSize = 500;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    await prisma.saleExpense.createMany({ data: rows.slice(i, i + chunkSize) });
+  }
+
+  log(`  sale expenses created=${rows.length}`);
+  return { created: rows.length };
+}
+
+/**
+ * Copy unitCostPerKg / costOfGoods from rebuilt SALE ledger rows onto Sale.
+ */
+async function backfillSaleCogs(prisma) {
+  const ledger = await prisma.stockLedgerEntry.findMany({
+    where: { refType: 'SALE', refNo: { not: null } },
+    select: { refNo: true, unitCostPerKg: true, totalCost: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const bySaleNo = new Map();
+  for (const entry of ledger) {
+    if (!entry.refNo || bySaleNo.has(entry.refNo)) continue;
+    bySaleNo.set(entry.refNo, {
+      unitCostPerKg: entry.unitCostPerKg,
+      totalCost: entry.totalCost,
+    });
+  }
+
+  const saleNos = [...bySaleNo.keys()];
+  const chunkSize = 500;
+  let updated = 0;
+
+  for (let i = 0; i < saleNos.length; i += chunkSize) {
+    const chunk = saleNos.slice(i, i + chunkSize);
+    const sales = await prisma.sale.findMany({
+      where: { saleNo: { in: chunk } },
+      select: { id: true, saleNo: true, weight: true },
+    });
+
+    await prisma.$transaction(
+      sales.map((sale) => {
+        const cost = bySaleNo.get(sale.saleNo);
+        const unitCostPerKg =
+          cost?.unitCostPerKg != null && Number.isFinite(Number(cost.unitCostPerKg))
+            ? Number(cost.unitCostPerKg)
+            : null;
+        let costOfGoods =
+          cost?.totalCost != null && Number.isFinite(Number(cost.totalCost))
+            ? Number(cost.totalCost)
+            : null;
+        if (costOfGoods == null && unitCostPerKg != null) {
+          costOfGoods = sale.weight * unitCostPerKg;
+        }
+        return prisma.sale.update({
+          where: { id: sale.id },
+          data: { unitCostPerKg, costOfGoods },
+        });
+      }),
+    );
+    updated += sales.length;
+  }
+
+  log(`  sales with COGS updated=${updated}`);
+  return { updated };
 }
 
 async function main() {
@@ -453,19 +625,28 @@ async function main() {
     log(`[OK] All required tables present (${afterTables.length} tables)`);
 
     await reportCounts(prisma, 'after schema sync');
+
+    log('\nStep 6: Backfill destination companies from Sale.companyName...');
+    await backfillDestinationCompanies(prisma);
+
+    log('\nStep 7: Backfill SaleExpense from legacy expenseType/expenseCost...');
+    await backfillSaleExpenses(prisma);
   } finally {
     await prisma.$disconnect().catch(() => {});
   }
 
-  log('\nStep 6: Rebuild stock ledger from purchases/sales...');
+  log('\nStep 8: Rebuild stock ledger, positions, and gangs...');
   const { rebuildStock } = require(path.join(projectRoot, 'electron', 'rebuild-stock.js'));
   const stockResult = await rebuildStock(dbUrl);
   log(
-    `[OK] Stock rebuilt: positions=${stockResult.positions}, ledger=${stockResult.ledgerEntries}, purchases=${stockResult.purchases}, sales=${stockResult.sales}`,
+    `[OK] Stock rebuilt: positions=${stockResult.positions}, ledger=${stockResult.ledgerEntries}, gangs=${stockResult.gangs ?? 0}, purchases=${stockResult.purchases}, sales=${stockResult.sales}`,
   );
 
   prisma = await createPrisma(dbUrl);
   try {
+    log('\nStep 9: Backfill Sale unitCostPerKg / costOfGoods from ledger...');
+    await backfillSaleCogs(prisma);
+
     const integrityAfter = await integrityCheck(prisma);
     if (!integrityAfter.ok) {
       fail(`Migrated DB integrity_check failed: ${JSON.stringify(integrityAfter.detail)}`);
