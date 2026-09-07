@@ -26,13 +26,6 @@ export default function BackupPage() {
     downloadBackup,
   } = useBackup();
   
-  // const {
-  //   settings,
-  //   loading: settingsLoading,
-  //   updateSettings,
-  //   saveSettings,
-  // } = useBackupSettings();
-
   const [backups, setBackups] = useState<Backup[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
