@@ -15,9 +15,6 @@ export function BackupHeader({ onCreateBackup, loading }: BackupHeaderProps) {
               สำรองข้อมูล
             </span>
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            จัดการการสำรองและเรียกคืนข้อมูล
-          </p>
         </div>
         <button
           onClick={onCreateBackup}

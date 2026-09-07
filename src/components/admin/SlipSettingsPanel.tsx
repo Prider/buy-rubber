@@ -136,9 +136,6 @@ export function SlipSettingsPanel({
                 );
               })}
             </div>
-          </div>
-
-          <div className="mt-auto pt-1">
             <button
               type="button"
               onClick={onSave}
