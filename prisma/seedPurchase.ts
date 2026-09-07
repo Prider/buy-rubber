@@ -1,28 +1,63 @@
 /**
- * Seed 100,000 sample Purchase rows into the existing database.
- * Run after main seed (needs at least one User, Member, and ProductType):
+ * Seed sample Purchase rows into the existing database.
+ * Run after customer/main seed (needs at least one User and ProductType):
  *   npx tsx prisma/seedPurchase.ts
- *   npm run db:seed:purchases
+ *   npm run db:seed:purchases:for:test
  *
  * Clears existing purchases and linked service fees first, then inserts fresh
- * records (no stock/ledger updates).
+ * records (no stock/ledger updates). Creates a few example members if none exist.
+ *
+ * Optional env:
+ *   PURCHASES=100000   number of purchase rows (default 100000)
+ *
+ * Examples:
+ *   PURCHASES=20 npm run db:seed:purchases:for:test
  */
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const PURCHASE_COUNT = 100_000;
+const PURCHASE_COUNT = Math.max(1, parseInt(process.env.PURCHASES || '100000', 10) || 100_000);
 const BATCH_SIZE = 1_000;
 
+const EXAMPLE_MEMBERS = [
+  {
+    code: 'M001',
+    name: 'นายสมชาย ใจดี',
+    phone: '0812345678',
+    address: 'สวนยาง ต.บ้านใหม่ อ.เมือง จ.สงขลา',
+    ownerPercent: 70,
+    tapperPercent: 30,
+    tapperName: 'นายสมศักดิ์ คนตัด',
+  },
+  {
+    code: 'M002',
+    name: 'นางสาวสมหญิง รักษ์ดี',
+    phone: '0823456789',
+    address: 'สวนยาง ต.ท่าช้าง อ.เมือง จ.สงขลา',
+    ownerPercent: 100,
+    tapperPercent: 0,
+  },
+  {
+    code: 'M003',
+    name: 'นายประยุทธ์ ขยัน',
+    phone: '0834567890',
+    address: 'สวนยาง ต.คลองแห อ.หาดใหญ่ จ.สงขลา',
+    ownerPercent: 60,
+    tapperPercent: 40,
+    tapperName: 'นายสมพงษ์ คนตัด',
+  },
+];
+
 async function main() {
-  console.log('🛒 seedPurchase: สร้างรายการรับซื้อตัวอย่าง...');
+  console.log(`🛒 seedPurchase: สร้างรายการรับซื้อตัวอย่าง... (${PURCHASE_COUNT.toLocaleString()} รายการ)`);
 
   const users = await prisma.user.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'asc' },
     take: 20,
   });
-  const members = await prisma.member.findMany({
+  let members = await prisma.member.findMany({
     where: { isActive: true },
     orderBy: { code: 'asc' },
   });
@@ -34,13 +69,17 @@ async function main() {
     console.error('❌ ไม่พบผู้ใช้ในระบบ — รัน npm run db:seed ก่อน');
     process.exit(1);
   }
-  if (members.length === 0) {
-    console.error('❌ ไม่พบสมาชิกในระบบ — รัน npm run db:seed ก่อน');
-    process.exit(1);
-  }
   if (productTypes.length === 0) {
     console.error('❌ ไม่พบประเภทสินค้า — รัน npm run db:seed ก่อน');
     process.exit(1);
+  }
+
+  if (members.length === 0) {
+    console.log('   - ไม่พบสมาชิก สร้างสมาชิกตัวอย่าง...');
+    members = await Promise.all(
+      EXAMPLE_MEMBERS.map((data) => prisma.member.create({ data })),
+    );
+    console.log(`   - สมาชิกตัวอย่าง: ${members.length} ราย`);
   }
 
   const deletedFees = await prisma.serviceFee.deleteMany({});

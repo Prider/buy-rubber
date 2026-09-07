@@ -2,8 +2,9 @@
 
 /**
  * Prepare a fresh prisma/dev.db for Electron packaging.
- * Customer seed (users + product types), then example sales and closed gangs.
- * Full load-test volumes stay on: npm run db:seed:sales:for:test / db:seed:gangs:for:test
+ * Customer seed (users + product types), then example purchases, sales,
+ * stock rebuild, then closed gangs (gangs last so restock does not wipe them).
+ * Full load-test volumes stay on: npm run db:seed:purchases:for:test / db:seed:sales:for:test / db:seed:gangs:for:test
  */
 
 const fs = require('fs');
@@ -56,10 +57,16 @@ run('npx prisma generate');
 run('npx prisma db push');
 run('npm run db:seed:customer');
 
+console.log('🛒 Seeding example purchases...');
+run('npm run db:seed:purchases:for:test', { PURCHASES: '20' });
+
 console.log('🧾 Seeding example sales...');
-run('npm run db:seed:sales:for:test', { SALES: '50' });
+run('npm run db:seed:sales:for:test', { SALES: '10' });
+
+console.log('🔁 Rebuilding stock ledger from purchases and sales...');
+run('node electron/rebuild-stock.js');
 
 console.log('📦 Seeding example gangs (ledger + matching sales)...');
-run('npm run db:seed:gangs:for:test', { GANGS: '25' });
+run('npm run db:seed:gangs:for:test', { GANGS: '10' });
 
-console.log('✅ Electron database ready for packaging (customer + example sales/gangs)');
+console.log('✅ Electron database ready for packaging (customer + example purchases/sales/gangs)');
