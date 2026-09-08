@@ -3,7 +3,7 @@
 import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'animal-island-ui';
-import { formatCurrency } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 import {
   computeSaleProfitPreview,
   computeTotalPreview,
@@ -184,12 +184,23 @@ export default function SalesFormCard({
   const hideDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const companySearchRef = useRef<HTMLInputElement>(null);
   const companyDropdownRef = useRef<HTMLDivElement>(null);
-  const totalPreview = useMemo(() => computeTotalPreview(formData), [formData]);
-  const profitPreview = useMemo(
-    () => computeSaleProfitPreview(formData, selectedAvgCostPerKg),
-    [formData, selectedAvgCostPerKg],
+  const totalPreview = useMemo(() => {
+    const total = computeTotalPreview(formData);
+    return Number(total.toFixed(2));
+  }, [formData]);
+  const profitPreview = useMemo(() => {
+    const profit = computeSaleProfitPreview(formData, selectedAvgCostPerKg);
+    return profit == null ? null : Number(profit.toFixed(2));
+  }, [formData, selectedAvgCostPerKg]);
+  const hasCompanySelected = Boolean(
+    String(formData.destinationCompanyId ?? '').trim() &&
+      String(companySearchTerm ?? '').trim(),
   );
-  const submitReady = useMemo(() => isSalesFormSubmitReady(formData), [formData]);
+  const submitReady = useMemo(() => {
+    if (!hasCompanySelected) return false;
+    return isSalesFormSubmitReady(formData);
+  }, [formData, hasCompanySelected]);
+  const canSave = !saving && !hasValidationError && submitReady;
   const atExpenseLimit = formData.expenses.length >= MAX_SALE_EXPENSES;
   const layout = getSalesFormLayoutClasses(compact);
   const cardBorderClass = getSalesFormCardBorderClass(isEditing);
@@ -283,7 +294,19 @@ export default function SalesFormCard({
 
   const fillField = (name: 'weight' | 'pricePerUnit', value: number) => {
     onInputChange({
-      target: { name, value: String(value) },
+      target: { name, value: Number(value).toFixed(2) },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const formatFieldToTwoDecimals = (name: 'weight' | 'pricePerUnit') => {
+    const raw = formData[name].trim();
+    if (raw === '') return;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+    const formatted = n.toFixed(2);
+    if (formatted === formData[name]) return;
+    onInputChange({
+      target: { name, value: formatted },
     } as React.ChangeEvent<HTMLInputElement>);
   };
 
@@ -530,6 +553,7 @@ export default function SalesFormCard({
                   name="weight"
                   value={formData.weight}
                   onChange={onInputChange}
+                  onBlur={() => formatFieldToTwoDecimals('weight')}
                   disabled={isFieldDisabled('weight')}
                   className={getInputClass('weight')}
                 />
@@ -540,7 +564,10 @@ export default function SalesFormCard({
                 hint={
                   formData.productTypeId ? (
                     <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
-                      ต้นทุน {selectedAvgCostPerKg != null ? formatCurrency(selectedAvgCostPerKg) : '-'}
+                      ต้นทุน{' '}
+                      {selectedAvgCostPerKg != null
+                        ? `฿${formatNumber(Number(selectedAvgCostPerKg.toFixed(2)))}`
+                        : '-'}
                     </span>
                   ) : undefined
                 }
@@ -566,6 +593,7 @@ export default function SalesFormCard({
                   name="pricePerUnit"
                   value={formData.pricePerUnit}
                   onChange={onInputChange}
+                  onBlur={() => formatFieldToTwoDecimals('pricePerUnit')}
                   disabled={isFieldDisabled('pricePerUnit')}
                   className={getInputClass('pricePerUnit')}
                 />
@@ -677,7 +705,7 @@ export default function SalesFormCard({
                         }`}
                       >
                         {profitPreview > 1e-6 ? '+' : ''}
-                        {formatCurrency(profitPreview)}
+                        {`${profitPreview < 0 ? '-' : ''}฿${formatNumber(Math.abs(profitPreview))}`}
                       </span>
                     </div>
                   ) : null}
@@ -697,8 +725,9 @@ export default function SalesFormCard({
                     type="button"
                     data-testid="sales-form-save"
                     onClick={onSave}
-                    disabled={saving || hasValidationError || !submitReady}
-                    className={`shrink-0 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 ${btnClass}`}
+                    disabled={!canSave}
+                    aria-disabled={!canSave}
+                    className={`shrink-0 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 dark:disabled:from-gray-400 dark:disabled:via-gray-400 dark:disabled:to-gray-400 ${btnClass}`}
                   >
                     {saveButtonText}
                   </button>

@@ -279,16 +279,26 @@ export function useSalesPageController() {
       setCompanySearchTerm(value);
       setShowCompanyDropdown(true);
 
-      // Clear selection if search term no longer matches selected company (same as members)
-      if (formData.destinationCompanyId) {
-        const selected = destinationCompanies.find((c) => c.id === formData.destinationCompanyId);
-        if (selected && !value.includes(selected.code)) {
-          setFormData((prev) => ({
-            ...prev,
-            destinationCompanyId: '',
-            companyName: '',
-          }));
-        }
+      const clearCompanySelection = () => {
+        setFormData((prev) => {
+          if (!prev.destinationCompanyId && !prev.companyName) return prev;
+          return { ...prev, destinationCompanyId: '', companyName: '' };
+        });
+      };
+
+      // Empty field = no company selected
+      if (!value.trim()) {
+        clearCompanySelection();
+        return;
+      }
+
+      if (!formData.destinationCompanyId) return;
+
+      const selected = destinationCompanies.find((c) => c.id === formData.destinationCompanyId);
+      const selectedLabel = selected ? `${selected.code} - ${selected.name}` : '';
+      // Typing away from the exact selected label clears the selection
+      if (value !== selectedLabel) {
+        clearCompanySelection();
       }
     },
     [destinationCompanies, formData.destinationCompanyId],
@@ -374,6 +384,11 @@ export function useSalesPageController() {
   const handleSave = useCallback(async () => {
     if (!user?.id) {
       setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+      return;
+    }
+
+    if (!formData.destinationCompanyId.trim()) {
+      setError('กรุณาเลือกบริษัทปลายทาง');
       return;
     }
 
@@ -497,9 +512,9 @@ export function useSalesPageController() {
         destinationCompanyId: matched?.id ?? companyId,
         companyName: matched?.name ?? row.companyName,
         productTypeId: row.productTypeId,
-        weight: String(row.weight),
+        weight: Number(row.weight).toFixed(2),
         rubberPercent: row.rubberPercent != null ? String(row.rubberPercent) : '',
-        pricePerUnit: String(row.pricePerUnit),
+        pricePerUnit: Number(row.pricePerUnit).toFixed(2),
         expenses,
         sellingType: row.sellingType,
       });

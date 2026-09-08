@@ -26,11 +26,11 @@ const SMALL_WALLET_PAD_PX = 28;
 
 /** Match animal-island-ui Wallet number formatting so pill width tracks the rendered text. */
 export function formatSalesWalletValue(value: number, thousandSeparator = ','): string {
-  if (!Number.isFinite(value)) return '00,000';
+  if (!Number.isFinite(value)) return '00,000.00';
   const sign = value < 0 ? '-' : '';
-  const [intPart, frac] = Math.abs(value).toString().split('.');
+  const [intPart, frac = '00'] = Math.abs(value).toFixed(2).split('.');
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
-  return frac ? `${sign}${grouped}.${frac}` : `${sign}${grouped}`;
+  return `${sign}${grouped}.${frac}`;
 }
 
 export function getSalesWalletStyle(value: number): CSSProperties {
