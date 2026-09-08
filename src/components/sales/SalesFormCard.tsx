@@ -601,7 +601,7 @@ export default function SalesFormCard({
             </div>
 
             <div className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 pt-3 dark:border-gray-700`}>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   ค่าใช้จ่าย
                   {formData.expenses.length > 0 ? (
@@ -610,18 +610,16 @@ export default function SalesFormCard({
                     </span>
                   ) : null}
                 </span>
-                {!isEditing ? (
-                  <button
-                    type="button"
-                    data-testid="sales-add-expense"
-                    onClick={onAddExpense}
-                    disabled={saving || atExpenseLimit}
-                    title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
-                  >
-                    {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  data-testid="sales-add-expense"
+                  onClick={onAddExpense}
+                  disabled={saving || atExpenseLimit}
+                  title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
+                >
+                  {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
+                </button>
               </div>
 
               {formData.expenses.length === 0 ? (
@@ -640,8 +638,12 @@ export default function SalesFormCard({
                         <select
                           value={line.type}
                           onChange={(e) => onExpenseChange(line.id, 'type', e.target.value)}
-                          disabled={isEditing || saving}
-                          className={getInputClass('sellingType')}
+                          disabled={saving}
+                          className={`${getInputClass('sellingType')}${
+                            isEditing
+                              ? ' border-violet-400 ring-2 ring-violet-200 focus:border-violet-500 focus:ring-violet-100 dark:border-violet-400 dark:ring-violet-500/40'
+                              : ''
+                          }`}
                         >
                           <option value="">เลือกชนิด</option>
                           {EXPENSE_TYPES.map((type) => (
@@ -658,30 +660,36 @@ export default function SalesFormCard({
                           min="0"
                           value={line.amount}
                           onChange={(e) => onExpenseChange(line.id, 'amount', e.target.value)}
-                          disabled={isEditing || saving}
-                          className={getInputClass('sellingType')}
+                          disabled={saving}
+                          className={`${getInputClass('sellingType')}${
+                            isEditing
+                              ? ' border-violet-400 ring-2 ring-violet-200 focus:border-violet-500 focus:ring-violet-100 dark:border-violet-400 dark:ring-violet-500/40'
+                              : ''
+                          }`}
                         />
                       </Field>
                       <Field label={index === 0 ? 'หมายเหตุ' : undefined}>
                         <input
                           value={line.note}
                           onChange={(e) => onExpenseChange(line.id, 'note', e.target.value)}
-                          disabled={isEditing || saving}
+                          disabled={saving}
                           placeholder="เช่น ค่าขนส่ง..."
-                          className={getInputClass('sellingType')}
+                          className={`${getInputClass('sellingType')}${
+                            isEditing
+                              ? ' border-violet-400 ring-2 ring-violet-200 focus:border-violet-500 focus:ring-violet-100 dark:border-violet-400 dark:ring-violet-500/40'
+                              : ''
+                          }`}
                         />
                       </Field>
-                      {!isEditing ? (
-                        <button
-                          type="button"
-                          aria-label="ลบค่าใช้จ่าย"
-                          onClick={() => onRemoveExpense(line.id)}
-                          disabled={saving}
-                          className={`inline-flex items-center justify-center rounded-xl border border-gray-200 font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-300 ${btnClass}`}
-                        >
-                          ลบ
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        aria-label="ลบค่าใช้จ่าย"
+                        onClick={() => onRemoveExpense(line.id)}
+                        disabled={saving}
+                        className={`inline-flex items-center justify-center rounded-xl border border-gray-200 font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-300 ${btnClass}`}
+                      >
+                        ลบ
+                      </button>
                     </div>
                   ))}
                 </div>
