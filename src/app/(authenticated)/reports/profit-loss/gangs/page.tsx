@@ -9,12 +9,24 @@ import { ListPagination } from '@/components/pagination/ListPagination';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { getExportExcelButtonText, getExportPdfButtonText, isExportDisabled } from '../ui';
+import { isDateRangeInvalid, toInputDate } from '../utils';
 import { downloadGangsExcel } from './exportExcel';
 import { downloadGangsPdf } from './exportPdf';
 
 const PNL_EPS = 1e-6;
 const PAGE_SIZE = 15;
 const EXPORT_LIMIT = 200;
+
+const inputClass =
+  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40';
+
+function openDatePicker(input: HTMLInputElement) {
+  try {
+    input.showPicker?.();
+  } catch {
+    // ignore
+  }
+}
 
 type ProductType = { id: string; code: string; name: string; isActive?: boolean };
 
@@ -111,6 +123,10 @@ export default function ProfitLossGangsReportPage() {
     totalPages: 1,
   });
 
+  const now = useMemo(() => new Date(), []);
+  const [startDate, setStartDate] = useState(() => toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+  const [endDate, setEndDate] = useState(() => toInputDate(now));
+
   const selectedProductType = useMemo(
     () => productTypes.find((pt) => pt.id === selectedProductTypeId) ?? null,
     [productTypes, selectedProductTypeId],
@@ -119,6 +135,7 @@ export default function ProfitLossGangsReportPage() {
   const summary = useMemo(() => summarizeGangs(gangs), [gangs]);
 
   const hasRows = gangs.length > 0;
+  const rangeInvalid = isDateRangeInvalid(startDate, endDate);
   const exportBusy = exportingPdf || exportingExcel;
 
   useEffect(() => {
@@ -149,62 +166,66 @@ export default function ProfitLossGangsReportPage() {
     };
 
     loadProductTypes();
-  }, [isLoading, productTypeIdFromQuery, router, user]);
+  }, [isLoading, productTypeIdFromQuery, router, user?.id]);
 
   useEffect(() => {
     setPage(1);
-  }, [selectedProductTypeId]);
+  }, [endDate, selectedProductTypeId, startDate]);
+
+  const loadGangs = useCallback(async () => {
+    if (!selectedProductTypeId || rangeInvalid) return;
+
+    try {
+      setGangsLoading(true);
+      setGangsError('');
+
+      const res = await axios.get<GangsApiResponse>('/api/stock/gangs', {
+        params: {
+          productTypeId: selectedProductTypeId,
+          startDate,
+          endDate,
+          page,
+          limit: PAGE_SIZE,
+        },
+      });
+
+      setGangs(res.data.data || []);
+      setPagination(
+        res.data.pagination || {
+          page,
+          limit: PAGE_SIZE,
+          total: res.data.data?.length ?? 0,
+          totalPages: 1,
+        },
+      );
+    } catch (e) {
+      logger.error('Failed to load gangs report', e);
+      setGangsError('ไม่สามารถโหลดกำไร/ขาดทุนต่อกองได้');
+      setGangs([]);
+    } finally {
+      setGangsLoading(false);
+    }
+  }, [endDate, page, rangeInvalid, selectedProductTypeId, startDate]);
 
   useEffect(() => {
-    if (!selectedProductTypeId) return;
-
-    const loadGangs = async () => {
-      try {
-        setGangsLoading(true);
-        setGangsError('');
-
-        const res = await axios.get<GangsApiResponse>('/api/stock/gangs', {
-          params: {
-            productTypeId: selectedProductTypeId,
-            page,
-            limit: PAGE_SIZE,
-          },
-        });
-
-        setGangs(res.data.data || []);
-        setPagination(
-          res.data.pagination || {
-            page,
-            limit: PAGE_SIZE,
-            total: res.data.data?.length ?? 0,
-            totalPages: 1,
-          },
-        );
-      } catch (e) {
-        logger.error('Failed to load gangs report', e);
-        setGangsError('ไม่สามารถโหลดกำไร/ขาดทุนต่อกองได้');
-        setGangs([]);
-      } finally {
-        setGangsLoading(false);
-      }
-    };
-
     void loadGangs();
-  }, [page, selectedProductTypeId]);
+  }, [loadGangs]);
 
   const fetchAllGangsForExport = useCallback(async (): Promise<GangCycle[]> => {
-    if (!selectedProductTypeId) return [];
+    if (!selectedProductTypeId || rangeInvalid) return [];
 
     const res = await axios.get<GangsApiResponse>('/api/stock/gangs', {
       params: {
         productTypeId: selectedProductTypeId,
+        startDate,
+        endDate,
         page: 1,
         limit: EXPORT_LIMIT,
       },
     });
 
     return res.data.data || [];
-  }, [selectedProductTypeId]);
+  }, [endDate, rangeInvalid, selectedProductTypeId, startDate]);
 
   const handleExportExcel = useCallback(async () => {
     if (!hasRows || !selectedProductType || exportBusy) return;
@@ -216,13 +237,14 @@ export default function ProfitLossGangsReportPage() {
         rows,
         summary: summarizeGangs(rows),
         product: { code: selectedProductType.code, name: selectedProductType.name },
+        dateRange: { startDate, endDate },
       });
     } catch (e) {
       logger.error('Failed to export gangs excel', e);
     } finally {
       setExportingExcel(false);
     }
-  }, [exportBusy, fetchAllGangsForExport, hasRows, selectedProductType]);
+  }, [endDate, exportBusy, fetchAllGangsForExport, hasRows, selectedProductType, startDate]);
 
   const handleExportPdf = useCallback(async () => {
     if (!hasRows || !selectedProductType || exportBusy) return;
@@ -234,13 +256,14 @@ export default function ProfitLossGangsReportPage() {
         rows,
         summary: summarizeGangs(rows),
         product: { code: selectedProductType.code, name: selectedProductType.name },
+        dateRange: { startDate, endDate },
       });
     } catch (e) {
       logger.error('Failed to export gangs pdf', e);
     } finally {
       setExportingPdf(false);
     }
-  }, [exportBusy, fetchAllGangsForExport, hasRows, selectedProductType]);
+  }, [endDate, exportBusy, fetchAllGangsForExport, hasRows, selectedProductType, startDate]);
 
   if (isLoading || loading) {
     return (
@@ -295,7 +318,7 @@ export default function ProfitLossGangsReportPage() {
           <button
             type="button"
             onClick={() => void handleExportPdf()}
-            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
+            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy }) || rangeInvalid}
             className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
           >
             {getExportPdfButtonText(exportingPdf)}
@@ -303,11 +326,71 @@ export default function ProfitLossGangsReportPage() {
           <button
             type="button"
             onClick={() => void handleExportExcel()}
-            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy })}
+            disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy }) || rangeInvalid}
             className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="relative z-20 grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 lg:grid-cols-3 lg:items-end">
+        <div className="relative z-20 min-w-0">
+          <label
+            htmlFor="gang-start-date"
+            className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            วันที่เริ่มต้น
+          </label>
+          <input
+            id="gang-start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} cursor-pointer`}
+          />
+        </div>
+        <div className="relative z-20 min-w-0">
+          <label
+            htmlFor="gang-end-date"
+            className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            วันที่สิ้นสุด
+          </label>
+          <input
+            id="gang-end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            onClick={(e) => openDatePicker(e.currentTarget)}
+            onFocus={(e) => openDatePicker(e.currentTarget)}
+            className={`${inputClass} cursor-pointer`}
+          />
+        </div>
+        <div className="relative">
+          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+            อัปเดต
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              if (rangeInvalid || gangsLoading) return;
+              void loadGangs();
+            }}
+            disabled={rangeInvalid || gangsLoading}
+            aria-disabled={rangeInvalid || gangsLoading}
+            className="w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 dark:disabled:from-gray-400 dark:disabled:via-gray-400 dark:disabled:to-gray-400"
+          >
+            {gangsLoading && !rangeInvalid ? 'กำลังโหลด...' : 'อัปเดตรายงาน'}
+          </button>
+          {rangeInvalid ? (
+            <p className="pointer-events-none absolute left-0 top-full mt-1.5 text-xs text-rose-600">
+              วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -348,13 +431,18 @@ export default function ProfitLossGangsReportPage() {
       {/* Gang list */}
       <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
-          <div className="flex min-w-0 items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">รายการกอง</h2>
-            {selectedProductType ? (
-              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                {selectedProductType.code} · {selectedProductType.name}
-              </p>
-            ) : null}
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">รายการกอง</h2>
+              {selectedProductType ? (
+                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                  {selectedProductType.code} · {selectedProductType.name}
+                </p>
+              ) : null}
+            </div>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {startDate} → {endDate}
+            </p>
           </div>
           {gangsLoading ? (
             <span className="animate-pulse text-xs text-gray-400">กำลังโหลด...</span>
@@ -370,7 +458,7 @@ export default function ProfitLossGangsReportPage() {
         ) : gangsError ? (
           <div className="px-5 py-16 text-center text-sm text-rose-600 dark:text-rose-300">{gangsError}</div>
         ) : gangs.length === 0 ? (
-          <div className="px-5 py-16 text-center text-sm text-gray-400">ยังไม่มีข้อมูลกองสำหรับสินค้านี้</div>
+          <div className="px-5 py-16 text-center text-sm text-gray-400">ยังไม่มีข้อมูลกองในช่วงที่เลือก</div>
         ) : (
           <ul className="divide-y divide-gray-100 dark:divide-gray-700/80">
             {gangs.map((g) => {

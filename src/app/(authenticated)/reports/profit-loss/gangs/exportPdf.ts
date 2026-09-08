@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import type { GangExportProduct, GangExportRow, GangExportSummary } from './exportExcel';
+import type { GangExportDateRange, GangExportProduct, GangExportRow, GangExportSummary } from './exportExcel';
 import { formatGangDate } from './exportExcel';
 
 const PDF_STYLES = `
@@ -65,11 +65,13 @@ export function generateGangsPdfHtml({
   rows,
   summary,
   product,
+  dateRange,
   printedAt = new Date(),
 }: {
   rows: GangExportRow[];
   summary: GangExportSummary;
   product: GangExportProduct;
+  dateRange?: GangExportDateRange;
   printedAt?: Date;
 }): string {
   const printedDate = printedAt.toLocaleDateString('th-TH', {
@@ -112,6 +114,11 @@ export function generateGangsPdfHtml({
           <p class="subtitle">Profit &amp; Loss by Stock Cycle</p>
           <div class="meta">
             <span><strong>สินค้า:</strong> ${escapeHtml(product.code)} - ${escapeHtml(product.name)}</span>
+            ${
+              dateRange
+                ? `<span><strong>ช่วงวันที่:</strong> ${escapeHtml(dateRange.startDate)} → ${escapeHtml(dateRange.endDate)}</span>`
+                : ''
+            }
             <span><strong>จำนวนกอง:</strong> ${rows.length}</span>
             <span><strong>วันที่จัดทำ:</strong> ${printedDate}</span>
           </div>
@@ -187,12 +194,14 @@ export async function downloadGangsPdf({
   rows,
   summary,
   product,
+  dateRange,
 }: {
   rows: GangExportRow[];
   summary: GangExportSummary;
   product: GangExportProduct;
+  dateRange?: GangExportDateRange;
 }): Promise<void> {
-  const html = generateGangsPdfHtml({ rows, summary, product });
+  const html = generateGangsPdfHtml({ rows, summary, product, dateRange });
   const canvas = await renderHtmlToCanvas(html);
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageMarginTop = 10;

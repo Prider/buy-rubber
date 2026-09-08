@@ -232,11 +232,15 @@ export default function ProfitLossReportPage() {
           </span>
           <button
             type="button"
-            onClick={() => void fetchData()}
-            disabled={loading || rangeInvalid}
-            className="w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
+            onClick={() => {
+              if (rangeInvalid || loading) return;
+              void fetchData();
+            }}
+            disabled={rangeInvalid || loading}
+            aria-disabled={rangeInvalid || loading}
+            className="w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 dark:disabled:from-gray-400 dark:disabled:via-gray-400 dark:disabled:to-gray-400"
           >
-            {loading ? 'กำลังโหลด...' : 'อัปเดตรายงาน'}
+            {loading && !rangeInvalid ? 'กำลังโหลด...' : 'อัปเดตรายงาน'}
           </button>
           {rangeInvalid ? (
             <p className="pointer-events-none absolute left-0 top-full mt-1.5 text-xs text-rose-600">

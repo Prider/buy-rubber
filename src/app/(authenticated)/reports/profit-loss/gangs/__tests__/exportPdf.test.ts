@@ -28,4 +28,29 @@ describe('generateGangsPdfHtml', () => {
     expect(html).toContain('กำลังดำเนินอยู่');
     expect(html).toContain('Net Profit');
   });
+
+  it('includes the selected date range when provided', () => {
+    const html = generateGangsPdfHtml({
+      rows: [
+        {
+          gangNo: 2,
+          startDate: '2026-07-01',
+          endDate: null,
+          soldKg: 50,
+          revenue: 2500,
+          cogs: 2000,
+          profitLoss: 500,
+          salesCount: 1,
+        },
+      ],
+      summary: { soldKg: 50, revenue: 2500, cogs: 2000, profitLoss: 500 },
+      product: { code: 'R1', name: 'ยาง' },
+      dateRange: { startDate: '2026-07-01', endDate: '2026-07-31' },
+      printedAt: new Date('2026-07-15T10:00:00'),
+    });
+
+    expect(html).toContain('ช่วงวันที่:');
+    expect(html).toContain('2026-07-01');
+    expect(html).toContain('2026-07-31');
+  });
 });

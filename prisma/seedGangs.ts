@@ -8,7 +8,9 @@
  *   npx tsx prisma/seedGangs.ts
  *   npm run db:seed:gangs:for:test
  *
- * Defaults create ~100,000 ledger rows (50,000 closed gangs × 1 purchase + 1 sale).
+ * Defaults create ~100,000 ledger rows (50,000 closed gangs × 1 purchase + 1 sale),
+ * spread across the last 18 months so /reports/profit-loss/gangs date filters have
+ * gangs in different months (including the current month and one open gang).
  *
  * Optional env:
  *   GANGS=50000              number of closed gangs (default 50000)
@@ -16,9 +18,12 @@
  *   PURCHASES_PER_GANG=1     purchases that open each gang (default 1)
  *   PRODUCT_TYPE_CODE=R1     target product type code (default: first by code)
  *   CLEAR=1                  clear prior GANG-* load-test data for that product (default 1)
+ *   SPAN_MONTHS=18           spread gang start dates across the last N months (default 18)
+ *   OPEN_LAST=1              leave the last gang open / กำลังดำเนินอยู่ (default 1)
  *
  * Examples:
  *   GANGS=10000 npm run db:seed:gangs:for:test
+ *   GANGS=48 SPAN_MONTHS=12 npm run db:seed:gangs:for:test
  *   GANGS=25000 SALES_PER_GANG=3 npm run db:seed:gangs:for:test
  */
 import { PrismaClient } from '@prisma/client';
@@ -37,6 +42,8 @@ const PURCHASES_PER_GANG = Math.max(
 );
 const CLEAR = (process.env.CLEAR || '1') !== '0';
 const PRODUCT_TYPE_CODE = process.env.PRODUCT_TYPE_CODE?.trim() || '';
+const SPAN_MONTHS = Math.max(1, parseInt(process.env.SPAN_MONTHS || '18', 10) || 18);
+const OPEN_LAST = (process.env.OPEN_LAST || '1') !== '0';
 
 const COMPANY_NAMES = [
   'บริษัท ยางไทย จำกัด',
@@ -87,13 +94,13 @@ function pad(n: number, width: number) {
 }
 
 async function main() {
-  const entriesPerGang = PURCHASES_PER_GANG + SALES_PER_GANG;
-  const expectedLedger = GANG_COUNT * entriesPerGang;
+  const expectedLedger = GANG_COUNT * PURCHASES_PER_GANG + (GANG_COUNT - (OPEN_LAST ? 1 : 0)) * SALES_PER_GANG;
 
   console.log('📦 seedGangs: สร้างข้อมูลกอง (stock ledger + sales) สำหรับทดสอบโหลด...');
   console.log(
     `   - gangs=${GANG_COUNT}, purchases/gang=${PURCHASES_PER_GANG}, sales/gang=${SALES_PER_GANG}`,
   );
+  console.log(`   - spanMonths=${SPAN_MONTHS}, openLast=${OPEN_LAST ? 'yes' : 'no'}`);
   console.log(`   - expected ledger entries ≈ ${expectedLedger.toLocaleString()}`);
 
   const user = await prisma.user.findFirst({
@@ -150,10 +157,20 @@ async function main() {
     console.log(`   - ลบ StockGang ของ ${productType.code}: ${wipedGangs.count}`);
   }
 
-  const baseTime = Date.UTC(2020, 0, 1, 7, 0, 0);
-  // Space gangs by 2 minutes so date+createdAt ordering stays stable.
-  const gangStepMs = 2 * 60_000;
+  const spanEnd = new Date();
+  spanEnd.setHours(18, 0, 0, 0);
+  const spanStart = new Date(spanEnd);
+  spanStart.setMonth(spanStart.getMonth() - SPAN_MONTHS);
+  spanStart.setDate(1);
+  spanStart.setHours(7, 0, 0, 0);
+  const spanMs = Math.max(spanEnd.getTime() - spanStart.getTime(), 60_000);
+  const gangStepMs = spanMs / GANG_COUNT;
   const withinGangStepMs = 5_000;
+
+  console.log(
+    `   - gang date span: ${spanStart.toISOString().slice(0, 10)} → ${spanEnd.toISOString().slice(0, 10)}` +
+      ` (~${Math.round(gangStepMs / 60_000)} min/gang)`,
+  );
 
   let state: StockState = { qtyKg: 0, avgCostPerKg: 0 };
   let createdSales = 0;
@@ -179,7 +196,7 @@ async function main() {
 
   for (let g = 0; g < GANG_COUNT; g++) {
     gangNo = g + 1;
-    const gangStart = new Date(baseTime + g * gangStepMs);
+    const gangStart = new Date(spanStart.getTime() + g * gangStepMs);
     let eventIndex = 0;
 
     // --- purchases open the gang (balance 0 → >0) ---
@@ -212,9 +229,10 @@ async function main() {
       });
     }
 
-    // --- sales deplete the gang back to 0 ---
+    // --- sales deplete the gang back to 0 (skip last gang when OPEN_LAST) ---
+    const salesThisGang = OPEN_LAST && g === GANG_COUNT - 1 ? 0 : SALES_PER_GANG;
     let remaining = state.qtyKg;
-    for (let s = 0; s < SALES_PER_GANG; s++) {
+    for (let s = 0; s < salesThisGang; s++) {
       const isLast = s === SALES_PER_GANG - 1;
       const rawQty = isLast
         ? remaining
@@ -315,10 +333,15 @@ async function main() {
   console.log(`   - materialize StockGang: ${gangsResult.gangs.toLocaleString()} rows`);
 
   console.log('✅ seedGangs เสร็จ');
-  console.log(`   - gangs: ${GANG_COUNT.toLocaleString()}`);
+  console.log(`   - gangs: ${GANG_COUNT.toLocaleString()}${OPEN_LAST ? ' (กองสุดท้ายกำลังดำเนินอยู่)' : ''}`);
   console.log(`   - sales: ${createdSales.toLocaleString()}`);
   console.log(`   - ledger entries: ${createdLedger.toLocaleString()}`);
   console.log(`   - final stock balance: ${state.qtyKg} kg`);
+  console.log('');
+  console.log('ทดสอบตัวกรองวันที่ที่ /reports/profit-loss/gangs :');
+  console.log('   - ค่าเริ่มต้นของหน้า = วันที่ 1 ของเดือนนี้ → วันนี้ (ควรเห็นกองช่วงท้าย + กองที่ยังเปิด)');
+  console.log(`   - ทั้งช่วง ${SPAN_MONTHS} เดือน = ${spanStart.toISOString().slice(0, 10)} → วันนี้`);
+  console.log('   - เดือนก่อนหน้า = ควรเห็นกองน้อยลงกว่าทั้งช่วง');
   console.log('');
   console.log(
     `เปิด /reports/profit-loss/gangs?productTypeId=${productType.id} เพื่อทดสอบโหลด`,

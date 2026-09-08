@@ -45,6 +45,17 @@ describe('buildGangsExcelHtml', () => {
     expect(html).toContain('1000.00');
     expect(html).toContain('<td colspan="3"><b>รวม</b></td>');
   });
+
+  it('includes the selected date range when provided', () => {
+    const html = buildGangsExcelHtml({
+      rows,
+      summary,
+      product,
+      dateRange: { startDate: '2026-07-01', endDate: '2026-07-31' },
+    });
+
+    expect(html).toContain('ช่วงวันที่: 2026-07-01 → 2026-07-31');
+  });
 });
 
 describe('downloadGangsExcel', () => {

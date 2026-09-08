@@ -23,6 +23,11 @@ export type GangExportProduct = {
   name: string;
 };
 
+export type GangExportDateRange = {
+  startDate: string;
+  endDate: string;
+};
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -48,10 +53,12 @@ export function buildGangsExcelHtml({
   rows,
   summary,
   product,
+  dateRange,
 }: {
   rows: GangExportRow[];
   summary: GangExportSummary;
   product: GangExportProduct;
+  dateRange?: GangExportDateRange;
 }): string {
   const tableRows = rows
     .map(
@@ -76,6 +83,11 @@ export function buildGangsExcelHtml({
         <body>
           <h2>รายงานกำไร / ขาดทุนต่อกอง</h2>
           <p>สินค้า: ${escapeHtml(product.code)} - ${escapeHtml(product.name)}</p>
+          ${
+            dateRange
+              ? `<p>ช่วงวันที่: ${escapeHtml(dateRange.startDate)} → ${escapeHtml(dateRange.endDate)}</p>`
+              : ''
+          }
           <table border="1">
             <thead>
               <tr>
@@ -110,12 +122,14 @@ export function downloadGangsExcel({
   rows,
   summary,
   product,
+  dateRange,
 }: {
   rows: GangExportRow[];
   summary: GangExportSummary;
   product: GangExportProduct;
+  dateRange?: GangExportDateRange;
 }): void {
-  const html = buildGangsExcelHtml({ rows, summary, product });
+  const html = buildGangsExcelHtml({ rows, summary, product, dateRange });
   const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
   const safeCode = product.code.replace(/[^\w.-]+/g, '_') || 'product';
   downloadBlob(blob, `profit-loss-gangs-${safeCode}.xls`);

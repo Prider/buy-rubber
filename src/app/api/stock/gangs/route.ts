@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { stockGang } from '@/lib/prismaStock';
 import { parseSaleNosJson } from '@/lib/stock/stockGangs';
+import { buildGangWhere, parseGangDateRange } from './dateRange';
 
 export const runtime = 'nodejs';
 
@@ -31,15 +32,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing productTypeId' }, { status: 400 });
     }
 
+    const dateRange = parseGangDateRange(searchParams.get('startDate'), searchParams.get('endDate'));
+    if (!dateRange.ok) {
+      return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
+    }
+
     const page = Math.max(1, parseInt(pageParam || '1', 10) || 1);
     const limit = Math.min(
       MAX_LIMIT,
       Math.max(1, parseInt(limitParam || String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT),
     );
 
+    const where = buildGangWhere(productTypeId, dateRange);
+
     const [pageGangs, total] = (await Promise.all([
       stockGang.findMany({
-        where: { productTypeId },
+        where,
         orderBy: { gangNo: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -53,7 +61,7 @@ export async function GET(request: NextRequest) {
           salesCount: true,
         },
       }),
-      stockGang.count({ where: { productTypeId } }),
+      stockGang.count({ where }),
     ])) as [StockGangRecord[], number];
 
     if (total === 0) {
