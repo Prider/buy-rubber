@@ -1,7 +1,9 @@
 'use client';
 
+import { Radio } from 'animal-island-ui';
 import {
   SLIP_PAPER_OPTIONS,
+  normalizeSlipPaperSize,
   slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
@@ -15,6 +17,16 @@ const PAPER_HINT: Record<SlipPaperSizeId, string> = {
   '80mm': 'มาตรฐาน',
   '104mm': 'กว้าง',
 };
+
+const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.map((opt) => ({
+  value: opt.id,
+  label: (
+    <span className="inline-flex flex-col leading-tight">
+      <span>{opt.id}</span>
+      <span className="text-xs font-normal opacity-80">{PAPER_HINT[opt.id]}</span>
+    </span>
+  ),
+}));
 
 const fieldClass =
   'w-full rounded-xl border-0 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 transition-shadow focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900/50 dark:text-gray-100 dark:ring-gray-700 dark:focus:bg-gray-900';
@@ -73,7 +85,7 @@ export function SlipSettingsPanel({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex flex-col gap-5 p-5">
+        <div className="flex w-full max-w-md flex-col gap-2 p-8">
           <div className="space-y-1.5">
             <label htmlFor="slip-company-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               ชื่อบริษัท
@@ -106,44 +118,25 @@ export function SlipSettingsPanel({
             <p id="slip-paper-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               ขนาดกระดาษ
             </p>
-            <div
-              role="radiogroup"
-              aria-labelledby="slip-paper-size-label"
-              className="grid grid-cols-3 gap-2"
-            >
-              {SLIP_PAPER_OPTIONS.map((opt) => {
-                const selected = paperSize === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={opt.label}
-                    disabled={busy}
-                    onClick={() => onPaperSizeChange(opt.id)}
-                    className={`rounded-xl px-3 py-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                      selected
-                        ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
-                        : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 dark:bg-gray-900/40 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-900/70'
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold tracking-tight">{opt.id}</span>
-                    <span className={`mt-0.5 block text-xs ${selected ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                      {PAPER_HINT[opt.id]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={onSave}
+            <Radio
+              options={PAPER_SIZE_RADIO_OPTIONS}
+              value={paperSize}
+              size="large"
+              direction="horizontal"
               disabled={busy}
-              className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
-            </button>
+              className="slip-paper-radio py-2"
+              onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
+            />
+            <div className="mt-10 flex justify-end">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={busy}
+                className="mt-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+              </button>
+            </div>
           </div>
         </div>
 

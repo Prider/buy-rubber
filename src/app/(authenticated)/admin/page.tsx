@@ -45,9 +45,9 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
 type AdminSettingsTab = 'connection' | 'slip' | 'users';
 
 const ADMIN_TABS: { id: AdminSettingsTab; label: string }[] = [
-  { id: 'connection', label: 'การเชื่อมต่อ' },
   { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
   { id: 'users', label: 'ผู้ใช้งาน' },
+  { id: 'connection', label: 'การเชื่อมต่อ' },
 ];
 
 export default function AdminSettingsPage() {
@@ -87,7 +87,7 @@ export default function AdminSettingsPage() {
   const [slipPaperSize, setSlipPaperSize] = useState<SlipPaperSizeId>('80mm');
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminSettingsTab>('connection');
+  const [activeTab, setActiveTab] = useState<AdminSettingsTab>('slip');
   const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
 
   // Redirect if not authenticated or not admin
@@ -245,35 +245,6 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="mt-6">
-              {activeTab === 'connection' && (
-                <div
-                  id="admin-tabpanel-connection"
-                  role="tabpanel"
-                  aria-labelledby="admin-tab-connection"
-                  className="space-y-6"
-                >
-                  <MessageDisplay
-                    connectionError={connectionError}
-                    successMessage={successMessage}
-                    copySuccess={copySuccess}
-                  />
-                  <ModeSelectionCards
-                    serverPort={serverPort}
-                    serverUrl={serverUrl}
-                    localIP={localIP}
-                    ipLoading={ipLoading}
-                    isConnecting={isConnecting}
-                    isServerMode={isServerMode}
-                    isClientMode={isClientMode}
-                    onServerPortChange={setServerPort}
-                    onServerUrlChange={setServerUrl}
-                    onServerMode={handleServerMode}
-                    onClientMode={() => handleClientMode()}
-                    onQuickConnect={handleQuickConnect}
-                    onCopyToClipboard={copyToClipboard}
-                  />
-                </div>
-              )}
 
               {activeTab === 'slip' && (
                 <SlipSettingsPanel
@@ -306,6 +277,35 @@ export default function AdminSettingsPage() {
                   >
                     <UserManagement />
                   </ProtectedRoute>
+                </div>
+              )}
+              {activeTab === 'connection' && (
+                <div
+                  id="admin-tabpanel-connection"
+                  role="tabpanel"
+                  aria-labelledby="admin-tab-connection"
+                  className="space-y-6"
+                >
+                  <MessageDisplay
+                    connectionError={connectionError}
+                    successMessage={successMessage}
+                    copySuccess={copySuccess}
+                  />
+                  <ModeSelectionCards
+                    serverPort={serverPort}
+                    serverUrl={serverUrl}
+                    localIP={localIP}
+                    ipLoading={ipLoading}
+                    isConnecting={isConnecting}
+                    isServerMode={isServerMode}
+                    isClientMode={isClientMode}
+                    onServerPortChange={setServerPort}
+                    onServerUrlChange={setServerUrl}
+                    onServerMode={handleServerMode}
+                    onClientMode={() => handleClientMode()}
+                    onQuickConnect={handleQuickConnect}
+                    onCopyToClipboard={copyToClipboard}
+                  />
                 </div>
               )}
             </div>
