@@ -49,9 +49,10 @@ vi.mock('html2canvas', () => {
 describe('pdfGenerator', () => {
   let mockWindow: Window | null = null;
   let originalWindowOpen: typeof window.open;
+  let appendedNodes: Node[];
 
   beforeEach(() => {
-    // Mock window.open
+    appendedNodes = [];
     originalWindowOpen = window.open;
     mockWindow = {
       document: {
@@ -63,12 +64,11 @@ describe('pdfGenerator', () => {
 
     window.open = vi.fn(() => mockWindow);
 
-    // Mock document.createElement and appendChild
-    const mockElement = document.createElement('div');
-    vi.spyOn(document, 'createElement').mockReturnValue(mockElement);
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockElement);
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockElement);
-    vi.spyOn(mockElement, 'querySelector').mockReturnValue(mockElement);
+    vi.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => {
+      appendedNodes.push(node);
+      return node;
+    });
+    vi.spyOn(document.body, 'removeChild').mockImplementation((node: Node) => node);
   });
 
   afterEach(() => {
@@ -83,7 +83,6 @@ describe('pdfGenerator', () => {
 
       await generatePDFFromHTML(html, fileName);
 
-      expect(document.createElement).toHaveBeenCalledWith('div');
       expect(document.body.appendChild).toHaveBeenCalled();
       expect(document.body.removeChild).toHaveBeenCalled();
     });
@@ -95,25 +94,40 @@ describe('pdfGenerator', () => {
       await expect(generatePDFFromHTML(html, fileName)).resolves.not.toThrow();
     });
 
-    it('should set correct container styles', async () => {
-      const html = '<div class="slip">Test</div>';
-      const fileName = 'test.pdf';
+    it('should not inject unscoped html/body styles onto the live page', async () => {
+      const html = `
+        <html>
+          <head>
+            <style>
+              html { background: #ffffff !important; }
+              body { background: #ffffff !important; display: flex; }
+              .slip { background: #ffffff; }
+            </style>
+          </head>
+          <body>
+            <div class="slip" data-slip-width="320">Test</div>
+          </body>
+        </html>
+      `;
 
-      await generatePDFFromHTML(html, fileName);
+      await generatePDFFromHTML(html, 'scoped.pdf');
 
-      const createElementCall = vi.mocked(document.createElement);
-      expect(createElementCall).toHaveBeenCalled();
+      const container = appendedNodes.find(
+        (node): node is HTMLElement =>
+          node instanceof HTMLElement && node.classList.contains('pdf-slip-capture')
+      );
+      expect(container).toBeTruthy();
+
+      const styleText = Array.from(container!.querySelectorAll('style'))
+        .map((el) => el.textContent || '')
+        .join('\n');
+
+      expect(styleText).toContain('.pdf-slip-capture');
+      expect(styleText).not.toMatch(/(^|[,{\s])html\b/);
+      expect(styleText).not.toMatch(/(^|[,{\s])body\b/);
     });
 
     it('should use data-slip-width for PDF capture dimensions', async () => {
-      const slipEl = document.createElement('div');
-      slipEl.className = 'slip';
-      slipEl.setAttribute('data-slip-width', '219');
-
-      const container = document.createElement('div');
-      vi.mocked(document.createElement).mockReturnValue(container);
-      vi.spyOn(container, 'querySelector').mockReturnValue(slipEl);
-
       const html =
         '<html><body><div class="slip" data-slip-width="219">Narrow slip</div></body></html>';
       const fileName = 'narrow.pdf';
@@ -124,7 +138,7 @@ describe('pdfGenerator', () => {
       await generatePDFFromHTML(html, fileName);
 
       expect(html2canvasMock).toHaveBeenCalledWith(
-        slipEl,
+        expect.any(HTMLElement),
         expect.objectContaining({ width: 219, windowWidth: 219 })
       );
     });
@@ -171,7 +185,8 @@ describe('pdfGenerator', () => {
       await generateTransactionPDF(transaction);
 
       expect(generateSlipHTML).toHaveBeenCalledWith(transaction);
-      expect(document.createElement).toHaveBeenCalled();
+      expect(document.body.appendChild).toHaveBeenCalled();
+      expect(document.body.removeChild).toHaveBeenCalled();
     });
 
     it('should generate correct file name with purchase number and date', async () => {
@@ -196,7 +211,7 @@ describe('pdfGenerator', () => {
       await generateTransactionPDF(transaction);
 
       // Verify that jsPDF save was called (indirectly through generatePDFFromHTML)
-      expect(document.createElement).toHaveBeenCalled();
+      expect(document.body.appendChild).toHaveBeenCalled();
 
       // Restore
       Date.prototype.toLocaleDateString = originalToLocaleDateString;

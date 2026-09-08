@@ -3,12 +3,17 @@ import html2canvas from 'html2canvas';
 import { PurchaseTransaction } from '../types';
 import { generateSlipHTML } from './slipGenerator';
 
+const PDF_CAPTURE_CLASS = 'pdf-slip-capture';
+
 /**
- * Shared PDF generation utility that accepts HTML string
+ * Scope document-level selectors so slip CSS cannot restyle the live page.
+ * Injecting full slip HTML (with `html`/`body` rules) into a div would otherwise
+ * flash the main UI white while the PDF is generated.
  */
-export async function generatePDFFromHTML(html: string, fileName: string): Promise<void> {
+function buildScopedCaptureContainer(html: string): HTMLDivElement {
   const container = document.createElement('div');
-  container.innerHTML = html;
+  container.className = PDF_CAPTURE_CLASS;
+  container.setAttribute('aria-hidden', 'true');
   container.style.position = 'fixed';
   container.style.top = '-10000px';
   container.style.left = '0';
@@ -17,7 +22,38 @@ export async function generatePDFFromHTML(html: string, fileName: string): Promi
   container.style.webkitFilter = 'none';
   container.style.background = '#ffffff';
   container.style.backgroundColor = '#ffffff';
-    
+
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+  for (const styleEl of Array.from(parsed.querySelectorAll('style'))) {
+    const scoped = document.createElement('style');
+    scoped.textContent = (styleEl.textContent || '')
+      .replace(/\bhtml\b/g, `.${PDF_CAPTURE_CLASS}`)
+      .replace(/\bbody\b/g, `.${PDF_CAPTURE_CLASS}`);
+    container.appendChild(scoped);
+  }
+
+  for (const linkEl of Array.from(parsed.querySelectorAll('link[rel="stylesheet"]'))) {
+    container.appendChild(document.importNode(linkEl, true));
+  }
+
+  const slipSource = parsed.querySelector('.slip');
+  if (slipSource) {
+    container.appendChild(document.importNode(slipSource, true));
+  } else if (parsed.body?.innerHTML) {
+    container.insertAdjacentHTML('beforeend', parsed.body.innerHTML);
+  } else {
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  return container;
+}
+
+/**
+ * Shared PDF generation utility that accepts HTML string
+ */
+export async function generatePDFFromHTML(html: string, fileName: string): Promise<void> {
+  const container = buildScopedCaptureContainer(html);
   document.body.appendChild(container);
 
   // Wait for fonts and content to load
