@@ -130,6 +130,7 @@ export interface SalesFormCardProps {
   onShowCompanyDropdown: (show: boolean) => void;
   onAddExpense: () => void;
   onRemoveExpense: (expenseId: string) => void;
+  onClearExpenses: () => void;
   onExpenseChange: (expenseId: string, field: keyof Omit<SaleExpenseLine, 'id'>, value: string) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSave: () => void;
@@ -174,6 +175,7 @@ export default function SalesFormCard({
   onShowCompanyDropdown,
   onAddExpense,
   onRemoveExpense,
+  onClearExpenses,
   onExpenseChange,
   onInputChange,
   onSave,
@@ -619,6 +621,16 @@ export default function SalesFormCard({
                   className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
                 >
                   {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
+                </button>
+                <button
+                  type="button"
+                  data-testid="sales-clear-expenses"
+                  onClick={onClearExpenses}
+                  disabled={saving || formData.expenses.length === 0}
+                  title="ล้างค่าใช้จ่ายทั้งหมด"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  ล้างค่าใช้จ่ายทั้งหมด
                 </button>
               </div>
 

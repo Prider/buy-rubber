@@ -359,6 +359,13 @@ export function useSalesPageController() {
     }));
   }, []);
 
+  const handleClearExpenses = useCallback(() => {
+    setFormData((prev) => {
+      if (prev.expenses.length === 0) return prev;
+      return { ...prev, expenses: [] };
+    });
+  }, []);
+
   const handleExpenseChange = useCallback(
     (expenseId: string, field: keyof Omit<SaleExpenseLine, 'id'>, value: string) => {
       setFormData((prev) => ({
@@ -605,6 +612,7 @@ export function useSalesPageController() {
     clearCompanySearch,
     handleAddExpense,
     handleRemoveExpense,
+    handleClearExpenses,
     handleExpenseChange,
     setCurrentPage,
     handleSearchChange,
