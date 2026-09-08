@@ -11,6 +11,22 @@ import {
 
 const PNL_EPS = 1e-6;
 
+function formatSaleDateTime(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '–';
+  const dateStr = d.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
+  const timeStr = d.toLocaleTimeString('th-TH', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  return `${dateStr}, ${timeStr}`;
+}
+
 interface SaleRow {
   id: string;
   saleNo: string;
@@ -176,7 +192,7 @@ export default function SalesTable({
         <table className={`w-full ${tableText}`}>
           <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className={`${cellPad} text-left`}>วันที่</th>
+              <th className={`${cellPad} text-left`}>วันที่ กับ เวลา</th>
               <th className={`${cellPad} text-left`}>เลขที่</th>
               <th className={`${cellPad} text-left`}>บริษัท</th>
               <th className={`${cellPad} text-left`}>ประเภทสินค้า</th>
@@ -218,7 +234,7 @@ export default function SalesTable({
                       : 'border-t border-gray-100 dark:border-gray-700'
                   }`}
                 >
-                  <td className={cellPad}>{new Date(row.date).toLocaleDateString('th-TH')}</td>
+                  <td className={cellPad}>{formatSaleDateTime(row.date)}</td>
                   <td className={cellPad}>{row.saleNo}</td>
                   <td className={cellPad}>{row.companyName}</td>
                   <td className={cellPad}>{row.productType?.name || '-'}</td>
