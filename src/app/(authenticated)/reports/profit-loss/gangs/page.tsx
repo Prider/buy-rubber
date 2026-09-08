@@ -253,18 +253,18 @@ export default function ProfitLossGangsReportPage() {
   return (
     <div className="w-full space-y-8 pb-10">
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
               กำไร / ขาดทุนต่อกอง
             </span>
           </h1>
 
-          <div className="w-full sm:w-64">
+          <div className="flex w-full items-center gap-2.5 sm:w-auto">
             <label
               htmlFor="gang-product-type"
-              className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400"
+              className="shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400"
             >
               สินค้า
             </label>
@@ -272,7 +272,7 @@ export default function ProfitLossGangsReportPage() {
               id="gang-product-type"
               value={selectedProductTypeId}
               onChange={(e) => setSelectedProductTypeId(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
+              className="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:w-64 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
             >
               {productTypes.map((pt) => (
                 <option key={pt.id} value={pt.id}>
