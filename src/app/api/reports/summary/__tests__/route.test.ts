@@ -39,8 +39,8 @@ describe('GET /api/reports/summary', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const module = await import('@/lib/prisma');
-    prisma = module.prisma as typeof prisma;
+    const prismaModule = await import('@/lib/prisma');
+    prisma = prismaModule.prisma as typeof prisma;
   });
 
   it('returns 400 for an invalid report type', async () => {
