@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
+import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 
@@ -270,7 +271,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง หรือถูกปิดการใช้งาน' }, { status: 404 });
     }
 
-    const saleDate = data.date ? new Date(data.date) : new Date();
+    const saleDate = resolveBusinessDate(data.date);
     const saleNo = generateDocumentNumber('SAL', saleDate);
     const weight = Number(data.weight);
     const pricePerUnit = Number(data.pricePerUnit);

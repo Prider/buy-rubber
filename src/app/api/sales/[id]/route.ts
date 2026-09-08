@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { reverseSaleFromStock } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 
@@ -147,7 +148,7 @@ export async function PUT(
       return tx.sale.update({
         where: { id: params.id },
         data: {
-          date: data.date ? new Date(data.date) : sale.date,
+          date: data.date ? resolveBusinessDate(data.date, sale.date) : sale.date,
           companyName: destinationCompany.name,
           destinationCompanyId: destinationCompany.id,
           productTypeId: data.productTypeId,

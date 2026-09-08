@@ -271,3 +271,8 @@ C:\Users\[Username]\AppData\Roaming\Punsook Innotech\
 
 *This structure enables your app to run as both a web application and a native desktop application!*
 
+
+npm run db:migrate:old -- \
+  --source /Users/pawat/Desktop/tech_projects/biglatex-pro/prisma/mayrin/backup-2026-09-04T01-39-09.db \
+  --target /Users/pawat/Desktop/tech_projects/biglatex-pro/prisma/dev.db
+
