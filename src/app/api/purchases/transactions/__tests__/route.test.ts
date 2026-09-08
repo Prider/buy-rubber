@@ -190,6 +190,8 @@ describe('GET /api/purchases/transactions', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    const { cache } = await import('@/lib/cache');
+    cache.clear();
     process.env.DATABASE_URL = 'file:./test.db';
     
     const prismaModule = await import('@/lib/prisma');
@@ -1105,6 +1107,29 @@ describe('GET /api/purchases/transactions', () => {
       );
       expect(data.pagination.total).toBe(3);
       expect(data.pagination.totalPages).toBe(3);
+    });
+
+    it('reuses the cached group count on later pages instead of recounting', async () => {
+      mockGroupedTransactions(
+        [
+          {
+            purchaseNo: 'PUR-01',
+            memberId: 'member-1',
+            _max: { createdAt: new Date('2024-01-15T10:00:00'), date: new Date('2024-01-15') },
+            _sum: { totalAmount: 1000 },
+          },
+        ],
+        40,
+      );
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const query = 'startDate=2024-01-01&endDate=2024-01-31&limit=1';
+      await GET(new NextRequest(`http://localhost:3000/api/purchases/transactions?page=1&${query}`));
+      await GET(new NextRequest(`http://localhost:3000/api/purchases/transactions?page=2&${query}`));
+
+      expect(transactionQuery.countTransactionGroups).toHaveBeenCalledTimes(1);
+      expect(transactionQuery.fetchPaginatedTransactionGroups).toHaveBeenCalledTimes(2);
     });
 
     it('passes correct page and limit to paginated group query', async () => {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { invalidatePurchaseCaches } from '@/lib/cache';
 import { 
   calculateNetWeight,
   calculateDryWeight,
@@ -304,8 +304,7 @@ export async function POST(request: NextRequest) {
       return created;
     });
 
-    // Invalidate dashboard cache when a purchase is created
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    invalidatePurchaseCaches();
 
     logger.info('POST /api/purchases - Success', { 
       purchaseId: purchase.id, 
@@ -547,8 +546,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       return createdPurchases;
     });
 
-    // Invalidate dashboard cache when batch purchases are created
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    invalidatePurchaseCaches();
 
     logger.info('Batch purchase - Success', { 
       count: purchases.length, 

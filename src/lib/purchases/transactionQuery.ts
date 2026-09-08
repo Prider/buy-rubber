@@ -147,6 +147,8 @@ function mapGroupRow(row: {
   };
 }
 
+export const SEARCH_MEMBER_ID_LIMIT = 50;
+
 export async function resolveSearchMemberIds(
   searchTerm: string | null | undefined,
   memberId: string | null | undefined,
@@ -163,6 +165,8 @@ export async function resolveSearchMemberIds(
       ],
     },
     select: { id: true },
+    take: SEARCH_MEMBER_ID_LIMIT,
+    orderBy: { code: 'asc' },
   });
 
   return matchingMembers.map((member) => member.id);

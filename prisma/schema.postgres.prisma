@@ -134,6 +134,7 @@ model Purchase {
   @@index([memberId, date])
   @@index([date, createdAt])
   @@index([date, purchaseNo])
+  @@index([date, purchaseNo, memberId])
 }
 
 // ค่าใช้จ่ายประจำวัน

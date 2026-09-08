@@ -102,11 +102,18 @@ export const CACHE_KEYS = {
   /** Admin / prices UI: includes inactive */
   PRODUCT_TYPES_ALL: 'product-types:all',
   MEMBERS: (params?: string) => `members:${params || 'default'}`,
+  PURCHASE_TX_COUNT: 'purchase-tx-count',
 } as const;
 
 export function invalidateProductTypesCache(): void {
   cache.delete(CACHE_KEYS.PRODUCT_TYPES_ACTIVE);
   cache.delete(CACHE_KEYS.PRODUCT_TYPES_ALL);
+}
+
+/** Dashboard stats and purchases-list group counts both change on purchase writes. */
+export function invalidatePurchaseCaches(): void {
+  cache.delete(CACHE_KEYS.DASHBOARD);
+  cache.deletePattern(`^${CACHE_KEYS.PURCHASE_TX_COUNT}:`);
 }
 
 // TTL constants (in milliseconds).
@@ -118,6 +125,7 @@ export const CACHE_TTL = {
   PRODUCT_TYPES: 5 * 60 * 1000,  // 5 minutes (changes rarely)
   MEMBERS: 30 * 1000,            // 30 seconds
   DESTINATION_COMPANIES: 30 * 1000, // 30 seconds
+  PURCHASE_TX_COUNT: 30 * 1000,  // 30 seconds — 90-day GROUP BY count
 } as const;
 
 // Helper function to generate cache key from request params

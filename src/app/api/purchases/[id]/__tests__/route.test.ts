@@ -11,8 +11,9 @@ vi.mock('@/lib/stock/stockService', async (importOriginal) => {
 });
 
 vi.mock('@/lib/cache', () => ({
-  cache: { delete: vi.fn() },
-  CACHE_KEYS: { DASHBOARD: 'dashboard:stats' },
+  cache: { delete: vi.fn(), deletePattern: vi.fn() },
+  CACHE_KEYS: { DASHBOARD: 'dashboard:stats', PURCHASE_TX_COUNT: 'purchase-tx-count' },
+  invalidatePurchaseCaches: vi.fn(),
 }));
 
 // Mock Prisma

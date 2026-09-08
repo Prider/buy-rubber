@@ -6,12 +6,13 @@ import {
   findReportGroupById,
   getDailyPurchaseGroupId,
   getGroupLabel,
-  isDailyPurchaseReport,
   ReportProductTypeGroupRecord,
   resolveGroupProductTypeIds,
 } from '@/lib/reportProductTypeGroups';
 
-export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string; // string for grouped daily purchase reports like 'daily_purchase:group:{id}'
+export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string;
+
+export const REPORT_PAGE_SIZE = 15;
 
 interface ExpenseCategorySummary {
   category: string;
@@ -26,8 +27,37 @@ interface ProductType {
   isActive: boolean;
 }
 
+interface ReportTotals {
+  count: number;
+  totalAmount: number;
+  totalWeight: number;
+}
+
+interface ReportSummaryResponse {
+  type: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  truncated?: boolean;
+  rows: unknown[];
+  totals: ReportTotals;
+  categorySummary?: ExpenseCategorySummary[];
+}
+
+const EMPTY_TOTALS: ReportTotals = { count: 0, totalAmount: 0, totalWeight: 0 };
+
+function summaryTypeFor(reportType: ReportType): 'daily_purchase' | 'member_summary' | 'expense_summary' {
+  if (reportType === 'member_summary' || reportType === 'expense_summary') {
+    return reportType;
+  }
+  return 'daily_purchase';
+}
+
 export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[] = []) {
   const [loading, setLoading] = useState(false);
+  const [paging, setPaging] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [reportType, setReportType] = useState<ReportType>('daily_purchase');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -35,8 +65,10 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
   const [data, setData] = useState<any[] | null>(null);
   const [expenseSummary, setExpenseSummary] = useState<ExpenseCategorySummary[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [totals, setTotals] = useState<ReportTotals>(EMPTY_TOTALS);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Load product types on mount
   useEffect(() => {
     const loadProductTypes = async () => {
       try {
@@ -50,142 +82,112 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
     loadProductTypes();
   }, []);
 
-  const handleSetReportType = useCallback((type: ReportType) => {
-    setReportType(type);
+  const resetResults = useCallback(() => {
     setData(null);
     setExpenseSummary([]);
+    setTotals(EMPTY_TOTALS);
+    setTotalPages(1);
+    setTotalCount(0);
   }, []);
+
+  const handleSetReportType = useCallback((type: ReportType) => {
+    setReportType(type);
+    resetResults();
+  }, [resetResults]);
 
   const handleSetStartDate = useCallback((date: string) => {
     setStartDate(date);
-    setData(null);
-    setExpenseSummary([]);
-  }, []);
+    resetResults();
+  }, [resetResults]);
 
   const handleSetEndDate = useCallback((date: string) => {
     setEndDate(date);
-    setData(null);
-    setExpenseSummary([]);
-  }, []);
+    resetResults();
+  }, [resetResults]);
 
   const reportGroups = useMemo(
     () => buildReportGroupOptions(reportGroupRecords),
     [reportGroupRecords]
   );
 
-  const generateReport = useCallback(async () => {
-    setLoading(true);
-    try {
-      let response;
-      
+  const buildParams = useCallback(
+    (page: number, exportingRows = false) => {
+      const params: Record<string, string | number | boolean> = {
+        type: summaryTypeFor(reportType),
+        startDate,
+        endDate,
+        page,
+        pageSize: REPORT_PAGE_SIZE,
+      };
+
+      if (exportingRows) {
+        params.export = 1;
+      }
+
       const groupId = getDailyPurchaseGroupId(reportType);
-      const isGroupedDailyPurchase = Boolean(groupId);
-      
-      if (reportType === 'daily_purchase' || isGroupedDailyPurchase) {
-        const params: { startDate: string; endDate: string; productTypeIds?: string } = { startDate, endDate };
-        if (groupId) {
-          const group = findReportGroupById(reportGroupRecords, groupId);
-          const productTypeIds = group ? resolveGroupProductTypeIds(group) : [];
-          if (productTypeIds.length > 0) {
-            params.productTypeIds = productTypeIds.join(',');
-          }
+      if (groupId) {
+        const group = findReportGroupById(reportGroupRecords, groupId);
+        const productTypeIds = group ? resolveGroupProductTypeIds(group) : [];
+        if (productTypeIds.length > 0) {
+          params.productTypeIds = productTypeIds.join(',');
         }
-        response = await axios.get('/api/purchases', { params });
-        setData(response.data);
-        setExpenseSummary([]);
-      } else {
-      switch (reportType) {
-        case 'member_summary':
-          response = await axios.get('/api/purchases', {
-            params: { startDate, endDate },
-          });
-          // Group by member
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const grouped = response.data.reduce((acc: any, p: any) => {
-            const key = p.memberId;
-            if (!acc[key]) {
-              acc[key] = {
-                member: p.member,
-                count: 0,
-                totalWeight: 0,
-                totalAmount: 0,
-              };
-            }
-            acc[key].count++;
-            acc[key].totalWeight += p.dryWeight;
-            acc[key].totalAmount += p.totalAmount;
-            return acc;
-          }, {});
-          setData(Object.values(grouped));
-          setExpenseSummary([]);
-          break;
-        case 'expense_summary':
-          response = await axios.get('/api/expenses', {
-            params: {
-              startDate,
-              endDate,
-              page: 1,
-              pageSize: 1000,
-            },
-          });
-          setData(response.data.expenses || []);
-          if (response.data.expenses) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const categorySummary = response.data.expenses.reduce((acc: Record<string, ExpenseCategorySummary>, expense: any) => {
-              if (!acc[expense.category]) {
-                acc[expense.category] = {
-                  category: expense.category,
-                  totalAmount: 0,
-                  count: 0,
-                };
-              }
-              acc[expense.category].totalAmount += expense.amount;
-              acc[expense.category].count += 1;
-              return acc;
-            }, {});
-            setExpenseSummary((Object.values(categorySummary) as ExpenseCategorySummary[]).sort((a, b) => b.totalAmount - a.totalAmount));
-          } else {
-            setExpenseSummary([]);
-          }
-          break;
-        default:
-          break;
       }
-      }
+
+      return params;
+    },
+    [endDate, reportGroupRecords, reportType, startDate],
+  );
+
+  const applyResponse = useCallback((body: ReportSummaryResponse) => {
+    setData(Array.isArray(body.rows) ? body.rows : []);
+    setTotals(body.totals ?? EMPTY_TOTALS);
+    setTotalPages(Math.max(1, body.totalPages || 1));
+    setTotalCount(body.total ?? 0);
+    setExpenseSummary(body.categorySummary ?? []);
+  }, []);
+
+  const generateReport = useCallback(async (page = 1) => {
+    if (data !== null) {
+      setPaging(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
+        params: buildParams(page),
+      });
+      applyResponse(response.data);
     } catch (error) {
       logger.error('Failed to generate report', error);
     } finally {
       setLoading(false);
+      setPaging(false);
     }
-  }, [reportType, startDate, endDate, reportGroupRecords]);
+  }, [applyResponse, buildParams, data]);
 
-  const getTotalAmount = useCallback(() => {
-    if (!data || !Array.isArray(data)) return 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (isDailyPurchaseReport(reportType)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
-    } else if (reportType === 'member_summary') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
-    } else if (reportType === 'expense_summary') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
+  const fetchExportRows = useCallback(async () => {
+    setExporting(true);
+    try {
+      const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
+        params: buildParams(1, true),
+      });
+      return {
+        rows: (Array.isArray(response.data.rows) ? response.data.rows : []) as unknown as any[],
+        expenseSummary: response.data.categorySummary ?? [],
+        totals: response.data.totals ?? totals,
+      };
+    } catch (error) {
+      logger.error('Failed to export report', error);
+      return null;
+    } finally {
+      setExporting(false);
     }
-    return 0;
-  }, [data, reportType]);
+  }, [buildParams, totals]);
 
-  const getTotalWeight = useCallback(() => {
-    if (!data || !Array.isArray(data)) return 0;
-    if (isDailyPurchaseReport(reportType)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.reduce((sum: number, item: any) => sum + (item.dryWeight || 0), 0);
-    } else if (reportType === 'member_summary') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data.reduce((sum: number, item: any) => sum + (item.totalWeight || 0), 0);
-    }
-    return 0;
-  }, [data, reportType]);
+  const getTotalAmount = useCallback(() => totals.totalAmount || 0, [totals.totalAmount]);
+
+  const getTotalWeight = useCallback(() => totals.totalWeight || 0, [totals.totalWeight]);
 
   const getReportTitle = useCallback(() => {
     const groupId = getDailyPurchaseGroupId(reportType);
@@ -196,7 +198,7 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
       }
       return 'รายงานรับซื้อประจำวัน';
     }
-    
+
     switch (reportType) {
       case 'daily_purchase':
         return 'รายงานรับซื้อประจำวัน';
@@ -206,11 +208,13 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
         return 'รายงานค่าใช้จ่ายที่เกิดขึ้น';
       default:
         return 'รายงาน';
-    } 
+    }
   }, [reportType, reportGroupRecords]);
 
   return {
     loading,
+    paging,
+    exporting,
     reportType,
     setReportType: handleSetReportType,
     startDate,
@@ -221,10 +225,13 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
     expenseSummary,
     productTypes,
     reportGroups,
+    totals,
+    totalPages,
+    totalCount,
     generateReport,
+    fetchExportRows,
     getTotalAmount,
     getTotalWeight,
     getReportTitle,
   };
 }
-

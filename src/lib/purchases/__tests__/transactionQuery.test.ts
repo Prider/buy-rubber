@@ -6,6 +6,8 @@ import {
   fetchPaginatedTransactionGroups,
   parseTransactionDateRange,
   resolveDefaultDateRange,
+  resolveSearchMemberIds,
+  SEARCH_MEMBER_ID_LIMIT,
   type TransactionQueryFilters,
 } from '@/lib/purchases/transactionQuery';
 
@@ -90,5 +92,28 @@ describe('transactionQuery', () => {
 
     expect(parsed.startDate.getTime()).toBe(startDate.getTime());
     expect(parsed.endDate.getTime()).toBe(endDate.getTime());
+  });
+
+  it('caps member search results so name matches cannot dump the whole table', async () => {
+    const prisma = (await import('@/lib/prisma')).prisma;
+    vi.mocked(prisma.member.findMany).mockResolvedValue([{ id: 'member-1' }]);
+
+    const ids = await resolveSearchMemberIds('สม', null);
+
+    expect(ids).toEqual(['member-1']);
+    expect(prisma.member.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: SEARCH_MEMBER_ID_LIMIT,
+        select: { id: true },
+      }),
+    );
+  });
+
+  it('skips member lookup when a memberId filter is already set', async () => {
+    const prisma = (await import('@/lib/prisma')).prisma;
+    vi.mocked(prisma.member.findMany).mockClear();
+
+    await expect(resolveSearchMemberIds('สม', 'member-1')).resolves.toBeUndefined();
+    expect(prisma.member.findMany).not.toHaveBeenCalled();
   });
 });

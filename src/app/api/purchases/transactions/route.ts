@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { countTransactionGroupsCached } from '@/lib/purchases/transactionCountCache';
 import {
   buildTransactionPrismaWhere,
-  countTransactionGroups,
   fetchPaginatedTransactionGroups,
   parseTransactionDateRange,
   purchaseTransactionInclude,
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const prismaWhere = buildTransactionPrismaWhere(filters);
 
     const [total, paginatedGroups] = await Promise.all([
-      countTransactionGroups(filters),
+      countTransactionGroupsCached(filters),
       fetchPaginatedTransactionGroups(filters, page, limit),
     ]);
 

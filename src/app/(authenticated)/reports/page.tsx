@@ -51,6 +51,8 @@ export default function ReportsPage() {
   const groupModal = useReportGroupManagementModal();
   const {
     loading,
+    paging,
+    exporting,
     reportType,
     setReportType,
     startDate,
@@ -61,7 +63,10 @@ export default function ReportsPage() {
     expenseSummary,
     productTypes,
     reportGroups,
+    totalPages,
+    totalCount,
     generateReport,
+    fetchExportRows,
     getTotalAmount,
     getTotalWeight,
     getReportTitle,
@@ -78,24 +83,13 @@ export default function ReportsPage() {
     }
   }, [user, isLoading, router]);
 
-  const totalPages = useMemo(() => {
-    if (!data || data.length === 0) return 1;
-    return Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  }, [data]);
-
-  const hasData = useMemo(() => Array.isArray(data) && data.length > 0, [data]);
+  const hasData = totalCount > 0;
 
   const dateRangeLabel = useMemo(
     () =>
       `ระหว่างวันที่ ${new Date(startDate).toLocaleDateString('th-TH')} - ${new Date(endDate).toLocaleDateString('th-TH')}`,
     [startDate, endDate],
   );
-
-  const paginatedData = useMemo(() => {
-    if (!data) return [];
-    const startIndex = (tablePage - 1) * PAGE_SIZE;
-    return data.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [data, tablePage]);
 
   const rowOffset = useMemo(() => (tablePage - 1) * PAGE_SIZE, [tablePage]);
 
@@ -111,8 +105,11 @@ export default function ReportsPage() {
     }
   }, [loadGroups, reportType, setReportType]);
 
-  const handlePrintPreview = useCallback(() => {
-    if (!hasData || !data) return;
+  const handlePrintPreview = useCallback(async () => {
+    if (!hasData) return;
+
+    const exported = await fetchExportRows();
+    if (!exported) return;
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -127,55 +124,52 @@ export default function ReportsPage() {
     let tableContent = '';
     const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
     if (isDailyPurchase) {
-      tableContent = generateDailyPurchaseTableHTML(data);
+      tableContent = generateDailyPurchaseTableHTML(exported.rows);
     } else if (reportType === 'member_summary') {
-      tableContent = generateMemberSummaryTableHTML(data);
+      tableContent = generateMemberSummaryTableHTML(exported.rows);
     } else if (reportType === 'expense_summary') {
-      tableContent = generateExpenseTableHTML(data, expenseSummary);
+      tableContent = generateExpenseTableHTML(exported.rows, exported.expenseSummary);
     }
 
-    const htmlContent = generatePrintPreviewHTML(reportTitle, dateRangeLabel, tableContent, data.length);
+    const htmlContent = generatePrintPreviewHTML(
+      reportTitle,
+      dateRangeLabel,
+      tableContent,
+      exported.rows.length,
+    );
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-  }, [data, dateRangeLabel, expenseSummary, getReportTitle, hasData, reportType, showWarning]);
+  }, [dateRangeLabel, fetchExportRows, getReportTitle, hasData, reportType, showWarning]);
 
-  const handleDownloadPDF = useCallback(() => {
-    if (!hasData || !data) return;
+  const handleDownloadPDF = useCallback(async () => {
+    if (!hasData) return;
+
+    const exported = await fetchExportRows();
+    if (!exported) return;
 
     downloadReportPDF({
       reportTitle: getReportTitle(),
       reportType,
-      data,
+      data: exported.rows,
       startDate,
       endDate,
-      totalAmount: getTotalAmount(),
-      totalWeight: getTotalWeight(),
-      expenseSummary,
+      totalAmount: exported.totals.totalAmount,
+      totalWeight: exported.totals.totalWeight,
+      expenseSummary: exported.expenseSummary,
     });
-  }, [
-    data,
-    endDate,
-    expenseSummary,
-    getReportTitle,
-    getTotalAmount,
-    getTotalWeight,
-    hasData,
-    reportType,
-    startDate,
-  ]);
+  }, [endDate, fetchExportRows, getReportTitle, hasData, reportType, startDate]);
+
+  const goToPage = useCallback(
+    (page: number) => {
+      setTablePage(page);
+      void generateReport(page);
+    },
+    [generateReport],
+  );
 
   useEffect(() => {
     setTablePage(1);
   }, [reportType, startDate, endDate]);
-
-  useEffect(() => {
-    if (!data || data.length === 0) {
-      setTablePage(1);
-      return;
-    }
-    const maxPage = Math.max(1, totalPages);
-    setTablePage((currentPage) => (currentPage > maxPage ? maxPage : currentPage));
-  }, [data, totalPages]);
 
   if (isLoading) {
     return (
@@ -219,7 +213,10 @@ export default function ReportsPage() {
         endDate={endDate}
         setEndDate={setEndDate}
         loading={loading}
-        onGenerate={generateReport}
+        onGenerate={() => {
+          setTablePage(1);
+          void generateReport(1);
+        }}
         reportGroups={reportGroups}
         onManageGroups={groupModal.open}
       />
@@ -275,10 +272,10 @@ export default function ReportsPage() {
           `}</style>
 
           <ReportSummaryCards
-            data={data}
             reportType={reportType}
             totalAmount={getTotalAmount()}
             totalWeight={getTotalWeight()}
+            totalCount={totalCount}
             expenseSummary={expenseSummary}
           />
 
@@ -295,20 +292,20 @@ export default function ReportsPage() {
                 onPreview={handlePrintPreview}
                 onDownloadPDF={handleDownloadPDF}
                 onPrint={handlePrint}
-                disabled={!hasData}
+                disabled={!hasData || exporting}
               />
             </div>
 
-            <div className="p-5">
+            <div className={`p-5 ${paging ? 'opacity-60' : ''}`}>
               {(reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:')) && (
-                <DailyPurchaseTable data={paginatedData} offset={rowOffset} />
+                <DailyPurchaseTable data={data ?? []} offset={rowOffset} />
               )}
               {reportType === 'member_summary' && (
-                <MemberSummaryTable data={paginatedData} offset={rowOffset} />
+                <MemberSummaryTable data={data ?? []} offset={rowOffset} />
               )}
               {reportType === 'expense_summary' && (
                 <ExpenseReportTable
-                  data={paginatedData}
+                  data={data ?? []}
                   categorySummary={expenseSummary}
                   totalAmount={getTotalAmount()}
                 />
@@ -317,8 +314,8 @@ export default function ReportsPage() {
                 <PaginationControls
                   currentPage={tablePage}
                   totalPages={totalPages}
-                  onPrev={() => setTablePage((prev) => Math.max(1, prev - 1))}
-                  onNext={() => setTablePage((prev) => Math.min(totalPages, prev + 1))}
+                  onPrev={() => goToPage(Math.max(1, tablePage - 1))}
+                  onNext={() => goToPage(Math.min(totalPages, tablePage + 1))}
                 />
               )}
             </div>

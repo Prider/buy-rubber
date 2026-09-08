@@ -48,6 +48,23 @@ function percentile(values: number[], p: number): number {
   return Math.round(sorted[index] * 100) / 100;
 }
 
+function extractItemCount(body: unknown): number | undefined {
+  if (Array.isArray(body)) {
+    return body.length;
+  }
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+  const record = body as Record<string, unknown>;
+  if (Array.isArray(record.expenses)) return record.expenses.length;
+  if (Array.isArray(record.transactions)) return record.transactions.length;
+  if (Array.isArray(record.members)) return record.members.length;
+  if (Array.isArray(record.rows)) {
+    return typeof record.total === 'number' ? record.total : record.rows.length;
+  }
+  return undefined;
+}
+
 function summarize(name: string, mode: 'handler' | 'http', durations: number[], status: number, itemCount?: number): BenchmarkResult {
   const total = durations.reduce((sum, value) => sum + value, 0);
   return {
@@ -99,17 +116,7 @@ async function measureHandler(
 
     status = response.status;
     const body = await response.json().catch(() => null);
-    if (Array.isArray(body)) {
-      itemCount = body.length;
-    } else if (body && typeof body === 'object') {
-      if (Array.isArray(body.expenses)) {
-        itemCount = body.expenses.length;
-      } else if (Array.isArray(body.transactions)) {
-        itemCount = body.transactions.length;
-      } else if (Array.isArray(body.members)) {
-        itemCount = body.members.length;
-      }
-    }
+    itemCount = extractItemCount(body);
 
     durations.push(durationMs);
   }
@@ -141,17 +148,7 @@ async function measureHttp(
 
     status = response.status;
     const body = await response.json().catch(() => null);
-    if (Array.isArray(body)) {
-      itemCount = body.length;
-    } else if (body && typeof body === 'object') {
-      if (Array.isArray(body.expenses)) {
-        itemCount = body.expenses.length;
-      } else if (Array.isArray(body.transactions)) {
-        itemCount = body.transactions.length;
-      } else if (Array.isArray(body.members)) {
-        itemCount = body.members.length;
-      }
-    }
+    itemCount = extractItemCount(body);
 
     durations.push(durationMs);
   }
@@ -216,25 +213,25 @@ async function main() {
   const results: BenchmarkResult[] = [];
 
   if (args.useHandler) {
-    const { GET: getPurchases } = await import('../src/app/api/purchases/route');
     const { GET: getTransactions } = await import('../src/app/api/purchases/transactions/route');
     const { GET: getDashboard } = await import('../src/app/api/dashboard/route');
     const { GET: getMembers } = await import('../src/app/api/members/route');
     const { GET: getExpenses } = await import('../src/app/api/expenses/route');
     const { GET: getProductTypes } = await import('../src/app/api/product-types/route');
     const { GET: getReportGroups } = await import('../src/app/api/report-product-type-groups/route');
+    const { GET: getReportSummary } = await import('../src/app/api/reports/summary/route');
 
     results.push(
       await measureHandler(
-        'GET /api/purchases (year report)',
-        getPurchases,
-        `http://localhost/api/purchases?startDate=${startDate}&endDate=${endDate}`,
+        'GET /api/reports/summary (daily page)',
+        getReportSummary,
+        `http://localhost/api/reports/summary?type=daily_purchase&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
         args.iterations,
       ),
       await measureHandler(
-        'GET /api/purchases/transactions',
+        'GET /api/purchases/transactions (90d page)',
         getTransactions,
-        `http://localhost/api/purchases/transactions?startDate=${startDate}&endDate=${endDate}&page=1&limit=20`,
+        'http://localhost/api/purchases/transactions?page=1&limit=20',
         args.iterations,
       ),
       await measureHandler('GET /api/dashboard', getDashboard, 'http://localhost/api/dashboard', args.iterations),
@@ -262,14 +259,14 @@ async function main() {
     } else {
       results.push(
         await measureHttp(
-          'HTTP GET /api/purchases (year report)',
-          `${args.baseUrl}/api/purchases?startDate=${startDate}&endDate=${endDate}`,
+          'HTTP GET /api/reports/summary (daily page)',
+          `${args.baseUrl}/api/reports/summary?type=daily_purchase&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
           token,
           args.iterations,
         ),
         await measureHttp(
-          'HTTP GET /api/purchases/transactions',
-          `${args.baseUrl}/api/purchases/transactions?startDate=${startDate}&endDate=${endDate}&page=1&limit=20`,
+          'HTTP GET /api/purchases/transactions (90d page)',
+          `${args.baseUrl}/api/purchases/transactions?page=1&limit=20`,
           token,
           args.iterations,
         ),

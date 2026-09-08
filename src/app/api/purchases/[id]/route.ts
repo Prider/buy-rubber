@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { invalidatePurchaseCaches } from '@/lib/cache';
 import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
 import {
   applyPurchaseToStock,
@@ -190,7 +190,7 @@ export async function PUT(
       return row;
     });
 
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    invalidatePurchaseCaches();
     logger.info('PUT /api/purchases/[id] - Success', { id: params.id });
     return NextResponse.json(updated);
   } catch (error) {
@@ -247,7 +247,7 @@ export async function DELETE(
       });
     });
 
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    invalidatePurchaseCaches();
 
     logger.info('DELETE /api/purchases/[id] - Success', { id: params.id });
     return NextResponse.json({ message: 'ลบการรับซื้อเรียบร้อยแล้ว' });

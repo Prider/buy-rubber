@@ -45,10 +45,13 @@ vi.mock('@/lib/cache', () => ({
     get: vi.fn(),
     set: vi.fn(),
     delete: vi.fn(),
+    deletePattern: vi.fn(),
   },
   CACHE_KEYS: {
     DASHBOARD: 'dashboard',
+    PURCHASE_TX_COUNT: 'purchase-tx-count',
   },
+  invalidatePurchaseCaches: vi.fn(),
 }));
 
 // Mock stock service called inside $transaction

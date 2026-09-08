@@ -62,7 +62,7 @@ async function fillReportDateRange(page: Page, startDate: string, endDate: strin
 async function generatePurchaseReport(page: Page, startDate: string, endDate: string) {
   await fillReportDateRange(page, startDate, endDate)
   const reportReq = page.waitForResponse(
-    (r) => r.url().includes('/api/purchases') && r.request().method() === 'GET' && r.ok()
+    (r) => r.url().includes('/api/reports/summary') && r.request().method() === 'GET' && r.ok()
   )
   await page.getByRole('button', { name: 'สร้างรายงาน' }).click()
   await reportReq

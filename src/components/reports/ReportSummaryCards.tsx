@@ -2,11 +2,10 @@ import { formatCurrency, formatNumber } from '@/lib/utils';
 import { ReportType } from '@/hooks/useReportData';
 
 interface ReportSummaryCardsProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any[];
   reportType: ReportType;
   totalAmount: number;
   totalWeight: number;
+  totalCount: number;
   expenseSummary?: Array<{ category: string; totalAmount: number; count: number }>;
 }
 
@@ -29,14 +28,14 @@ function StatCard({
 }
 
 export default function ReportSummaryCards({
-  data,
   reportType,
   totalAmount,
   totalWeight,
+  totalCount,
   expenseSummary = [],
 }: ReportSummaryCardsProps) {
   const averageExpense =
-    reportType === 'expense_summary' && data.length > 0 ? totalAmount / data.length : 0;
+    reportType === 'expense_summary' && totalCount > 0 ? totalAmount / totalCount : 0;
   const topExpenseCategory =
     reportType === 'expense_summary' && expenseSummary.length > 0 ? expenseSummary[0] : null;
 
@@ -45,13 +44,13 @@ export default function ReportSummaryCards({
       <div className="no-print grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           label="จำนวนรายการ"
-          value={data.length.toLocaleString('th-TH')}
+          value={totalCount.toLocaleString('th-TH')}
           hint="รายการค่าใช้จ่าย"
         />
         <StatCard
           label="เฉลี่ยต่อรายการ"
           value={formatCurrency(averageExpense || 0)}
-          hint={`จาก ${data.length.toLocaleString('th-TH')} รายการ`}
+          hint={`จาก ${totalCount.toLocaleString('th-TH')} รายการ`}
         />
         <StatCard
           label="หมวดสูงสุด"
@@ -73,7 +72,7 @@ export default function ReportSummaryCards({
     <div className="no-print grid grid-cols-2 gap-3 sm:grid-cols-3">
       <StatCard
         label="จำนวนรายการ"
-        value={String(data.length)}
+        value={totalCount.toLocaleString('th-TH')}
         hint={isDaily ? 'รายการรับซื้อ' : 'สมาชิก'}
       />
       <StatCard label="น้ำหนักรวม" value={formatNumber(totalWeight)} hint="กิโลกรัม" />
