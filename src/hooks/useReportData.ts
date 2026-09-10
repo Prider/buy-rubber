@@ -4,8 +4,9 @@ import { logger } from '@/lib/logger';
 import {
   buildReportGroupOptions,
   findReportGroupById,
-  getDailyPurchaseGroupId,
   getGroupLabel,
+  getSelectedGroupId,
+  isSellSummaryReport,
   ReportProductTypeGroupRecord,
   resolveGroupProductTypeIds,
 } from '@/lib/reportProductTypeGroups';
@@ -47,14 +48,22 @@ interface ReportSummaryResponse {
 
 const EMPTY_TOTALS: ReportTotals = { count: 0, totalAmount: 0, totalWeight: 0 };
 
-function summaryTypeFor(reportType: ReportType): 'daily_purchase' | 'member_summary' | 'expense_summary' {
+function summaryTypeFor(
+  reportType: ReportType,
+): 'daily_purchase' | 'sell_summary' | 'member_summary' | 'expense_summary' {
+  if (isSellSummaryReport(reportType)) {
+    return 'sell_summary';
+  }
   if (reportType === 'member_summary' || reportType === 'expense_summary') {
     return reportType;
   }
   return 'daily_purchase';
 }
 
-export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[] = []) {
+export function useReportData(
+  reportGroupRecords: ReportProductTypeGroupRecord[] = [],
+  sellGroupRecords: ReportProductTypeGroupRecord[] = [],
+) {
   const [loading, setLoading] = useState(false);
   const [paging, setPaging] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -106,8 +115,13 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
   }, [resetResults]);
 
   const reportGroups = useMemo(
-    () => buildReportGroupOptions(reportGroupRecords),
+    () => buildReportGroupOptions(reportGroupRecords, 'daily_purchase'),
     [reportGroupRecords]
+  );
+
+  const sellReportGroups = useMemo(
+    () => buildReportGroupOptions(sellGroupRecords, 'sell_summary'),
+    [sellGroupRecords]
   );
 
   const buildParams = useCallback(
@@ -124,9 +138,12 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
         params.export = 1;
       }
 
-      const groupId = getDailyPurchaseGroupId(reportType);
+      const groupId = getSelectedGroupId(reportType);
       if (groupId) {
-        const group = findReportGroupById(reportGroupRecords, groupId);
+        const sourceGroups = isSellSummaryReport(reportType)
+          ? sellGroupRecords
+          : reportGroupRecords;
+        const group = findReportGroupById(sourceGroups, groupId);
         const productTypeIds = group ? resolveGroupProductTypeIds(group) : [];
         if (productTypeIds.length > 0) {
           params.productTypeIds = productTypeIds.join(',');
@@ -135,7 +152,7 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
 
       return params;
     },
-    [endDate, reportGroupRecords, reportType, startDate],
+    [endDate, reportGroupRecords, reportType, sellGroupRecords, startDate],
   );
 
   const applyResponse = useCallback((body: ReportSummaryResponse) => {
@@ -190,18 +207,24 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
   const getTotalWeight = useCallback(() => totals.totalWeight || 0, [totals.totalWeight]);
 
   const getReportTitle = useCallback(() => {
-    const groupId = getDailyPurchaseGroupId(reportType);
+    const groupId = getSelectedGroupId(reportType);
     if (groupId) {
-      const group = findReportGroupById(reportGroupRecords, groupId);
-      if (group) {
-        return `รายงานรับซื้อประจำวัน - ${getGroupLabel(group)}`;
+      const sourceGroups = isSellSummaryReport(reportType)
+        ? sellGroupRecords
+        : reportGroupRecords;
+      const group = findReportGroupById(sourceGroups, groupId);
+      const groupLabel = group ? getGroupLabel(group) : null;
+      if (isSellSummaryReport(reportType)) {
+        return groupLabel ? `สรุปรายการขาย - ${groupLabel}` : 'สรุปรายการขาย';
       }
-      return 'รายงานรับซื้อประจำวัน';
+      return groupLabel ? `รายงานรับซื้อประจำวัน - ${groupLabel}` : 'รายงานรับซื้อประจำวัน';
     }
 
     switch (reportType) {
       case 'daily_purchase':
         return 'รายงานรับซื้อประจำวัน';
+      case 'sell_summary':
+        return 'สรุปรายการขาย';
       case 'member_summary':
         return 'สรุปรายสมาชิกที่รับซื้อยาง';
       case 'expense_summary':
@@ -209,7 +232,7 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
       default:
         return 'รายงาน';
     }
-  }, [reportType, reportGroupRecords]);
+  }, [reportType, reportGroupRecords, sellGroupRecords]);
 
   return {
     loading,
@@ -225,6 +248,7 @@ export function useReportData(reportGroupRecords: ReportProductTypeGroupRecord[]
     expenseSummary,
     productTypes,
     reportGroups,
+    sellReportGroups,
     totals,
     totalPages,
     totalCount,

@@ -12,14 +12,17 @@ import GamerLoader from '@/components/GamerLoader';
 import {
   generatePrintPreviewHTML,
   generateDailyPurchaseTableHTML,
+  generateSellSummaryTableHTML,
   generateMemberSummaryTableHTML,
   generateExpenseTableHTML,
 } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
+import ReportTabs, { type ReportTabId } from '@/components/reports/ReportTabs';
 import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
-import { getDailyPurchaseGroupId } from '@/lib/reportProductTypeGroups';
+import { getSelectedGroupId, isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
 import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
 import DailyPurchaseTable from '@/components/reports/DailyPurchaseTable';
+import SellSummaryTable from '@/components/reports/SellSummaryTable';
 import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
 import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
 import ReportActionButtons from '@/components/reports/ReportActionButtons';
@@ -33,12 +36,20 @@ const ReportGroupManagementModal = dynamic(
 
 const PAGE_SIZE = 15;
 
+function tabFromReportType(reportType: string): ReportTabId {
+  if (isSellSummaryReport(reportType)) return 'sell_summary';
+  if (reportType === 'member_summary') return 'member_summary';
+  if (reportType === 'expense_summary') return 'expense_summary';
+  return 'daily_purchase';
+}
+
 export default function ReportsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { showWarning } = useAlert();
   const [tablePage, setTablePage] = useState(1);
-  const groupManager = useReportProductTypeGroups();
+  const purchaseGroupManager = useReportProductTypeGroups('purchase');
+  const saleGroupManager = useReportProductTypeGroups('sale');
   const {
     groups: reportGroupRecords,
     loading: groupsLoading,
@@ -47,7 +58,16 @@ export default function ReportsPage() {
     createGroup,
     updateGroup,
     deleteGroup,
-  } = groupManager;
+  } = purchaseGroupManager;
+  const {
+    groups: sellGroupRecords,
+    loading: sellGroupsLoading,
+    saving: sellGroupsSaving,
+    loadGroups: loadSellGroups,
+    createGroup: createSellGroup,
+    updateGroup: updateSellGroup,
+    deleteGroup: deleteSellGroup,
+  } = saleGroupManager;
   const groupModal = useReportGroupManagementModal();
   const {
     loading,
@@ -63,6 +83,7 @@ export default function ReportsPage() {
     expenseSummary,
     productTypes,
     reportGroups,
+    sellReportGroups,
     totalPages,
     totalCount,
     generateReport,
@@ -70,11 +91,14 @@ export default function ReportsPage() {
     getTotalAmount,
     getTotalWeight,
     getReportTitle,
-  } = useReportData(reportGroupRecords);
+  } = useReportData(reportGroupRecords, sellGroupRecords);
+
+  const activeTab = tabFromReportType(reportType);
 
   useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
+    void loadGroups();
+    void loadSellGroups();
+  }, [loadGroups, loadSellGroups]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -97,13 +121,29 @@ export default function ReportsPage() {
     window.print();
   }, []);
 
+  const handleTabChange = useCallback(
+    (tab: ReportTabId) => {
+      setTablePage(1);
+      setReportType(tab);
+    },
+    [setReportType],
+  );
+
   const handleGroupsChanged = useCallback(async () => {
+    const selectedGroupId = getSelectedGroupId(reportType);
+    if (isSellSummaryReport(reportType)) {
+      const nextGroups = await loadSellGroups();
+      if (selectedGroupId && !nextGroups.some((group) => group.id === selectedGroupId)) {
+        setReportType('sell_summary');
+      }
+      return;
+    }
+
     const nextGroups = await loadGroups();
-    const selectedGroupId = getDailyPurchaseGroupId(reportType);
     if (selectedGroupId && !nextGroups.some((group) => group.id === selectedGroupId)) {
       setReportType('daily_purchase');
     }
-  }, [loadGroups, reportType, setReportType]);
+  }, [loadGroups, loadSellGroups, reportType, setReportType]);
 
   const handlePrintPreview = useCallback(async () => {
     if (!hasData) return;
@@ -122,9 +162,10 @@ export default function ReportsPage() {
 
     const reportTitle = getReportTitle();
     let tableContent = '';
-    const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
-    if (isDailyPurchase) {
+    if (isDailyPurchaseReport(reportType)) {
       tableContent = generateDailyPurchaseTableHTML(exported.rows);
+    } else if (isSellSummaryReport(reportType)) {
+      tableContent = generateSellSummaryTableHTML(exported.rows);
     } else if (reportType === 'member_summary') {
       tableContent = generateMemberSummaryTableHTML(exported.rows);
     } else if (reportType === 'expense_summary') {
@@ -189,9 +230,6 @@ export default function ReportsPage() {
               รายงาน
             </span>
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            รับซื้อ · สมาชิก · ค่าใช้จ่าย
-          </p>
         </div>
 
         <Link
@@ -205,32 +243,40 @@ export default function ReportsPage() {
         </Link>
       </div>
 
-      <ReportFilterCard
-        reportType={reportType}
-        setReportType={setReportType}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        loading={loading}
-        onGenerate={() => {
-          setTablePage(1);
-          void generateReport(1);
-        }}
-        reportGroups={reportGroups}
-        onManageGroups={groupModal.open}
-      />
+      <div className="space-y-5" id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
+        <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
+
+        <ReportFilterCard
+          reportType={reportType}
+          setReportType={setReportType}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          loading={loading}
+          onGenerate={() => {
+            setTablePage(1);
+            void generateReport(1);
+          }}
+          reportGroups={activeTab === 'sell_summary' ? sellReportGroups : reportGroups}
+          onManageGroups={
+            activeTab === 'daily_purchase' || activeTab === 'sell_summary' ? groupModal.open : undefined
+          }
+          selectMode={activeTab}
+        />
+      </div>
 
       <ReportGroupManagementModal
         isOpen={groupModal.isOpen}
         onClose={groupModal.close}
         productTypes={productTypes}
-        groups={reportGroupRecords}
-        loading={groupsLoading}
-        saving={groupsSaving}
-        onCreateGroup={createGroup}
-        onUpdateGroup={updateGroup}
-        onDeleteGroup={deleteGroup}
+        kind={activeTab === 'sell_summary' ? 'sale' : 'purchase'}
+        groups={activeTab === 'sell_summary' ? sellGroupRecords : reportGroupRecords}
+        loading={activeTab === 'sell_summary' ? sellGroupsLoading : groupsLoading}
+        saving={activeTab === 'sell_summary' ? sellGroupsSaving : groupsSaving}
+        onCreateGroup={activeTab === 'sell_summary' ? createSellGroup : createGroup}
+        onUpdateGroup={activeTab === 'sell_summary' ? updateSellGroup : updateGroup}
+        onDeleteGroup={activeTab === 'sell_summary' ? deleteSellGroup : deleteGroup}
         onRefresh={handleGroupsChanged}
       />
 
@@ -297,8 +343,11 @@ export default function ReportsPage() {
             </div>
 
             <div className={`p-5 ${paging ? 'opacity-60' : ''}`}>
-              {(reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:')) && (
+              {isDailyPurchaseReport(reportType) && (
                 <DailyPurchaseTable data={data ?? []} offset={rowOffset} />
+              )}
+              {isSellSummaryReport(reportType) && (
+                <SellSummaryTable data={data ?? []} offset={rowOffset} />
               )}
               {reportType === 'member_summary' && (
                 <MemberSummaryTable data={data ?? []} offset={rowOffset} />
@@ -326,7 +375,9 @@ export default function ReportsPage() {
       {!data && !loading ? (
         <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            เลือกประเภทรายงานและช่วงวันที่ แล้วกดสร้างรายงาน
+            {activeTab === 'daily_purchase' || activeTab === 'sell_summary'
+              ? 'เลือกประเภทรายงานและช่วงวันที่ แล้วกดสร้างรายงาน'
+              : 'เลือกช่วงวันที่ แล้วกดสร้างรายงาน'}
           </p>
         </div>
       ) : null}

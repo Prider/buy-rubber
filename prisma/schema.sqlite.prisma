@@ -299,16 +299,18 @@ model StockGang {
   @@index([productTypeId, startDate])
 }
 
-// กลุ่มประเภทสินค้าสำหรับรายงานรับซื้อประจำวัน (ผู้ใช้กำหนดเอง)
+// กลุ่มประเภทสินค้าสำหรับรายงานรับซื้อ / ขาย (ผู้ใช้กำหนดเอง)
 model ReportProductTypeGroup {
   id           String                         @id @default(uuid())
   name         String?
+  kind         String                         @default("purchase") // purchase | sale
   sortOrder    Int                            @default(0)
   isActive     Boolean                        @default(true)
   createdAt    DateTime                       @default(now())
   updatedAt    DateTime                       @updatedAt
   productTypes ReportProductTypeGroupMember[]
 
+  @@index([kind, isActive, sortOrder])
   @@index([isActive, sortOrder])
 }
 

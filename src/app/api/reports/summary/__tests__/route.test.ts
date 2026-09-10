@@ -9,6 +9,10 @@ vi.mock('@/lib/prisma', () => ({
       aggregate: vi.fn(),
       groupBy: vi.fn(),
     },
+    sale: {
+      findMany: vi.fn(),
+      aggregate: vi.fn(),
+    },
     member: {
       findMany: vi.fn(),
     },
@@ -33,6 +37,7 @@ function req(params: Record<string, string> = {}) {
 describe('GET /api/reports/summary', () => {
   let prisma: {
     purchase: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
+    sale: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn> };
     member: { findMany: ReturnType<typeof vi.fn> };
     expense: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
   };
@@ -100,6 +105,88 @@ describe('GET /api/reports/summary', () => {
       totalAmount: 500000,
       totalWeight: 12000,
     });
+  });
+
+  it('paginates sell summary from sales and returns server totals', async () => {
+    prisma.sale.findMany.mockResolvedValue([
+      {
+        id: 's1',
+        date: new Date('2026-01-02'),
+        saleNo: 'SAL-1',
+        companyName: 'Acme',
+        weight: 20,
+        pricePerUnit: 55,
+        totalAmount: 1100,
+        productType: { id: 't1', name: 'Latex' },
+      },
+    ]);
+    prisma.sale.aggregate.mockResolvedValue({
+      _count: { _all: 42 },
+      _sum: { weight: 800, totalAmount: 44000 },
+    });
+
+    const response = await GET(
+      req({
+        type: 'sell_summary',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        page: '1',
+        pageSize: '15',
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(prisma.sale.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 15,
+        select: expect.objectContaining({
+          saleNo: true,
+          companyName: true,
+        }),
+      }),
+    );
+    expect(body.rows).toHaveLength(1);
+    expect(body.total).toBe(42);
+    expect(body.totals).toEqual({
+      count: 42,
+      totalAmount: 44000,
+      totalWeight: 800,
+    });
+  });
+
+  it('filters sell summary by productTypeIds', async () => {
+    prisma.sale.findMany.mockResolvedValue([]);
+    prisma.sale.aggregate.mockResolvedValue({
+      _count: { _all: 0 },
+      _sum: { weight: 0, totalAmount: 0 },
+    });
+
+    const response = await GET(
+      req({
+        type: 'sell_summary',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        productTypeIds: 't1,t2',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.sale.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          productTypeId: { in: ['t1', 't2'] },
+        }),
+      }),
+    );
+    expect(prisma.sale.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          productTypeId: { in: ['t1', 't2'] },
+        }),
+      }),
+    );
   });
 
   it('aggregates member summary in SQL instead of grouping purchase rows in Node', async () => {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
 
 export const runtime = 'nodejs';
 
@@ -18,6 +19,7 @@ const groupInclude = {
 function serializeGroup(group: {
   id: string;
   name: string | null;
+  kind: string;
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
@@ -29,6 +31,7 @@ function serializeGroup(group: {
   return {
     id: group.id,
     name: group.name,
+    kind: parseReportProductTypeGroupKind(group.kind),
     sortOrder: group.sortOrder,
     isActive: group.isActive,
     createdAt: group.createdAt,
@@ -65,11 +68,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === '1';
+    const kind = parseReportProductTypeGroupKind(searchParams.get('kind'));
 
-    logger.info('GET /api/report-product-type-groups', { includeInactive });
+    logger.info('GET /api/report-product-type-groups', { includeInactive, kind });
 
     const groups = await prisma.reportProductTypeGroup.findMany({
-      where: includeInactive ? undefined : { isActive: true },
+      where: includeInactive ? { kind } : { kind, isActive: true },
       include: groupInclude,
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
@@ -99,10 +103,12 @@ export async function POST(request: NextRequest) {
       : null;
 
     const sortOrder = Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0;
+    const kind = parseReportProductTypeGroupKind(data.kind);
 
     const group = await prisma.reportProductTypeGroup.create({
       data: {
         name,
+        kind,
         sortOrder,
         productTypes: {
           create: validation.productTypeIds.map((productTypeId) => ({ productTypeId })),

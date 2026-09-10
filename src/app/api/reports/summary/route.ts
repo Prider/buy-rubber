@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const REPORT_TYPES = ['daily_purchase', 'member_summary', 'expense_summary'] as const;
+const REPORT_TYPES = ['daily_purchase', 'sell_summary', 'member_summary', 'expense_summary'] as const;
 type ReportSummaryType = (typeof REPORT_TYPES)[number];
 
 const DEFAULT_PAGE_SIZE = 15;
@@ -32,6 +32,17 @@ const expenseRowSelect = {
   description: true,
   createdAt: true,
 } satisfies Prisma.ExpenseSelect;
+
+const saleRowSelect = {
+  id: true,
+  date: true,
+  saleNo: true,
+  companyName: true,
+  weight: true,
+  pricePerUnit: true,
+  totalAmount: true,
+  productType: { select: { id: true, name: true } },
+} satisfies Prisma.SaleSelect;
 
 function isReportType(value: string | null): value is ReportSummaryType {
   return REPORT_TYPES.includes(value as ReportSummaryType);
@@ -91,6 +102,22 @@ function buildPurchaseWhere(
   return where;
 }
 
+function buildSaleWhere(
+  startDate: Date,
+  endDate: Date,
+  productTypeIds: string[],
+): Prisma.SaleWhereInput {
+  const where: Prisma.SaleWhereInput = {
+    date: { gte: startDate, lte: endDate },
+  };
+  if (productTypeIds.length === 1) {
+    where.productTypeId = productTypeIds[0];
+  } else if (productTypeIds.length > 1) {
+    where.productTypeId = { in: productTypeIds };
+  }
+  return where;
+}
+
 function buildExpenseWhere(startDate: Date, endDate: Date): Prisma.ExpenseWhereInput {
   return {
     date: { gte: startDate, lte: endDate },
@@ -126,6 +153,39 @@ async function dailyPurchaseReport(
       count: total,
       totalAmount: totals._sum.totalAmount ?? 0,
       totalWeight: totals._sum.dryWeight ?? 0,
+    },
+  };
+}
+
+async function sellSummaryReport(
+  where: Prisma.SaleWhereInput,
+  page: number,
+  pageSize: number,
+) {
+  const skip = (page - 1) * pageSize;
+  const [rows, totals] = await Promise.all([
+    prisma.sale.findMany({
+      where,
+      select: saleRowSelect,
+      orderBy: { date: 'desc' },
+      skip,
+      take: pageSize,
+    }),
+    prisma.sale.aggregate({
+      where,
+      _count: { _all: true },
+      _sum: { weight: true, totalAmount: true },
+    }),
+  ]);
+
+  const total = totals._count._all;
+  return {
+    rows,
+    total,
+    totals: {
+      count: total,
+      totalAmount: totals._sum.totalAmount ?? 0,
+      totalWeight: totals._sum.weight ?? 0,
     },
   };
 }
@@ -270,6 +330,12 @@ export async function GET(request: NextRequest) {
     if (typeParam === 'daily_purchase') {
       payload = await dailyPurchaseReport(
         buildPurchaseWhere(startDate, endDate, productTypeIds),
+        page,
+        pageSize,
+      );
+    } else if (typeParam === 'sell_summary') {
+      payload = await sellSummaryReport(
+        buildSaleWhere(startDate, endDate, productTypeIds),
         page,
         pageSize,
       );

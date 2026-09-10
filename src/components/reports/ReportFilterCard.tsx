@@ -1,5 +1,6 @@
 import { ReportType } from '@/hooks/useReportData';
 import { ReportGroupOption } from '@/lib/reportProductTypeGroups';
+import type { ReportTabId } from '@/components/reports/ReportTabs';
 
 interface ReportFilterCardProps {
   reportType: ReportType;
@@ -12,6 +13,7 @@ interface ReportFilterCardProps {
   onGenerate: () => void;
   reportGroups?: ReportGroupOption[];
   onManageGroups?: () => void;
+  selectMode: ReportTabId;
 }
 
 const inputClass =
@@ -36,50 +38,69 @@ export default function ReportFilterCard({
   onGenerate,
   reportGroups = [],
   onManageGroups,
+  selectMode,
 }: ReportFilterCardProps) {
   const isDateRangeInvalid = startDate && endDate ? new Date(startDate) > new Date(endDate) : false;
+  const showSelect = selectMode === 'daily_purchase' || selectMode === 'sell_summary';
 
   return (
     <div className="relative z-20 space-y-3 overflow-visible">
-      <div className="grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
-        <div className="sm:col-span-2 lg:col-span-1">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              ประเภทรายงาน
-            </label>
-            {onManageGroups ? (
-              <button
-                type="button"
-                onClick={onManageGroups}
-                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                จัดการกลุ่มรายงานการรับซื้อยาง
-              </button>
-            ) : null}
+      <div
+        className={`grid grid-cols-1 gap-3 overflow-visible sm:grid-cols-2 ${
+          showSelect ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+        } lg:items-end`}
+      >
+        {showSelect ? (
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                ประเภทรายงาน
+              </label>
+              {onManageGroups ? (
+                <button
+                  type="button"
+                  onClick={onManageGroups}
+                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  จัดการกลุ่มรายงาน{selectMode === 'sell_summary' ? 'การขายยาง' : 'การรับซื้อยาง'}
+                </button>
+              ) : null}
+            </div>
+            <select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value as ReportType)}
+              className={inputClass}
+            >
+              {selectMode === 'daily_purchase' ? (
+                <>
+                  <option value="daily_purchase">รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
+                  {reportGroups.map((group) => (
+                    <option key={group.id} value={group.reportType}>
+                      รายงานรับซื้อประจำวัน - {group.label}
+                    </option>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <option value="sell_summary">สรุปรายการขาย (ทั้งหมด)</option>
+                  {reportGroups.map((group) => (
+                    <option key={group.id} value={group.reportType}>
+                      สรุปรายการขาย - {group.label}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
           </div>
-          <select
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value as ReportType)}
-            className={inputClass}
-          >
-            <option value="daily_purchase">รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
-            {reportGroups.map((group) => (
-              <option key={group.id} value={group.reportType}>
-                รายงานรับซื้อประจำวัน - {group.label}
-              </option>
-            ))}
-            <option value="member_summary">สรุปรายสมาชิกที่รับซื้อยาง</option>
-            <option value="expense_summary">รายงานค่าใช้จ่ายที่เกิดขึ้น</option>
-          </select>
-        </div>
+        ) : null}
 
         <div className="relative z-20 min-w-0">
           <label
@@ -92,7 +113,7 @@ export default function ReportFilterCard({
             id="report-start-date"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => setStartDate(e.currentTarget.value)}
             onClick={(e) => openDatePicker(e.currentTarget)}
             onFocus={(e) => openDatePicker(e.currentTarget)}
             className={`${inputClass} relative z-20 cursor-pointer ${
@@ -112,7 +133,7 @@ export default function ReportFilterCard({
             id="report-end-date"
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={(e) => setEndDate(e.currentTarget.value)}
             onClick={(e) => openDatePicker(e.currentTarget)}
             onFocus={(e) => openDatePicker(e.currentTarget)}
             className={`${inputClass} relative z-20 cursor-pointer ${

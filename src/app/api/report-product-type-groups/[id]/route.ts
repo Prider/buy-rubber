@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
 
 export const runtime = 'nodejs';
 
@@ -18,6 +19,7 @@ const groupInclude = {
 function serializeGroup(group: {
   id: string;
   name: string | null;
+  kind: string;
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
@@ -29,6 +31,7 @@ function serializeGroup(group: {
   return {
     id: group.id,
     name: group.name,
+    kind: parseReportProductTypeGroupKind(group.kind),
     sortOrder: group.sortOrder,
     isActive: group.isActive,
     createdAt: group.createdAt,

@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatCurrency, formatNumber } from './utils';
 import { ReportType } from '@/hooks/useReportData';
+import { isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
 
 interface ExpenseCategorySummary {
   category: string;
@@ -25,8 +26,7 @@ interface DownloadReportPDFParams {
 const ROWS_PER_PAGE = 15;
 
 const renderTableRows = (reportType: ReportType, rows: any[]) => {
-  const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
-  if (isDailyPurchase) {
+  if (isDailyPurchaseReport(reportType)) {
     return rows
       .map(
         (item) => `
@@ -37,6 +37,24 @@ const renderTableRows = (reportType: ReportType, rows: any[]) => {
             <td>${item.productType?.name || '-'}</td>
             <td class=\"number\">${formatNumber(item.dryWeight)}</td>
             <td class=\"number\">${formatNumber(item.dryWeight ? item.totalAmount / item.dryWeight : 0)}</td>
+            <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
+          </tr>
+        `
+      )
+      .join('');
+  }
+
+  if (isSellSummaryReport(reportType)) {
+    return rows
+      .map(
+        (item) => `
+          <tr>
+            <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
+            <td>${item.saleNo || '-'}</td>
+            <td>${item.companyName || '-'}</td>
+            <td>${item.productType?.name || '-'}</td>
+            <td class=\"number\">${formatNumber(item.weight)}</td>
+            <td class=\"number\">${formatNumber(item.pricePerUnit ?? (item.weight ? item.totalAmount / item.weight : 0))}</td>
             <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
           </tr>
         `
@@ -75,13 +93,26 @@ const renderTableRows = (reportType: ReportType, rows: any[]) => {
 };
 
 const renderTableHeaders = (reportType: ReportType) => {
-  const isDailyPurchase = reportType === 'daily_purchase' || reportType.startsWith('daily_purchase:');
-  if (isDailyPurchase) {
+  if (isDailyPurchaseReport(reportType)) {
     return `
       <tr>
         <th>วันที่</th>
         <th>เลขที่</th>
         <th>สมาชิก</th>
+        <th>ประเภทสินค้า</th>
+        <th>น้ำหนัก (กก.)</th>
+        <th>ราคา/กก.</th>
+        <th>ยอดเงิน</th>
+      </tr>
+    `;
+  }
+
+  if (isSellSummaryReport(reportType)) {
+    return `
+      <tr>
+        <th>วันที่</th>
+        <th>เลขที่</th>
+        <th>บริษัท</th>
         <th>ประเภทสินค้า</th>
         <th>น้ำหนัก (กก.)</th>
         <th>ราคา/กก.</th>

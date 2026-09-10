@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Modal } from 'animal-island-ui';
-import { ReportProductTypeGroupRecord, getGroupLabel } from '@/lib/reportProductTypeGroups';
+import { ReportProductTypeGroupKind, ReportProductTypeGroupRecord, getGroupLabel } from '@/lib/reportProductTypeGroups';
 import { useAlert } from '@/hooks/useAlert';
 
 const fieldClassName =
@@ -28,6 +28,7 @@ interface ReportGroupManagementModalProps {
   ) => Promise<ReportProductTypeGroupRecord>;
   onDeleteGroup: (id: string) => Promise<void>;
   onRefresh: () => Promise<ReportProductTypeGroupRecord[] | void>;
+  kind?: ReportProductTypeGroupKind;
 }
 
 function buildPreviewLabel(
@@ -57,6 +58,7 @@ export default function ReportGroupManagementModal({
   onUpdateGroup,
   onDeleteGroup,
   onRefresh,
+  kind = 'purchase',
 }: ReportGroupManagementModalProps) {
   const { showSuccess, showError, showConfirm } = useAlert();
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
@@ -74,6 +76,10 @@ export default function ReportGroupManagementModal({
       resetForm();
     }
   }, [isOpen, resetForm]);
+
+  useEffect(() => {
+    resetForm();
+  }, [kind, resetForm]);
 
   const startEdit = useCallback((group: ReportProductTypeGroupRecord) => {
     setEditingGroupId(group.id);
@@ -170,6 +176,11 @@ export default function ReportGroupManagementModal({
   );
 
   const previewLabel = buildPreviewLabel(name, selectedProductTypeIds, productTypes);
+  const isSaleGroups = kind === 'sale';
+  const modalTitle = isSaleGroups ? 'จัดการกลุ่มรายงานการขายยาง' : 'จัดการกลุ่มรายงานการรับซื้อยาง';
+  const modalDescription = isSaleGroups
+    ? 'สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานสรุปการขาย เช่น ยางจอก + ยางพรก'
+    : 'สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก';
 
   return (
     <Modal
@@ -177,14 +188,14 @@ export default function ReportGroupManagementModal({
       className="app-island-modal"
       title={
         <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-          จัดการกลุ่มรายงานการรับซื้อยาง
+          {modalTitle}
         </span>
       }
       width={800}
       typewriter={false}
       onClose={onClose}
       footer={
-        <>
+        <div className="mr-8 flex items-center gap-3">
           <Button htmlType="button" onClick={onClose}>
             ปิด
           </Button>
@@ -201,12 +212,12 @@ export default function ReportGroupManagementModal({
           >
             {saving ? 'กำลังบันทึก...' : editingGroupId ? 'บันทึกการแก้ไข' : 'เพิ่มกลุ่ม'}
           </Button>
-        </>
+        </div>
       }
     >
       <div className="w-full text-base font-normal px-2">
         <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก
+          {modalDescription}
         </p>
 
         <div className="grid w-full gap-6 md:grid-cols-2">

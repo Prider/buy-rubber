@@ -204,13 +204,16 @@ async function main() {
   const prisma = new PrismaClient();
   const { startDate, endDate } = getReportDateRange();
 
-  const [purchaseCount, memberCount, saleCount, expenseCount, stockGangCount] = await Promise.all([
-    prisma.purchase.count(),
-    prisma.member.count(),
-    prisma.sale.count(),
-    prisma.expense.count(),
-    prisma.stockGang.count(),
-  ]);
+  const [purchaseCount, memberCount, saleCount, expenseCount, stockGangCount, purchaseGroupCount, saleGroupCount] =
+    await Promise.all([
+      prisma.purchase.count(),
+      prisma.member.count(),
+      prisma.sale.count(),
+      prisma.expense.count(),
+      prisma.stockGang.count(),
+      prisma.reportProductTypeGroup.count({ where: { kind: 'purchase' } }),
+      prisma.reportProductTypeGroup.count({ where: { kind: 'sale' } }),
+    ]);
 
   const gangGroups = await prisma.stockGang.groupBy({
     by: ['productTypeId'],
@@ -230,6 +233,7 @@ async function main() {
   const monthStart = formatDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const today = formatDate(new Date());
   const runGangs = !args.only || args.only === 'gangs';
+  const runReports = args.only === 'reports';
   const runGeneral = !args.only;
 
   console.log('Database snapshot');
@@ -238,6 +242,8 @@ async function main() {
   console.log(`  sales:     ${saleCount.toLocaleString()}`);
   console.log(`  expenses:  ${expenseCount.toLocaleString()}`);
   console.log(`  stock gangs: ${stockGangCount.toLocaleString()}`);
+  console.log(`  purchase groups: ${purchaseGroupCount.toLocaleString()}`);
+  console.log(`  sale groups:     ${saleGroupCount.toLocaleString()}`);
   if (topGangProduct) {
     console.log(
       `  heaviest product: ${topGangProduct.code} (${topGangProduct.name}) · ${topGangCount.toLocaleString()} gangs · id=${topGangProduct.id}`,
@@ -330,6 +336,75 @@ async function main() {
           ),
         );
       }
+    }
+
+    if (runReports) {
+      const { GET: getReportGroups } = await import('../src/app/api/report-product-type-groups/route');
+      const { GET: getReportSummary } = await import('../src/app/api/reports/summary/route');
+      const topSale = await prisma.sale.groupBy({
+        by: ['productTypeId'],
+        _count: { _all: true },
+        orderBy: { _count: { productTypeId: 'desc' } },
+        take: 1,
+      });
+      const saleProductTypeId = topSale[0]?.productTypeId ?? '';
+      const saleGroup = await prisma.reportProductTypeGroup.findFirst({
+        where: { kind: 'sale', isActive: true },
+        include: { productTypes: { select: { productTypeId: true } } },
+      });
+      const saleGroupIds =
+        saleGroup?.productTypes.map((member) => member.productTypeId).join(',') ?? saleProductTypeId;
+
+      results.push(
+        await measureHandler(
+          'GET /api/report-product-type-groups?kind=purchase',
+          getReportGroups,
+          'http://localhost/api/report-product-type-groups?kind=purchase',
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/report-product-type-groups?kind=sale',
+          getReportGroups,
+          'http://localhost/api/report-product-type-groups?kind=sale',
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (daily page)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=daily_purchase&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (sell page)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=sell_summary&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (sell + productTypeIds)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=sell_summary&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15&productTypeIds=${saleGroupIds}`,
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (sell export)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=sell_summary&startDate=${startDate}&endDate=${endDate}&export=1`,
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (member page)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=member_summary&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
+          args.iterations,
+        ),
+        await measureHandler(
+          'GET /api/reports/summary (expense page)',
+          getReportSummary,
+          `http://localhost/api/reports/summary?type=expense_summary&startDate=${startDate}&endDate=${endDate}&page=1&pageSize=15`,
+          args.iterations,
+        ),
+      );
     }
   }
 

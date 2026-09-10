@@ -1,14 +1,17 @@
 import { useCallback, useState } from 'react';
 import axios from 'axios';
 import { logger } from '@/lib/logger';
-import { ReportProductTypeGroupRecord } from '@/lib/reportProductTypeGroups';
+import {
+  ReportProductTypeGroupKind,
+  ReportProductTypeGroupRecord,
+} from '@/lib/reportProductTypeGroups';
 
 interface SaveReportGroupInput {
   name?: string;
   productTypeIds: string[];
 }
 
-export function useReportProductTypeGroups() {
+export function useReportProductTypeGroups(kind: ReportProductTypeGroupKind = 'purchase') {
   const [groups, setGroups] = useState<ReportProductTypeGroupRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -18,7 +21,10 @@ export function useReportProductTypeGroups() {
     setLoading(true);
     setError(null);
     try {
-      const params = includeInactive ? { includeInactive: '1' } : undefined;
+      const params: Record<string, string> = { kind };
+      if (includeInactive) {
+        params.includeInactive = '1';
+      }
       const response = await axios.get<ReportProductTypeGroupRecord[]>(
         '/api/report-product-type-groups',
         { params },
@@ -32,7 +38,7 @@ export function useReportProductTypeGroups() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [kind]);
 
   const createGroup = useCallback(async (input: SaveReportGroupInput) => {
     setSaving(true);
@@ -40,7 +46,7 @@ export function useReportProductTypeGroups() {
     try {
       const response = await axios.post<ReportProductTypeGroupRecord>(
         '/api/report-product-type-groups',
-        input,
+        { ...input, kind },
       );
       setGroups((current) => [...current, response.data]);
       return response.data;
@@ -54,7 +60,7 @@ export function useReportProductTypeGroups() {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [kind]);
 
   const updateGroup = useCallback(async (id: string, input: SaveReportGroupInput) => {
     setSaving(true);

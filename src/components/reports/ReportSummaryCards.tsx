@@ -67,13 +67,20 @@ export default function ReportSummaryCards({
 
   const isDaily =
     reportType === 'daily_purchase' || String(reportType).startsWith('daily_purchase:');
+  const isSell =
+    reportType === 'sell_summary' || String(reportType).startsWith('sell_summary:');
+  const countHint = isDaily
+    ? 'รายการรับซื้อ'
+    : isSell
+      ? 'รายการขาย'
+      : 'สมาชิก';
 
   return (
     <div className="no-print grid grid-cols-2 gap-3 sm:grid-cols-3">
       <StatCard
         label="จำนวนรายการ"
         value={totalCount.toLocaleString('th-TH')}
-        hint={isDaily ? 'รายการรับซื้อ' : 'สมาชิก'}
+        hint={countHint}
       />
       <StatCard label="น้ำหนักรวม" value={formatNumber(totalWeight)} hint="กิโลกรัม" />
       <StatCard label="ยอดเงินรวม" value={formatCurrency(totalAmount)} hint="บาท" />

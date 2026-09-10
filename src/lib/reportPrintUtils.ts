@@ -177,6 +177,35 @@ export function generateDailyPurchaseTableHTML(data: any[]): string {
   `;
 }
 
+export function generateSellSummaryTableHTML(data: any[]): string {
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>วันที่</th>
+          <th>เลขที่</th>
+          <th>บริษัท</th>
+          <th>ประเภทสินค้า</th>
+          <th>น้ำหนัก (กก.)</th>
+          <th>ยอดเงิน</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map((item: any) => `
+          <tr>
+            <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
+            <td>${item.saleNo}</td>
+            <td>${item.companyName || '-'}</td>
+            <td>${item.productType?.name || '-'}</td>
+            <td>${formatNumber(item.weight)}</td>
+            <td>${formatCurrency(item.totalAmount)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
 export function generateMemberSummaryTableHTML(data: any[]): string {
   return `
     <table>
