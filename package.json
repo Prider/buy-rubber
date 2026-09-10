@@ -1,6 +1,6 @@
 {
   "name": "punsook-innotech",
-  "version": "1.4.7",
+  "version": "2.0.0",
   "description": "ระบบบริหารจัดการรับซื้อยาง (Rubber Purchasing Management System)",
   "main": "electron/main.js",
   "author": "pos.punsook.innotech",
