@@ -24,6 +24,7 @@ test.describe('Dashboard dark mode', () => {
 
     const sectionHeadings = [
       page.getByRole('heading', { name: 'รายการรับซื้อล่าสุด' }),
+      page.getByRole('heading', { name: 'รายการขายล่าสุด' }),
       page.getByRole('heading', { name: 'ค่าใช้จ่ายล่าสุด' }),
       page.getByRole('heading', { name: 'สมาชิกที่รับซื้อมากที่สุด' }),
     ]

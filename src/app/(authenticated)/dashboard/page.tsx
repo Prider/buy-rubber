@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import DashboardStatsCards from '@/components/dashboard/DashboardStatsCards';
 import RecentPurchasesList from '@/components/dashboard/RecentPurchasesList';
+import RecentSalesList from '@/components/dashboard/RecentSalesList';
 import TopMembersList from '@/components/dashboard/TopMembersList';
 import RecentExpensesList from '@/components/dashboard/RecentExpensesList';
 import GamerLoader from '@/components/GamerLoader';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { loading, stats, recentPurchases, topMembers, recentExpenses, reload } = useDashboardData();
+  const { loading, stats, recentPurchases, recentSales, topMembers, recentExpenses, reload } = useDashboardData();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -90,23 +91,12 @@ export default function DashboardPage() {
       <div className="flex-shrink-0">
         <DashboardStatsCards stats={stats} />
       </div>
-
-      {/* Today's Prices */}
-      {/* <div className="flex-shrink-0">
-        <TodayPricesCard productTypes={productTypes} todayPrices={todayPrices} />
-      </div> */}
-
       {/* Recent Activities */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <RecentPurchasesList purchases={recentPurchases} />
-        </div>
-        <div className="lg:col-span-1">
-          <RecentExpensesList expenses={recentExpenses} />
-        </div>
-        <div className="lg:col-span-1">
-          <TopMembersList topMembers={topMembers} />
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RecentPurchasesList purchases={recentPurchases} />
+        <RecentSalesList sales={recentSales} />
+        <RecentExpensesList expenses={recentExpenses} />
+        <TopMembersList topMembers={topMembers} />
       </div>
     </div>
   );

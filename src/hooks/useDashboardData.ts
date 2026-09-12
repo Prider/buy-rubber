@@ -26,6 +26,10 @@ export interface DashboardStats {
   todayServiceFeeAmount: number;
   monthServiceFees: number;
   monthServiceFeeAmount: number;
+  todaySales: number;
+  todaySaleAmount: number;
+  monthSales: number;
+  monthSaleAmount: number;
   todayPurchasesByProductType?: TodayPurchaseByProductType[];
 }
 
@@ -36,6 +40,7 @@ export interface DashboardData {
   recentPurchases: any[];
   topMembers: any[];
   recentExpenses: any[];
+  recentSales: any[];
 }
 
 interface UseDashboardDataReturn {
@@ -47,6 +52,7 @@ interface UseDashboardDataReturn {
   recentPurchases: any[];
   topMembers: any[];
   recentExpenses: any[];
+  recentSales: any[];
   reload: () => Promise<void>;
 }
 
@@ -114,6 +120,10 @@ export function useDashboardData(): UseDashboardDataReturn {
     todayServiceFeeAmount: 0,
     monthServiceFees: 0,
     monthServiceFeeAmount: 0,
+    todaySales: 0,
+    todaySaleAmount: 0,
+    monthSales: 0,
+    monthSaleAmount: 0,
   }), []);
 
   // Memoize stats to prevent unnecessary re-renders
@@ -127,6 +137,7 @@ export function useDashboardData(): UseDashboardDataReturn {
   const recentPurchases = useMemo(() => data?.recentPurchases || [], [data?.recentPurchases]);
   const topMembers = useMemo(() => data?.topMembers || [], [data?.topMembers]);
   const recentExpenses = useMemo(() => data?.recentExpenses || [], [data?.recentExpenses]);
+  const recentSales = useMemo(() => data?.recentSales || [], [data?.recentSales]);
 
   return {
     loading,
@@ -137,6 +148,7 @@ export function useDashboardData(): UseDashboardDataReturn {
     recentPurchases,
     topMembers,
     recentExpenses,
+    recentSales,
     reload: loadData,
   };
 }

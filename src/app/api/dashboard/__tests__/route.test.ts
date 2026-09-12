@@ -29,6 +29,10 @@ vi.mock('@/lib/prisma', () => ({
     serviceFee: {
       aggregate: vi.fn(),
     },
+    sale: {
+      aggregate: vi.fn(),
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -118,6 +122,8 @@ describe('GET /api/dashboard', () => {
     // Clear cache before each test
     vi.mocked(cache.get).mockReturnValue(null);
     vi.mocked(prisma.serviceFee.aggregate).mockResolvedValue({ _count: 0, _sum: { amount: 0 } });
+    vi.mocked(prisma.sale.aggregate).mockResolvedValue({ _count: 0, _sum: { totalAmount: 0 } });
+    vi.mocked(prisma.sale.findMany).mockResolvedValue([]);
   });
 
   describe('Successful retrieval', () => {
@@ -163,6 +169,7 @@ describe('GET /api/dashboard', () => {
       expect(data.todayPrices).toBeDefined();
       expect(data.productTypes).toBeDefined();
       expect(data.recentExpenses).toBeDefined();
+      expect(data.recentSales).toBeDefined();
     });
 
     it('should return correct statistics', async () => {
@@ -188,6 +195,10 @@ describe('GET /api/dashboard', () => {
 
       vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
 
+      vi.mocked(prisma.sale.aggregate)
+        .mockResolvedValueOnce({ _count: 2, _sum: { totalAmount: 80000 } })
+        .mockResolvedValueOnce({ _count: 20, _sum: { totalAmount: 800000 } });
+
       const request = new NextRequest('http://localhost:3000/api/dashboard');
       const response = await GET(request);
       const data = await response.json();
@@ -203,6 +214,10 @@ describe('GET /api/dashboard', () => {
       expect(data.stats.todayExpenseAmount).toBe(2500);
       expect(data.stats.monthExpenses).toBe(50);
       expect(data.stats.monthExpenseAmount).toBe(25000);
+      expect(data.stats.todaySales).toBe(2);
+      expect(data.stats.todaySaleAmount).toBe(80000);
+      expect(data.stats.monthSales).toBe(20);
+      expect(data.stats.monthSaleAmount).toBe(800000);
     });
 
     it('should handle null sum values', async () => {
@@ -228,6 +243,10 @@ describe('GET /api/dashboard', () => {
 
       vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
 
+      vi.mocked(prisma.sale.aggregate)
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: null } })
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: null } });
+
       const request = new NextRequest('http://localhost:3000/api/dashboard');
       const response = await GET(request);
       const data = await response.json();
@@ -237,6 +256,8 @@ describe('GET /api/dashboard', () => {
       expect(data.stats.monthAmount).toBe(0);
       expect(data.stats.todayExpenseAmount).toBe(0);
       expect(data.stats.monthExpenseAmount).toBe(0);
+      expect(data.stats.todaySaleAmount).toBe(0);
+      expect(data.stats.monthSaleAmount).toBe(0);
     });
 
     it('should return recent purchases with member and productType', async () => {
@@ -451,6 +472,56 @@ describe('GET /api/dashboard', () => {
       );
     });
 
+    it('should return recent sales with productType', async () => {
+      const mockSale = {
+        id: 'sale-1',
+        saleNo: 'SAL-202401-0001',
+        date: new Date('2024-01-15'),
+        companyName: 'Test Company',
+        weight: 250,
+        totalAmount: 12000,
+        productType: { id: 'product-1', name: 'น้ำยางสด', code: 'PT001' },
+      };
+
+      vi.mocked(prisma.purchase.aggregate)
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
+        .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
+
+      vi.mocked(prisma.member.count)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
+
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.purchase.groupBy)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      vi.mocked(prisma.productPrice.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+
+      vi.mocked(prisma.expense.aggregate)
+        .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } })
+        .mockResolvedValueOnce({ _count: 0, _sum: { amount: 0 } });
+
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.sale.findMany).mockResolvedValue([mockSale]);
+
+      const request = new NextRequest('http://localhost:3000/api/dashboard');
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.recentSales).toHaveLength(1);
+      expect(data.recentSales[0].companyName).toBe('Test Company');
+      expect(data.recentSales[0].productType).toBeDefined();
+      expect(vi.mocked(prisma.sale.findMany)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 10,
+          orderBy: { date: 'desc' },
+        })
+      );
+    });
+
     it('should limit recent purchases to 10', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
@@ -609,6 +680,8 @@ describe('GET /api/dashboard', () => {
         expect.objectContaining({
           todayPurchases: 10,
           monthPurchases: 100,
+          todaySales: 0,
+          monthSales: 0,
         })
       );
     });

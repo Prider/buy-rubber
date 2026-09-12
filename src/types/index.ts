@@ -128,6 +128,10 @@ export interface DashboardStats {
   todayAmount: number;
   monthPurchases: number;
   monthAmount: number;
+  todaySales: number;
+  todaySaleAmount: number;
+  monthSales: number;
+  monthSaleAmount: number;
   totalMembers: number;
   activeMembers: number;
   totalAdvance: number;
