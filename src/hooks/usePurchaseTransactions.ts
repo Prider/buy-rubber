@@ -4,6 +4,17 @@ import { PurchaseTransaction, PaginationInfo } from '@/components/purchases/type
 
 const ITEMS_PER_PAGE = 20;
 
+function uniqueByPurchaseNo(items: PurchaseTransaction[]): PurchaseTransaction[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.purchaseNo || seen.has(item.purchaseNo)) {
+      return false;
+    }
+    seen.add(item.purchaseNo);
+    return true;
+  });
+}
+
 interface UsePurchaseTransactionsReturn {
   transactions: PurchaseTransaction[];
   pagination: PaginationInfo;
@@ -60,7 +71,7 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
       // Only update state if request wasn't cancelled
       // Handle both old format (array) and new format (object with transactions and pagination)
       if (Array.isArray(response.data)) {
-        setTransactions(response.data);
+        setTransactions(uniqueByPurchaseNo(response.data));
         // Calculate pagination from array length
         const total = response.data.length;
         const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -72,7 +83,7 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
           hasMore: page < totalPages,
         });
       } else {
-        setTransactions(response.data.transactions || []);
+        setTransactions(uniqueByPurchaseNo(response.data.transactions || []));
         if (response.data.pagination) {
           setPagination(response.data.pagination);
         }

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import {
   buildTransactionPrismaWhere,
   countTransactionGroups,
+  dedupeGroupsByPurchaseNo,
   fetchPaginatedTransactionGroups,
   parseTransactionDateRange,
   resolveDefaultDateRange,
@@ -52,10 +53,12 @@ describe('transactionQuery', () => {
       expect.objectContaining({
         strings: expect.arrayContaining([
           expect.stringContaining('SELECT COUNT(*) AS count'),
-          expect.stringContaining('GROUP BY "purchaseNo", "memberId"'),
+          expect.stringContaining('GROUP BY "purchaseNo"'),
         ]),
       }),
     );
+    const countSql = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as Prisma.Sql;
+    expect(countSql.strings.join(' ')).not.toContain('GROUP BY "purchaseNo", "memberId"');
   });
 
   it('fetches paginated grouped transactions with limit and offset', async () => {
@@ -83,7 +86,39 @@ describe('transactionQuery', () => {
     const sqlArg = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as Prisma.Sql;
     expect(sqlArg.strings.join(' ')).toContain('LIMIT');
     expect(sqlArg.strings.join(' ')).toContain('OFFSET');
+    expect(sqlArg.strings.join(' ')).toContain('GROUP BY "purchaseNo"');
+    expect(sqlArg.strings.join(' ')).not.toContain('GROUP BY "purchaseNo", "memberId"');
     expect(sqlArg.values).toEqual(expect.arrayContaining([10, 10]));
+  });
+
+  it('dedupes grouped rows that share a purchaseNo from different members', () => {
+    const unique = dedupeGroupsByPurchaseNo([
+      {
+        purchaseNo: 'PUR-01',
+        memberId: 'member-1',
+        maxCreatedAt: new Date('2024-01-15T11:00:00.000Z'),
+        maxDate: new Date('2024-01-15T00:00:00.000Z'),
+        sumTotalAmount: 1500,
+      },
+      {
+        purchaseNo: 'PUR-01',
+        memberId: 'member-2',
+        maxCreatedAt: new Date('2024-01-15T10:00:00.000Z'),
+        maxDate: new Date('2024-01-15T00:00:00.000Z'),
+        sumTotalAmount: 800,
+      },
+      {
+        purchaseNo: 'PUR-02',
+        memberId: 'member-1',
+        maxCreatedAt: new Date('2024-01-14T10:00:00.000Z'),
+        maxDate: new Date('2024-01-14T00:00:00.000Z'),
+        sumTotalAmount: 200,
+      },
+    ]);
+
+    expect(unique).toHaveLength(2);
+    expect(unique.map((group) => group.purchaseNo)).toEqual(['PUR-01', 'PUR-02']);
+    expect(unique[0].memberId).toBe('member-1');
   });
 
   it('uses a 90-day default date range when params are missing', () => {

@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { countTransactionGroupsCached } from '@/lib/purchases/transactionCountCache';
 import {
   buildTransactionPrismaWhere,
+  dedupeGroupsByPurchaseNo,
   fetchPaginatedTransactionGroups,
   parseTransactionDateRange,
   purchaseTransactionInclude,
@@ -48,11 +49,12 @@ export async function GET(request: NextRequest) {
 
     const prismaWhere = buildTransactionPrismaWhere(filters);
 
-    const [total, paginatedGroups] = await Promise.all([
+    const [total, fetchedGroups] = await Promise.all([
       countTransactionGroupsCached(filters),
       fetchPaginatedTransactionGroups(filters, page, limit),
     ]);
 
+    const paginatedGroups = dedupeGroupsByPurchaseNo(fetchedGroups);
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     if (paginatedGroups.length === 0) {

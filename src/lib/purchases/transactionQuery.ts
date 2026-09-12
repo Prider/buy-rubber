@@ -181,7 +181,7 @@ export async function countTransactionGroups(filters: TransactionQueryFilters): 
         SELECT 1
         FROM "Purchase"
         ${whereSql}
-        GROUP BY "purchaseNo", "memberId"
+        GROUP BY "purchaseNo"
       ) AS grouped
     `,
   );
@@ -210,13 +210,13 @@ export async function fetchPaginatedTransactionGroups(
     Prisma.sql`
       SELECT
         "purchaseNo" AS "purchaseNo",
-        "memberId" AS "memberId",
+        MAX("memberId") AS "memberId",
         MAX("createdAt") AS "maxCreatedAt",
         MAX("date") AS "maxDate",
         SUM("totalAmount") AS "sumTotalAmount"
       FROM "Purchase"
       ${whereSql}
-      GROUP BY "purchaseNo", "memberId"
+      GROUP BY "purchaseNo"
       ORDER BY MAX("createdAt") DESC, MAX("date") DESC, "purchaseNo" DESC
       LIMIT ${limit}
       OFFSET ${skip}
@@ -224,6 +224,21 @@ export async function fetchPaginatedTransactionGroups(
   );
 
   return rows.map(mapGroupRow);
+}
+
+export function dedupeGroupsByPurchaseNo(
+  groups: TransactionGroupSummary[],
+): TransactionGroupSummary[] {
+  const seen = new Set<string>();
+  const unique: TransactionGroupSummary[] = [];
+
+  for (const group of groups) {
+    if (seen.has(group.purchaseNo)) continue;
+    seen.add(group.purchaseNo);
+    unique.push(group);
+  }
+
+  return unique;
 }
 
 export const purchaseTransactionInclude = {

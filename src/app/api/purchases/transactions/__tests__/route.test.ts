@@ -282,6 +282,40 @@ describe('GET /api/purchases/transactions', () => {
       expect(data.transactions[0].totalAmount).toBe(14250); // 4750 + 9500
     });
 
+    it('returns one row when the same purchaseNo is grouped under different members', async () => {
+      mockGroupedTransactions([
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-1',
+          _max: {
+            createdAt: new Date('2024-01-15T11:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: { totalAmount: 4750 },
+        },
+        {
+          purchaseNo: 'PUR-202401-0001',
+          memberId: 'member-2',
+          _max: {
+            createdAt: new Date('2024-01-15T10:00:00'),
+            date: new Date('2024-01-15'),
+          },
+          _sum: { totalAmount: 4750 },
+        },
+      ]);
+
+      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
+      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.transactions).toHaveLength(1);
+      expect(data.transactions[0].purchaseNo).toBe('PUR-202401-0001');
+    });
+
     it('should subtract service fees from totalAmount', async () => {
       mockGroupedTransactions([
         {

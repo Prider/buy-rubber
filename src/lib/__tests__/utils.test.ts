@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatNumber, formatDate, calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit } from '../utils'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import { formatCurrency, formatNumber, formatDate, calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, generateDocumentNumber } from '../utils'
 
 describe('Utils', () => {
   describe('formatCurrency', () => {
@@ -174,6 +174,41 @@ describe('Utils', () => {
 
       expect(ownerAmount).toBeCloseTo(333.3)
       expect(tapperAmount).toBeCloseTo(666.7)
+    })
+  })
+
+  describe('generateDocumentNumber', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('does not reuse a number after 16.7 minutes in the same month', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-09-12T12:00:00.000Z'))
+      const first = generateDocumentNumber('PUR', new Date())
+
+      vi.setSystemTime(new Date('2026-09-12T12:16:40.000Z')) // +1_000_000 ms
+      const second = generateDocumentNumber('PUR', new Date())
+
+      expect(second).not.toBe(first)
+    })
+
+    it('keeps numbers unique when generated in the same millisecond', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-09-12T12:00:00.000Z'))
+
+      const first = generateDocumentNumber('PUR', new Date())
+      const second = generateDocumentNumber('PUR', new Date())
+
+      expect(second).not.toBe(first)
+    })
+
+    it('uses prefix and year-month from the given date', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-09-12T12:00:00.000Z'))
+      const number = generateDocumentNumber('PUR', new Date('2026-09-01'))
+
+      expect(number.startsWith('PUR-202609-')).toBe(true)
     })
   })
 })

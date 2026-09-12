@@ -91,14 +91,28 @@ export function calculateSplit(
   return { ownerAmount, tapperAmount };
 }
 
+// Same-millisecond calls (purchase + service fees, concurrent requests) must not
+// share a number. purchaseNo is not unique at row level (batch line items share it),
+// so collisions between *different* transactions used to duplicate list rows.
+let lastDocumentTimestamp = 0;
+let sameTickSeq = 0;
+
 // สร้างเลขที่เอกสารอัตโนมัติ
 export function generateDocumentNumber(prefix: string, date: Date): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  // Use last 6 digits of unix-ms timestamp — monotonically increasing within a process,
-  // ~1M unique values vs the previous 10K random, and still collision-safe when callers
-  // wrap creation in a retry on Prisma P2002 (unique constraint violation).
-  const seq = (Date.now() % 1_000_000).toString().padStart(6, '0');
+  const timestamp = Date.now();
+
+  if (timestamp === lastDocumentTimestamp) {
+    sameTickSeq += 1;
+  } else {
+    lastDocumentTimestamp = timestamp;
+    sameTickSeq = 0;
+  }
+
+  // Full millisecond timestamp — the previous `% 1_000_000` wrapped every ~16.7
+  // minutes and reused PUR/SAL/SVC numbers within the same month.
+  const seq = `${timestamp}${sameTickSeq.toString().padStart(2, '0')}`;
   return `${prefix}-${year}${month}-${seq}`;
 }
 
