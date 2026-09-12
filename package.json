@@ -35,6 +35,7 @@
     "db:seed:companies:for:test": "tsx prisma/seedCompany.ts",
     "db:rebuild-stock": "node electron/rebuild-stock.js",
     "db:rebuild-gangs": "tsx prisma/rebuildStockGangs.ts",
+    "db:reset:first-day": "tsx prisma/resetFirstDay.ts",
     "db:backfill-sale-cogs": "tsx prisma/backfillSaleCogs.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
