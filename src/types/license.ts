@@ -77,10 +77,12 @@ export interface LicenseContextType {
   isLoading: boolean;
   /** True after a successful key entry until the user clicks through to login. */
   awaitingAcknowledgment: boolean;
+  licenseKey: string | null;
   expiresAt: Date | null;
   renewalDate: Date | null;
   message: string | null;
   activateLicense: (key: string) => Promise<{ success: boolean; message?: string }>;
+  updateLicense: (key: string) => Promise<{ success: boolean; message?: string }>;
   acknowledgeActivation: () => void;
   revalidateLicense: () => Promise<void>;
   clearLicense: () => void;

@@ -8,9 +8,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { AdminTabs, type AdminSettingsTab } from '@/components/admin/AdminTabs';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
+import { SoftwareLicensePanel } from '@/components/admin/SoftwareLicensePanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -40,14 +42,6 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
     category: 'ค่าเข้าแหล่ง',
     totalAmount: -150,
   },
-];
-
-type AdminSettingsTab = 'connection' | 'slip' | 'users';
-
-const ADMIN_TABS: { id: AdminSettingsTab; label: string }[] = [
-  { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
-  { id: 'users', label: 'ผู้ใช้งาน' },
-  { id: 'connection', label: 'การเชื่อมต่อ' },
 ];
 
 export default function AdminSettingsPage() {
@@ -211,38 +205,11 @@ export default function AdminSettingsPage() {
           {/* Header */}
           <AdminHeader 
             title="ตั้งค่าระบบ"
-            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ หรือผู้ใช้งาน"
+            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ ผู้ใช้งาน หรือใบอนุญาตซอฟต์แวร์"
           />
 
           <div className="w-full mx-auto">
-            <div
-              className="flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700"
-              role="tablist"
-              aria-label="หมวดการตั้งค่า"
-            >
-              {ADMIN_TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    id={`admin-tab-${tab.id}`}
-                    aria-selected={isActive}
-                    aria-controls={`admin-tabpanel-${tab.id}`}
-                    tabIndex={isActive ? 0 : -1}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors duration-200 ${
-                      isActive
-                        ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+            <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
             <div className="mt-6">
 
@@ -279,6 +246,8 @@ export default function AdminSettingsPage() {
                   </ProtectedRoute>
                 </div>
               )}
+              {activeTab === 'license' && <SoftwareLicensePanel />}
+
               {activeTab === 'connection' && (
                 <div
                   id="admin-tabpanel-connection"

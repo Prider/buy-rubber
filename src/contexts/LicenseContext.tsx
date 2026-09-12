@@ -51,6 +51,7 @@ function isConnectivityFailure(result: LicenseValidateResponse): boolean {
 
 export function LicenseProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<LicenseStatus>('unknown');
+  const [licenseKey, setLicenseKey] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [renewalDate, setRenewalDate] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -74,6 +75,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       });
 
       setStatus(nextStatus);
+      setLicenseKey(licenseKey);
       setExpiresAt(result.expiresAt);
       setRenewalDate(result.renewalDate ?? null);
       setMessage(result.message);
@@ -87,6 +89,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
 
     if (!stored.licenseKey && !licenseFile) {
       setStatus('missing');
+      setLicenseKey(null);
       setExpiresAt(null);
       setRenewalDate(null);
       setMessage(null);
@@ -180,9 +183,12 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
           // fall through
         }
         setStatus('missing');
+        setLicenseKey(null);
         setIsLoading(false);
         return;
       }
+
+      setLicenseKey(stored.licenseKey);
 
       // Optimistic UI while verifying
       if (stored.status === 'valid' && licenseFile) {
@@ -242,6 +248,36 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
     [applyResult]
   );
 
+  const updateLicense = useCallback(
+    async (key: string): Promise<{ success: boolean; message?: string }> => {
+      const nextKey = key.trim();
+      if (!nextKey) {
+        return { success: false, message: 'กรุณากรอก License Key' };
+      }
+
+      try {
+        const result = await callValidateApi({ licenseKey: nextKey });
+        if (!result.valid) {
+          return {
+            success: false,
+            message:
+              result.message ||
+              (result.expired
+                ? 'ใบอนุญาตหมดอายุ กรุณาติดต่อผู้ดูแลระบบ'
+                : 'ใบอนุญาตไม่ถูกต้อง'),
+          };
+        }
+
+        await applyResult(nextKey, result, result.licenseFile);
+        setAwaitingAcknowledgment(false);
+        return { success: true, message: result.message };
+      } catch {
+        return { success: false, message: 'ไม่สามารถตรวจสอบใบอนุญาตได้' };
+      }
+    },
+    [applyResult]
+  );
+
   const acknowledgeActivation = useCallback(() => {
     setAwaitingAcknowledgment(false);
   }, []);
@@ -249,6 +285,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
   const clearLicense = useCallback(() => {
     void clearLicenseStorage();
     setStatus('missing');
+    setLicenseKey(null);
     setExpiresAt(null);
     setRenewalDate(null);
     setMessage(null);
@@ -262,10 +299,12 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       isExpired: status === 'expired',
       isLoading,
       awaitingAcknowledgment,
+      licenseKey,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       renewalDate: renewalDate ? new Date(renewalDate) : null,
       message,
       activateLicense,
+      updateLicense,
       acknowledgeActivation,
       revalidateLicense,
       clearLicense,
@@ -274,10 +313,12 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       status,
       isLoading,
       awaitingAcknowledgment,
+      licenseKey,
       expiresAt,
       renewalDate,
       message,
       activateLicense,
+      updateLicense,
       acknowledgeActivation,
       revalidateLicense,
       clearLicense,
