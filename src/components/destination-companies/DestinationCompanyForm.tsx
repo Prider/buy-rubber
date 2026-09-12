@@ -100,20 +100,17 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
       typewriter={false}
       onClose={onCancel}
       footer={
-        <>
+        <div className="mr-8 flex items-center gap-3">
           <Button htmlType="button" onClick={onCancel} disabled={isLoading}>
             ยกเลิก
           </Button>
           <Button type="primary" htmlType="submit" form={FORM_ID} disabled={!canSubmit}>
             {isLoading ? 'กำลังบันทึก...' : editingCompany ? 'บันทึกการแก้ไข' : 'เพิ่มบริษัท'}
           </Button>
-        </>
+        </div>
       }
     >
       <div className="w-full text-base font-normal">
-        <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {editingCompany ? 'แก้ไขข้อมูลบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทางใหม่'}
-        </p>
         <form id={FORM_ID} onSubmit={handleSubmit} className="w-full space-y-5 px-2">
           {validationError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 whitespace-pre-line">

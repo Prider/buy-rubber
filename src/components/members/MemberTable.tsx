@@ -82,8 +82,9 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   onViewHistory,
   onViewServiceFees,
 }) => {
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
+  const canEdit = hasAnyRole(['admin', 'user']);
 
   // Memoize row class
   const rowClassName = useMemo(
@@ -177,7 +178,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
               <span>ค่าบริการ</span>
             </button>
           )}
-          {member.isActive && (
+          {member.isActive && canEdit && (
             <button
               onClick={handleEdit}
               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"

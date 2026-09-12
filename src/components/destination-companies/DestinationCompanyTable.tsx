@@ -74,8 +74,9 @@ const DestinationCompanyTableRow: React.FC<RowProps> = memo(({
   onDelete,
   onReactivate,
 }) => {
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
+  const canEdit = hasAnyRole(['admin', 'user']);
 
   const rowClassName = useMemo(
     () =>
@@ -120,7 +121,7 @@ const DestinationCompanyTableRow: React.FC<RowProps> = memo(({
       </td>
       <td>
         <div className="flex items-center space-x-3">
-          {company.isActive && (
+          {company.isActive && canEdit && (
             <button
               onClick={handleEdit}
               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"

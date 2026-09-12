@@ -725,24 +725,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Expense Image Section */}
-      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
-          ระบบการเงิน
-        </h2>
-        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-          <Image
-            src="/landing/expense.png"
-            alt="ระบบการเงิน"
-            width={1920}
-            height={1080}
-            className="object-contain w-full h-auto"
-            priority
-          />
-        </div>
-      </section> */}
-
-
       {/* Benefits Section */}
       <section id="benefits" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
