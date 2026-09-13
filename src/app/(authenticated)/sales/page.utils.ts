@@ -146,12 +146,12 @@ export function isSalesFormSubmitReady(formData: SaleFormData): boolean {
   return true;
 }
 
+/** Net sale amount: weight × price − expenses. May be negative when expenses exceed revenue. */
 export function computeTotalPreview(formData: SaleFormData): number {
   const w = parseRequiredNumber(formData.weight) ?? 0;
   const p = parseRequiredNumber(formData.pricePerUnit) ?? 0;
   const expenseCost = sumExpenses(formData.expenses);
-  const total = w * p - expenseCost;
-  return total > 0 ? total : 0;
+  return w * p - expenseCost;
 }
 
 /** Net profit/loss for one sale: totalAmount (already net of expenses) minus that sale's COGS.

@@ -144,6 +144,21 @@ describe('sales page.utils pagination', () => {
       expect(payload.expenses).toHaveLength(2);
       expect(payload.notes).toBe('a; b');
     });
+
+    it('keeps a negative total when price is 0 and expenses exist', () => {
+      const formData = {
+        date: '2026-07-20',
+        destinationCompanyId: 'dc-1',
+        companyName: 'บริษัท A',
+        productTypeId: 'pt-1',
+        weight: '100',
+        rubberPercent: '',
+        pricePerUnit: '0',
+        expenses: [{ id: '1', type: 'ค่าขนส่ง', amount: '500', note: '' }],
+        sellingType: 'จ่ายสด',
+      };
+      expect(computeTotalPreview(formData)).toBe(-500);
+    });
   });
 
   describe('computeSaleProfitLoss', () => {
@@ -197,6 +212,19 @@ describe('sales page.utils pagination', () => {
 
     it('returns null without avg cost for this sale', () => {
       expect(computeSaleProfitPreview(formBase, null)).toBeNull();
+    });
+
+    it('includes expenses in loss when price is 0', () => {
+      expect(
+        computeSaleProfitPreview(
+          {
+            ...formBase,
+            pricePerUnit: '0',
+            expenses: [{ id: '1', type: 'ค่าขนส่ง', amount: '500', note: '' }],
+          },
+          40,
+        ),
+      ).toBe(-4500); // 0 - 500 - (100 * 40)
     });
   });
 

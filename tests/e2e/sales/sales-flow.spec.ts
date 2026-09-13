@@ -26,8 +26,7 @@ function formatCurrency(amount: number): string {
 }
 
 function computeSaleTotal(weight: number, pricePerUnit: number, expenseCost = 0): number {
-  const total = weight * pricePerUnit - expenseCost
-  return total > 0 ? total : 0
+  return weight * pricePerUnit - expenseCost
 }
 
 test.describe.serial('Sales flow', () => {
