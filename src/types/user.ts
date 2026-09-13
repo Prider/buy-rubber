@@ -4,18 +4,12 @@ export type UserRole = 'root' | 'admin' | 'user' | 'viewer';
 /** Roles that can be assigned via the admin UI / API (root is seed-only). */
 export const ASSIGNABLE_ROLES: UserRole[] = ['viewer', 'user', 'admin'];
 
-export const ROOT_USERNAME = 'root';
-
 export function isAdminLike(role: string | undefined | null): boolean {
   return role === 'admin' || role === 'root';
 }
 
-/** System root account — cannot be created, deleted, demoted, or deactivated in-app. */
-export function isProtectedSystemUser(user: {
-  role?: string | null;
-  username?: string | null;
-}): boolean {
-  return user.role === 'root' || user.username === ROOT_USERNAME;
+export function isRootRole(role: string | undefined | null): boolean {
+  return role === 'root';
 }
 
 export interface User {

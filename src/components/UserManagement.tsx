@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, CreateUserRequest, UpdateUserRequest, isProtectedSystemUser } from '@/types/user';
+import { User, CreateUserRequest, UpdateUserRequest, isRootRole } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { logger } from '@/lib/logger';
@@ -197,7 +197,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
   };
 
   const startEdit = (user: Omit<User, 'password'>) => {
-    if (isProtectedSystemUser(user)) {
+    if (isRootRole(user.role)) {
       setError('ไม่สามารถแก้ไขบัญชี Root ได้');
       return;
     }

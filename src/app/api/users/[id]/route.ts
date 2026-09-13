@@ -89,7 +89,6 @@ export async function PUT(
       error instanceof Error &&
       (error.message === 'Cannot modify root user' ||
         error.message === 'Cannot assign root role' ||
-        error.message === 'Cannot use reserved username' ||
         error.message === 'Invalid role')
     ) {
       return NextResponse.json({

@@ -85,6 +85,30 @@ describe('userStore', () => {
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
+    it('should throw when creating a root user', async () => {
+      const userData: CreateUserRequest = {
+        username: 'root',
+        password: 'root123',
+        role: 'root',
+      };
+
+      await expect(userStore.createUser(userData)).rejects.toThrow(
+        'Cannot create root user'
+      );
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when role is invalid', async () => {
+      const userData = {
+        username: 'testuser',
+        password: 'password123',
+        role: 'superadmin',
+      } as unknown as CreateUserRequest;
+
+      await expect(userStore.createUser(userData)).rejects.toThrow('Invalid role');
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
     it('should hash password before storing', async () => {
       const userData: CreateUserRequest = {
         username: 'testuser',
@@ -362,6 +386,47 @@ describe('userStore', () => {
       expect(updateCall.data.password).toBeTruthy();
     });
 
+    it('should reject updating a root user', async () => {
+      const existingUser: User = {
+        id: 'root-1',
+        username: 'root',
+        password: 'old-hash',
+        role: 'root',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(existingUser as any);
+
+      await expect(
+        userStore.updateUser('root-1', {
+          username: 'superroot',
+          password: 'newrootpass',
+        })
+      ).rejects.toThrow('Cannot modify root user');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should reject assigning the root role', async () => {
+      const existingUser: User = {
+        id: 'user-1',
+        username: 'testuser',
+        password: 'hashed-password',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(existingUser as any);
+
+      await expect(
+        userStore.updateUser('user-1', { role: 'root' })
+      ).rejects.toThrow('Cannot assign root role');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it('should update isActive status', async () => {
       const existingUser: User = {
         id: 'user-1',
@@ -462,7 +527,7 @@ describe('userStore', () => {
       expect(result).toBeNull();
     });
 
-    it('should throw when deleting root user', async () => {
+    it('should throw when deleting a root user', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'root-1',
         username: 'root',
@@ -473,6 +538,7 @@ describe('userStore', () => {
       await expect(userStore.deleteUser('root-1')).rejects.toThrow(
         'Cannot delete root user'
       );
+      expect(prisma.user.delete).not.toHaveBeenCalled();
     });
   });
 

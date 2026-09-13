@@ -363,6 +363,36 @@ describe('POST /api/users', () => {
       });
     });
 
+    it('should return 403 when creating a user with root role', async () => {
+      const token = createAdminToken();
+      vi.mocked(userStore.createUser).mockRejectedValue(
+        new Error('Cannot create root user')
+      );
+
+      const request = new NextRequest('http://localhost:3000/api/users', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: 'root',
+          password: 'root123',
+          role: 'root',
+        }),
+      });
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.success).toBe(false);
+      expect(data.message).toBe('Cannot create root user');
+      expect(vi.mocked(userStore.createUser)).toHaveBeenCalledWith({
+        username: 'root',
+        password: 'root123',
+        role: 'root',
+      });
+    });
+
     it('should create a user with admin role', async () => {
       const token = createAdminToken();
       const adminUser = { ...mockUser, role: 'admin' as const };

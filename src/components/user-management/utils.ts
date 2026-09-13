@@ -1,5 +1,11 @@
 import { UserRole } from '@/types/user';
 
+export const ROLE_SELECT_OPTIONS: { value: UserRole; label: string }[] = [
+  { value: 'viewer', label: 'ผู้ชม (อ่านอย่างเดียว)' },
+  { value: 'user', label: 'ผู้ใช้งาน (แก้ไขได้)' },
+  { value: 'admin', label: 'ผู้ดูแล (สิทธิ์เต็ม)' },
+];
+
 export const getRoleBadgeColor = (role: UserRole) => {
   if (role === 'root') {
     return 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200';

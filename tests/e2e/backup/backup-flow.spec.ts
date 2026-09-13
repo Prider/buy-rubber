@@ -96,6 +96,7 @@ test.describe.serial('Backup flow', () => {
 
     await gotoBackupPage(electronPage)
     await expect(electronPage.getByRole('button', { name: 'สำรองข้อมูลตอนนี้' })).toBeVisible()
+    await expect(electronPage.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' })).toHaveCount(0)
     await electronPage.close()
 
     await ensureViewerUser(page.request)
@@ -310,5 +311,25 @@ test.describe.serial('Backup flow', () => {
     await deleteBackupViaApi(request, backup.id, adminToken)
     const idx = createdBackupIds.indexOf(backup.id)
     if (idx >= 0) createdBackupIds.splice(idx, 1)
+  })
+
+  test('REQ-BKP-09: reset to initial data is root-only and requires confirmation', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    await installElectronMock(page)
+    await loginAs(page, 'root', 'root123')
+    await gotoBackupPage(page)
+
+    await page.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' }).click()
+    const dialog = page.getByRole('alertdialog')
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText('ยืนยันการรีเซ็ตข้อมูล')).toBeVisible()
+    await dialog.getByRole('button', { name: 'ยกเลิก' }).click()
+    await expect(dialog).not.toBeVisible()
+
+    await page.close()
+    await context.close()
   })
 })

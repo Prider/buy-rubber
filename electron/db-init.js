@@ -100,6 +100,50 @@ function findBundledDatabasePath() {
   return null;
 }
 
+const INITIAL_DATA_FILE_NAMES = ['initial-data.db'];
+
+function findBundledInitialDataPath() {
+  const appPath = app.getAppPath();
+  const searchRoots = [
+    process.resourcesPath || appPath,
+    appPath,
+    path.join(appPath, '..'),
+    path.join(__dirname, '..'),
+  ];
+  for (const root of searchRoots) {
+    for (const fileName of INITIAL_DATA_FILE_NAMES) {
+      const candidate = path.join(root, 'prisma', 'backups', fileName);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
+function ensureInitialDataBackup(userDbDir) {
+  const backupDir = path.join(userDbDir, 'backups');
+  fs.mkdirSync(backupDir, { recursive: true });
+
+  const alreadyPresent = INITIAL_DATA_FILE_NAMES.some((fileName) =>
+    fs.existsSync(path.join(backupDir, fileName)),
+  );
+  if (alreadyPresent) {
+    debugLog('Initial data snapshot already present in user backups');
+    return;
+  }
+
+  const bundled = findBundledInitialDataPath();
+  if (!bundled) {
+    debugLog('No bundled initial-data snapshot found');
+    return;
+  }
+
+  const dest = path.join(backupDir, path.basename(bundled));
+  fs.copyFileSync(bundled, dest);
+  debugLog(`Copied initial data snapshot to: ${dest}`);
+}
+
 async function maybeRefreshFromBundle(userDbPath, dbUrl) {
   const bundledDbPath = findBundledDatabasePath();
   if (!bundledDbPath) {
@@ -277,6 +321,8 @@ function initializeDatabase() {
       } else {
         debugLog('Database directory already exists');
       }
+
+      ensureInitialDataBackup(userDbDir);
 
       // If database already exists, ensure schema is up to date
       // Add missing columns using Prisma's raw SQL (works in packaged apps)

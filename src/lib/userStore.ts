@@ -3,8 +3,7 @@ import {
   CreateUserRequest,
   UpdateUserRequest,
   ASSIGNABLE_ROLES,
-  ROOT_USERNAME,
-  isProtectedSystemUser,
+  isRootRole,
 } from '@/types/user';
 import { prisma } from '@/lib/prisma';
 
@@ -26,10 +25,7 @@ class UserStore {
   async createUser(userData: CreateUserRequest): Promise<User> {
     console.log('Creating user in Prisma:', userData.username);
 
-    if (
-      userData.role === 'root' ||
-      userData.username.toLowerCase() === ROOT_USERNAME
-    ) {
+    if (isRootRole(userData.role)) {
       throw new Error('Cannot create root user');
     }
 
@@ -105,17 +101,8 @@ class UserStore {
       return null;
     }
 
-    if (isProtectedSystemUser(existingUser)) {
-      // Root may only change their own password (via changePassword or password-only update).
-      const keys = Object.keys(updates).filter(
-        (k) => updates[k as keyof UpdateUserRequest] !== undefined
-      );
-      const onlyPassword =
-        keys.length === 1 && keys[0] === 'password' && !!updates.password;
-
-      if (!onlyPassword) {
-        throw new Error('Cannot modify root user');
-      }
+    if (isRootRole(existingUser.role)) {
+      throw new Error('Cannot modify root user');
     }
 
     if (updates.role === 'root') {
@@ -127,13 +114,6 @@ class UserStore {
       !ASSIGNABLE_ROLES.includes(updates.role)
     ) {
       throw new Error('Invalid role');
-    }
-
-    if (
-      updates.username &&
-      updates.username.toLowerCase() === ROOT_USERNAME
-    ) {
-      throw new Error('Cannot use reserved username');
     }
 
     // Check if username is being changed and already exists
@@ -193,7 +173,7 @@ class UserStore {
       return null;
     }
 
-    if (isProtectedSystemUser(existingUser)) {
+    if (isRootRole(existingUser.role)) {
       throw new Error('Cannot delete root user');
     }
 

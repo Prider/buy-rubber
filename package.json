@@ -135,6 +135,10 @@
         ]
       },
       {
+        "from": "prisma/backups/initial-data.db",
+        "to": "prisma/backups/initial-data.db"
+      },
+      {
         "from": "node_modules/.prisma",
         "to": "app/node_modules/.prisma",
         "filter": [

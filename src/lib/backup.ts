@@ -114,6 +114,177 @@ function getBackupDirectory(): string {
   return getBackupDir();
 }
 
+/** Keep the on-disk typo (`inital-data.db`) and accept the corrected name. */
+export const INITIAL_DATA_FILE_NAMES = ['inital-data.db', 'initial-data.db'] as const;
+
+function getElectronAppPath(): string | undefined {
+  try {
+    const electron = require('electron');
+    const app = electron?.app || electron?.remote?.app;
+    if (app?.getAppPath) {
+      return app.getAppPath();
+    }
+  } catch {
+    // Not in Electron context
+  }
+  return undefined;
+}
+
+export function collectInitialDataCandidatePaths(options: {
+  dbPath: string;
+  cwd: string;
+  resourcesPath?: string;
+  appPath?: string;
+}): string[] {
+  const dirs = [
+    path.join(path.dirname(options.dbPath), 'backups'),
+    path.join(options.cwd, 'prisma', 'backups'),
+  ];
+
+  if (options.resourcesPath) {
+    dirs.push(path.join(options.resourcesPath, 'prisma', 'backups'));
+    dirs.push(path.join(options.resourcesPath, 'app', 'prisma', 'backups'));
+  }
+
+  if (options.appPath) {
+    dirs.push(path.join(options.appPath, 'prisma', 'backups'));
+  }
+
+  const candidates: string[] = [];
+  for (const dir of dirs) {
+    for (const fileName of INITIAL_DATA_FILE_NAMES) {
+      candidates.push(path.join(dir, fileName));
+    }
+  }
+
+  return [...new Set(candidates)];
+}
+
+export function getInitialDataPath(): string | null {
+  const candidates = collectInitialDataCandidatePaths({
+    dbPath: getDatabasePath(),
+    cwd: process.cwd(),
+    resourcesPath: typeof process.resourcesPath === 'string' ? process.resourcesPath : undefined,
+    appPath: getElectronAppPath(),
+  });
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      logger.info('Found initial data snapshot', { path: candidate });
+      return candidate;
+    }
+  }
+
+  logger.warn('Initial data snapshot not found', { triedPaths: candidates });
+  return null;
+}
+
+async function restoreDatabaseFromFile(
+  sourcePath: string,
+  fileName: string,
+  extraLog: Record<string, unknown> = {},
+) {
+  const dbPath = getDatabasePath();
+
+  let backupExists = false;
+  let dbExists = false;
+  let backupSize = 0;
+  let dbSize = 0;
+
+  try {
+    await fsPromises.access(sourcePath);
+    backupExists = true;
+    backupSize = (await fsPromises.stat(sourcePath)).size;
+  } catch {
+    backupExists = false;
+  }
+
+  try {
+    await fsPromises.access(dbPath);
+    dbExists = true;
+    dbSize = (await fsPromises.stat(dbPath)).size;
+  } catch {
+    dbExists = false;
+  }
+
+  logger.info('Preparing to restore backup', {
+    backupFileName: fileName,
+    backupFilePath: sourcePath,
+    targetDbPath: dbPath,
+    backupExists,
+    dbExists,
+    backupSize,
+    dbSize,
+    ...extraLog,
+  });
+
+  console.log('========== RESTORE DEBUG ==========');
+  console.log('Backup file:', sourcePath);
+  console.log('Backup exists:', backupExists);
+  console.log('Target DB:', dbPath);
+  console.log('Target exists:', dbExists);
+  console.log('===================================');
+
+  try {
+    await prisma.$disconnect();
+    logger.info('Prisma disconnected successfully');
+  } catch (disconnectError) {
+    logger.warn('Error disconnecting Prisma (may not be connected)', disconnectError);
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  logger.info('Copying backup file to database location');
+  try {
+    let beforeSize = 0;
+    try {
+      beforeSize = (await fsPromises.stat(dbPath)).size;
+    } catch {
+      beforeSize = 0;
+    }
+
+    const escapedBackupPath = sourcePath.replace(/'/g, "''");
+    try {
+      await sqliteCommand(dbPath, `.restore '${escapedBackupPath}'`);
+    } catch (sqliteRestoreError) {
+      logger.warn('SQLite restore failed, falling back to copyFile', { error: sqliteRestoreError });
+      await fsPromises.copyFile(sourcePath, dbPath);
+    }
+
+    const afterSize = (await fsPromises.stat(dbPath)).size;
+
+    logger.info('Database file replaced successfully', {
+      beforeSize,
+      afterSize,
+      backupSize,
+      sizesMatch: afterSize === backupSize,
+    });
+
+    console.log(sourcePath, '========== COPY SUCCESS ==========', dbPath);
+    console.log('Before size:', beforeSize);
+    console.log('After size:', afterSize);
+    console.log('Backup size:', backupSize);
+    console.log('Sizes match:', afterSize === backupSize);
+    console.log('==================================');
+  } catch (copyError) {
+    logger.error('Failed to copy backup file', copyError);
+    console.error('========== COPY FAILED ==========');
+    console.error('Error:', copyError);
+    console.error('=================================');
+    throw new Error(`Failed to replace database file: ${copyError}`);
+  }
+
+  await resetPrismaConnection();
+  logger.info('Prisma reconnected after restore');
+
+  return {
+    success: true as const,
+    message: 'เรียกคืนข้อมูลสำเร็จ!\n\nกรุณาปิดแอปและเปิดใหม่เพื่อใช้ข้อมูลที่เรียกคืน',
+    requiresRestart: true as const,
+    fileName,
+  };
+}
+
 // สร้างโฟลเดอร์สำรองข้อมูล (ถ้ายังไม่มี)
 export async function ensureBackupDirectory() {
   const backupDir = getBackupDirectory();
@@ -248,116 +419,9 @@ export async function restoreBackup(backupId: string) {
     logger.info('Creating safety backup before restore');
     await createBackup('auto');
 
-    // Get database path dynamically
-    const dbPath = getDatabasePath();
-    
-    // Verify paths (async)
-    let backupExists = false;
-    let dbExists = false;
-    let backupSize = 0;
-    let dbSize = 0;
-    
-    try {
-      await fsPromises.access(backup.filePath);
-      backupExists = true;
-      const backupStats = await fsPromises.stat(backup.filePath);
-      backupSize = backupStats.size;
-    } catch {
-      backupExists = false;
-    }
-    
-    try {
-      await fsPromises.access(dbPath);
-      dbExists = true;
-      const dbStats = await fsPromises.stat(dbPath);
-      dbSize = dbStats.size;
-    } catch {
-      dbExists = false;
-    }
-    
-    logger.info('Preparing to restore backup', { 
-      backupId,
-      backupFileName: backup.fileName,
-      backupFilePath: backup.filePath,
-      targetDbPath: dbPath,
-      backupExists,
-      dbExists,
-      backupSize,
-      dbSize,
-    });
-    
-    console.log('========== RESTORE DEBUG ==========');
-    console.log('Backup file:', backup.filePath);
-    console.log('Backup exists:', backupExists);
-    console.log('Target DB:', dbPath);
-    console.log('Target exists:', dbExists);
-    console.log('===================================');
-    
-    // Close all database connections before replacing file
-    try {
-      await prisma.$disconnect();
-      logger.info('Prisma disconnected successfully');
-    } catch (disconnectError) {
-      logger.warn('Error disconnecting Prisma (may not be connected)', disconnectError);
-    }
-
-    // Small delay to ensure connections are closed
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // เรียกคืนข้อมูล - replace the database file (async)
-    logger.info('Copying backup file to database location');
-    try {
-      let beforeSize = 0;
-      try {
-        const beforeStats = await fsPromises.stat(dbPath);
-        beforeSize = beforeStats.size;
-      } catch {
-        beforeSize = 0;
-      }
-
-      const escapedBackupPath = backup.filePath.replace(/'/g, "''");
-      try {
-        await sqliteCommand(dbPath, `.restore '${escapedBackupPath}'`);
-      } catch (sqliteRestoreError) {
-        logger.warn('SQLite restore failed, falling back to copyFile', { error: sqliteRestoreError });
-        await fsPromises.copyFile(backup.filePath, dbPath);
-      }
-
-      const afterStats = await fsPromises.stat(dbPath);
-      const afterSize = afterStats.size;
-      const finalBackupSize = backupSize;
-
-      logger.info('Database file replaced successfully', {
-        beforeSize,
-        afterSize,
-        backupSize: finalBackupSize,
-        sizesMatch: afterSize === finalBackupSize
-      });
-
-      console.log(backup.filePath,'========== COPY SUCCESS ==========', dbPath);
-      console.log('Before size:', beforeSize);
-      console.log('After size:', afterSize);
-      console.log('Backup size:', finalBackupSize);
-      console.log('Sizes match:', afterSize === finalBackupSize);
-      console.log('==================================');
-    } catch (copyError) {
-      logger.error('Failed to copy backup file', copyError);
-      console.error('========== COPY FAILED ==========');
-      console.error('Error:', copyError);
-      console.error('=================================');
-      throw new Error(`Failed to replace database file: ${copyError}`);
-    }
-
-    await resetPrismaConnection();
-    logger.info('Prisma reconnected after restore');
-
+    const result = await restoreDatabaseFromFile(backup.filePath, backup.fileName, { backupId });
     logger.info('Backup restored successfully', { fileName: backup.fileName });
-    return {
-      success: true,
-      message: 'เรียกคืนข้อมูลสำเร็จ!\n\nกรุณาปิดแอปและเปิดใหม่เพื่อใช้ข้อมูลที่เรียกคืน',
-      requiresRestart: true,
-      fileName: backup.fileName,
-    };
+    return result;
   } catch (error: any) {
     logger.error('Backup restore failed', error);
 
@@ -370,6 +434,71 @@ export async function restoreBackup(backupId: string) {
     return {
       success: false,
       error: error.message || 'เกิดข้อผิดพลาดในการเรียกคืนข้อมูล',
+    };
+  }
+}
+
+// รีเซ็ตฐานข้อมูลกลับสู่ไฟล์ข้อมูลเริ่มต้น
+export async function resetToInitialData() {
+  try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (!dbUrl.startsWith('file:')) {
+      return {
+        success: false,
+        error: 'การรีเซ็ตข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+      };
+    }
+
+    const initialPath = getInitialDataPath();
+    if (!initialPath) {
+      return {
+        success: false,
+        error: 'ไม่พบไฟล์ข้อมูลเริ่มต้น (inital-data.db)',
+      };
+    }
+
+    logger.info('Starting reset to initial data', { initialPath });
+    logger.info('Creating safety backup before reset');
+    const safetyResult = await createBackup('auto');
+    const safetyBackup = safetyResult.success ? safetyResult.backup : undefined;
+
+    const result = await restoreDatabaseFromFile(initialPath, path.basename(initialPath), {
+      resetToInitial: true,
+    });
+
+    if (safetyBackup) {
+      try {
+        await prisma.backup.create({
+          data: {
+            fileName: safetyBackup.fileName,
+            filePath: safetyBackup.filePath,
+            fileSize: safetyBackup.fileSize,
+            backupType: safetyBackup.backupType,
+          },
+        });
+        logger.info('Recorded safety backup after reset', { fileName: safetyBackup.fileName });
+      } catch (recordError) {
+        logger.warn('Could not record safety backup after reset', recordError);
+      }
+    }
+
+    logger.info('Reset to initial data completed', { fileName: result.fileName });
+    return {
+      ...result,
+      message: 'รีเซ็ตข้อมูลเริ่มต้นสำเร็จ!\n\nกรุณาปิดแอปและเปิดใหม่เพื่อใช้ข้อมูลเริ่มต้น',
+    };
+  } catch (error: any) {
+    logger.error('Reset to initial data failed', error);
+
+    try {
+      await resetPrismaConnection();
+    } catch (reconnectError) {
+      logger.error('Failed to reconnect after reset error', reconnectError);
+    }
+
+    return {
+      success: false,
+      error: error.message || 'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูลเริ่มต้น',
     };
   }
 }

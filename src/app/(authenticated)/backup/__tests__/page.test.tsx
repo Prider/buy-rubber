@@ -27,6 +27,7 @@ describe.skip('BackupPage - handleRestore Function', () => {
   const mockRestoreBackup = vi.fn();
   const mockLoadBackups = vi.fn();
   const mockCreateBackup = vi.fn();
+  const mockResetToInitialData = vi.fn();
   const mockDeleteBackup = vi.fn();
   const mockDownloadBackup = vi.fn();
 
@@ -70,6 +71,7 @@ describe.skip('BackupPage - handleRestore Function', () => {
       error: null,
       loadBackups: mockLoadBackups,
       restoreBackup: mockRestoreBackup,
+      resetToInitialData: mockResetToInitialData,
       createBackup: mockCreateBackup,
       deleteBackup: mockDeleteBackup,
       downloadBackup: mockDownloadBackup,

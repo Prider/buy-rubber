@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button, Modal } from 'animal-island-ui';
 import { CreateUserRequest, UserRole } from '@/types/user';
+import { ROLE_SELECT_OPTIONS } from './utils';
 
 interface CreateUserModalProps {
   visible: boolean;
@@ -156,9 +157,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               }}
               className={fieldClassName}
             >
-              <option value="viewer">ผู้ชม (อ่านอย่างเดียว)</option>
-              <option value="user">ผู้ใช้งาน (แก้ไขได้)</option>
-              <option value="admin">ผู้ดูแล (สิทธิ์เต็ม)</option>
+              {ROLE_SELECT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </form>

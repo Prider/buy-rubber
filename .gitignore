@@ -45,7 +45,8 @@ next-env.d.ts
 # prisma
 /prisma/dev.db
 /prisma/dev.db-journal
-/prisma/backups/
+/prisma/backups/*
+!/prisma/backups/initial-data.db
 prisma/prisma/dev.db
 
 # Playwright

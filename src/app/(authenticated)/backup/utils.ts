@@ -63,3 +63,22 @@ export function showRestoreSuccessMessage(showSuccess: (title: string, message: 
   }
 }
 
+export function showResetSuccessMessage(showSuccess: (title: string, message: string, options?: { autoClose?: boolean; autoCloseDelay?: number }) => void): void {
+  if (isElectronEnvironment()) {
+    showSuccess(
+      '✅ รีเซ็ตข้อมูลเริ่มต้นสำเร็จ',
+      'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\nเพื่อให้ข้อมูลเริ่มต้นแสดงผลอย่างถูกต้อง\n\n(กด Cmd+Q หรือปิดหน้าต่างแอป)',
+      { autoClose: false }
+    );
+  } else {
+    showSuccess(
+      '✅ รีเซ็ตข้อมูลเริ่มต้นเรียบร้อย',
+      'หน้าเว็บจะรีโหลดอัตโนมัติ...',
+      { autoClose: false }
+    );
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  }
+}
+

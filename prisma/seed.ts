@@ -60,7 +60,7 @@ async function main() {
   console.log('');
 
   // สร้างผู้ใช้งาน
-  const rootPassword = process.env.ROOT_PASSWORD || 'root123';
+  const rootPassword = process.env.ROOT_PASSWORD || 'root4144128';
   const root = await prisma.user.create({
     data: {
       username: 'root',
@@ -108,7 +108,7 @@ async function main() {
   });
   
   console.log('✅ สร้างผู้ใช้งาน:');
-  console.log('   - Root:', root.username, '(System — cannot be removed)');
+  console.log('   - Root:', root.username, '(Full system System — cannot be removed or edited)');
   console.log('   - Admin:', admin.username, '(Full access)');
   console.log('   - Admin Two:', adminTwo.username, '(Full access)');
   console.log('   - User:', user.username, '(Edit access)');
@@ -509,7 +509,7 @@ async function main() {
   console.log('');
   console.log('ข้อมูลการเข้าสู่ระบบ:');
   console.log('');
-  console.log('  👤 Root Account (System — cannot be removed):');
+  console.log('  👤 Root Account (Full system access):');
   console.log('     Username: root');
   console.log(`     Password: ${rootPassword}`);
   console.log('');

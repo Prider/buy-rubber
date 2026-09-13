@@ -62,6 +62,22 @@ export const useBackup = () => {
     }
   }, []);
 
+  const resetToInitialData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.post('/api/backup/reset');
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูลเริ่มต้น';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const deleteBackup = useCallback(async (id: string) => {
     try {
       setLoading(true);
@@ -103,6 +119,7 @@ export const useBackup = () => {
     loadBackups,
     createBackup,
     restoreBackup,
+    resetToInitialData,
     deleteBackup,
     downloadBackup,
   };

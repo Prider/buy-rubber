@@ -1,6 +1,6 @@
 'use client';
 
-import { User, isProtectedSystemUser } from '@/types/user';
+import { User, isRootRole } from '@/types/user';
 import { getRoleBadgeColor, getRoleLabel } from './utils';
 
 interface UsersTableProps {
@@ -34,16 +34,13 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, currentUserId, on
       </thead>
       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         {users.map((user) => {
-          const isProtected = isProtectedSystemUser(user);
+          const isRoot = isRootRole(user.role);
           return (
             <tr key={user.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                 {user.username}
                 {user.id === currentUserId && (
                   <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(บัญชีของคุณ)</span>
-                )}
-                {isProtected && (
-                  <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">(ระบบ)</span>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -66,7 +63,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, currentUserId, on
                 {new Date(user.createdAt).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                {isProtected ? (
+                {isRoot ? (
                   <span className="text-xs text-gray-400 dark:text-gray-500">ไม่สามารถแก้ไขได้</span>
                 ) : (
                   <>

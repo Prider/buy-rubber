@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup, Backup } from '@/hooks/useBackup';
 import { useAlert } from '@/hooks/useAlert';
-import { showRestoreSuccessMessage } from './utils';
+import { showRestoreSuccessMessage, showResetSuccessMessage } from './utils';
 import { BACKUP_PAGE_SIZE } from './constants';
 import { BackupHeader } from './components/BackupHeader';
 import { BackupList } from './components/BackupList';
@@ -22,6 +22,7 @@ export default function BackupPage() {
     loadBackups,
     createBackup,
     restoreBackup,
+    resetToInitialData,
     deleteBackup,
     downloadBackup,
   } = useBackup();
@@ -134,6 +135,43 @@ export default function BackupPage() {
     }
   };
 
+  // Handle reset to bundled initial data
+  const handleResetToInitial = async () => {
+    if (user?.role !== 'root') {
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      'ยืนยันการรีเซ็ตข้อมูล',
+      'คุณต้องการคืนข้อมูลกลับสู่สถานะเริ่มต้นหรือไม่?\n\nการกระทำนี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด ระบบจะสำรองข้อมูลปัจจุบันไว้ก่อน',
+      {
+        confirmText: 'รีเซ็ตข้อมูล',
+        cancelText: 'ยกเลิก',
+        variant: 'danger',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const result = await resetToInitialData();
+      if (result) {
+        setActionLoading(false);
+        showResetSuccessMessage(showSuccess);
+      } else {
+        setActionLoading(false);
+      }
+    } catch (err: unknown) {
+      console.error('Failed to reset to initial data:', err);
+      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถรีเซ็ตข้อมูลเริ่มต้นได้';
+      showError('เกิดข้อผิดพลาด', errorMessage);
+      setActionLoading(false);
+    }
+  };
+
   // Handle download backup
   const handleDownload = (backup: Backup) => {
     downloadBackup(backup.id);
@@ -191,7 +229,12 @@ export default function BackupPage() {
   return (
     <div className="space-y-8 pb-8">
       {/* Header */}
-      <BackupHeader onCreateBackup={handleCreateBackup} loading={actionLoading} />
+      <BackupHeader
+        onCreateBackup={handleCreateBackup}
+        onResetToInitial={handleResetToInitial}
+        canResetToInitial={user?.role === 'root'}
+        loading={actionLoading}
+      />
 
       {/* Backups List */}
       <BackupList

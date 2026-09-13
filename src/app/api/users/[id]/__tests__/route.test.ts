@@ -217,6 +217,30 @@ describe('PUT /api/users/[id]', () => {
       });
     });
 
+    it('should return 403 when updating a root user', async () => {
+      const token = createAdminToken();
+      vi.mocked(userStore.updateUser).mockRejectedValue(
+        new Error('Cannot modify root user')
+      );
+
+      const request = new NextRequest('http://localhost:3000/api/users/root-1', {
+        method: 'PUT',
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: 'superroot',
+          password: 'newrootpass',
+        }),
+      });
+      const response = await PUT(request, { params: { id: 'root-1' } });
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.success).toBe(false);
+      expect(data.message).toBe('Cannot modify root user');
+    });
+
     it('should update user role', async () => {
       const token = createAdminToken();
       const updatedUser = { ...mockUser, role: 'admin' as const };
@@ -434,6 +458,26 @@ describe('DELETE /api/users/[id]', () => {
   });
 
   describe('Error handling', () => {
+    it('should return 403 when deleting a root user', async () => {
+      const token = createAdminToken();
+      vi.mocked(userStore.deleteUser).mockRejectedValue(
+        new Error('Cannot delete root user')
+      );
+
+      const request = new NextRequest('http://localhost:3000/api/users/root-1', {
+        method: 'DELETE',
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+      const response = await DELETE(request, { params: { id: 'root-1' } });
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.success).toBe(false);
+      expect(data.message).toBe('Cannot delete root user');
+    });
+
     it('should return 404 when user does not exist', async () => {
       const token = createAdminToken();
       vi.mocked(userStore.deleteUser).mockResolvedValue(null);
