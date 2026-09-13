@@ -86,7 +86,13 @@ function SellSummaryTableComponent({ data, offset = 0 }: SellSummaryTableProps) 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-600 dark:text-blue-300">
                   {formatNumber(unitPrice)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600 dark:text-green-400">
+                <td
+                  className={`px-6 py-4 whitespace-nowrap text-sm text-right font-bold ${
+                    item.totalAmount < 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-600 dark:text-green-400'
+                  }`}
+                >
                   {formatCurrency(item.totalAmount)}
                 </td>
               </tr>
