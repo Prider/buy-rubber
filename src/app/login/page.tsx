@@ -19,15 +19,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isElectron, setIsElectron] = useState(false);
 
   useArrowFocusNavigation();
 
-  // Check if running in Electron
+  // Pre-fill demo credentials on web only
   useEffect(() => {
-    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
-    
-    // Pre-fill demo credentials on web only
     if (typeof window !== 'undefined' && !window.electron?.isElectron) {
       setUsername('demo');
       setPassword('demo@123');
