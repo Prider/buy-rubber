@@ -1,6 +1,6 @@
 /**
  * Initialize database on first run
- * Copies seeded database from app bundle to userData if it doesn't exist
+ * Copies factory snapshot (initial-data.db, else bundled prisma/dev.db) to userData
  */
 
 const fs = require('fs');
@@ -72,18 +72,6 @@ async function getMissingTables(prisma) {
   return REQUIRED_TABLES.filter((table) => !existing.has(table));
 }
 
-async function countPurchases(dbUrl) {
-  const { PrismaClient } = require('@prisma/client');
-  const prisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
-  try {
-    return await prisma.purchase.count();
-  } catch {
-    return 0;
-  } finally {
-    await prisma.$disconnect().catch(() => {});
-  }
-}
-
 function findBundledDatabasePath() {
   const appPath = app.getAppPath();
   const possibleDbPaths = [
@@ -100,7 +88,7 @@ function findBundledDatabasePath() {
   return null;
 }
 
-const INITIAL_DATA_FILE_NAMES = ['initial-data.db'];
+const INITIAL_DATA_FILE_NAMES = ['initial-data.db', 'inital-data.db'];
 
 function findBundledInitialDataPath() {
   const appPath = app.getAppPath();
@@ -119,6 +107,14 @@ function findBundledInitialDataPath() {
     }
   }
   return null;
+}
+
+function findBundledSourceDatabasePath() {
+  const initialPath = findBundledInitialDataPath();
+  if (initialPath) {
+    return initialPath;
+  }
+  return findBundledDatabasePath();
 }
 
 function ensureInitialDataBackup(userDbDir) {
@@ -142,40 +138,6 @@ function ensureInitialDataBackup(userDbDir) {
   const dest = path.join(backupDir, path.basename(bundled));
   fs.copyFileSync(bundled, dest);
   debugLog(`Copied initial data snapshot to: ${dest}`);
-}
-
-async function maybeRefreshFromBundle(userDbPath, dbUrl) {
-  const bundledDbPath = findBundledDatabasePath();
-  if (!bundledDbPath) {
-    debugLog('No bundled database found for refresh check');
-    return false;
-  }
-
-  const normalizedBundled = bundledDbPath.replace(/\\/g, '/');
-  const bundledUrl = `file:${normalizedBundled}`;
-  const [userPurchases, bundledPurchases] = await Promise.all([
-    countPurchases(dbUrl),
-    countPurchases(bundledUrl),
-  ]);
-
-  debugLog(
-    `Purchase count check: user=${userPurchases}, bundled=${bundledPurchases}`,
-  );
-
-  // Re-copy when user DB is stale (e.g. old install before seed data was bundled).
-  if (userPurchases > 0 || bundledPurchases === 0) {
-    return false;
-  }
-
-  const backupDir = path.join(path.dirname(userDbPath), 'backups');
-  fs.mkdirSync(backupDir, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupPath = path.join(backupDir, `dev.db.before-bundle-refresh.${stamp}`);
-  fs.copyFileSync(userDbPath, backupPath);
-  debugLog(`Backed up stale database to: ${backupPath}`);
-  fs.copyFileSync(bundledDbPath, userDbPath);
-  debugLog(`✅ Refreshed user database from bundle (${bundledPurchases} purchases)`);
-  return true;
 }
 
 async function ensureExpenseUserColumns(prisma) {
@@ -329,7 +291,6 @@ function initializeDatabase() {
       if (fs.existsSync(userDbPath)) {
         const stats = fs.statSync(userDbPath);
         debugLog(`Database already exists: ${(stats.size / 1024).toFixed(2)} KB`);
-        await maybeRefreshFromBundle(userDbPath, dbUrl);
         debugLog('Ensuring database schema is up to date...');
         await ensureSchemaUpToDate(dbUrl);
 
@@ -340,13 +301,13 @@ function initializeDatabase() {
         return;
       }
       
-      debugLog('No existing database found, searching for source...');
+      debugLog('No existing database found, searching for factory snapshot...');
 
-      const sourceDbPath = findBundledDatabasePath();
+      const sourceDbPath = findBundledSourceDatabasePath();
       if (sourceDbPath) {
-        debugLog('Found seeded database at: ' + sourceDbPath);
+        debugLog('Found factory database at: ' + sourceDbPath);
       } else {
-        debugLog('Searching for seeded database in bundled paths — none found');
+        debugLog('Searching for initial-data.db / prisma/dev.db in bundled paths — none found');
       }
 
       if (!sourceDbPath) {
@@ -397,8 +358,8 @@ function initializeDatabase() {
         return;
       }
 
-      // Copy the seeded database to userData
-      debugLog('Copying seeded database...');
+      // Copy the factory snapshot to userData
+      debugLog('Copying factory database...');
       debugLog('  From: ' + sourceDbPath);
       debugLog('  To: ' + userDbPath);
       fs.copyFileSync(sourceDbPath, userDbPath);
