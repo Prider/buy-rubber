@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { sqlNumericCodeSuffix } from '@/lib/dbProvider';
 
 // Force dynamic rendering - prevent caching in Vercel
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ export async function GET() {
         FROM "Member"
         WHERE code LIKE 'M%'
           AND LENGTH(code) >= 2
-          AND SUBSTR(code, 2) GLOB '[0-9]*'
+          AND ${sqlNumericCodeSuffix()}
       `;
 
       const maxNum = parseMaxNum(result[0]?.max_num);

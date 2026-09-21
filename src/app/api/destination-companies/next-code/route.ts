@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { sqlNumericCodeSuffix } from '@/lib/dbProvider';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -30,7 +31,7 @@ export async function GET() {
         FROM "DestinationCompany"
         WHERE code LIKE 'C%'
           AND LENGTH(code) >= 2
-          AND SUBSTR(code, 2) GLOB '[0-9]*'
+          AND ${sqlNumericCodeSuffix()}
       `;
 
       const maxNum = parseMaxNum(result[0]?.max_num);

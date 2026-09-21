@@ -18,10 +18,27 @@ const globalForPrisma = globalThis as typeof globalThis & {
 	prisma?: PrismaClient;
 };
 
+function resolveDatabaseUrl(): string | undefined {
+	const url = process.env.DATABASE_URL;
+	if (!url) return undefined;
+	if (!process.env.VERCEL) return url;
+	try {
+		const parsed = new URL(url);
+		if (!parsed.searchParams.has('connection_limit')) {
+			parsed.searchParams.set('connection_limit', '1');
+		}
+		return parsed.toString();
+	} catch {
+		return url;
+	}
+}
+
 function createPrismaClient(): PrismaClient {
 	logDatabaseUrl();
+	const databaseUrl = resolveDatabaseUrl();
 	const client = new PrismaClient({
 		log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+		...(databaseUrl ? { datasources: { db: { url: databaseUrl } } } : {}),
 	});
 	console.log('[Prisma] Client created successfully');
 	if (process.env.NODE_ENV !== 'production') {

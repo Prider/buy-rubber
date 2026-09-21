@@ -1,55 +1,48 @@
 #!/bin/bash
 
 # Vercel Build Script
-# This script ensures proper database setup during Vercel deployment
+# Generate Prisma for PostgreSQL, sync schema, then build Next.js.
 
 set -e
 
 echo "🔧 Starting Vercel build process..."
 
-# Use WASM SWC to avoid native binary download issues
 export NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1
 
-# Step 1: Generate Prisma Client
+# Vercel / web always uses PostgreSQL (Electron copies the SQLite schema separately).
+if [ -f prisma/schema.postgres.prisma ]; then
+    echo "🐘 Using PostgreSQL Prisma schema..."
+    cp prisma/schema.postgres.prisma prisma/schema.prisma
+else
+    echo "❌ prisma/schema.postgres.prisma not found"
+    exit 1
+fi
+
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
-# Step 2: Database setup (optional in CI/build environments)
 if [ -z "$DATABASE_URL" ]; then
     echo "⚠️  DATABASE_URL is not set - skipping schema push and seed."
-    echo "If your deployment requires DB migrations/seed at build time,"
-    echo "set DATABASE_URL in Vercel project environment variables."
+    echo "Set DATABASE_URL (pooled Neon URL) and DIRECT_URL (unpooled Neon URL) in Vercel env vars."
 else
     echo "✅ DATABASE_URL is set"
 
-    # Step 3: Push database schema (create/update tables)
     echo "📊 Pushing database schema..."
-    if npx prisma db push --skip-generate --accept-data-loss; then
+    if npx prisma db push --skip-generate; then
         echo "✅ Schema pushed successfully"
     else
         echo "⚠️  Warning: Schema push failed, but continuing build..."
     fi
 
-    # Step 4: Seed database (only if not already seeded)
-    echo "🌱 Checking if database needs seeding..."
-    if npx prisma db seed; then
-        echo "✅ Database seeded successfully"
+    echo "🌱 Seeding database if empty..."
+    if node scripts/seed-if-empty.js; then
+        echo "✅ Seed check complete"
     else
-        echo "⚠️  Database might already be seeded or seed failed, continuing build..."
-    fi
-
-    # Step 5: Rebuild stock ledger from purchases/sales
-    echo "📦 Rebuilding stock ledger..."
-    if npm run db:rebuild-stock; then
-        echo "✅ Stock ledger rebuilt successfully"
-    else
-        echo "⚠️  Stock rebuild failed, continuing build..."
+        echo "⚠️  Seed check failed, continuing build..."
     fi
 fi
 
-# Step 5: Build Next.js application
 echo "🏗️  Building Next.js application..."
 npm run web:build
 
 echo "✅ Vercel build completed successfully!"
-
