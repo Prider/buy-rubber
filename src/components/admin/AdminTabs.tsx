@@ -4,7 +4,6 @@ export const ADMIN_TABS = [
   { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
   { id: 'users', label: 'ผู้ใช้งาน' },
   { id: 'connection', label: 'การเชื่อมต่อ' },
-  { id: 'license', label: 'ใบอนุญาตซอฟต์แวร์' },
 ] as const;
 
 export type AdminSettingsTab = (typeof ADMIN_TABS)[number]['id'];

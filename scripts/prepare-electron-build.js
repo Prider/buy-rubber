@@ -9,7 +9,6 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { writePackagedLicenseEnv } = require('../electron/loadEnv');
 
 const projectRoot = path.join(__dirname, '..');
 const dbPath = path.join(projectRoot, 'prisma', 'dev.db');
@@ -33,13 +32,6 @@ function fail(message) {
 }
 
 console.log('📦 Preparing factory database for Electron packaging...');
-
-try {
-  const licenseEnvPath = writePackagedLicenseEnv(projectRoot);
-  console.log('✓ Packaged license env:', licenseEnvPath);
-} catch (error) {
-  fail(error.message);
-}
 
 if (!fs.existsSync(sqliteSchemaPath)) {
   fail('prisma/schema.sqlite.prisma not found');
