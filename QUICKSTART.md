@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-This is a Rubber Purchasing Management System (ระบบบริหารจัดการรับซื้อยาง) that can run as:
-- **Web Application** - Deployed on Vercel with Neon PostgreSQL
-- **Desktop Application** - Built with Electron using local SQLite database
+This is a Rubber Purchasing Management System (ระบบบริหารจัดการรับซื้อยาง) that runs as a **Web Application** — locally or deployed on Vercel with PostgreSQL.
 
 ## 🚀 Deployment Options
 
@@ -74,32 +72,14 @@ npm run dev
 
 ---
 
-### Option 3: Desktop Application (Electron)
-
-```bash
-# 1. Setup local SQLite database
-npm run setup:local
-
-# 2. Start Electron app
-npm run electron:dev
-
-# 3. Build for distribution
-npm run electron:build:mac    # For macOS
-npm run electron:build:win    # For Windows
-npm run electron:build:all    # For both
-```
-
----
-
 ## 📦 Scripts Reference
 
 ### Development
 - `npm run dev` - Start Next.js development server (with Prisma generation)
-- `npm run electron:dev` - Start Electron + Next.js development
 - `npm run web:dev` - Start web server on all network interfaces
 
 ### Database Setup
-- `npm run setup:local` - Setup SQLite for local development
+- `npm run setup:sqlite` - Setup SQLite for local development
 - `npm run setup:postgres` - Setup PostgreSQL (local or production)
 - `npm run db:push` - Push Prisma schema to database
 - `npm run db:seed` - Seed database with initial data
@@ -109,11 +89,6 @@ npm run electron:build:all    # For both
 - `npm run build` - Build for production (includes database setup)
 - `npm run start` - Start production server
 - `npm run vercel-build` - Vercel deployment build command
-
-### Electron
-- `npm run electron:build:mac` - Build macOS app
-- `npm run electron:build:win` - Build Windows app
-- `npm run electron:build:all` - Build for all platforms
 
 ---
 
@@ -183,7 +158,6 @@ NODE_ENV="development"
 - **Frontend**: Next.js 13, React 18, Tailwind CSS
 - **Database**: PostgreSQL (Neon) / SQLite
 - **ORM**: Prisma
-- **Desktop**: Electron
 - **Deployment**: Vercel
 - **Testing**: Vitest, Testing Library
 

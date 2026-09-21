@@ -9,7 +9,7 @@ function logDatabaseUrl(): void {
 	} else {
 		console.warn('[Prisma] ⚠️ DATABASE_URL not set! Using default from schema.prisma');
 		console.warn(
-			'[Prisma] This may cause issues in Electron builds. Ensure DATABASE_URL is set before Prisma client is initialized.',
+			'[Prisma] Ensure DATABASE_URL is set before Prisma client is initialized.',
 		);
 	}
 }

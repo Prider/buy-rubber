@@ -28,18 +28,13 @@ export { expect }
 async function waitForLoginPrefill(page: Page) {
   const usernameInput = page.getByPlaceholder('กรอกชื่อผู้ใช้')
   await usernameInput.waitFor({ state: 'visible' })
-  // Web login pre-fills demo credentials in useEffect; wait so fill() does not race it.
+  // Login pre-fills demo credentials in useEffect; wait so fill() does not race it.
   await page.waitForFunction(
     () => {
       const input = document.querySelector<HTMLInputElement>(
         'input[placeholder="กรอกชื่อผู้ใช้"]'
       )
-      if (!input) return false
-      const isElectron =
-        typeof window !== 'undefined' &&
-        (window as Window & { electron?: { isElectron?: boolean } }).electron?.isElectron ===
-          true
-      return isElectron || input.value.length > 0
+      return Boolean(input && input.value.length > 0)
     },
     { timeout: 5000 }
   )

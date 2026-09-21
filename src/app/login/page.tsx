@@ -22,12 +22,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   useArrowFocusNavigation();
 
-  // Pre-fill demo credentials on web only
+  // Pre-fill demo credentials
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.electron?.isElectron) {
-      setUsername('demo');
-      setPassword('demo@123');
-    }
+    setUsername('demo');
+    setPassword('demo@123');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

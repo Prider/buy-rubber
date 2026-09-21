@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// Use a dedicated port so e2e tests don't hit a stale app on :3000 (e.g. Electron).
+// Use a dedicated port so e2e tests don't hit a stale app on :3000.
 const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3099'
 const e2eBaseURL = `http://localhost:${e2ePort}`
 

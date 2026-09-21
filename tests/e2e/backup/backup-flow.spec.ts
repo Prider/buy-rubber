@@ -16,19 +16,11 @@ import {
   uniqueSuffix,
 } from '../fixtures/data.fixture'
 
-async function installElectronMock(page: Page) {
-  await page.addInitScript(() => {
-    window.electron = { isElectron: true }
-  })
-}
-
-async function newElectronAdminPage(browser: Browser): Promise<Page> {
+async function newAdminPage(browser: Browser): Promise<Page> {
   const context = await browser.newContext({
     storageState: 'playwright/.auth/admin.json',
   })
-  const page = await context.newPage()
-  await installElectronMock(page)
-  return page
+  return context.newPage()
 }
 
 async function gotoBackupPage(page: Page) {
@@ -83,26 +75,17 @@ test.describe.serial('Backup flow', () => {
     }
   })
 
-  test('REQ-BKP-01: backup page restricted to Electron admin', async ({ page, browser }) => {
+  test('REQ-BKP-01: backup page restricted to admin', async ({ page, browser }) => {
     await page.goto('/dashboard')
-    await expect(page.getByRole('link', { name: 'สำรองข้อมูล' })).not.toBeVisible()
+    await expect(page.getByRole('link', { name: 'สำรองข้อมูล' })).toBeVisible()
 
-    await page.goto('/backup')
-    await expect(page).toHaveURL('/dashboard')
-
-    const electronPage = await newElectronAdminPage(browser)
-    await electronPage.goto('/dashboard')
-    await expect(electronPage.getByRole('link', { name: 'สำรองข้อมูล' })).toBeVisible()
-
-    await gotoBackupPage(electronPage)
-    await expect(electronPage.getByRole('button', { name: 'สำรองข้อมูลตอนนี้' })).toBeVisible()
-    await expect(electronPage.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' })).toHaveCount(0)
-    await electronPage.close()
+    await gotoBackupPage(page)
+    await expect(page.getByRole('button', { name: 'สำรองข้อมูลตอนนี้' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' })).toHaveCount(0)
 
     await ensureViewerUser(page.request)
     const viewerContext = await browser.newContext()
     const viewerPage = await viewerContext.newPage()
-    await installElectronMock(viewerPage)
     await loginAs(viewerPage, 'demo', 'demo@123')
     await viewerPage.goto('/backup')
     await expect(viewerPage).toHaveURL('/dashboard')
@@ -110,7 +93,7 @@ test.describe.serial('Backup flow', () => {
   })
 
   test('REQ-BKP-02: create manual database backup', async ({ browser, request }) => {
-    const page = await newElectronAdminPage(browser)
+    const page = await newAdminPage(browser)
     await gotoBackupPage(page)
 
     const beforeCount = (await listBackups(request, adminToken)).length
@@ -155,7 +138,7 @@ test.describe.serial('Backup flow', () => {
     expect(download.contentLength).toBeGreaterThan(0)
     expect(download.body.length).toBe(backup.fileSize)
 
-    const page = await newElectronAdminPage(browser)
+    const page = await newAdminPage(browser)
     await gotoBackupPage(page)
 
     const downloadButton = backupRow(page, backup.fileName).getByTitle('ดาวน์โหลด')
@@ -187,7 +170,7 @@ test.describe.serial('Backup flow', () => {
 
     const filesBeforeRestore = new Set(listBackupFiles())
 
-    const page = await newElectronAdminPage(browser)
+    const page = await newAdminPage(browser)
     await gotoBackupPage(page)
 
     await new Promise((resolve) => setTimeout(resolve, 1100))
@@ -226,7 +209,7 @@ test.describe.serial('Backup flow', () => {
     await deleteMember(request, markerMember.id, adminToken)
     createdMemberIds.pop()
 
-    const page = await newElectronAdminPage(browser)
+    const page = await newAdminPage(browser)
     await gotoBackupPage(page)
 
     await new Promise((resolve) => setTimeout(resolve, 1100))
@@ -251,7 +234,7 @@ test.describe.serial('Backup flow', () => {
   test('REQ-BKP-06: delete backup file', async ({ browser, request }) => {
     const backup = await createBackupViaApi(request, adminToken, 'manual')
 
-    const page = await newElectronAdminPage(browser)
+    const page = await newAdminPage(browser)
     await gotoBackupPage(page)
     await expect(page.getByText(backup.fileName)).toBeVisible()
 
@@ -318,7 +301,6 @@ test.describe.serial('Backup flow', () => {
   }) => {
     const context = await browser.newContext()
     const page = await context.newPage()
-    await installElectronMock(page)
     await loginAs(page, 'root', 'root123')
     await gotoBackupPage(page)
 

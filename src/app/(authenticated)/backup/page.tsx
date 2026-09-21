@@ -15,7 +15,6 @@ export default function BackupPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { showSuccess, showError, showConfirm } = useAlert();
-  const [isElectron, setIsElectron] = useState(false);
   const {
     loading,
     // error,
@@ -30,41 +29,13 @@ export default function BackupPage() {
   const [backups, setBackups] = useState<Backup[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [electronCheckComplete, setElectronCheckComplete] = useState(false);
 
-  // Check if running in Electron
+  // Redirect if not admin
   useEffect(() => {
-    const checkElectron = () => {
-      const isElectronEnv = typeof window !== 'undefined' && window.electron?.isElectron === true;
-      setIsElectron(isElectronEnv);
-      setElectronCheckComplete(true);
-    };
-    
-    // Check immediately
-    checkElectron();
-    
-    // Also check after a short delay in case electron object loads asynchronously
-    const timeout = setTimeout(checkElectron, 100);
-    
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Redirect if not admin or not in Electron (wait for Electron check to complete)
-  useEffect(() => {
-    // Wait for Electron check to complete before redirecting
-    if (!electronCheckComplete) {
-      return;
-    }
-    
     if (user && user.role !== 'admin' && user.role !== 'root') {
       router.push('/dashboard');
-      return;
     }
-    if (!isElectron) {
-      router.push('/dashboard');
-      return;
-    }
-  }, [user, router, isElectron, electronCheckComplete]);
+  }, [user, router]);
 
   // Refresh backups list
   const refreshBackups = useCallback(async () => {
@@ -211,19 +182,13 @@ export default function BackupPage() {
     }
   };
 
-  // Don't render if Electron check not complete, not admin, or not in Electron
-  if (!electronCheckComplete) {
+  // Don't render if not admin
+  if (user && user.role !== 'admin' && user.role !== 'root') {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <GamerLoader className="py-12" message="กำลังโหลด..." />
+        <GamerLoader className="py-12" message="กำลังเปลี่ยนหน้า..." />
       </div>
     );
-  }
-  if (user && user.role !== 'admin' && user.role !== 'root') {
-    return null;
-  }
-  if (!isElectron) {
-    return null;
   }
 
   return (

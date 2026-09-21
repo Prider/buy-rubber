@@ -5,12 +5,9 @@ import { useRouter } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminTabs, type AdminSettingsTab } from '@/components/admin/AdminTabs';
-import { MessageDisplay } from '@/components/admin/MessageDisplay';
-import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
@@ -47,26 +44,6 @@ export default function AdminSettingsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { showSuccess, showError } = useAlert();
-  
-  // Admin settings hook
-  const {
-    serverUrl,
-    serverPort,
-    isConnecting,
-    connectionError,
-    successMessage,
-    copySuccess,
-    localIP,
-    ipLoading,
-    isServerMode,
-    isClientMode,
-    setServerUrl,
-    setServerPort,
-    handleServerMode,
-    handleClientMode,
-    handleQuickConnect,
-    copyToClipboard,
-  } = useAdminSettings();
 
   const slipDefaults = useMemo(() => {
     return {
@@ -204,7 +181,7 @@ export default function AdminSettingsPage() {
           {/* Header */}
           <AdminHeader 
             title="ตั้งค่าระบบ"
-            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ หรือผู้ใช้งาน"
+            subtitle="เลือกแท็บเพื่อจัดการใบรับซื้อ หรือผู้ใช้งาน"
           />
 
           <div className="w-full mx-auto">
@@ -243,36 +220,6 @@ export default function AdminSettingsPage() {
                   >
                     <UserManagement />
                   </ProtectedRoute>
-                </div>
-              )}
-
-              {activeTab === 'connection' && (
-                <div
-                  id="admin-tabpanel-connection"
-                  role="tabpanel"
-                  aria-labelledby="admin-tab-connection"
-                  className="space-y-6"
-                >
-                  <MessageDisplay
-                    connectionError={connectionError}
-                    successMessage={successMessage}
-                    copySuccess={copySuccess}
-                  />
-                  <ModeSelectionCards
-                    serverPort={serverPort}
-                    serverUrl={serverUrl}
-                    localIP={localIP}
-                    ipLoading={ipLoading}
-                    isConnecting={isConnecting}
-                    isServerMode={isServerMode}
-                    isClientMode={isClientMode}
-                    onServerPortChange={setServerPort}
-                    onServerUrlChange={setServerUrl}
-                    onServerMode={handleServerMode}
-                    onClientMode={() => handleClientMode()}
-                    onQuickConnect={handleQuickConnect}
-                    onCopyToClipboard={copyToClipboard}
-                  />
                 </div>
               )}
             </div>

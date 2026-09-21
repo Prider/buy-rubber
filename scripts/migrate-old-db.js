@@ -2,9 +2,9 @@
 
 /**
  * Migrate an old SQLite backup (dev.db) to the current schema, then optionally
- * install it into the Electron app's userData database.
+ * install it into prisma/dev.db for local web development.
  *
- * Works on Windows, macOS, and Linux. Close the Electron app before --install.
+ * Works on Windows, macOS, and Linux.
  *
  * Windows (PowerShell or cmd):
  *
@@ -26,7 +26,7 @@
  * Options:
  *   --source <path>   Required. Old prisma/dev.db (or backup file)
  *   --target <path>   Optional. Where to write the migrated DB
- *   --install         Install into default Electron userData path
+ *   --install         Install into prisma/dev.db in this project
  *   --dry-run         Inspect + migrate in temp only (do not write target)
  */
 
@@ -37,7 +37,6 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const projectRoot = path.join(__dirname, '..');
-const USER_DATA_DIR_NAME = 'pos.punsook.innotech';
 const isWindows = process.platform === 'win32';
 
 const REQUIRED_TABLES = [
@@ -138,30 +137,13 @@ Windows examples:
   npm run db:migrate:old -- --source "D:\\backups\\old-dev.db" --install
   npm run db:migrate:old -- --source "D:\\backups\\old-dev.db" --dry-run
 
-Default install path on Windows:
-  %APPDATA%\\${USER_DATA_DIR_NAME}\\prisma\\dev.db
-
-Close the Electron app before using --install.
+Default install path:
+  prisma/dev.db in this project
 `);
 }
 
-function defaultElectronDbPath() {
-  if (process.platform === 'darwin') {
-    return path.join(
-      os.homedir(),
-      'Library',
-      'Application Support',
-      USER_DATA_DIR_NAME,
-      'prisma',
-      'dev.db',
-    );
-  }
-  if (isWindows) {
-    const appData =
-      process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    return path.join(appData, USER_DATA_DIR_NAME, 'prisma', 'dev.db');
-  }
-  return path.join(os.homedir(), '.config', USER_DATA_DIR_NAME, 'prisma', 'dev.db');
+function defaultLocalDbPath() {
+  return path.join(projectRoot, 'prisma', 'dev.db');
 }
 
 function stamp() {
@@ -199,7 +181,7 @@ function copyFileSafe(src, dest) {
   } catch (e) {
     if (e && (e.code === 'EBUSY' || e.code === 'EPERM' || e.code === 'EACCES')) {
       fail(
-        `File is locked (common on Windows if the app is still open).\n  Close Electron / DB tools, then retry.\n  ${src}\n  ${e.message}`,
+        `File is locked (common on Windows if another process has the DB open).\n  Close DB tools, then retry.\n  ${src}\n  ${e.message}`,
       );
     }
     throw e;
@@ -543,7 +525,7 @@ async function main() {
 
   let targetPath = args.target ? path.resolve(args.target) : null;
   if (args.install) {
-    targetPath = defaultElectronDbPath();
+    targetPath = defaultLocalDbPath();
   }
   if (!targetPath) {
     targetPath = path.join(
@@ -558,12 +540,12 @@ async function main() {
   log('========================================');
   log(`Source:  ${sourcePath}`);
   log(`Target:  ${targetPath}`);
-  log(`Install: ${args.install ? 'yes (Electron userData)' : 'no'}`);
+  log(`Install: ${args.install ? 'yes (prisma/dev.db)' : 'no'}`);
   log(`Dry-run: ${args.dryRun ? 'yes' : 'no'}`);
   log('');
 
   if (args.install) {
-    log('[WARN] Close the Electron app before installing into userData.\n');
+    log('[WARN] This will overwrite prisma/dev.db in the project.\n');
   }
 
   ensureSqliteSchema();
@@ -636,7 +618,7 @@ async function main() {
   }
 
   log('\nStep 8: Rebuild stock ledger, positions, and gangs...');
-  const { rebuildStock } = require(path.join(projectRoot, 'electron', 'rebuild-stock.js'));
+  const { rebuildStock } = require(path.join(projectRoot, 'scripts', 'rebuild-stock.js'));
   const stockResult = await rebuildStock(dbUrl);
   log(
     `[OK] Stock rebuilt: positions=${stockResult.positions}, ledger=${stockResult.ledgerEntries}, gangs=${stockResult.gangs ?? 0}, purchases=${stockResult.purchases}, sales=${stockResult.sales}`,
@@ -701,10 +683,7 @@ async function main() {
   log(`Migrated DB: ${targetPath}`);
   log(`Source copy: ${sourceBackup}`);
   if (args.install) {
-    log('\nNext: open the Electron app — it will use this database.');
-    if (isWindows) {
-      log(`Path: %APPDATA%\\${USER_DATA_DIR_NAME}\\prisma\\dev.db`);
-    }
+    log('\nNext: run `npm run dev` — the app will use prisma/dev.db.');
   }
 }
 

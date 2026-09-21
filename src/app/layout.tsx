@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
-import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AlertProvider } from '@/contexts/AlertContext';
 
@@ -42,13 +41,11 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <AuthProvider>
-          <AppModeProvider>
-            <DarkModeProvider>
-              <AlertProvider>
-                {children}
-              </AlertProvider>
-            </DarkModeProvider>
-          </AppModeProvider>
+          <DarkModeProvider>
+            <AlertProvider>
+              {children}
+            </AlertProvider>
+          </DarkModeProvider>
         </AuthProvider>
       </body>
     </html>

@@ -1,4 +1,4 @@
-import { test, expect, type Browser, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { loginAs } from '../fixtures/auth.fixture'
 import {
   apiHeaders,
@@ -17,21 +17,6 @@ import {
   listBackups,
   uniqueSuffix,
 } from '../fixtures/data.fixture'
-
-async function installElectronMock(page: Page) {
-  await page.addInitScript(() => {
-    window.electron = { isElectron: true }
-  })
-}
-
-async function newElectronAdminPage(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({
-    storageState: 'playwright/.auth/admin.json',
-  })
-  const page = await context.newPage()
-  await installElectronMock(page)
-  return page
-}
 
 test.describe('Security requirements', () => {
   let adminToken: string
@@ -263,7 +248,8 @@ test.describe('Security requirements', () => {
     expect(leakedNames).not.toContain(safeName)
   })
 
-  test('REQ-SEC-06: backup access restricted to admin in Electron', async ({
+  test('REQ-SEC-06: backup access restricted to admin', async ({
+    page,
     browser,
     request,
   }) => {
@@ -277,21 +263,16 @@ test.describe('Security requirements', () => {
     const adminBackups = await listBackups(request, adminToken)
     expect(adminBackups.some((item) => item.id === backup.id)).toBe(true)
 
-    const electronPage = await newElectronAdminPage(browser)
-    const backupReq = electronPage.waitForResponse(
+    const backupReq = page.waitForResponse(
       (r) => r.url().includes('/api/backup') && r.ok()
     )
-    await electronPage.goto('/backup')
+    await page.goto('/backup')
     await backupReq
-    await expect(
-      electronPage.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })
-    ).toBeVisible()
-    await expect(electronPage.getByText(backup.fileName)).toBeVisible()
-    await electronPage.close()
+    await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
+    await expect(page.getByText(backup.fileName)).toBeVisible()
 
     const viewerContext = await browser.newContext()
     const viewerPage = await viewerContext.newPage()
-    await installElectronMock(viewerPage)
     await loginAs(viewerPage, 'demo', 'demo@123')
     await viewerPage.goto('/backup')
     await expect(viewerPage).toHaveURL('/dashboard')

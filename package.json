@@ -2,7 +2,6 @@
   "name": "punsook-innotech",
   "version": "2.0.0",
   "description": "ระบบบริหารจัดการรับซื้อยาง (Rubber Purchasing Management System)",
-  "main": "electron/main.js",
   "author": "pos.punsook.innotech",
   "scripts": {
     "dev": "prisma generate && next dev",
@@ -11,14 +10,9 @@
     "vercel-build": "bash scripts/vercel-build.sh",
     "switch:sqlite": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.sqlite.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → SQLite');\" && npx prisma generate",
     "switch:postgres": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → PostgreSQL');\" && npx prisma generate",
-    "electron:dev": "npm run switch:sqlite && concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder",
     "web:dev": "cross-env SKIP_ENV_VALIDATION=true next dev -H 0.0.0.0",
     "web:build": "cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build",
     "web:start": "next start -H 0.0.0.0 -p 3000",
-    "electron": "electron .",
-    "electron:build:win": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --win",
-    "electron:build:mac": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --mac",
     "setup:postgres": "bash scripts/setup-postgres-db.sh",
     "setup:sqlite": "node scripts/setup-sqlite-local.js",
     "push:github": "bash scripts/push-to-github.sh",
@@ -33,7 +27,7 @@
     "db:seed:gangs:for:test": "tsx prisma/seedGangs.ts",
     "perf:api": "tsx scripts/benchmark-api-performance.ts",
     "db:seed:companies:for:test": "tsx prisma/seedCompany.ts",
-    "db:rebuild-stock": "node electron/rebuild-stock.js",
+    "db:rebuild-stock": "node scripts/rebuild-stock.js",
     "db:rebuild-gangs": "tsx prisma/rebuildStockGangs.ts",
     "db:reset:first-day": "tsx prisma/resetFirstDay.ts",
     "db:backfill-sale-cogs": "tsx prisma/backfillSaleCogs.ts",
@@ -59,9 +53,7 @@
     "bcryptjs": "^2.4.3",
     "classnames": "^2.5.1",
     "clsx": "^2.0.0",
-    "cors": "^2.8.5",
     "date-fns": "^2.30.0",
-    "express": "^4.18.2",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.3",
@@ -84,8 +76,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.9.0",
     "@types/react": "^18.2.37",
@@ -94,10 +84,7 @@
     "@vitest/coverage-v8": "^4.0.13",
     "@vitest/ui": "^4.0.13",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "electron": "^27.0.0",
-    "electron-builder": "^24.6.4",
     "eslint": "^8.53.0",
     "eslint-config-next": "^14.0.0",
     "jsdom": "^23.0.0",
@@ -107,84 +94,6 @@
     "tsx": "^4.6.2",
     "typescript": "^5.2.2",
     "vite": "^5.4.0",
-    "vitest": "^4.0.13",
-    "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.punsook.innotech",
-    "productName": "pos.punsook.innotech",
-    "asar": false,
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "electron/**/*",
-      "electron.env",
-      ".next/**/*",
-      "prisma/**/*",
-      "node_modules/.prisma/**",
-      "node_modules/**/*",
-      "package.json",
-      "public/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "prisma/dev.db",
-        "to": "prisma/dev.db",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "prisma/backups/initial-data.db",
-        "to": "prisma/backups/initial-data.db"
-      },
-      {
-        "from": "node_modules/.prisma",
-        "to": "app/node_modules/.prisma",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "node_modules/@prisma/engines",
-        "to": "app/node_modules/@prisma/engines",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "win": {
-      "target": [
-        "nsis"
-      ],
-      "icon": "electron/icon.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "allowElevation": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "pos.punsook.innotech",
-      "runAfterFinish": false,
-      "include": "build/installer.nsh"
-    },
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "icon": "electron/icon.png",
-      "category": "public.app-category.business"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "icon": "electron/icon.png",
-      "category": "Office"
-    }
+    "vitest": "^4.0.13"
   }
 }

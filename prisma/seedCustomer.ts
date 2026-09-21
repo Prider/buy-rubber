@@ -14,7 +14,7 @@ function simpleHash(password: string): string {
 }
 
 /**
- * Minimal seed for customer Electron packages.
+ * Minimal seed for customer packages.
  * Includes login accounts and product types only — no purchases, sales, members, or expenses.
  */
 async function main() {

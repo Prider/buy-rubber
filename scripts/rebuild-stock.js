@@ -1,6 +1,6 @@
 /**
  * Rebuild stock positions and ledger from purchases/sales.
- * Plain JS so it runs in packaged Electron apps (no tsx required).
+ * Plain JS so it can run without tsx.
  */
 
 const { PrismaClient } = require('@prisma/client');

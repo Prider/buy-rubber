@@ -66,19 +66,6 @@ function getDatabasePathFromEnv(): string {
     }
   }
   
-  // Try Electron userData path
-  try {
-    const electron = require('electron');
-    const app = electron?.app || electron?.remote?.app;
-    if (app?.getPath) {
-      const userDataPath = app.getPath('userData');
-      const electronDbPath = path.join(userDataPath, 'prisma', 'dev.db');
-      possiblePaths.push(electronDbPath);
-    }
-  } catch {
-    // Not in Electron context
-  }
-  
   // Common fallback paths
   possiblePaths.push(
     path.join(process.cwd(), 'prisma', 'dev.db'),
@@ -117,19 +104,6 @@ function getBackupDirectory(): string {
 /** Keep the on-disk typo (`inital-data.db`) and accept the corrected name. */
 export const INITIAL_DATA_FILE_NAMES = ['inital-data.db', 'initial-data.db'] as const;
 
-function getElectronAppPath(): string | undefined {
-  try {
-    const electron = require('electron');
-    const app = electron?.app || electron?.remote?.app;
-    if (app?.getAppPath) {
-      return app.getAppPath();
-    }
-  } catch {
-    // Not in Electron context
-  }
-  return undefined;
-}
-
 export function collectInitialDataCandidatePaths(options: {
   dbPath: string;
   cwd: string;
@@ -164,8 +138,6 @@ export function getInitialDataPath(): string | null {
   const candidates = collectInitialDataCandidatePaths({
     dbPath: getDatabasePath(),
     cwd: process.cwd(),
-    resourcesPath: typeof process.resourcesPath === 'string' ? process.resourcesPath : undefined,
-    appPath: getElectronAppPath(),
   });
 
   for (const candidate of candidates) {
@@ -304,7 +276,7 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     if (!dbUrl.startsWith('file:')) {
       return {
         success: false,
-        error: 'การสำรองข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+        error: 'การสำรองข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
       };
     }
 
@@ -395,7 +367,7 @@ export async function restoreBackup(backupId: string) {
     if (!dbUrl.startsWith('file:')) {
       return {
         success: false,
-        error: 'การเรียกคืนข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+        error: 'การเรียกคืนข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
       };
     }
 
@@ -445,7 +417,7 @@ export async function resetToInitialData() {
     if (!dbUrl.startsWith('file:')) {
       return {
         success: false,
-        error: 'การรีเซ็ตข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite (โหมด Electron) เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
+        error: 'การรีเซ็ตข้อมูลแบบไฟล์รองรับเฉพาะฐานข้อมูล SQLite เท่านั้น ระบบกำลังใช้งาน PostgreSQL อยู่',
       };
     }
 

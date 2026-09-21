@@ -1,13 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { AppConfig } from '@/lib/config';
 import { isTokenExpired, redirectToLogin } from '@/lib/sessionToken';
 
 class ApiClient {
   private client: AxiosInstance;
-  private config: AppConfig;
 
-  constructor(config: AppConfig) {
-    this.config = config;
+  constructor() {
     this.client = this.createClient();
   }
 
@@ -55,23 +52,12 @@ class ApiClient {
   }
 
   private getBaseURL(): string {
-    // Client mode - connect to external server
-    if (this.config.mode === 'client' && this.config.serverUrl) {
-      return this.config.serverUrl;
-    }
-
     // In the browser, use same-origin relative URLs so any dev/e2e port works.
     if (typeof window !== 'undefined') {
       return '';
     }
 
-    // Server-side rendering - default to localhost
-    return `http://localhost:${this.config.clientPort || 3000}`;
-  }
-
-  public updateConfig(newConfig: AppConfig): void {
-    this.config = newConfig;
-    this.client = this.createClient();
+    return `http://localhost:${process.env.PORT || 3000}`;
   }
 
   // Generic API methods
@@ -157,38 +143,14 @@ class ApiClient {
       return false;
     }
   }
-
-  // Get server info
-  public async getServerInfo() {
-    return this.get('/api/server/info');
-  }
 }
 
 // Singleton instance
 let apiClientInstance: ApiClient | null = null;
 
-export function createApiClient(config: AppConfig): ApiClient {
-  apiClientInstance = new ApiClient(config);
-  return apiClientInstance;
-}
-
 export function getApiClient(): ApiClient {
   if (!apiClientInstance) {
-    // Try to create with default config if not initialized
-    const defaultConfig: AppConfig = {
-      mode: 'server',
-      serverPort: 3001,
-      clientPort: 3000,
-    };
-    apiClientInstance = new ApiClient(defaultConfig);
+    apiClientInstance = new ApiClient();
   }
   return apiClientInstance;
-}
-
-export function updateApiClient(config: AppConfig): void {
-  if (apiClientInstance) {
-    apiClientInstance.updateConfig(config);
-  } else {
-    createApiClient(config);
-  }
 }

@@ -32,53 +32,25 @@ export function getBackupTypeBadge(type: string): string {
     : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
 }
 
-/**
- * Check if running in Electron environment
- */
-export function isElectronEnvironment(): boolean {
-  return typeof window !== 'undefined' &&
-    window.navigator.userAgent.toLowerCase().includes('electron');
-}
-
-/**
- * Show success message based on environment
- * @param showSuccess - Function to show success alert (from useAlert hook)
- */
 export function showRestoreSuccessMessage(showSuccess: (title: string, message: string, options?: { autoClose?: boolean; autoCloseDelay?: number }) => void): void {
-  if (isElectronEnvironment()) {
-    showSuccess(
-      '✅ เรียกคืนข้อมูลสำเร็จ',
-      'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\nเพื่อให้ข้อมูลที่เรียกคืนมาแสดงผลอย่างถูกต้อง\n\n(กด Cmd+Q หรือปิดหน้าต่างแอป)',
-      { autoClose: false }
-    );
-  } else {
-    showSuccess(
-      '✅ เรียกคืนข้อมูลเรียบร้อย',
-      'หน้าเว็บจะรีโหลดอัตโนมัติ...',
-      { autoClose: false }
-    );
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  }
+  showSuccess(
+    '✅ เรียกคืนข้อมูลเรียบร้อย',
+    'หน้าเว็บจะรีโหลดอัตโนมัติ...',
+    { autoClose: false }
+  );
+  setTimeout(() => {
+    window.location.reload();
+  }, 2000);
 }
 
 export function showResetSuccessMessage(showSuccess: (title: string, message: string, options?: { autoClose?: boolean; autoCloseDelay?: number }) => void): void {
-  if (isElectronEnvironment()) {
-    showSuccess(
-      '✅ รีเซ็ตข้อมูลเริ่มต้นสำเร็จ',
-      'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\nเพื่อให้ข้อมูลเริ่มต้นแสดงผลอย่างถูกต้อง\n\n(กด Cmd+Q หรือปิดหน้าต่างแอป)',
-      { autoClose: false }
-    );
-  } else {
-    showSuccess(
-      '✅ รีเซ็ตข้อมูลเริ่มต้นเรียบร้อย',
-      'หน้าเว็บจะรีโหลดอัตโนมัติ...',
-      { autoClose: false }
-    );
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  }
+  showSuccess(
+    '✅ รีเซ็ตข้อมูลเริ่มต้นเรียบร้อย',
+    'หน้าเว็บจะรีโหลดอัตโนมัติ...',
+    { autoClose: false }
+  );
+  setTimeout(() => {
+    window.location.reload();
+  }, 2000);
 }
 

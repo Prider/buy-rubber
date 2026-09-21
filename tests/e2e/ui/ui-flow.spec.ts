@@ -1,4 +1,4 @@
-import { test, expect, type Browser, type Page } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /** Sidebar routes visible in web mode (admin session). */
 const WEB_NAV_ROUTES: Array<{
@@ -70,6 +70,13 @@ const WEB_NAV_ROUTES: Array<{
     },
   },
   {
+    name: 'สำรองข้อมูล',
+    href: '/backup',
+    verify: async (page) => {
+      await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
+    },
+  },
+  {
     name: 'ตั้งค่า',
     href: '/admin',
     verify: async (page) => {
@@ -77,31 +84,6 @@ const WEB_NAV_ROUTES: Array<{
     },
   },
 ]
-
-async function installElectronMock(page: Page) {
-  await page.addInitScript(() => {
-    window.electron = { isElectron: true }
-  })
-}
-
-async function newElectronAdminPage(
-  browser: Browser,
-  localStorageSeed?: Record<string, string>
-): Promise<Page> {
-  const context = await browser.newContext({
-    storageState: 'playwright/.auth/admin.json',
-  })
-  const page = await context.newPage()
-  await installElectronMock(page)
-  if (localStorageSeed) {
-    await page.addInitScript((seed) => {
-      for (const [key, value] of Object.entries(seed)) {
-        localStorage.setItem(key, value)
-      }
-    }, localStorageSeed)
-  }
-  return page
-}
 
 async function assertNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {
@@ -168,12 +150,15 @@ test.describe('UI flow', () => {
     }
   })
 
-  test('REQ-UI-03: Electron-only nav items hidden on web', async ({ page }) => {
+  test('REQ-UI-03: backup nav is visible to admin', async ({ page }) => {
     await page.goto('/dashboard')
     await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
 
-    await expect(page.locator('[data-nav-link="/backup"]')).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'สำรองข้อมูล' })).toHaveCount(0)
+    const backupLink = page.locator('[data-nav-link="/backup"]')
+    await expect(backupLink).toBeVisible()
+    await backupLink.click()
+    await expect(page).toHaveURL('/backup')
+    await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
   })
 
   test('REQ-UI-04: Thai text renders correctly in navigation, forms, and tables', async ({
@@ -216,66 +201,5 @@ test.describe('UI flow', () => {
     await expect(page.getByRole('button', { name: 'Open sidebar' })).toBeVisible()
     await expect(page.locator('main')).toBeVisible()
     await assertNoHorizontalOverflow(page)
-  })
-
-  test('REQ-UI-06: app mode switcher works in Electron', async ({ browser }) => {
-    const serverPage = await newElectronAdminPage(browser, {
-      app_mode: 'server',
-      server_port: '3001',
-    })
-
-    try {
-      await serverPage.goto('/dashboard')
-      await expect(serverPage.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
-
-      const serverSwitcher = serverPage.getByRole('button', { name: /เซิร์ฟเวอร์/ })
-      await expect(serverSwitcher).toBeVisible()
-      await serverSwitcher.click()
-
-      await expect(serverPage.getByText('สถานะโหมดการทำงาน')).toBeVisible()
-      await expect(serverPage.getByText('โหมดปัจจุบัน:')).toBeVisible()
-      await expect(serverPage.getByText('พอร์ต:')).toBeVisible()
-      await expect(serverPage.getByText('3001')).toBeVisible()
-      await expect(serverPage.getByRole('link', { name: 'จัดการการตั้งค่า' })).toBeVisible()
-    } finally {
-      await serverPage.context().close()
-    }
-
-    const clientPage = await newElectronAdminPage(browser, {
-      app_mode: 'client',
-      server_url: 'http://localhost:3001',
-    })
-
-    try {
-      await clientPage.goto('/dashboard')
-      await expect(
-        clientPage.getByRole('button', { name: /ไคลเอนต์ \(http:\/\/localhost:3001\)/ })
-      ).toBeVisible()
-
-      await clientPage.getByRole('button', { name: /ไคลเอนต์/ }).click()
-      await expect(clientPage.getByText('เซิร์ฟเวอร์:')).toBeVisible()
-      await expect(
-        clientPage.locator('.absolute.right-0').getByText('http://localhost:3001', { exact: true })
-      ).toBeVisible()
-    } finally {
-      await clientPage.context().close()
-    }
-  })
-
-  test('REQ-UI-03 (Electron): backup nav visible when running in Electron', async ({
-    browser,
-  }) => {
-    const page = await newElectronAdminPage(browser)
-
-    try {
-      await page.goto('/dashboard')
-      const backupLink = page.locator('[data-nav-link="/backup"]')
-      await expect(backupLink).toBeVisible()
-      await backupLink.click()
-      await expect(page).toHaveURL('/backup')
-      await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
-    } finally {
-      await page.context().close()
-    }
   })
 })

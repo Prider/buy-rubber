@@ -44,7 +44,7 @@ describe('collectInitialDataCandidatePaths', () => {
     ]);
   });
 
-  it('includes Electron resource and app bundle paths when provided', () => {
+  it('includes extra search paths when provided', () => {
     const candidates = collectInitialDataCandidatePaths({
       dbPath: path.join('/userData', 'prisma', 'dev.db'),
       cwd: '/userData',

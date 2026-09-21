@@ -44,8 +44,8 @@
 - Dashboard แสดงสถิติแบบ Real-time
 
 ### ✅ การจัดการระบบ
-- สำรองข้อมูล (Backup) - เฉพาะ Electron และ Admin
-- ตั้งค่าระบบ - เฉพาะ Electron และ Admin
+- สำรองข้อมูล (Backup) - เฉพาะ Admin
+- ตั้งค่าระบบ - เฉพาะ Admin
 - จัดการผู้ใช้งาน (User Management)
 - กำหนดสิทธิ์การใช้งานผู้ใช้ (Admin, User, Viewer)
 - Dark Mode Support
@@ -54,49 +54,11 @@
 
 - **Frontend**: Next.js 13.5.6, React 18.2.0, TypeScript, TailwindCSS
 - **Backend**: Next.js API Routes
-- **Database**: 
-  - SQLite (สำหรับ Electron/Desktop - ใช้งานแบบ Offline)
-  - PostgreSQL (สำหรับ Production/Web - รองรับ Neon, Vercel)
+- **Database**: PostgreSQL (production / Vercel / Neon) หรือ SQLite (local development)
 - **State Management**: TanStack React Query
 - **Reporting**: jsPDF, jsPDF-AutoTable, Recharts
 - **Testing**: Vitest, Testing Library
 - **UI/UX**: Modern responsive design with Thai language support, Dark Mode
-- **Desktop**: Electron 27.0.0 (Windows, macOS, Linux support)
-
-## 🖥️ เวอร์ชั่น Desktop Application (Electron)
-
-โปรเจกต์นี้รองรับการทำงานเป็น **Desktop Application** บนระบบปฏิบัติการ Windows และ macOS ด้วย Electron
-
-### ข้อดีของ Desktop Version:
-- ✅ ทำงานแบบ Offline ได้ (ไม่ต้องพึ่ง Internet)
-- ✅ เร็วกว่า Web Version
-- ✅ ติดตั้งง่าย ใช้งานสะดวกเหมือนโปรแกรมทั่วไป
-- ✅ ข้อมูลปลอดภัย เก็บไว้ในเครื่องของคุณ
-- ✅ รองรับทั้ง Windows และ macOS
-
-### วิธีการใช้งาน:
-
-**Development Mode:**
-```bash
-npm run electron:dev
-```
-
-**Build สำหรับ Windows:**
-```bash
-npm run electron:build:win
-```
-
-**Build สำหรับ macOS:**
-```bash
-npm run electron:build:mac
-```
-
-**Build ทั้ง Windows และ macOS:**
-```bash
-npm run electron:build:all
-```
-
-📖 **คู่มือการใช้งาน Electron แบบละเอียด:** อ่านได้ที่ [ELECTRON_SETUP.md](./ELECTRON_SETUP.md) (ถ้ามี)
 
 ## การติดตั้ง
 
@@ -137,30 +99,6 @@ npm run dev
 
 5. เปิดเบราว์เซอร์ที่: `http://localhost:3000`
 
-#### สำหรับ Desktop Application (Electron)
-
-1. ติดตั้ง dependencies:
-```bash
-npm install
-```
-
-2. ตั้งค่าฐานข้อมูล SQLite:
-```bash
-npm run setup:sqlite
-```
-
-3. รัน Electron ในโหมด Development:
-```bash
-npm run electron:dev
-```
-
-4. Build สำหรับ Distribution:
-```bash
-npm run electron:build:win    # สำหรับ Windows
-npm run electron:build:mac    # สำหรับ macOS
-npm run electron:build:all    # สำหรับทั้งสอง
-```
-
 ## ข้อมูลผู้ใช้เริ่มต้น
 
 - **Username**: admin
@@ -199,10 +137,6 @@ punsook-innotech/
 │   ├── hooks/                  # Custom Hooks
 │   ├── lib/                    # Utilities
 │   └── types/                  # TypeScript Types
-├── electron/                   # Electron Desktop App
-│   ├── main.js                 # Main Process
-│   ├── preload.js              # Preload Script
-│   └── server.js               # Next.js Server
 ├── prisma/
 │   ├── schema.prisma           # Database Schema (SQLite)
 │   ├── schema.postgres.prisma  # PostgreSQL Schema
@@ -252,7 +186,7 @@ punsook-innotech/
 - 🌙 Dark Mode Support
 - 🖨️ พิมพ์เอกสารทุกประเภท (jsPDF)
 - 📊 กราฟและรายงานวิเคราะห์ (Recharts)
-- 💾 สำรองข้อมูลอัตโนมัติ (Electron only)
+- 💾 สำรองข้อมูล
 - 🔐 ระบบความปลอดภัยข้อมูล (JWT Authentication, bcrypt)
 - 🧪 Unit Testing (Vitest)
 - ⚡ Performance Optimization (Caching, React Query)
@@ -265,16 +199,12 @@ punsook-innotech/
 ### Development
 ```bash
 npm run dev              # รัน Next.js development server
-npm run electron:dev     # รัน Electron app ในโหมด development
 npm run web:dev          # รัน web server (accessible from network)
 ```
 
 ### Build
 ```bash
 npm run build            # Build สำหรับ production (Vercel)
-npm run electron:build:win   # Build Electron app สำหรับ Windows
-npm run electron:build:mac   # Build Electron app สำหรับ macOS
-npm run electron:build:all   # Build Electron app สำหรับทั้งสอง
 ```
 
 ### Database
@@ -318,28 +248,12 @@ vercel --prod
 
 📖 **คู่มือละเอียด:** อ่านได้ที่ [QUICKSTART.md](./QUICKSTART.md) และ [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md)
 
-### Build Desktop Application
-
-```bash
-# สำหรับ Windows
-npm run electron:build:win
-
-# สำหรับ macOS
-npm run electron:build:mac
-
-# สำหรับทั้งสอง
-npm run electron:build:all
-```
-
-ไฟล์ที่ build จะอยู่ในโฟลเดอร์ `dist/`
-
 ## เอกสารเพิ่มเติม
 
 - [QUICKSTART.md](./QUICKSTART.md) - คู่มือเริ่มต้นใช้งาน
 - [PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md) - สรุปโปรเจคและฟีเจอร์
 - [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md) - คู่มือการ Deploy
 - [SQLITE_LOCAL_SETUP.md](./SQLITE_LOCAL_SETUP.md) - คู่มือตั้งค่า SQLite
-- [PROJECT_STRUCTURE_ELECTRON.md](./PROJECT_STRUCTURE_ELECTRON.md) - โครงสร้างโปรเจค Electron
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md) - คู่มือการทดสอบ
 
 ## API Endpoints
@@ -390,7 +304,7 @@ npm run electron:build:all
 ### Dashboard
 - `GET /api/dashboard` - ข้อมูล Dashboard
 
-### Backup (Electron only)
+### Backup
 - `GET /api/backup` - ดึงรายการ Backup
 - `POST /api/backup` - สร้าง Backup
 - `GET /api/backup/[id]/download` - ดาวน์โหลด Backup

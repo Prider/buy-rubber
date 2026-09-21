@@ -152,53 +152,13 @@ describe.skip('BackupPage - handleRestore Function', () => {
       fireEvent.click(restoreButtons[0]);
 
       await waitFor(() => {
-        // The test environment is not Electron, so it should show the web browser message
+        // Restore success uses the web reload message
         expect(alertSpy).toHaveBeenCalledWith(
           '✅ เรียกคืนข้อมูลเรียบร้อย!\n\nหน้าเว็บจะรีโหลดอัตโนมัติ...'
         );
       });
 
       alertSpy.mockRestore();
-    });
-
-    it('should show Electron-specific message when running in Electron', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-      // Mock navigator to simulate Electron environment
-      const originalUserAgent = window.navigator.userAgent;
-      Object.defineProperty(window.navigator, 'userAgent', {
-        value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) electron/28.0.0 Chrome/120.0.0.0 Safari/537.36',
-        configurable: true,
-      });
-      
-      mockRestoreBackup.mockResolvedValue({ success: true });
-      
-      render(<BackupPage />);
-      
-      // Wait for buttons to appear
-      await waitFor(() => {
-        const buttons = screen.getAllByTitle('เรียกคืนข้อมูล');
-        expect(buttons.length).toBeGreaterThan(0);
-      });
-
-      const restoreButtons = screen.getAllByTitle('เรียกคืนข้อมูล');
-      fireEvent.click(restoreButtons[0]);
-
-      await waitFor(() => {
-        // Should show Electron-specific message
-        expect(alertSpy).toHaveBeenCalledWith(
-          '✅ เรียกคืนข้อมูลสำเร็จ!\n\n' +
-          'กรุณาปิดแอปพลิเคชันและเปิดใหม่อีกครั้ง\n' +
-          'เพื่อให้ข้อมูลที่เรียกคืนมาแสดงผลอย่างถูกต้อง\n\n' +
-          '(กด Cmd+Q หรือปิดหน้าต่างแอป)'
-        );
-      });
-
-      alertSpy.mockRestore();
-      // Restore original userAgent
-      Object.defineProperty(window.navigator, 'userAgent', {
-        value: originalUserAgent,
-        configurable: true,
-      });
     });
 
     it('should work with different backups', async () => {

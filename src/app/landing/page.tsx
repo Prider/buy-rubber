@@ -69,8 +69,8 @@ const features = [
     {
       title: 'การจัดการระบบ',
       items: [
-        'สำรองข้อมูล (Backup) - เฉพาะ Electron และ Admin',
-        'ตั้งค่าระบบ - เฉพาะ Electron และ Admin',
+        'สำรองข้อมูล (Backup) - เฉพาะ Admin',
+        'ตั้งค่าระบบ - เฉพาะ Admin',
         'จัดการผู้ใช้งาน (User Management)',
         'กำหนดสิทธิ์การใช้งานผู้ใช้ (Admin, User, Viewer)',
         'Dark Mode Support',
@@ -849,22 +849,7 @@ function LandingPage() {
               โปรเจกต์นี้รองรับการทำงานเป็น
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Desktop Application */}
-            <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Desktop Application
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Windows และ macOS
-              </p>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Web Browser */}
             <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
@@ -927,72 +912,33 @@ function LandingPage() {
             โหมดการใช้งาน
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            เลือกโหมดการใช้งานที่เหมาะสมกับธุรกิจของคุณ
+            ใช้งานผ่านเว็บเบราว์เซอร์ ข้อมูลอยู่บนคลาวด์และเข้าถึงได้จากทุกเครื่อง
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Standalone Mode */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-green-200/50 dark:border-green-800/50">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
                 <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                 </svg>
               </div>
               <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                ใช้งานแบบเครื่องเดียว
+                เว็บแอปพลิเคชัน
               </h3>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong className="text-gray-900 dark:text-white">Standalone Mode</strong>
-            </p>
             <ul className="space-y-3 text-gray-600 dark:text-gray-300">
               <li className="flex items-start">
                 <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ฐานข้อมูลเก็บอยู่ในเครื่องของท่าน โดยไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ต</span>
+                <span>เปิดใช้งานผ่านเบราว์เซอร์ ไม่ต้องติดตั้งโปรแกรม</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เหมาะกับกิจการรับซื้อน้ำยางพาราส่วนตัวขนาดเล็ก</span>
+                <span>ข้อมูลอยู่บนเซิร์ฟเวอร์ เข้าถึงได้จากหลายเครื่องพร้อมกัน</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>สามารถเพิ่มการใช้งานร่วมกันหลายเครื่องแบบเครือข่าย LAN ได้ตามต้องการ</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* LAN Network Mode */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-green-200/50 dark:border-green-800/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                ใช้ร่วมกันหลายเครื่องในเครือข่าย
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong className="text-gray-900 dark:text-white">LAN Network Mode</strong>
-            </p>
-            <ul className="space-y-3 text-gray-600 dark:text-gray-300">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ฐานข้อมูลเก็บอยู่ในเครื่องที่กำหนดเป็นเครื่อง Server (ควรเป็นเครื่องที่มีประสิทธิภาพสูงสุด)</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ตก็สามารถใช้งานได้</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เหมาะกับกิจการรับซื้อน้ำยางที่ต้องการใช้งานมากกว่า 1 เครื่อง</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เมื่อบันทึกข้อมูลที่เครื่องใดก็ตาม ข้อมูลจะอัปเดตอัตโนมัติทุกเครื่องที่อยู่ในวง LAN ทันที</span>
+                <span>เหมาะกับกิจการรับซื้อน้ำยางที่ต้องการใช้งานร่วมกันหลายจุด</span>
               </li>
             </ul>
           </div>
@@ -1131,7 +1077,7 @@ function LandingPage() {
               ต้องติดตั้งโปรแกรมอะไรเพิ่มไหม?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              ไม่ต้องติดตั้งโปรแกรมเพิ่มเติม ระบบทำงานผ่านเว็บเบราว์เซอร์ หรือสามารถดาวน์โหลด Desktop Application สำหรับใช้งานแบบ Offline ได้
+              ไม่ต้องติดตั้งโปรแกรมเพิ่มเติม ระบบทำงานผ่านเว็บเบราว์เซอร์
             </p>
           </div>
 

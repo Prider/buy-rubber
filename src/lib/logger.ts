@@ -25,23 +25,7 @@ function getServerModules() {
       // Use require directly - only runs in Node.js runtime
       fs = require('fs');
       path = require('path');
-      
-      // Try to get Electron userData path if available
-      try {
-        const electron = require('electron');
-        const app = electron?.app || electron?.remote?.app;
-        if (app?.getPath) {
-          const userData = app.getPath('userData');
-          LOG_DIR = path.join(userData, 'logs');
-        }
-      } catch {
-        // Not in Electron
-      }
-      
-      if (!LOG_DIR) {
-        // Use project logs directory for Next.js development
-        LOG_DIR = path.join(process.cwd(), 'logs');
-      }
+      LOG_DIR = path.join(process.cwd(), 'logs');
     } catch (_error) {
       // Silently fail - logger won't work but app will continue
     }

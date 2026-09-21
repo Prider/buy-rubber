@@ -6,18 +6,8 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
   },
-  // Disable image optimization for Electron
-  images: {
-    unoptimized: true,
-  },
-  // Disable standalone mode for Electron - it causes path issues in packaged apps
-  // The standard Next.js build works better with Electron's file structure
-  // output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
-  
-  // Webpack configuration to prevent bundling Node.js modules on client
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Don't bundle these modules for the client
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -26,10 +16,8 @@ const nextConfig = {
         crypto: false,
         stream: false,
         buffer: false,
-        electron: false,
       };
     } else {
-      // For server-side, ensure Prisma client is properly resolved
       config.resolve.alias = {
         ...config.resolve.alias,
         '@prisma/client': require.resolve('@prisma/client'),
@@ -37,7 +25,6 @@ const nextConfig = {
     }
     return config;
   },
-}
+};
 
-module.exports = nextConfig
-
+module.exports = nextConfig;

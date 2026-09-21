@@ -6,7 +6,6 @@ import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
 import HeaderTime from './HeaderTime';
 import Logo from './Logo';
-import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
@@ -16,7 +15,6 @@ interface NavigationItem {
   href: string;
   icon: string;
   adminOnly?: boolean;
-  electronOnly?: boolean;
 }
 
 const NAV_ITEMS: NavigationItem[] = [
@@ -30,7 +28,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
-  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
+  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];
 
@@ -43,14 +41,8 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isElectron, setIsElectron] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
-
-  // Check if running in Electron
-  useEffect(() => {
-    setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
-  }, []);
 
   // Preload slip settings into localStorage so slipGenerator can render correctly
   useEffect(() => {
@@ -66,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
           companyAddress: string;
           paperSize?: string;
         }>('/api/slip/settings');
-        // Always overwrite with server values so updates done in Electron propagate to Browser.
+        // Always overwrite with server values so slip setting updates propagate.
         if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
         if (data?.companyAddress) window.localStorage.setItem(ADDRESS_KEY, data.companyAddress);
         const paper = normalizeSlipPaperSize(data?.paperSize);
@@ -92,11 +84,6 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navigation = NAV_ITEMS.filter((item) => {
-    // Check if item is Electron-only and we're not in Electron
-    if (item.electronOnly && !isElectron) {
-      return false;
-    }
-    // Check if item is admin-only and user is not admin
     if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') {
       return false;
     }
@@ -328,13 +315,6 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Right side - Controls */}
             <div className="flex items-center space-x-3">
-              {/* Mode Switcher - Only show in Electron */}
-              {isElectron && (
-                <div className="hidden md:block">
-                  <ModeSwitcher />
-                </div>
-              )}
-              
               {/* Dark Mode Toggle */}
               <DarkModeToggle />
               

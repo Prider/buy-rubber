@@ -220,7 +220,7 @@ if (exec('npm run db:seed', { env: prismaEnv })) {
 // Step 9: Rebuild stock ledger from purchases/sales
 log('');
 log('Step 9: Rebuilding stock ledger...', 'yellow');
-if (exec('node electron/rebuild-stock.js', {
+if (exec('node scripts/rebuild-stock.js', {
   env: prismaEnv,
 })) {
   log('  ✓ Stock ledger rebuilt', 'green');

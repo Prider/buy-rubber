@@ -15,12 +15,6 @@ Logs are stored in different locations depending on the environment:
 /Users/pawat/Desktop/biglatex-pro/logs/
 ```
 
-### **In Electron App (Production)**
-```
-~/Library/Application Support/Punsook Innotech/logs/
-```
-*The logger automatically detects if running in Electron and uses the app's userData directory*
-
 ---
 
 ## 📝 Log File Format
@@ -205,8 +199,7 @@ try {
 
 1. **Lazy Loading**: Server modules (`fs`, `path`) are loaded only when needed
 2. **Browser Safety**: File operations are skipped in browser environment
-3. **Electron Detection**: Automatically uses Electron's userData path
-4. **Daily Rotation**: New log file created each day
+3. **Daily Rotation**: New log file created each day
 5. **JSON Format**: Each entry is valid JSON for easy parsing
 
 ### **File Writing**
@@ -336,7 +329,6 @@ Potential improvements you could add:
 ✅ **Automatic daily log rotation**  
 ✅ **JSON format for easy parsing**  
 ✅ **Works in both browser and server**  
-✅ **Electron-aware (uses userData path)**  
 ✅ **4 log levels (info, warn, error, debug)**  
 ✅ **Automatic cleanup of old logs**  
 ✅ **Used across 20+ files in project**  
