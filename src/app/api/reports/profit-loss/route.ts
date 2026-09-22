@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { fetchProfitLossAggregates } from './aggregates';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,6 +123,10 @@ function createPeriodMap(startDate: Date, endDate: Date, mode: ViewMode): Map<st
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const viewMode = parseViewMode(searchParams.get('view'));
 
@@ -138,6 +143,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [saleAggs, purchaseAggs, expenseAggs] = await fetchProfitLossAggregates(
+      tenantId,
       startDate,
       endDate,
       viewMode,

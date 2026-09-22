@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { cache, CACHE_KEYS, tenantKey } from '@/lib/cache';
 import { getUserFromToken } from '@/lib/utils';
 import { Prisma } from '@prisma/client';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -88,11 +89,12 @@ function parseQueryParams(searchParams: URLSearchParams): {
  * Builds Prisma where clause for expense queries
  */
 function buildWhereClause(params: {
+  tenantId: string;
   startDate?: Date;
   endDate?: Date;
   category?: string;
 }): Prisma.ExpenseWhereInput {
-  const where: Prisma.ExpenseWhereInput = {};
+  const where: Prisma.ExpenseWhereInput = { tenantId: params.tenantId };
 
   if (params.startDate || params.endDate) {
       where.date = {};
@@ -115,7 +117,7 @@ function buildWhereClause(params: {
  * Calculates expense summary statistics
  * Uses Thailand timezone (UTC+7) to ensure consistency with expense creation dates
  */
-async function calculateExpenseSummary(): Promise<ExpenseSummary> {
+async function calculateExpenseSummary(tenantId: string): Promise<ExpenseSummary> {
   // Calculate "today" in Thailand timezone (UTC+7)
   const now = new Date();
   const thailandOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
@@ -153,6 +155,7 @@ async function calculateExpenseSummary(): Promise<ExpenseSummary> {
   const [todayExpenses, monthExpenses] = await Promise.all([
     prisma.expense.aggregate({
       where: {
+        tenantId,
         date: {
           gte: today,
           lt: tomorrow,
@@ -163,6 +166,7 @@ async function calculateExpenseSummary(): Promise<ExpenseSummary> {
     }),
     prisma.expense.aggregate({
       where: {
+        tenantId,
         date: {
           gte: monthStart,
           lt: monthEnd,
@@ -328,11 +332,15 @@ function createErrorResponse(
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     validatePrismaClient();
 
     const { searchParams } = new URL(request.url);
     const params = parseQueryParams(searchParams);
-    const where = buildWhereClause(params);
+    const where = buildWhereClause({ tenantId, ...params });
 
     // Get total count first (needed for pagination)
     const total = await prisma.expense.count({ where });
@@ -348,7 +356,7 @@ export async function GET(request: NextRequest) {
         skip: total === 0 ? 0 : (params.page - 1) * params.pageSize,
         take: params.pageSize,
       }),
-      calculateExpenseSummary(),
+      calculateExpenseSummary(tenantId),
     ]);
 
     const totalPages = total === 0 ? 1 : Math.ceil(total / params.pageSize);
@@ -385,6 +393,10 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     validatePrismaClient();
 
     const data: ExpenseCreateData = await request.json();
@@ -452,6 +464,7 @@ export async function POST(request: NextRequest) {
 
         expense = await prisma.expense.create({
       data: {
+        tenantId,
         expenseNo,
             date: parsedDate.date,
             category: validatedData.category,
@@ -485,7 +498,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Invalidate dashboard cache
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
     logger.debug('Expense created successfully', { id: expense!.id, expenseNo });
     return NextResponse.json(expense);

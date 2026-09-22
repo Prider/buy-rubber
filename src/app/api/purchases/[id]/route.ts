@@ -8,6 +8,7 @@ import {
   reversePurchaseFromStock,
   StockInsufficientError,
 } from '@/lib/stock/stockService';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -39,6 +40,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     const tokenUser = getUserFromToken(request);
     const userId = data.userId || tokenUser?.userId;
@@ -55,7 +60,7 @@ export async function PUT(
       include: { member: true },
     });
 
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการรับซื้อ' }, { status: 404 });
     }
 
@@ -89,6 +94,7 @@ export async function PUT(
     const [productPrice, member, productType, user] = await Promise.all([
       prisma.productPrice.findFirst({
         where: {
+          tenantId,
           date: {
             gte: new Date(`${priceDateStr}T00:00:00`),
             lte: new Date(`${priceDateStr}T23:59:59`),
@@ -110,13 +116,13 @@ export async function PUT(
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
     const totalAmount = netWeight * finalPrice;
 
-    if (!member) {
+    if (!member || member.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลสมาชิก' }, { status: 404 });
     }
-    if (!productType) {
+    if (!productType || productType.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
     }
-    if (!user) {
+    if (!user || user.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลผู้ใช้' }, { status: 404 });
     }
 
@@ -190,7 +196,7 @@ export async function PUT(
       return row;
     });
 
-    invalidatePurchaseCaches();
+    invalidatePurchaseCaches(tenantId);
     logger.info('PUT /api/purchases/[id] - Success', { id: params.id });
     return NextResponse.json(updated);
   } catch (error) {
@@ -221,11 +227,15 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const purchase = await prisma.purchase.findUnique({
       where: { id: params.id },
     });
 
-    if (!purchase) {
+    if (!purchase || purchase.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลการรับซื้อ' },
         { status: 404 }
@@ -247,7 +257,7 @@ export async function DELETE(
       });
     });
 
-    invalidatePurchaseCaches();
+    invalidatePurchaseCaches(tenantId);
 
     logger.info('DELETE /api/purchases/[id] - Success', { id: params.id });
     return NextResponse.json({ message: 'ลบการรับซื้อเรียบร้อยแล้ว' });

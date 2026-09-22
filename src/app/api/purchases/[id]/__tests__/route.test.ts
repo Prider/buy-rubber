@@ -43,6 +43,7 @@ describe('DELETE /api/purchases/[id]', () => {
 
   const mockPurchase = {
     id: 'purchase-1',
+    tenantId: 'tenant-1',
     purchaseNo: 'PUR-202401-0001',
     date: new Date('2024-01-15'),
     memberId: 'member-1',

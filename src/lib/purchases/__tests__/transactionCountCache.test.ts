@@ -14,6 +14,7 @@ vi.mock('@/lib/purchases/transactionQuery', async (importOriginal) => {
 
 describe('countTransactionGroupsCached', () => {
   const filters: TransactionQueryFilters = {
+    tenantId: 'tenant-1',
     startDate: new Date('2024-01-01T00:00:00.000Z'),
     endDate: new Date('2024-03-31T23:59:59.999Z'),
   };

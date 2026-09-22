@@ -11,6 +11,7 @@ import {
   getUserFromToken
 } from '@/lib/utils';
 import { applyPurchaseToStock } from '@/lib/stock/stockService';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -18,6 +19,10 @@ export const runtime = 'nodejs';
 // GET /api/purchases - ดึงรายการรับซื้อ
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -29,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('GET /api/purchases', { startDate, endDate, memberId, productTypeId, productTypeIds, isPaid, limit });
 
-    const where: any = {};
+    const where: any = { tenantId };
 
     if (startDate) {
       const start = new Date(startDate);
@@ -88,6 +93,10 @@ export async function GET(request: NextRequest) {
 // POST /api/purchases - บันทึกการรับซื้อ (single or batch)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     logger.info('POST /api/purchases - Received', { 
       isBatch: Array.isArray(data.items), 
@@ -108,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // Check if this is a batch request (array of purchases)
     if (Array.isArray(data.items)) {
-      return handleBatchPurchase({ ...data, userId }, request);
+      return handleBatchPurchase({ ...data, userId }, request, tenantId);
     }
 
     // Single purchase (existing logic)
@@ -159,6 +168,7 @@ export async function POST(request: NextRequest) {
       // ดึงราคาประกาศสำหรับประเภทสินค้านี้ (ถ้ามี)
       prisma.productPrice.findFirst({
         where: {
+          tenantId,
           date: {
             gte: new Date(data.date + 'T00:00:00'),
             lte: new Date(data.date + 'T23:59:59'),
@@ -196,21 +206,21 @@ export async function POST(request: NextRequest) {
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
     const totalAmount = netWeight * finalPrice;
 
-    if (!member) {
+    if (!member || member.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลสมาชิก', details: `Member with id ${data.memberId} not found` },
         { status: 404 }
       );
     }
 
-    if (!productType) {
+    if (!productType || productType.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลประเภทสินค้า', details: `ProductType with id ${data.productTypeId} not found` },
         { status: 404 }
       );
     }
 
-    if (!user) {
+    if (!user || user.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found. Please log out and log in again.` },
         { status: 404 }
@@ -265,6 +275,7 @@ export async function POST(request: NextRequest) {
     const purchase = await prisma.$transaction(async (tx) => {
       const created = await tx.purchase.create({
         data: {
+          tenantId,
           purchaseNo,
           date: purchaseDate,
           memberId: data.memberId,
@@ -304,7 +315,7 @@ export async function POST(request: NextRequest) {
       return created;
     });
 
-    invalidatePurchaseCaches();
+    invalidatePurchaseCaches(tenantId);
 
     logger.info('POST /api/purchases - Success', { 
       purchaseId: purchase.id, 
@@ -334,7 +345,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle batch purchase creation with same purchaseNo
-async function handleBatchPurchase(data: { items: any[]; userId?: string; date?: string }, request: NextRequest) {
+async function handleBatchPurchase(data: { items: any[]; userId?: string; date?: string }, request: NextRequest, tenantId: string) {
   try {
     // Get user info from token or use provided values
     const tokenUser = getUserFromToken(request);
@@ -394,10 +405,11 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
 
     const [user, membersArr, productTypesArr, productPricesArr] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
-      prisma.member.findMany({ where: { id: { in: uniqueMemberIds } } }),
-      prisma.productType.findMany({ where: { id: { in: uniqueProductTypeIds } } }),
+      prisma.member.findMany({ where: { tenantId, id: { in: uniqueMemberIds } } }),
+      prisma.productType.findMany({ where: { tenantId, id: { in: uniqueProductTypeIds } } }),
       prisma.productPrice.findMany({
         where: {
+          tenantId,
           productTypeId: { in: uniqueProductTypeIds },
           date: {
             gte: new Date(purchaseDate + 'T00:00:00'),
@@ -407,7 +419,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       }),
     ]);
 
-    if (!user) {
+    if (!user || user.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลผู้ใช้', details: `User with id ${userId} not found` },
         { status: 404 }
@@ -420,6 +432,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
 
     // Validate all items and prepare purchase data
     const purchaseDataList: {
+      tenantId: string;
       purchaseNo: string;
       date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
     }[] = [];
@@ -497,6 +510,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       }
       
       purchaseDataList.push({
+        tenantId,
         purchaseNo: batchPurchaseNo, // Same purchaseNo for all items in the batch
         date: itemPurchaseDate,
         memberId: item.memberId,
@@ -546,7 +560,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       return createdPurchases;
     });
 
-    invalidatePurchaseCaches();
+    invalidatePurchaseCaches(tenantId);
 
     logger.info('Batch purchase - Success', { 
       count: purchases.length, 

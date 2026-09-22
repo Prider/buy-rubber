@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 
+import { requireTenantAuth } from '@/lib/tenant';
+
 export const runtime = 'nodejs';
 
 // GET /api/members/[id]/servicefees - Get service fees for a member
@@ -11,6 +13,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const memberId = params.id;
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -20,7 +26,7 @@ export async function GET(
     const fetchAll = searchParams.get('fetchAll') === 'true';
 
     const member = await prisma.member.findUnique({ where: { id: memberId } });
-    if (!member) {
+    if (!member || member.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลสมาชิก' }, { status: 404 });
     }
 
@@ -40,8 +46,9 @@ export async function GET(
              COUNT(*)::bigint                        AS cnt,
              COALESCE(SUM(sf.amount), 0)::float      AS total
       FROM   "ServiceFee" sf
-      WHERE  sf."purchaseNo" IN (
-               SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId}
+      WHERE  sf."tenantId" = ${tenantId}
+        AND  sf."purchaseNo" IN (
+               SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId} AND "tenantId" = ${tenantId}
              )
       ${dateFilter}
       GROUP BY sf.category
@@ -57,8 +64,9 @@ export async function GET(
       const serviceFees = await prisma.$queryRaw<any[]>`
         SELECT sf.*
         FROM   "ServiceFee" sf
-        WHERE  sf."purchaseNo" IN (
-                 SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId}
+        WHERE  sf."tenantId" = ${tenantId}
+          AND  sf."purchaseNo" IN (
+                 SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId} AND "tenantId" = ${tenantId}
                )
         ${dateFilter}
         ORDER BY sf.date DESC
@@ -75,8 +83,9 @@ export async function GET(
     const serviceFees = await prisma.$queryRaw<any[]>`
       SELECT sf.*
       FROM   "ServiceFee" sf
-      WHERE  sf."purchaseNo" IN (
-               SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId}
+      WHERE  sf."tenantId" = ${tenantId}
+        AND  sf."purchaseNo" IN (
+               SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId} AND "tenantId" = ${tenantId}
              )
       ${dateFilter}
       ORDER BY sf.date DESC

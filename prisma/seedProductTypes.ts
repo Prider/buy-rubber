@@ -1,8 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import { resolveDefaultTenant } from './resolveDefaultTenant';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const tenant = await resolveDefaultTenant(prisma);
   const totalToCreate = 100;
   let created = 0;
   let updated = 0;
@@ -12,13 +14,14 @@ async function main() {
     const name = `ประเภทสินค้า ${i}`;
 
     const result = await prisma.productType.upsert({
-      where: { code },
+      where: { tenantId_code: { tenantId: tenant.id, code } },
       update: {
         name,
         description: `สร้างอัตโนมัติ #${i}`,
         isActive: true,
       },
       create: {
+        tenantId: tenant.id,
         code,
         name,
         description: `สร้างอัตโนมัติ #${i}`,

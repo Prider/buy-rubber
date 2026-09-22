@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { cache, CACHE_TTL, generateCacheKey, tenantKey } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -12,6 +13,10 @@ const MAX_LIMIT = 100;
 // GET /api/members - ดึงรายการสมาชิกทั้งหมด (with pagination)
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const active = searchParams.get('active');
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Only cache if no search query (search results shouldn't be cached)
     const cacheKey = search 
       ? null 
-      : generateCacheKey('members', { active, page: page.toString(), limit: limit.toString() });
+      : tenantKey(tenantId, generateCacheKey('members', { active, page: page.toString(), limit: limit.toString() }));
     
     // Check cache first (only for non-search queries)
     if (cacheKey) {
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: any = {};
+    const where: any = { tenantId };
     
     if (search) {
       where.OR = [
@@ -105,12 +110,16 @@ export async function GET(request: NextRequest) {
 // POST /api/members - สร้างสมาชิกใหม่
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     logger.info('POST /api/members - Request', { code: data.code, name: data.name });
 
     // ตรวจสอบรหัสซ้ำ
     const existingCode = await prisma.member.findUnique({
-      where: { code: data.code },
+      where: { tenantId_code: { tenantId, code: data.code } },
     });
 
     if (existingCode) {
@@ -127,6 +136,7 @@ export async function POST(request: NextRequest) {
       SELECT id, code, name 
       FROM "Member" 
       WHERE LOWER(name) = LOWER(${data.name})
+        AND "tenantId" = ${tenantId}
       LIMIT 1
     `;
 
@@ -141,6 +151,7 @@ export async function POST(request: NextRequest) {
 
     const member = await prisma.member.create({
       data: {
+        tenantId,
         code: data.code,
         name: data.name,
         idCard: data.idCard,
@@ -156,7 +167,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Invalidate members cache when a new member is created
-    cache.deletePattern('^members:');
+    cache.deletePattern(`^tenant:${tenantId}:members:`);
     logger.info('POST /api/members - Cache invalidated');
 
     logger.info('POST /api/members - Success', { memberId: member.id, code: member.code });

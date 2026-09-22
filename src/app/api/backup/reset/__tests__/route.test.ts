@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
 vi.mock('@/lib/backup', () => ({
@@ -28,7 +29,7 @@ describe('POST /api/backup/reset', () => {
       fileName: 'inital-data.db',
     });
 
-    const response = await POST();
+    const response = await POST(new NextRequest('http://localhost/api/backup/reset', { method: 'POST' }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -44,7 +45,7 @@ describe('POST /api/backup/reset', () => {
       error: 'ไม่พบไฟล์ข้อมูลเริ่มต้น (inital-data.db)',
     });
 
-    const response = await POST();
+    const response = await POST(new NextRequest('http://localhost/api/backup/reset', { method: 'POST' }));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -57,7 +58,7 @@ describe('POST /api/backup/reset', () => {
     const error = new Error('Database connection failed');
     vi.mocked(backupModule.resetToInitialData).mockRejectedValue(error);
 
-    const response = await POST();
+    const response = await POST(new NextRequest('http://localhost/api/backup/reset', { method: 'POST' }));
     const data = await response.json();
 
     expect(response.status).toBe(500);

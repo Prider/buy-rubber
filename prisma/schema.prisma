@@ -11,62 +11,146 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ผู้ใช้งานระบบ
+model Tenant {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  address   String?
+  plan      String   @default("freemium") // freemium | premium
+  status    String   @default("active") // active | pending_payment | rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                    User[]
+  members                  Member[]
+  destinationCompanies     DestinationCompany[]
+  productTypes             ProductType[]
+  productPrices            ProductPrice[]
+  purchases                Purchase[]
+  expenses                 Expense[]
+  serviceFees              ServiceFee[]
+  settings                 Setting[]
+  backups                  Backup[]
+  sales                    Sale[]
+  stockPositions           StockPosition[]
+  stockLedgerEntries       StockLedgerEntry[]
+  stockGangs               StockGang[]
+  reportProductTypeGroups  ReportProductTypeGroup[]
+  paymentRequests          PaymentRequest[]
+
+  @@index([status])
+  @@index([plan])
+}
+
+model PlatformUser {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlatformSettings {
+  id              String   @id @default("default")
+  bankName        String   @default("")
+  accountName     String   @default("")
+  accountNumber   String   @default("")
+  promptPayId     String   @default("")
+  qrImage         Bytes?
+  qrImageMimeType String?
+  premiumPriceThb Float    @default(0)
+  updatedAt       DateTime @updatedAt
+}
+
+model PaymentRequest {
+  id           String    @id @default(uuid())
+  tenantId     String
+  amount       Float
+  status       String    @default("pending") // pending | approved | rejected
+  slipImage    Bytes
+  slipMimeType String
+  note         String?
+  rejectReason String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([status, createdAt])
+}
+
 model User {
   id        String     @id @default(uuid())
-  username  String     @unique
+  tenantId  String
+  username  String
   password  String
   role      String     @default("user") // root, admin, user, viewer
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   purchases Purchase[]
   sales     Sale[]
+
+  @@unique([tenantId, username])
+  @@index([tenantId])
 }
 
-// สมาชิก (เจ้าของสวน)
 model Member {
   id             String     @id @default(uuid())
-  code           String     @unique
+  tenantId       String
+  code           String
   name           String
   idCard         String?
   phone          String?
   address        String?
   bankAccount    String?
   bankName       String?
-  ownerPercent   Float      @default(100) // เปอร์เซ็นต์เจ้าของสวน
-  tapperPercent  Float      @default(0) // เปอร์เซ็นต์คนตัด
-  tapperId       String? // ID คนตัด (ถ้ามี)
-  tapperName     String? // ชื่อคนตัด
-  advanceBalance Float      @default(0) // ยอดเบิกเงินล่วงหน้า
+  ownerPercent   Float      @default(100)
+  tapperPercent  Float      @default(0)
+  tapperId       String?
+  tapperName     String?
+  advanceBalance Float      @default(0)
   isActive       Boolean    @default(true)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   purchases      Purchase[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
 }
 
-// บริษัทปลายทาง (ผู้ซื้อ)
 model DestinationCompany {
   id        String   @id @default(uuid())
-  code      String   @unique
+  tenantId  String
+  code      String
   name      String
   phone     String?
   address   String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sales     Sale[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
 }
 
-// ประเภทสินค้ายาง
 model ProductType {
-  id                 String             @id @default(uuid())
-  code               String             @unique
-  name               String // น้ำยางสด, ยางแห้ง, เศษยาง
+  id                 String                         @id @default(uuid())
+  tenantId           String
+  code               String
+  name               String
   description        String?
-  isActive           Boolean            @default(true)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  isActive           Boolean                        @default(true)
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+  tenant             Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productPrices      ProductPrice[]
   purchases          Purchase[]
   sales              Sale[]
@@ -74,60 +158,58 @@ model ProductType {
   stockLedgerEntries StockLedgerEntry[]
   stockGangs         StockGang[]
   reportGroupMembers ReportProductTypeGroupMember[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
 }
 
-// ราคาสินค้าตามประเภทประจำวัน
 model ProductPrice {
   id            String      @id @default(uuid())
-  date          DateTime // วันที่ตั้งราคา
+  tenantId      String
+  date          DateTime
   productTypeId String
-  price         Float // ราคา (บาท/กก.)
+  price         Float
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 
-  @@unique([date, productTypeId]) // ป้องกันการตั้งราคาซ้ำในวันเดียวกัน
+  @@unique([date, productTypeId])
+  @@index([tenantId])
   @@index([date])
 }
 
-// การรับซื้อ
 model Purchase {
   id              String      @id @default(uuid())
+  tenantId        String
   purchaseNo      String
   date            DateTime    @default(now())
   memberId        String
   productTypeId   String
   userId          String
+  grossWeight     Float
+  containerWeight Float       @default(0)
+  netWeight       Float
+  rubberPercent   Float?
+  dryWeight       Float
+  basePrice       Float
+  adjustedPrice   Float
+  bonusPrice      Float       @default(0)
+  finalPrice      Float
+  totalAmount     Float
+  ownerAmount     Float
+  tapperAmount    Float       @default(0)
+  isPaid          Boolean     @default(false)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member          Member      @relation(fields: [memberId], references: [id])
+  productType     ProductType @relation(fields: [productTypeId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
 
-  // น้ำหนัก
-  grossWeight     Float // น้ำหนักรวมภาชนะ (กก.)
-  containerWeight Float       @default(0) // น้ำหนักภาชนะ (กก.)
-  netWeight       Float // น้ำหนักสุทธิ (กก.)
-
-  // สำหรับน้ำยางสด
-  rubberPercent Float? // %ยาง (DRC)
-  dryWeight     Float // น้ำหนักแห้ง (กก.)
-
-  // ราคา
-  basePrice     Float // ราคาพื้นฐาน (บาท/กก.)
-  adjustedPrice Float // ราคาหลังปรับตาม %ยาง
-  bonusPrice    Float       @default(0) // ราคาบวกพิเศษ
-  finalPrice    Float // ราคาสุดท้าย (บาท/กก.)
-  totalAmount   Float // ยอดเงินรวม
-
-  // การแบ่ง %
-  ownerAmount  Float // เงินเจ้าของสวน
-  tapperAmount Float       @default(0) // เงินคนตัด
-
-  isPaid    Boolean     @default(false)
-  notes     String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  member      Member      @relation(fields: [memberId], references: [id])
-  productType ProductType @relation(fields: [productTypeId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
-
+  @@index([tenantId])
+  @@index([tenantId, purchaseNo])
   @@index([purchaseNo])
   @@index([date])
   @@index([memberId])
@@ -138,90 +220,104 @@ model Purchase {
   @@index([date, purchaseNo, memberId])
 }
 
-// ค่าใช้จ่ายประจำวัน
 model Expense {
   id          String   @id @default(uuid())
-  expenseNo   String   @unique
+  tenantId    String
+  expenseNo   String
   date        DateTime @default(now())
-  category    String // ค่าน้ำมัน, ค่าซ่อมรถ, ค่าคนงาน, อื่นๆ
+  category    String
   amount      Float
   description String?
-  userId      String // ID ของผู้ใช้ที่สร้างรายการ
-  userName    String // ชื่อผู้ใช้ที่สร้างรายการ
+  userId      String
+  userName    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, expenseNo])
+  @@index([tenantId])
   @@index([date])
   @@index([category])
   @@index([userId])
 }
 
-// ค่าบริการ (Service Fees)
 model ServiceFee {
   id           String   @id @default(uuid())
-  serviceFeeNo String   @unique
-  purchaseNo   String? // Link to purchase transaction (same cart)
+  tenantId     String
+  serviceFeeNo String
+  purchaseNo   String?
   date         DateTime @default(now())
-  category     String // ประเภทค่าบริการ
-  amount       Float // จำนวนเงิน (บวก)
+  category     String
+  amount       Float
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, serviceFeeNo])
+  @@index([tenantId])
   @@index([date])
   @@index([purchaseNo])
   @@index([category])
 }
 
-// ตั้งค่าระบบ
 model Setting {
   id        String   @id @default(uuid())
-  key       String   @unique
+  tenantId  String
+  key       String
   value     String
   updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
 }
 
-// ข้อมูลการสำรอง
 model Backup {
   id         String   @id @default(uuid())
-  fileName   String   @unique
+  tenantId   String
+  fileName   String
   filePath   String
   fileSize   Int
-  backupType String // "auto" or "manual"
+  backupType String
   createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, fileName])
+  @@index([tenantId])
   @@index([createdAt])
   @@index([backupType])
 }
 
-// การขาย
 model Sale {
-  id                    String              @id @default(uuid())
-  saleNo                String              @unique
-  date                  DateTime            @default(now())
-  userId                String
-  companyName           String // denormalized from DestinationCompany.name at save time
-  destinationCompanyId  String?
-  productTypeId         String
-  weight                Float
-  rubberPercent         Float?
-  pricePerUnit          Float
-  expenseType           String?
-  expenseCost           Float?
-  sellingType           String
-  totalAmount           Float
-  // Avg stock cost/kg at sale time (denormalized for list P/L)
-  unitCostPerKg         Float?
-  // weight * unitCostPerKg at sale time
-  costOfGoods           Float?
-  notes                 String?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  user                  User                @relation(fields: [userId], references: [id])
-  productType           ProductType         @relation(fields: [productTypeId], references: [id])
-  destinationCompany    DestinationCompany? @relation(fields: [destinationCompanyId], references: [id])
-  expenses              SaleExpense[]
+  id                   String               @id @default(uuid())
+  tenantId             String
+  saleNo               String
+  date                 DateTime             @default(now())
+  userId               String
+  companyName          String
+  destinationCompanyId String?
+  productTypeId        String
+  weight               Float
+  rubberPercent        Float?
+  pricePerUnit         Float
+  expenseType          String?
+  expenseCost          Float?
+  sellingType          String
+  totalAmount          Float
+  unitCostPerKg        Float?
+  costOfGoods          Float?
+  notes                String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  tenant               Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user                 User                 @relation(fields: [userId], references: [id])
+  productType          ProductType          @relation(fields: [productTypeId], references: [id])
+  destinationCompany   DestinationCompany?  @relation(fields: [destinationCompanyId], references: [id])
+  expenses             SaleExpense[]
 
+  @@unique([tenantId, saleNo])
+  @@index([tenantId])
   @@index([date])
   @@index([userId])
   @@index([productTypeId])
@@ -230,11 +326,10 @@ model Sale {
   @@index([date, createdAt])
 }
 
-// ค่าใช้จ่ายรายการขาย (หลายรายการต่อหนึ่งการขาย)
 model SaleExpense {
   id        String @id @default(uuid())
   saleId    String
-  type      String // ค่าขนส่ง, ค่าแรง, ค่าบริการ, อื่นๆ
+  type      String
   amount    Float
   note      String?
   sortOrder Int    @default(0)
@@ -243,19 +338,22 @@ model SaleExpense {
   @@index([saleId])
 }
 
-// สต็อกปัจจุบัน
 model StockPosition {
   id            String      @id @default(uuid())
+  tenantId      String
   productTypeId String      @unique
   quantityKg    Float       @default(0)
   avgCostPerKg  Float       @default(0)
   updatedAt     DateTime    @updatedAt
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productType   ProductType @relation(fields: [productTypeId], references: [id])
+
+  @@index([tenantId])
 }
 
-// บัญชีแยกประเภทสต็อก
 model StockLedgerEntry {
   id                  String      @id @default(uuid())
+  tenantId            String
   productTypeId       String
   refType             String
   refNo               String?
@@ -269,8 +367,10 @@ model StockLedgerEntry {
   notes               String?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
+  tenant              Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productType         ProductType @relation(fields: [productTypeId], references: [id])
 
+  @@index([tenantId])
   @@index([productTypeId])
   @@index([productTypeId, date, createdAt])
   @@index([productTypeId, refType])
@@ -280,9 +380,9 @@ model StockLedgerEntry {
   @@index([refId])
 }
 
-// กองสต็อกที่คำนวณไว้ล่วงหน้า (balance 0 → >0 → 0) สำหรับรายงานกำไร/ขาดทุนต่อกอง
 model StockGang {
   id            String      @id @default(uuid())
+  tenantId      String
   productTypeId String
   gangNo        Int
   startDate     DateTime
@@ -293,24 +393,28 @@ model StockGang {
   salesCount    Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productType   ProductType @relation(fields: [productTypeId], references: [id])
 
   @@unique([productTypeId, gangNo])
+  @@index([tenantId])
   @@index([productTypeId, gangNo])
   @@index([productTypeId, startDate])
 }
 
-// กลุ่มประเภทสินค้าสำหรับรายงานรับซื้อ / ขาย (ผู้ใช้กำหนดเอง)
 model ReportProductTypeGroup {
   id           String                         @id @default(uuid())
+  tenantId     String
   name         String?
-  kind         String                         @default("purchase") // purchase | sale
+  kind         String                         @default("purchase")
   sortOrder    Int                            @default(0)
   isActive     Boolean                        @default(true)
   createdAt    DateTime                       @default(now())
   updatedAt    DateTime                       @updatedAt
+  tenant       Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   productTypes ReportProductTypeGroupMember[]
 
+  @@index([tenantId])
   @@index([kind, isActive, sortOrder])
   @@index([isActive, sortOrder])
 }

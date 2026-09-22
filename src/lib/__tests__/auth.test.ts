@@ -27,6 +27,7 @@ describe('auth', () => {
   describe('generateToken', () => {
     it('should generate a JWT token with correct payload', () => {
       const payload: JWTPayload = {
+        kind: 'shop',
         userId: 'user-123',
         username: 'testuser',
         role: 'admin',
@@ -49,6 +50,7 @@ describe('auth', () => {
       delete process.env.JWT_SECRET;
 
       const payload: JWTPayload = {
+        kind: 'shop',
         userId: 'user-123',
         username: 'testuser',
         role: 'admin',
@@ -71,6 +73,7 @@ describe('auth', () => {
 
     it('should use JWT_SECRET from env var or default', () => {
       const payload: JWTPayload = {
+        kind: 'shop',
         userId: 'user-123',
         username: 'testuser',
         role: 'user',
@@ -93,6 +96,7 @@ describe('auth', () => {
   describe('verifyToken', () => {
     it('should return payload when token is valid', () => {
       const mockPayload: JWTPayload = {
+        kind: 'shop',
         userId: 'user-123',
         username: 'testuser',
         role: 'admin',
@@ -130,6 +134,7 @@ describe('auth', () => {
 
     it('should use JWT_SECRET from env var or default', () => {
       const mockPayload: JWTPayload = {
+        kind: 'shop',
         userId: 'user-123',
         username: 'testuser',
         role: 'admin',

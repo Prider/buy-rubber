@@ -1,134 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userStore } from '@/lib/userStore';
-import { UpdateUserRequest } from '@/types/user';
-import { verifyAdminRole } from '@/lib/sessionToken';
+import { UpdateUserRequest, isAdminLike } from '@/types/user';
+import { requireTenantAuth } from '@/lib/tenant';
 
-// GET /api/users/[id] - Get user by ID (admin only)
+export const runtime = 'nodejs';
+
+async function requireAdmin(request: NextRequest) {
+  const auth = await requireTenantAuth(request);
+  if (!auth.ok) return auth;
+  if (!isAdminLike(auth.auth.role)) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ success: false, message: 'Admin access required' }, { status: 403 }),
+    };
+  }
+  return auth;
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    if (!verifyAdminRole(request)) {
-      return NextResponse.json({
-        success: false,
-        message: 'Admin access required'
-      }, { status: 403 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
 
     const user = await userStore.getUserById(params.id);
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        message: 'User not found'
-      }, { status: 404 });
+    if (!user || user.tenantId !== auth.auth.tenantId) {
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-
-    return NextResponse.json({
-      success: true,
-      user: userWithoutPassword
-    });
-
+    const { password: _password, ...userWithoutPassword } = user;
+    return NextResponse.json({ success: true, user: userWithoutPassword });
   } catch (error) {
     console.error('Get user error:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Internal server error'
-    }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PUT /api/users/[id] - Update user (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    console.log('PUT /api/users/[id] - Update user request:', params.id);
-    
-    if (!verifyAdminRole(request)) {
-      return NextResponse.json({
-        success: false,
-        message: 'Admin access required'
-      }, { status: 403 });
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
+    const existing = await userStore.getUserById(params.id);
+    if (!existing || existing.tenantId !== auth.auth.tenantId) {
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
     const body: UpdateUserRequest = await request.json();
-    console.log('Updating user in Prisma:', { id: params.id, updates: body });
-    
     const user = await userStore.updateUser(params.id, body);
-
     if (!user) {
-      return NextResponse.json({
-        success: false,
-        message: 'User not found'
-      }, { status: 404 });
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    console.log('User updated successfully in Prisma:', { id: user.id, username: user.username });
-    const { password: _, ...userWithoutPassword } = user;
-
-    return NextResponse.json({
-      success: true,
-      user: userWithoutPassword
-    });
-
+    const { password: _password, ...userWithoutPassword } = user;
+    return NextResponse.json({ success: true, user: userWithoutPassword });
   } catch (error) {
-    console.error('Update user error:', error);
-    
     if (error instanceof Error && error.message === 'Username already exists') {
-      return NextResponse.json({
-        success: false,
-        message: 'Username already exists'
-      }, { status: 409 });
+      return NextResponse.json({ success: false, message: 'Username already exists' }, { status: 409 });
     }
-
     if (
       error instanceof Error &&
       (error.message === 'Cannot modify root user' ||
         error.message === 'Cannot assign root role' ||
         error.message === 'Invalid role')
     ) {
-      return NextResponse.json({
-        success: false,
-        message: error.message
-      }, { status: 403 });
+      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
     }
-
-    return NextResponse.json({
-      success: false,
-      message: 'Internal server error'
-    }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }
 
-// DELETE /api/users/[id] - Delete user (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    console.log('DELETE /api/users/[id] - Delete user request:', params.id);
-    
-    if (!verifyAdminRole(request)) {
-      return NextResponse.json({
-        success: false,
-        message: 'Admin access required'
-      }, { status: 403 });
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+
+    const existing = await userStore.getUserById(params.id);
+    if (!existing || existing.tenantId !== auth.auth.tenantId) {
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
     const result = await userStore.deleteUser(params.id);
     if (!result) {
-      return NextResponse.json({
-        success: false,
-        message: 'User not found'
-      }, { status: 404 });
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
     if (result === 'deactivated') {
-      console.log('User deactivated (has linked records):', params.id);
       return NextResponse.json({
         success: true,
         action: 'deactivated',
@@ -137,27 +102,15 @@ export async function DELETE(
       });
     }
 
-    console.log('User deleted successfully from Prisma:', params.id);
-
     return NextResponse.json({
       success: true,
       action: 'deleted',
-      message: 'User deleted successfully'
+      message: 'User deleted successfully',
     });
-
   } catch (error) {
-    console.error('Delete user error:', error);
-
     if (error instanceof Error && error.message === 'Cannot delete root user') {
-      return NextResponse.json({
-        success: false,
-        message: error.message
-      }, { status: 403 });
+      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
     }
-
-    return NextResponse.json({
-      success: false,
-      message: 'Internal server error'
-    }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { sqlNumericCodeSuffix } from '@/lib/dbProvider';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force dynamic rendering - prevent caching in Vercel
 export const dynamic = 'force-dynamic';
@@ -31,8 +32,12 @@ function parseMaxNum(value: unknown): number | null {
  * 
  * @returns {Promise<NextResponse>} JSON response with the next available code
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     // Step 1: Use optimized database query to find max number directly
     // This is much faster than fetching all members and processing in JavaScript
     // SQLite query: Find max numeric value from codes matching pattern M###
@@ -46,6 +51,7 @@ export async function GET() {
         FROM "Member"
         WHERE code LIKE 'M%'
           AND LENGTH(code) >= 2
+          AND "tenantId" = ${tenantId}
           AND ${sqlNumericCodeSuffix()}
       `;
 
@@ -58,6 +64,7 @@ export async function GET() {
         const members = await prisma.member.findMany({
           select: { code: true },
           where: {
+            tenantId,
             code: {
               startsWith: 'M',
             },
@@ -78,6 +85,7 @@ export async function GET() {
       const members = await prisma.member.findMany({
         select: { code: true },
         where: {
+          tenantId,
           code: {
             startsWith: 'M',
           },
@@ -111,7 +119,7 @@ export async function GET() {
     while (attempts < maxAttempts) {
       // Check if the generated code already exists in database
       const existing = await prisma.member.findUnique({
-        where: { code: nextCode },
+        where: { tenantId_code: { tenantId, code: nextCode } },
         select: { id: true }, // Only select id for faster query
       });
       

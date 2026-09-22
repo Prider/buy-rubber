@@ -27,6 +27,7 @@
  *   GANGS=25000 SALES_PER_GANG=3 npm run db:seed:gangs:for:test
  */
 import { PrismaClient } from '@prisma/client';
+import { resolveDefaultTenant } from './resolveDefaultTenant';
 
 const prisma = new PrismaClient();
 
@@ -56,6 +57,7 @@ const COMPANY_NAMES = [
 type StockState = { qtyKg: number; avgCostPerKg: number };
 
 type LedgerRow = {
+  tenantId: string;
   productTypeId: string;
   refType: string;
   refNo: string;
@@ -70,6 +72,7 @@ type LedgerRow = {
 };
 
 type SaleRow = {
+  tenantId: string;
   saleNo: string;
   date: Date;
   createdAt: Date;
@@ -103,8 +106,9 @@ async function main() {
   console.log(`   - spanMonths=${SPAN_MONTHS}, openLast=${OPEN_LAST ? 'yes' : 'no'}`);
   console.log(`   - expected ledger entries ≈ ${expectedLedger.toLocaleString()}`);
 
+  const tenant = await resolveDefaultTenant(prisma);
   const user = await prisma.user.findFirst({
-    where: { isActive: true },
+    where: { tenantId: tenant.id, isActive: true },
     orderBy: { createdAt: 'asc' },
   });
   if (!user) {
@@ -113,8 +117,8 @@ async function main() {
   }
 
   const productType = PRODUCT_TYPE_CODE
-    ? await prisma.productType.findFirst({ where: { code: PRODUCT_TYPE_CODE } })
-    : await prisma.productType.findFirst({ orderBy: { code: 'asc' } });
+    ? await prisma.productType.findFirst({ where: { tenantId: tenant.id, code: PRODUCT_TYPE_CODE } })
+    : await prisma.productType.findFirst({ where: { tenantId: tenant.id }, orderBy: { code: 'asc' } });
 
   if (!productType) {
     console.error('❌ ไม่พบประเภทสินค้า — รัน npm run db:seed ก่อน');
@@ -125,13 +129,14 @@ async function main() {
 
   let destinationCompanyId: string | null = null;
   const existingCompany = await prisma.destinationCompany.findFirst({
+    where: { tenantId: tenant.id },
     orderBy: { code: 'asc' },
   });
   if (existingCompany) {
     destinationCompanyId = existingCompany.id;
   } else {
     const created = await prisma.destinationCompany.create({
-      data: { code: 'C001', name: COMPANY_NAMES[0] },
+      data: { tenantId: tenant.id, code: 'C001', name: COMPANY_NAMES[0] },
     });
     destinationCompanyId = created.id;
   }
@@ -215,6 +220,7 @@ async function main() {
       eventIndex += 1;
 
       ledgerBatch.push({
+        tenantId: tenant.id,
         productTypeId: productType.id,
         refType: 'PURCHASE',
         refNo: `${REF_PREFIX}-PUR-${pad(gangNo, 6)}-${pad(p + 1, 2)}`,
@@ -256,6 +262,7 @@ async function main() {
       const totalAmount = parseFloat((sellQty * pricePerUnit).toFixed(2));
 
       saleBatch.push({
+        tenantId: tenant.id,
         saleNo,
         date: at,
         createdAt: at,
@@ -276,6 +283,7 @@ async function main() {
       });
 
       ledgerBatch.push({
+        tenantId: tenant.id,
         productTypeId: productType.id,
         refType: 'SALE',
         refNo: saleNo,
@@ -322,6 +330,7 @@ async function main() {
 
   await prisma.stockPosition.create({
     data: {
+      tenantId: tenant.id,
       productTypeId: productType.id,
       quantityKg: state.qtyKg,
       avgCostPerKg: state.avgCostPerKg,

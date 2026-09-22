@@ -270,7 +270,7 @@ export async function ensureBackupDirectory() {
 }
 
 // สร้างไฟล์สำรองข้อมูล
-export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
+export async function createBackup(backupType: 'auto' | 'manual' = 'manual', tenantId?: string) {
   try {
     const dbUrl = process.env.DATABASE_URL || '';
     if (!dbUrl.startsWith('file:')) {
@@ -332,9 +332,17 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     const stats = await fsPromises.stat(backupPath);
     const fileSize = stats.size;
 
+    if (!tenantId) {
+      return {
+        success: false,
+        error: 'ไม่พบข้อมูลร้านค้าสำหรับการสำรองข้อมูล',
+      };
+    }
+
     // บันทึกข้อมูลการสำรองลงฐานข้อมูล
     const backup = await prisma.backup.create({
       data: {
+        tenantId,
         fileName,
         filePath: backupPath,
         fileSize,
@@ -343,7 +351,7 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
     });
 
     // ทำความสะอาดไฟล์เก่า
-    await cleanupOldBackups();
+    await cleanupOldBackups(tenantId);
 
     logger.info('Backup created successfully', { fileName, fileSize });
     return {
@@ -361,7 +369,7 @@ export async function createBackup(backupType: 'auto' | 'manual' = 'manual') {
 }
 
 // เรียกคืนข้อมูลจากไฟล์สำรอง
-export async function restoreBackup(backupId: string) {
+export async function restoreBackup(backupId: string, tenantId?: string) {
   try {
     const dbUrl = process.env.DATABASE_URL || '';
     if (!dbUrl.startsWith('file:')) {
@@ -376,7 +384,7 @@ export async function restoreBackup(backupId: string) {
       where: { id: backupId },
     });
 
-    if (!backup) {
+    if (!backup || (tenantId && backup.tenantId !== tenantId)) {
       throw new Error('Backup not found');
     }
 
@@ -389,7 +397,7 @@ export async function restoreBackup(backupId: string) {
 
     // สำรองฐานข้อมูลปัจจุบันก่อนเรียกคืน (safety)
     logger.info('Creating safety backup before restore');
-    await createBackup('auto');
+    await createBackup('auto', backup.tenantId);
 
     const result = await restoreDatabaseFromFile(backup.filePath, backup.fileName, { backupId });
     logger.info('Backup restored successfully', { fileName: backup.fileName });
@@ -411,7 +419,7 @@ export async function restoreBackup(backupId: string) {
 }
 
 // รีเซ็ตฐานข้อมูลกลับสู่ไฟล์ข้อมูลเริ่มต้น
-export async function resetToInitialData() {
+export async function resetToInitialData(tenantId?: string) {
   try {
     const dbUrl = process.env.DATABASE_URL || '';
     if (!dbUrl.startsWith('file:')) {
@@ -431,7 +439,7 @@ export async function resetToInitialData() {
 
     logger.info('Starting reset to initial data', { initialPath });
     logger.info('Creating safety backup before reset');
-    const safetyResult = await createBackup('auto');
+    const safetyResult = await createBackup('auto', tenantId);
     const safetyBackup = safetyResult.success ? safetyResult.backup : undefined;
 
     const result = await restoreDatabaseFromFile(initialPath, path.basename(initialPath), {
@@ -442,6 +450,7 @@ export async function resetToInitialData() {
       try {
         await prisma.backup.create({
           data: {
+            tenantId: tenantId ?? safetyBackup.tenantId,
             fileName: safetyBackup.fileName,
             filePath: safetyBackup.filePath,
             fileSize: safetyBackup.fileSize,
@@ -476,9 +485,10 @@ export async function resetToInitialData() {
 }
 
 // รับรายการไฟล์สำรอง
-export async function getBackupList() {
+export async function getBackupList(tenantId?: string) {
   try {
     const backups = await prisma.backup.findMany({
+      where: tenantId ? { tenantId } : undefined,
       orderBy: { createdAt: 'desc' },
       take: 100, // จำกัดที่ 100 รายการล่าสุด
     });
@@ -491,13 +501,13 @@ export async function getBackupList() {
 }
 
 // ลบไฟล์สำรอง
-export async function deleteBackup(backupId: string) {
+export async function deleteBackup(backupId: string, tenantId?: string) {
   try {
     const backup = await prisma.backup.findUnique({
       where: { id: backupId },
     });
 
-    if (!backup) {
+    if (!backup || (tenantId && backup.tenantId !== tenantId)) {
       throw new Error('Backup not found');
     }
 
@@ -528,12 +538,16 @@ export async function deleteBackup(backupId: string) {
 }
 
 // ทำความสะอาดไฟล์เก่า (ตามการตั้งค่า)
-export async function cleanupOldBackups() {
+export async function cleanupOldBackups(tenantId?: string) {
   try {
     // หาการตั้งค่าจำนวนสูงสุด
-    const maxBackupsSetting = await prisma.setting.findUnique({
-      where: { key: 'backup_max_count' },
-    });
+    const maxBackupsSetting = tenantId
+      ? await prisma.setting.findUnique({
+          where: { tenantId_key: { tenantId, key: 'backup_max_count' } },
+        })
+      : await prisma.setting.findFirst({
+          where: { key: 'backup_max_count' },
+        });
 
     const maxBackups = maxBackupsSetting 
       ? parseInt(maxBackupsSetting.value) || 30 
@@ -541,6 +555,7 @@ export async function cleanupOldBackups() {
 
     // ดึงรายการทั้งหมดเรียงตามวันที่ (เก่าที่สุดก่อน)
     const backups = await prisma.backup.findMany({
+      where: tenantId ? { tenantId } : undefined,
       orderBy: { createdAt: 'asc' },
     });
 
@@ -573,7 +588,7 @@ export async function cleanupOldBackups() {
 export async function autoBackup() {
   try {
     logger.info('Auto backup triggered');
-    const autoBackupSetting = await prisma.setting.findUnique({
+    const autoBackupSetting = await prisma.setting.findFirst({
       where: { key: 'backup_enabled' },
     });
 

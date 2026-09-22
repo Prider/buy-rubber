@@ -63,7 +63,7 @@ function TestComponent() {
       <button
         data-testid="login-button"
         onClick={async () => {
-          await login('testuser', 'password');
+          await login('demo', 'testuser', 'password');
         }}
       >
         Login
@@ -264,7 +264,7 @@ describe('AuthContext', () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: 'testuser', password: 'password' }),
+        body: JSON.stringify({ slug: 'demo', username: 'testuser', password: 'password' }),
       });
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', expect.any(String));

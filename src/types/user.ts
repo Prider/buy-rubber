@@ -1,5 +1,6 @@
-// User types and interfaces
 export type UserRole = 'root' | 'admin' | 'user' | 'viewer';
+export type TenantPlan = 'freemium' | 'premium';
+export type TenantStatus = 'active' | 'pending_payment' | 'rejected';
 
 /** Roles that can be assigned via the admin UI / API (root is seed-only). */
 export const ASSIGNABLE_ROLES: UserRole[] = ['viewer', 'user', 'admin'];
@@ -14,12 +15,16 @@ export function isRootRole(role: string | undefined | null): boolean {
 
 export interface User {
   id: string;
+  tenantId: string;
   username: string;
-  password: string; // This will be hashed
+  password: string;
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
+  tenantSlug?: string;
+  plan?: TenantPlan;
+  tenantStatus?: TenantStatus;
 }
 
 export interface CreateUserRequest {
@@ -36,6 +41,7 @@ export interface UpdateUserRequest {
 }
 
 export interface LoginRequest {
+  slug: string;
   username: string;
   password: string;
 }
@@ -51,14 +57,13 @@ export interface AuthContextType {
   user: Omit<User, 'password'> | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (slug: string, username: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
 }
 
-// Permission types
-export type Permission = 
+export type Permission =
   | 'user.create'
   | 'user.read'
   | 'user.update'
@@ -80,7 +85,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   'prices.update',
   'locations.read',
   'locations.update',
-  'admin.settings'
+  'admin.settings',
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -91,11 +96,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'prices.read',
     'prices.update',
     'locations.read',
-    'locations.update'
+    'locations.update',
   ],
-  viewer: [
-    'dashboard.read',
-    'prices.read',
-    'locations.read'
-  ]
+  viewer: ['dashboard.read', 'prices.read', 'locations.read'],
 };

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { normalizeSlipPaperSize, type SlipPaperSizeId } from '@/lib/slipPaper';
+import { requireTenantAuth } from '@/lib/tenant';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
 const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';
@@ -16,10 +17,15 @@ function getString(val: unknown): string | null {
 }
 
 // GET /api/slip/settings - ดึงการตั้งค่าการพิมพ์สลิป
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const settings = await prisma.setting.findMany({
       where: {
+        tenantId,
         key: {
           in: [KEY_COMPANY_NAME, KEY_COMPANY_ADDRESS, KEY_PAPER_SIZE],
         },
@@ -45,6 +51,10 @@ export async function GET() {
 // POST /api/slip/settings - บันทึกการตั้งค่าการพิมพ์สลิป
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     const companyName = getString(data?.companyName)?.trim() || DEFAULT_COMPANY_NAME;
     const companyAddress = getString(data?.companyAddress)?.trim() || DEFAULT_COMPANY_ADDRESS;
@@ -53,25 +63,27 @@ export async function POST(request: NextRequest) {
     if (typeof data?.paperSize === 'string') {
       paperSize = normalizeSlipPaperSize(data.paperSize);
     } else {
-      const existing = await prisma.setting.findUnique({ where: { key: KEY_PAPER_SIZE } });
+      const existing = await prisma.setting.findUnique({
+        where: { tenantId_key: { tenantId, key: KEY_PAPER_SIZE } },
+      });
       paperSize = normalizeSlipPaperSize(existing?.value);
     }
 
     await Promise.all([
       prisma.setting.upsert({
-        where: { key: KEY_COMPANY_NAME },
+        where: { tenantId_key: { tenantId, key: KEY_COMPANY_NAME } },
         update: { value: companyName },
-        create: { key: KEY_COMPANY_NAME, value: companyName },
+        create: { tenantId, key: KEY_COMPANY_NAME, value: companyName },
       }),
       prisma.setting.upsert({
-        where: { key: KEY_COMPANY_ADDRESS },
+        where: { tenantId_key: { tenantId, key: KEY_COMPANY_ADDRESS } },
         update: { value: companyAddress },
-        create: { key: KEY_COMPANY_ADDRESS, value: companyAddress },
+        create: { tenantId, key: KEY_COMPANY_ADDRESS, value: companyAddress },
       }),
       prisma.setting.upsert({
-        where: { key: KEY_PAPER_SIZE },
+        where: { tenantId_key: { tenantId, key: KEY_PAPER_SIZE } },
         update: { value: paperSize },
-        create: { key: KEY_PAPER_SIZE, value: paperSize },
+        create: { tenantId, key: KEY_PAPER_SIZE, value: paperSize },
       }),
     ]);
 

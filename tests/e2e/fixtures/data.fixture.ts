@@ -24,7 +24,7 @@ export function apiHeaders(token: string) {
  */
 export async function getAdminToken(request: APIRequestContext): Promise<string> {
   const res = await request.post(`${BASE}/api/auth/login`, {
-    data: { username: 'admin', password: 'admin123' },
+    data: { slug: 'demo', username: 'admin', password: 'admin123' },
   })
   const body = await res.json()
   return body.token as string
@@ -34,7 +34,7 @@ export async function getAdminToken(request: APIRequestContext): Promise<string>
 export async function getViewerToken(request: APIRequestContext): Promise<string> {
   await ensureViewerUser(request)
   const res = await request.post(`${BASE}/api/auth/login`, {
-    data: { username: 'demo', password: 'demo@123' },
+    data: { slug: 'demo', username: 'demo', password: 'demo@123' },
   })
   if (!res.ok()) {
     throw new Error(`Failed to get viewer token: ${res.status()}`)
@@ -465,7 +465,7 @@ export async function ensureViewerUser(request: APIRequestContext): Promise<void
   const demoCredentials = { username: 'demo', password: 'demo@123' }
 
   const loginRes = await request.post(`${BASE}/api/auth/login`, {
-    data: demoCredentials,
+    data: { slug: 'demo', ...demoCredentials },
   })
 
   if (loginRes.ok()) {

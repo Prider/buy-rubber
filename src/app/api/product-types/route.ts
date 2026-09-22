@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS, CACHE_TTL, invalidateProductTypesCache } from '@/lib/cache';
+import { cache, CACHE_KEYS, CACHE_TTL, invalidateProductTypesCache, tenantKey } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -14,9 +15,16 @@ function parseIncludeInactive(searchParams: URLSearchParams): boolean {
 // GET /api/product-types — active only by default; ?includeInactive=1 for admin lists
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const includeInactive = parseIncludeInactive(searchParams);
-    const cacheKey = includeInactive ? CACHE_KEYS.PRODUCT_TYPES_ALL : CACHE_KEYS.PRODUCT_TYPES_ACTIVE;
+    const cacheKey = tenantKey(
+      tenantId,
+      includeInactive ? CACHE_KEYS.PRODUCT_TYPES_ALL : CACHE_KEYS.PRODUCT_TYPES_ACTIVE,
+    );
 
     logger.info('GET /api/product-types', { includeInactive });
 
@@ -28,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('GET /api/product-types - Cache miss, fetching from database', { includeInactive });
     const productTypes = await prisma.productType.findMany({
-      where: includeInactive ? undefined : { isActive: true },
+      where: includeInactive ? { tenantId } : { tenantId, isActive: true },
       orderBy: { code: 'asc' },
     });
 
@@ -48,6 +56,10 @@ export async function GET(request: NextRequest) {
 // POST /api/product-types - Create new product type
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const body = await request.json();
     const { code, name, description } = body;
 
@@ -63,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Check if code already exists
     const existing = await prisma.productType.findUnique({
-      where: { code },
+      where: { tenantId_code: { tenantId, code } },
     });
 
     if (existing) {
@@ -76,13 +88,14 @@ export async function POST(request: NextRequest) {
 
     const productType = await prisma.productType.create({
       data: {
+        tenantId,
         code,
         name,
         description: description || null,
       },
     });
 
-    invalidateProductTypesCache();
+    invalidateProductTypesCache(tenantId);
     logger.info('POST /api/product-types - Cache invalidated');
 
     logger.info('POST /api/product-types - Success', { id: productType.id, code });

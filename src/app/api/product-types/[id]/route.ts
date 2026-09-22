@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
 import { invalidateProductTypesCache } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 type SaleCountDelegate = {
   count(args?: unknown): Promise<number>;
@@ -22,6 +23,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const body = await request.json();
     const { name, description, isActive } = body;
 
@@ -30,6 +35,14 @@ export async function PUT(
         { error: 'Name is required' },
         { status: 400 }
       );
+    }
+
+    const existing = await prisma.productType.findUnique({
+      where: { id: params.id },
+      select: { id: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json({ error: 'Product type not found' }, { status: 404 });
     }
 
     const data: {
@@ -49,7 +62,7 @@ export async function PUT(
       data,
     });
 
-    invalidateProductTypesCache();
+    invalidateProductTypesCache(tenantId);
 
     return NextResponse.json(productType);
   } catch (error) {
@@ -67,20 +80,24 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const existing = await prisma.productType.findUnique({
       where: { id: params.id },
-      select: { id: true },
+      select: { id: true, tenantId: true },
     });
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return NextResponse.json({ error: 'Product type not found' }, { status: 404 });
     }
 
     const saleCountPromise = asSale.sale
-      ? asSale.sale.count({ where: { productTypeId: params.id } })
+      ? asSale.sale.count({ where: { tenantId, productTypeId: params.id } })
       : Promise.resolve(0);
 
     const [purchaseCount, saleCount, ledgerCount, positionRow] = await Promise.all([
-      prisma.purchase.count({ where: { productTypeId: params.id } }),
+      prisma.purchase.count({ where: { tenantId, productTypeId: params.id } }),
       saleCountPromise,
       stockLedgerEntry.count({ where: { productTypeId: params.id } }),
       stockPosition.findUnique({
@@ -97,7 +114,7 @@ export async function DELETE(
         where: { id: params.id },
         data: { isActive: false },
       });
-      invalidateProductTypesCache();
+      invalidateProductTypesCache(tenantId);
       return NextResponse.json({
         success: true,
         deactivated: true,
@@ -109,7 +126,7 @@ export async function DELETE(
       where: { id: params.id },
     });
 
-    invalidateProductTypesCache();
+    invalidateProductTypesCache(tenantId);
 
     return NextResponse.json({ success: true, deactivated: false });
   } catch (error) {

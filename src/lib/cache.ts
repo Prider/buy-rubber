@@ -105,13 +105,27 @@ export const CACHE_KEYS = {
   PURCHASE_TX_COUNT: 'purchase-tx-count',
 } as const;
 
-export function invalidateProductTypesCache(): void {
+export function tenantKey(tenantId: string, key: string): string {
+  return `tenant:${tenantId}:${key}`;
+}
+
+export function invalidateProductTypesCache(tenantId?: string): void {
+  if (tenantId) {
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.PRODUCT_TYPES_ACTIVE));
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.PRODUCT_TYPES_ALL));
+    return;
+  }
   cache.delete(CACHE_KEYS.PRODUCT_TYPES_ACTIVE);
   cache.delete(CACHE_KEYS.PRODUCT_TYPES_ALL);
 }
 
 /** Dashboard stats and purchases-list group counts both change on purchase writes. */
-export function invalidatePurchaseCaches(): void {
+export function invalidatePurchaseCaches(tenantId?: string): void {
+  if (tenantId) {
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
+    cache.deletePattern(`^tenant:${tenantId}:${CACHE_KEYS.PURCHASE_TX_COUNT}:`);
+    return;
+  }
   cache.delete(CACHE_KEYS.DASHBOARD);
   cache.deletePattern(`^${CACHE_KEYS.PURCHASE_TX_COUNT}:`);
 }

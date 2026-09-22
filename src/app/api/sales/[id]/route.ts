@@ -4,11 +4,13 @@ import { logger } from '@/lib/logger';
 import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { reverseSaleFromStock } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
 type SaleRecord = {
   id: string;
+  tenantId: string;
   saleNo: string;
   date: Date;
   productTypeId: string;
@@ -26,6 +28,7 @@ const asSale = prisma as unknown as { sale?: SaleDelegate };
 
 const saleDetailSelect = {
   id: true,
+  tenantId: true,
   saleNo: true,
   date: true,
   userId: true,
@@ -52,10 +55,14 @@ const saleDetailSelect = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
@@ -65,7 +72,7 @@ export async function GET(
       select: saleDetailSelect,
     });
 
-    if (!sale) {
+    if (!sale || sale.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 
@@ -81,16 +88,20 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
     const sale = await asSale.sale.findUnique({
       where: { id: params.id },
-      select: { id: true, saleNo: true, date: true, productTypeId: true, weight: true, unitCostPerKg: true },
+      select: { id: true, tenantId: true, saleNo: true, date: true, productTypeId: true, weight: true, unitCostPerKg: true },
     });
 
-    if (!sale) {
+    if (!sale || sale.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 
@@ -118,17 +129,17 @@ export async function PUT(
     const [productType, destinationCompany] = await Promise.all([
       prisma.productType.findUnique({
         where: { id: data.productTypeId },
-        select: { id: true },
+        select: { id: true, tenantId: true },
       }),
       prisma.destinationCompany.findUnique({
         where: { id: String(data.destinationCompanyId) },
-        select: { id: true, name: true },
+        select: { id: true, name: true, tenantId: true },
       }),
     ]);
-    if (!productType) {
+    if (!productType || productType.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
     }
-    if (!destinationCompany) {
+    if (!destinationCompany || destinationCompany.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง' }, { status: 404 });
     }
 
@@ -191,14 +202,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการจัดการการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
     const sale = await asSale.sale.findUnique({
       where: { id: params.id },
-      select: { id: true, saleNo: true, productTypeId: true, weight: true },
+      select: { id: true, tenantId: true, saleNo: true, productTypeId: true, weight: true },
     });
-    if (!sale) {
+    if (!sale || sale.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
     }
 

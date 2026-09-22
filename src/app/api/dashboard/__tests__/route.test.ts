@@ -430,7 +430,7 @@ describe('GET /api/dashboard', () => {
       expect(data.productTypes).toHaveLength(1);
       expect(vi.mocked(prisma.productType.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { isActive: true },
+          where: { tenantId: 'tenant-1', isActive: true },
         })
       );
     });

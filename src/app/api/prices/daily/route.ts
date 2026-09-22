@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { cache, CACHE_KEYS, tenantKey } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -9,6 +10,10 @@ export const runtime = 'nodejs';
 // GET /api/prices/daily - Get prices for a specific date
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
     
@@ -26,6 +31,7 @@ export async function GET(request: NextRequest) {
     
     const prices = await prisma.productPrice.findMany({
       where: {
+        tenantId,
         date: {
           gte: targetDate,
           lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000), // Next day
@@ -56,6 +62,10 @@ export async function GET(request: NextRequest) {
 // POST /api/prices/daily - Set prices for a specific date
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const body = await request.json();
     const { date, prices } = body;
 
@@ -76,6 +86,7 @@ export async function POST(request: NextRequest) {
     // Delete existing prices for this date (if any)
     const deletedCount = await prisma.productPrice.deleteMany({
       where: {
+        tenantId,
         date: {
           gte: new Date(date + 'T00:00:00'),
           lte: new Date(date + 'T23:59:59'),
@@ -102,6 +113,7 @@ export async function POST(request: NextRequest) {
       uniquePrices.map(async (p) => {
         return await prisma.productPrice.create({
           data: {
+            tenantId,
             date: priceDate,
             productTypeId: p.productTypeId,
             price: p.price,
@@ -111,7 +123,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Invalidate dashboard cache when prices are updated (dashboard shows today's prices)
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
     logger.info('POST /api/prices/daily - Success', { count: createdPrices.length });
 

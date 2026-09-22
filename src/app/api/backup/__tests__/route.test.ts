@@ -47,21 +47,21 @@ describe('GET /api/backup', () => {
 
     vi.mocked(backupLib.getBackupList).mockResolvedValue(mockBackups);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup'));
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.backups).toHaveLength(1);
     expect(data.backups[0].id).toBe(mockBackups[0].id);
     expect(data.backups[0].fileName).toBe(mockBackups[0].fileName);
-    expect(vi.mocked(backupLib.getBackupList)).toHaveBeenCalled();
+    expect(vi.mocked(backupLib.getBackupList)).toHaveBeenCalledWith('tenant-1');
   });
 
   it('should return 500 when getBackupList fails', async () => {
     const error = new Error('Database connection failed');
     vi.mocked(backupLib.getBackupList).mockRejectedValue(error);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup'));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -111,7 +111,7 @@ describe('POST /api/backup', () => {
     expect(data.success).toBe(true);
     expect(data.backup.id).toBe(mockBackup.id);
     expect(data.backup.fileName).toBe(mockBackup.fileName);
-    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual');
+    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual', 'tenant-1');
   });
 
   it('should create an auto backup when type is auto', async () => {
@@ -139,7 +139,7 @@ describe('POST /api/backup', () => {
     await response.json();
 
     expect(response.status).toBe(200);
-    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('auto');
+    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('auto', 'tenant-1');
   });
 
   it('should default to manual backup when type is not provided', async () => {
@@ -167,7 +167,7 @@ describe('POST /api/backup', () => {
     await response.json();
 
     expect(response.status).toBe(200);
-    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual');
+    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual', 'tenant-1');
   });
 
   it('should handle invalid JSON body', async () => {
@@ -195,7 +195,7 @@ describe('POST /api/backup', () => {
     await response.json();
 
     expect(response.status).toBe(200);
-    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual');
+    expect(vi.mocked(backupLib.createBackup)).toHaveBeenCalledWith('manual', 'tenant-1');
   });
 
   it('should return 500 when backup creation fails', async () => {
@@ -263,7 +263,7 @@ describe('PUT /api/backup', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(vi.mocked(backupLib.restoreBackup)).toHaveBeenCalledWith('backup-1');
+    expect(vi.mocked(backupLib.restoreBackup)).toHaveBeenCalledWith('backup-1', 'tenant-1');
   });
 
   it('should return 400 when id is missing', async () => {
@@ -341,7 +341,7 @@ describe('DELETE /api/backup', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(vi.mocked(backupLib.deleteBackup)).toHaveBeenCalledWith('backup-1');
+    expect(vi.mocked(backupLib.deleteBackup)).toHaveBeenCalledWith('backup-1', 'tenant-1');
   });
 
   it('should return 400 when id is missing', async () => {

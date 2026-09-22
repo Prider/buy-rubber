@@ -12,9 +12,13 @@ import {
 const gangFindMany = vi.fn();
 const gangCount = vi.fn();
 const saleFindMany = vi.fn();
+const productTypeFindUnique = vi.fn();
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    productType: {
+      findUnique: (...args: unknown[]) => productTypeFindUnique(...args),
+    },
     sale: {
       findMany: (...args: unknown[]) => saleFindMany(...args),
     },
@@ -38,6 +42,7 @@ describe('GET /api/stock/gangs', () => {
     gangFindMany.mockResolvedValue([]);
     gangCount.mockResolvedValue(0);
     saleFindMany.mockResolvedValue([]);
+    productTypeFindUnique.mockResolvedValue({ id: 'pt-1', tenantId: 'tenant-1' });
   });
 
   it('returns materialized gang with revenue/cogs/profitLoss', async () => {
@@ -77,7 +82,7 @@ describe('GET /api/stock/gangs', () => {
 
     expect(gangFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { productTypeId: 'pt-1' },
+        where: { productTypeId: 'pt-1', tenantId: 'tenant-1' },
         orderBy: { gangNo: 'desc' },
         skip: 0,
         take: 10,
@@ -85,7 +90,7 @@ describe('GET /api/stock/gangs', () => {
     );
     expect(saleFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { saleNo: { in: ['SAL-1', 'SAL-2'] } },
+        where: { tenantId: 'tenant-1', saleNo: { in: ['SAL-1', 'SAL-2'] } },
       }),
     );
   });
@@ -147,9 +152,11 @@ describe('GET /api/stock/gangs', () => {
 
     const where = gangFindMany.mock.calls[0]?.[0]?.where as {
       productTypeId: string;
+      tenantId: string;
       AND: Array<Record<string, unknown>>;
     };
     expect(where.productTypeId).toBe('pt-1');
+    expect(where.tenantId).toBe('tenant-1');
     expect(where.AND).toHaveLength(2);
 
     const startedByEnd = where.AND.find((clause) => 'startDate' in clause) as {
@@ -240,6 +247,7 @@ describe('GET /api/stock/gangs', () => {
         expect(gangFindMany).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
+              tenantId: 'tenant-1',
               productTypeId: 'pt-1',
               AND: expect.any(Array),
             }),

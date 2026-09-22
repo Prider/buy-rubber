@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateDocumentNumber } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -9,6 +10,10 @@ export const runtime = 'nodejs';
 // GET /api/servicefees - Get service fees
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -18,7 +23,7 @@ export async function GET(request: NextRequest) {
     const requestedLimit = parseInt(searchParams.get('limit') || '200');
     const limit = Math.min(isNaN(requestedLimit) || requestedLimit <= 0 ? 200 : requestedLimit, 500);
 
-    const where: any = {};
+    const where: any = { tenantId };
 
     if (startDate || endDate) {
       where.date = {};
@@ -74,12 +79,16 @@ export async function GET(request: NextRequest) {
 // POST /api/servicefees - Create service fee (single or batch)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     logger.debug('ServiceFee POST request data', data);
 
     // Check if this is a batch request (array of service fees)
     if (Array.isArray(data.items) && data.items.length > 0) {
-      return handleBatchServiceFee(data);
+      return handleBatchServiceFee(data, tenantId);
     }
 
     // Single service fee (if needed in the future)
@@ -126,6 +135,7 @@ export async function POST(request: NextRequest) {
 
     const serviceFee = await prisma.serviceFee.create({
       data: {
+        tenantId,
         serviceFeeNo,
         purchaseNo: purchaseNo || null,
         date: serviceFeeDate,
@@ -154,7 +164,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle batch service fee creation
-async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; date?: string }) {
+async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; date?: string }, tenantId: string) {
   try {
     const { items, purchaseNo, date } = data;
 
@@ -197,6 +207,7 @@ async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; 
 
       const itemDate = item.date ? new Date(item.date) : (date ? new Date(date) : new Date());
       serviceFeeDataList.push({
+        tenantId,
         serviceFeeNo: '', // filled below with retry-safe generation
         purchaseNo: purchaseNo || null,
         date: itemDate,

@@ -1,17 +1,20 @@
-import { cache, CACHE_KEYS, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { cache, CACHE_KEYS, CACHE_TTL, generateCacheKey, tenantKey } from '@/lib/cache';
 import {
   countTransactionGroups,
   type TransactionQueryFilters,
 } from '@/lib/purchases/transactionQuery';
 
 export function transactionGroupCountCacheKey(filters: TransactionQueryFilters): string {
-  return generateCacheKey(CACHE_KEYS.PURCHASE_TX_COUNT, {
-    startDate: filters.startDate.toISOString(),
-    endDate: filters.endDate.toISOString(),
-    memberId: filters.memberId ?? '',
-    search: filters.searchTerm ?? '',
-    searchMemberIds: [...(filters.searchMemberIds ?? [])].sort().join(','),
-  });
+  return tenantKey(
+    filters.tenantId,
+    generateCacheKey(CACHE_KEYS.PURCHASE_TX_COUNT, {
+      startDate: filters.startDate.toISOString(),
+      endDate: filters.endDate.toISOString(),
+      memberId: filters.memberId ?? '',
+      search: filters.searchTerm ?? '',
+      searchMemberIds: [...(filters.searchMemberIds ?? [])].sort().join(','),
+    }),
+  );
 }
 
 export async function countTransactionGroupsCached(

@@ -82,8 +82,8 @@ class ApiClient {
   }
 
   // Specific API methods
-  public async login(username: string, password: string) {
-    return this.post('/api/auth/login', { username, password });
+  public async login(slug: string, username: string, password: string) {
+    return this.post('/api/auth/login', { slug, username, password });
   }
 
   public async getDashboard() {

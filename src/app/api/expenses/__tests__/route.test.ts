@@ -39,6 +39,7 @@ vi.mock('@/lib/cache', () => ({
   CACHE_KEYS: {
     DASHBOARD: 'dashboard',
   },
+  tenantKey: (tenantId: string, key: string) => `tenant:${tenantId}:${key}`,
 }));
 
 describe('GET /api/expenses', () => {
@@ -99,6 +100,7 @@ describe('GET /api/expenses', () => {
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               gte: expect.any(Date),
             }),
@@ -120,6 +122,7 @@ describe('GET /api/expenses', () => {
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               lte: expect.any(Date),
             }),
@@ -141,6 +144,7 @@ describe('GET /api/expenses', () => {
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               gte: expect.any(Date),
               lte: expect.any(Date),
@@ -163,6 +167,7 @@ describe('GET /api/expenses', () => {
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             category: 'ค่าน้ำมัน',
           }),
         })

@@ -1,6 +1,26 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+vi.mock('@/lib/tenant', () => ({
+  requireTenantAuth: vi.fn(async () => ({
+    ok: true,
+    auth: {
+      userId: 'admin-1',
+      username: 'admin',
+      role: 'admin',
+      tenantId: 'tenant-1',
+      tenantSlug: 'demo',
+      plan: 'premium',
+      tenantStatus: 'active',
+    },
+  })),
+  requirePlatformAuth: vi.fn(async () => ({
+    ok: true,
+    auth: { userId: 'owner-1', username: 'owner' },
+  })),
+  isPremiumActive: vi.fn(() => true),
+}))
+
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: () => ({

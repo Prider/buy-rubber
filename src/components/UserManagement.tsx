@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, CreateUserRequest, UpdateUserRequest, isRootRole } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
@@ -23,12 +24,14 @@ interface UserManagementProps {
 }
 
 export default function UserManagement({ className = '' }: UserManagementProps) {
+  const router = useRouter();
   const { user: currentUser } = useAuth();
   const { showConfirm } = useAlert();
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [canAddUsers, setCanAddUsers] = useState(true);
   
   // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -57,6 +60,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
+        setCanAddUsers(data.canAddUsers !== false);
         if (data.users.length >= MAX_USERS) {
           setError(USER_LIMIT_MESSAGE);
         }
@@ -210,8 +214,6 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
     });
   };
 
-  const isAtUserLimit = users.length >= MAX_USERS;
-
   const handleCreateFieldChange = <K extends keyof CreateUserRequest>(field: K, value: CreateUserRequest[K]) => {
     setCreateForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -220,8 +222,14 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const isAtUserLimit = users.length >= MAX_USERS || !canAddUsers;
+
   const handleOpenCreateModal = () => {
-    if (isAtUserLimit) {
+    if (!canAddUsers) {
+      setError('แพ็คเกจฟรีใช้ได้ 1 ผู้ใช้ กรุณาอัปเกรดเป็น Premium');
+      return;
+    }
+    if (users.length >= MAX_USERS) {
       setError(USER_LIMIT_MESSAGE);
       return;
     }
@@ -256,14 +264,25 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">จัดการผู้ใช้งาน</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1">จัดการบัญชีผู้ใช้งานและสิทธิ์การเข้าถึงระบบ</p>
         </div>
-        <button
-          onClick={handleOpenCreateModal}
-          className="group relative flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-          disabled={isAtUserLimit}
-          title={isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
-        >
-          เพิ่มผู้ใช้งาน
-        </button>
+        <div className="flex gap-3">
+          {!canAddUsers && (
+            <button
+              type="button"
+              onClick={() => router.push('/signup/payment')}
+              className="px-5 py-2.5 bg-green-600 text-white rounded-xl font-medium"
+            >
+              อัปเกรด Premium
+            </button>
+          )}
+          <button
+            onClick={handleOpenCreateModal}
+            className="group relative flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+            disabled={isAtUserLimit}
+            title={!canAddUsers ? 'แพ็คเกจฟรีใช้ได้ 1 ผู้ใช้' : isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
+          >
+            เพิ่มผู้ใช้งาน
+          </button>
+        </div>
       </div>
 
       <MessageBanner variant="error" message={error} />

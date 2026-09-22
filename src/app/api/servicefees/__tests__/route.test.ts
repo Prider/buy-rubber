@@ -74,7 +74,7 @@ describe('GET /api/servicefees', () => {
       expect(data.serviceFees[0].serviceFeeNo).toBe(mockServiceFee.serviceFeeNo);
       expect(data.pagination.total).toBe(1);
       expect(vi.mocked(prisma.serviceFee.findMany)).toHaveBeenCalledWith({
-        where: {},
+        where: { tenantId: 'tenant-1' },
         orderBy: { date: 'desc' },
         take: 200,
         skip: 0,

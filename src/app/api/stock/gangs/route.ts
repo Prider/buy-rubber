@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { stockGang } from '@/lib/prismaStock';
 import { parseSaleNosJson } from '@/lib/stock/stockGangs';
 import { buildGangWhere, parseGangDateRange } from './dateRange';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +24,10 @@ type SaleRow = { saleNo: string; totalAmount: number };
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const productTypeId = searchParams.get('productTypeId');
     const pageParam = searchParams.get('page');
@@ -30,6 +35,14 @@ export async function GET(request: NextRequest) {
 
     if (!productTypeId) {
       return NextResponse.json({ error: 'Missing productTypeId' }, { status: 400 });
+    }
+
+    const productType = await prisma.productType.findUnique({
+      where: { id: productTypeId },
+      select: { id: true, tenantId: true },
+    });
+    if (!productType || productType.tenantId !== tenantId) {
+      return NextResponse.json({ error: 'ไม่พบประเภทสินค้า' }, { status: 404 });
     }
 
     const dateRange = parseGangDateRange(searchParams.get('startDate'), searchParams.get('endDate'));
@@ -43,7 +56,7 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(limitParam || String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT),
     );
 
-    const where = buildGangWhere(productTypeId, dateRange);
+    const where = { ...buildGangWhere(productTypeId, dateRange), tenantId };
 
     const [pageGangs, total] = (await Promise.all([
       stockGang.findMany({
@@ -82,7 +95,7 @@ export async function GET(request: NextRequest) {
     const saleMap = new Map<string, number>();
     if (saleNoArr.length > 0) {
       const sales = (await prisma.sale.findMany({
-        where: { saleNo: { in: saleNoArr } },
+        where: { tenantId, saleNo: { in: saleNoArr } },
         select: { saleNo: true, totalAmount: true },
       })) as SaleRow[];
 

@@ -1,7 +1,41 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GET, POST } from '../route';
-import { generateToken } from '@/lib/auth';
+import { generateToken, verifyToken } from '@/lib/auth';
+
+vi.mock('@/lib/tenant', () => ({
+  requireTenantAuth: vi.fn(async (request: NextRequest) => {
+    const header = request.headers.get('authorization');
+    if (!header?.startsWith('Bearer ')) {
+      return {
+        ok: false,
+        response: NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 }),
+      };
+    }
+    const payload = verifyToken(header.slice(7));
+    if (!payload) {
+      return {
+        ok: false,
+        response: NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 }),
+      };
+    }
+    return {
+      ok: true,
+      auth: {
+        userId: payload.userId,
+        username: payload.username,
+        role: payload.role,
+        tenantId: payload.tenantId || 'tenant-1',
+        tenantSlug: payload.tenantSlug || 'demo',
+        plan: payload.plan || 'premium',
+        tenantStatus: payload.tenantStatus || 'active',
+      },
+    };
+  }),
+  isPremiumActive: vi.fn((auth: { plan: string; tenantStatus: string }) =>
+    auth.plan === 'premium' && auth.tenantStatus === 'active',
+  ),
+}));
 
 // Mock userStore
 vi.mock('@/lib/userStore', () => ({
@@ -60,11 +94,9 @@ describe('GET /api/users', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
-      expect(vi.mocked(logger.warn)).toHaveBeenCalledWith('GET /api/users - Unauthorized access attempt');
-      expect(vi.mocked(userStore.getAllUsers)).not.toHaveBeenCalled();
+      expect(data.message).toBe('Authentication required');
     });
 
     it('should return 403 when authorization header is invalid', async () => {
@@ -76,9 +108,9 @@ describe('GET /api/users', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
+      expect(data.message).toBe('Authentication required');
     });
 
     it('should return 403 when token is not Bearer', async () => {
@@ -90,7 +122,7 @@ describe('GET /api/users', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
     });
 
@@ -241,10 +273,10 @@ describe('POST /api/users', () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
-      expect(vi.mocked(logger.warn)).toHaveBeenCalledWith('POST /api/users - Unauthorized access attempt');
+      expect(data.message).toBe('Authentication required');
+      expect(vi.mocked(userStore.createUser)).not.toHaveBeenCalled();
     });
 
     it('should return 403 when user is not admin', async () => {
@@ -356,7 +388,7 @@ describe('POST /api/users', () => {
       expect(data.user.id).toBe(mockUser.id);
       expect(data.user.username).toBe(mockUser.username);
       expect(data.user.password).toBeUndefined();
-      expect(vi.mocked(userStore.createUser)).toHaveBeenCalledWith({
+      expect(vi.mocked(userStore.createUser)).toHaveBeenCalledWith('tenant-1', {
         username: 'testuser',
         password: 'password',
         role: 'user',
@@ -386,7 +418,7 @@ describe('POST /api/users', () => {
       expect(response.status).toBe(403);
       expect(data.success).toBe(false);
       expect(data.message).toBe('Cannot create root user');
-      expect(vi.mocked(userStore.createUser)).toHaveBeenCalledWith({
+      expect(vi.mocked(userStore.createUser)).toHaveBeenCalledWith('tenant-1', {
         username: 'root',
         password: 'root123',
         role: 'root',

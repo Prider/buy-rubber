@@ -1,13 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { resetToInitialData } from '@/lib/backup';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
 // POST /api/backup/reset - รีเซ็ตข้อมูลกลับสู่สถานะเริ่มต้น
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const result = await resetToInitialData();
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const result = await resetToInitialData(tenantId);
 
     if (result.success) {
       return NextResponse.json(result);

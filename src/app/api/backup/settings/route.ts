@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { restartAutoBackup } from '@/lib/backupScheduler';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // GET /api/backup/settings - ดึงการตั้งค่าการสำรอง
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const settings = await prisma.setting.findMany({
       where: {
+        tenantId,
         key: {
           in: [
             'backup_enabled',
@@ -72,45 +78,49 @@ export async function GET() {
 // POST /api/backup/settings - บันทึกการตั้งค่าการสำรอง
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     const { enabled, frequency, time, weeklyDay, monthlyDay, maxCount, autoCleanup } = data;
 
     // Update or create settings
     await Promise.all([
       prisma.setting.upsert({
-        where: { key: 'backup_enabled' },
+        where: { tenantId_key: { tenantId, key: 'backup_enabled' } },
         update: { value: enabled ? 'true' : 'false' },
-        create: { key: 'backup_enabled', value: enabled ? 'true' : 'false' },
+        create: { tenantId, key: 'backup_enabled', value: enabled ? 'true' : 'false' },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_frequency' },
+        where: { tenantId_key: { tenantId, key: 'backup_frequency' } },
         update: { value: frequency || 'daily' },
-        create: { key: 'backup_frequency', value: frequency || 'daily' },
+        create: { tenantId, key: 'backup_frequency', value: frequency || 'daily' },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_time' },
+        where: { tenantId_key: { tenantId, key: 'backup_time' } },
         update: { value: time || '22:00' },
-        create: { key: 'backup_time', value: time || '22:00' },
+        create: { tenantId, key: 'backup_time', value: time || '22:00' },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_max_count' },
+        where: { tenantId_key: { tenantId, key: 'backup_max_count' } },
         update: { value: (maxCount || 30).toString() },
-        create: { key: 'backup_max_count', value: (maxCount || 30).toString() },
+        create: { tenantId, key: 'backup_max_count', value: (maxCount || 30).toString() },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_auto_cleanup' },
+        where: { tenantId_key: { tenantId, key: 'backup_auto_cleanup' } },
         update: { value: autoCleanup ? 'true' : 'false' },
-        create: { key: 'backup_auto_cleanup', value: autoCleanup ? 'true' : 'false' },
+        create: { tenantId, key: 'backup_auto_cleanup', value: autoCleanup ? 'true' : 'false' },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId, key: 'backup_weekly_day' } },
         update: { value: ((weeklyDay ?? 0) as number).toString() },
-        create: { key: 'backup_weekly_day', value: ((weeklyDay ?? 0) as number).toString() },
+        create: { tenantId, key: 'backup_weekly_day', value: ((weeklyDay ?? 0) as number).toString() },
       }),
       prisma.setting.upsert({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId, key: 'backup_monthly_day' } },
         update: { value: ((monthlyDay ?? 1) as number).toString() },
-        create: { key: 'backup_monthly_day', value: ((monthlyDay ?? 1) as number).toString() },
+        create: { tenantId, key: 'backup_monthly_day', value: ((monthlyDay ?? 1) as number).toString() },
       }),
     ]);
 

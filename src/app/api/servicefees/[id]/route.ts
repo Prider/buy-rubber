@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -11,11 +12,15 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const serviceFee = await prisma.serviceFee.findUnique({
       where: { id: params.id },
     });
 
-    if (!serviceFee) {
+    if (!serviceFee || serviceFee.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลค่าบริการ' },
         { status: 404 }

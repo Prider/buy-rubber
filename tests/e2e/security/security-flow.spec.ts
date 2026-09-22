@@ -70,7 +70,7 @@ test.describe('Security requirements', () => {
     expect(storedHash).not.toBe(plainPassword)
 
     const loginRes = await request.post(`${E2E_BASE_URL}/api/auth/login`, {
-      data: { username, password: plainPassword },
+      data: { slug: 'demo', username, password: plainPassword },
     })
     expect(loginRes.ok()).toBeTruthy()
     const loginBody = await loginRes.json()
@@ -89,7 +89,7 @@ test.describe('Security requirements', () => {
 
   test('REQ-SEC-02: expired JWT requires re-login', async ({ page, request }) => {
     const loginRes = await request.post(`${E2E_BASE_URL}/api/auth/login`, {
-      data: { username: 'admin', password: 'admin123' },
+      data: { slug: 'demo', username: 'admin', password: 'admin123' },
     })
     const loginBody = await loginRes.json()
     const expiredToken = generateExpiredToken({

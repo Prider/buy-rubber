@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // GET /api/backup/[id]/download - ดาวน์โหลดไฟล์สำรอง
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { id } = params;
 
     // ดึงข้อมูลการสำรอง
@@ -15,7 +20,7 @@ export async function GET(
       where: { id },
     });
 
-    if (!backup) {
+    if (!backup || backup.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลการสำรอง' },
         { status: 404 }

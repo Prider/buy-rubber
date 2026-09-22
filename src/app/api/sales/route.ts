@@ -5,6 +5,7 @@ import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
 import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;
@@ -98,6 +99,10 @@ function withSaleProfitLoss(sales: SaleRecord[]): SaleWithProfit[] {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -108,7 +113,7 @@ export async function GET(request: NextRequest) {
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit');
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { tenantId };
     const dateFilter: { gte?: Date; lte?: Date } = {};
     const paginated = pageParam != null && pageParam !== '';
     const page = paginated ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
@@ -143,6 +148,7 @@ export async function GET(request: NextRequest) {
         // Prefetch matching product types to avoid relation joins in the Sale query
         const matchingProductTypes = await prisma.productType.findMany({
           where: {
+            tenantId,
             OR: [{ name: { contains: s } }, { code: { contains: s } }],
           },
           select: { id: true },
@@ -219,6 +225,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการขายในสภาพแวดล้อมนี้' }, { status: 501 });
     }
@@ -257,7 +267,7 @@ export async function POST(request: NextRequest) {
       prisma.destinationCompany.findUnique({ where: { id: String(data.destinationCompanyId) } }),
     ]);
 
-    if (!user) {
+    if (!user || user.tenantId !== tenantId) {
       return NextResponse.json(
         {
           error: 'ไม่พบข้อมูลผู้ใช้',
@@ -266,8 +276,8 @@ export async function POST(request: NextRequest) {
         { status: 404 },
       );
     }
-    if (!productType) return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
-    if (!destinationCompany || !destinationCompany.isActive) {
+    if (!productType || productType.tenantId !== tenantId) return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
+    if (!destinationCompany || !destinationCompany.isActive || destinationCompany.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง หรือถูกปิดการใช้งาน' }, { status: 404 });
     }
 
@@ -295,6 +305,7 @@ export async function POST(request: NextRequest) {
 
       return txSale.create({
         data: {
+          tenantId,
           saleNo,
           date: saleDate,
           userId,

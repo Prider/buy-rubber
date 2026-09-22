@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
-export async function POST(_: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+
     logger.info('POST /api/auth/logout - User logged out');
     
     // In a real application, you would invalidate the JWT token here

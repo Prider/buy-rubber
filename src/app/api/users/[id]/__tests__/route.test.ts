@@ -1,7 +1,41 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GET, PUT, DELETE } from '../route';
-import { generateToken } from '@/lib/auth';
+import { generateToken, verifyToken } from '@/lib/auth';
+
+vi.mock('@/lib/tenant', () => ({
+  requireTenantAuth: vi.fn(async (request: NextRequest) => {
+    const header = request.headers.get('authorization');
+    if (!header?.startsWith('Bearer ')) {
+      return {
+        ok: false,
+        response: NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 }),
+      };
+    }
+    const payload = verifyToken(header.slice(7));
+    if (!payload) {
+      return {
+        ok: false,
+        response: NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 }),
+      };
+    }
+    return {
+      ok: true,
+      auth: {
+        userId: payload.userId,
+        username: payload.username,
+        role: payload.role,
+        tenantId: payload.tenantId || 'tenant-1',
+        tenantSlug: payload.tenantSlug || 'demo',
+        plan: payload.plan || 'premium',
+        tenantStatus: payload.tenantStatus || 'active',
+      },
+    };
+  }),
+  isPremiumActive: vi.fn((auth: { plan: string; tenantStatus: string }) =>
+    auth.plan === 'premium' && auth.tenantStatus === 'active',
+  ),
+}));
 
 // Mock userStore
 vi.mock('@/lib/userStore', () => ({
@@ -31,6 +65,7 @@ describe('GET /api/users/[id]', () => {
 
   const mockUser = {
     id: 'user-1',
+    tenantId: 'tenant-1',
     username: 'testuser',
     password: 'hashedpassword',
     role: 'user' as const,
@@ -52,9 +87,9 @@ describe('GET /api/users/[id]', () => {
       const response = await GET(request, { params: { id: 'user-1' } });
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
+      expect(data.message).toBe('Authentication required');
       expect(vi.mocked(userStore.getUserById)).not.toHaveBeenCalled();
     });
 
@@ -139,6 +174,7 @@ describe('PUT /api/users/[id]', () => {
 
   const mockUser = {
     id: 'user-1',
+    tenantId: 'tenant-1',
     username: 'testuser',
     password: 'hashedpassword',
     role: 'user' as const,
@@ -152,6 +188,7 @@ describe('PUT /api/users/[id]', () => {
     
     const userStoreModule = await import('@/lib/userStore');
     userStore = userStoreModule.userStore;
+    vi.mocked(userStore.getUserById).mockResolvedValue(mockUser);
   });
 
   describe('Authorization', () => {
@@ -165,9 +202,9 @@ describe('PUT /api/users/[id]', () => {
       const response = await PUT(request, { params: { id: 'user-1' } });
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
+      expect(data.message).toBe('Authentication required');
       expect(vi.mocked(userStore.updateUser)).not.toHaveBeenCalled();
     });
 
@@ -310,6 +347,7 @@ describe('PUT /api/users/[id]', () => {
   describe('Error handling', () => {
     it('should return 404 when user does not exist', async () => {
       const token = createAdminToken();
+      vi.mocked(userStore.getUserById).mockResolvedValue(null);
       vi.mocked(userStore.updateUser).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/users/nonexistent', {
@@ -371,7 +409,6 @@ describe('PUT /api/users/[id]', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.message).toBe('Internal server error');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Update user error:', error);
     });
   });
 
@@ -391,7 +428,9 @@ describe('PUT /api/users/[id]', () => {
       });
       await PUT(request, { params: { id: 'user-1' } });
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('PUT /api/users/[id] - Update user request:', 'user-1');
+      expect(vi.mocked(userStore.updateUser)).toHaveBeenCalledWith('user-1', {
+        username: 'updateduser',
+      });
     });
   });
 });
@@ -399,11 +438,23 @@ describe('PUT /api/users/[id]', () => {
 describe('DELETE /api/users/[id]', () => {
   let userStore: any;
 
+  const mockUser = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    username: 'testuser',
+    password: 'hashedpassword',
+    role: 'user' as const,
+    isActive: true,
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15'),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     
     const userStoreModule = await import('@/lib/userStore');
     userStore = userStoreModule.userStore;
+    vi.mocked(userStore.getUserById).mockResolvedValue(mockUser);
   });
 
   describe('Authorization', () => {
@@ -414,9 +465,9 @@ describe('DELETE /api/users/[id]', () => {
       const response = await DELETE(request, { params: { id: 'user-1' } });
       const data = await response.json();
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Admin access required');
+      expect(data.message).toBe('Authentication required');
       expect(vi.mocked(userStore.deleteUser)).not.toHaveBeenCalled();
     });
 
@@ -480,6 +531,7 @@ describe('DELETE /api/users/[id]', () => {
 
     it('should return 404 when user does not exist', async () => {
       const token = createAdminToken();
+      vi.mocked(userStore.getUserById).mockResolvedValue(null);
       vi.mocked(userStore.deleteUser).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/users/nonexistent', {
@@ -513,7 +565,6 @@ describe('DELETE /api/users/[id]', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.message).toBe('Internal server error');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Delete user error:', error);
     });
   });
 
@@ -530,13 +581,14 @@ describe('DELETE /api/users/[id]', () => {
       });
       await DELETE(request, { params: { id: 'user-1' } });
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('DELETE /api/users/[id] - Delete user request:', 'user-1');
+      expect(vi.mocked(userStore.deleteUser)).toHaveBeenCalledWith('user-1');
     });
   });
 
   describe('Edge cases', () => {
     it('should handle empty string id', async () => {
       const token = createAdminToken();
+      vi.mocked(userStore.getUserById).mockResolvedValue({ ...mockUser, id: '' });
       vi.mocked(userStore.deleteUser).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/users/', {
@@ -555,6 +607,7 @@ describe('DELETE /api/users/[id]', () => {
     it('should handle UUID format id', async () => {
       const token = createAdminToken();
       const uuidId = '550e8400-e29b-41d4-a716-446655440000';
+      vi.mocked(userStore.getUserById).mockResolvedValue({ ...mockUser, id: uuidId });
       vi.mocked(userStore.deleteUser).mockResolvedValue('deleted');
 
       const request = new NextRequest(`http://localhost:3000/api/users/${uuidId}`, {

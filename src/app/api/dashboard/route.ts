@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -9,8 +10,12 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     logger.info('GET /api/dashboard - Request received');
     
     // Calculate "today" in Thailand timezone (UTC+7) to match expense calculations
@@ -74,6 +79,7 @@ export async function GET(_request: NextRequest) {
       // รายการรับซื้อวันนี้
       prisma.purchase.aggregate({
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -87,6 +93,7 @@ export async function GET(_request: NextRequest) {
       // รายการรับซื้อเดือนนี้
       prisma.purchase.aggregate({
         where: {
+          tenantId,
           date: {
             gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
@@ -98,13 +105,14 @@ export async function GET(_request: NextRequest) {
         },
       }),
       // จำนวนสมาชิกทั้งหมด
-      prisma.member.count(),
+      prisma.member.count({ where: { tenantId } }),
       // จำนวนสมาชิกที่ใช้งาน
       prisma.member.count({
-        where: { isActive: true },
+        where: { tenantId, isActive: true },
       }),
       // รายการรับซื้อล่าสุด 10 รายการ
       prisma.purchase.findMany({
+        where: { tenantId },
         take: 10,
         orderBy: { date: 'desc' },
         include: {
@@ -116,6 +124,7 @@ export async function GET(_request: NextRequest) {
       prisma.purchase.groupBy({
         by: ['memberId'],
         where: {
+          tenantId,
           date: {
             gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
@@ -135,6 +144,7 @@ export async function GET(_request: NextRequest) {
       // ดึงข้อมูลราคาวันนี้
       prisma.productPrice.findMany({
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -151,12 +161,13 @@ export async function GET(_request: NextRequest) {
       }),
       // ดึงข้อมูลประเภทสินค้าทั้งหมด
       prisma.productType.findMany({
-        where: { isActive: true },
+        where: { tenantId, isActive: true },
         orderBy: { name: 'asc' },
       }),
       // ดึงข้อมูลค่าใช้จ่ายวันนี้
       prisma.expense.aggregate({
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -170,6 +181,7 @@ export async function GET(_request: NextRequest) {
       // ดึงข้อมูลค่าใช้จ่ายเดือนนี้
       prisma.expense.aggregate({
         where: {
+          tenantId,
           date: {
             gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
@@ -182,6 +194,7 @@ export async function GET(_request: NextRequest) {
       }),
       // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
       prisma.expense.findMany({
+        where: { tenantId },
         take: 5,
         orderBy: { date: 'desc' },
       }),
@@ -189,6 +202,7 @@ export async function GET(_request: NextRequest) {
       prisma.purchase.groupBy({
         by: ['productTypeId'],
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -203,6 +217,7 @@ export async function GET(_request: NextRequest) {
       // ดึงข้อมูลค่าบริการวันนี้
       prisma.serviceFee.aggregate({
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -216,6 +231,7 @@ export async function GET(_request: NextRequest) {
       // ดึงข้อมูลค่าบริการเดือนนี้
       prisma.serviceFee.aggregate({
         where: {
+          tenantId,
           date: {
             gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
@@ -229,6 +245,7 @@ export async function GET(_request: NextRequest) {
       // รายการขายวันนี้
       prisma.sale.aggregate({
         where: {
+          tenantId,
           date: {
             gte: today,
             lt: tomorrow,
@@ -242,6 +259,7 @@ export async function GET(_request: NextRequest) {
       // รายการขายเดือนนี้
       prisma.sale.aggregate({
         where: {
+          tenantId,
           date: {
             gte: thailandMonthStart,
             lt: firstDayOfNextMonth,
@@ -254,6 +272,7 @@ export async function GET(_request: NextRequest) {
       }),
       // รายการขายล่าสุด 10 รายการ
       prisma.sale.findMany({
+        where: { tenantId },
         take: 10,
         orderBy: { date: 'desc' },
         select: {
@@ -275,7 +294,7 @@ export async function GET(_request: NextRequest) {
           where: { id: tm.memberId },
         });
         return {
-          member,
+          member: member && member.tenantId === tenantId ? member : null,
           totalAmount: tm._sum.totalAmount || 0,
           totalWeight: tm._sum.dryWeight || 0,
         };
@@ -288,10 +307,11 @@ export async function GET(_request: NextRequest) {
         const productType = await prisma.productType.findUnique({
           where: { id: pt.productTypeId || '' },
         });
+        const owned = productType && productType.tenantId === tenantId ? productType : null;
         return {
           productTypeId: pt.productTypeId,
-          productTypeName: productType?.name || 'ไม่ระบุ',
-          productTypeCode: productType?.code || '',
+          productTypeName: owned?.name || 'ไม่ระบุ',
+          productTypeCode: owned?.code || '',
           count: pt._count,
           totalAmount: pt._sum.totalAmount || 0,
           totalWeight: pt._sum.dryWeight || 0,

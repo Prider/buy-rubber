@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireTenantAuth } from '@/lib/tenant';
 export const dynamic = 'force-dynamic';
 
 // GET /api/prices/history?days=10 - Get price history for the last N days
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '10');
 
@@ -24,6 +29,7 @@ export async function GET(request: NextRequest) {
 
     const prices = await prisma.productPrice.findMany({
       where: {
+        tenantId,
         date: {
           gte: startDate,
           lte: endDate,

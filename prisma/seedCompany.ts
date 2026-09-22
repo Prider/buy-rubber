@@ -11,6 +11,7 @@
  *   COUNT=50000 npm run db:seed:companies:for:test
  */
 import { PrismaClient } from '@prisma/client';
+import { resolveDefaultTenant } from './resolveDefaultTenant';
 
 const prisma = new PrismaClient();
 
@@ -50,6 +51,7 @@ function companyName(index: number): string {
 }
 
 async function main() {
+  const tenant = await resolveDefaultTenant(prisma);
   console.log(`🏢 seedCompany: สร้างบริษัทปลายทางตัวอย่าง ${COMPANY_COUNT.toLocaleString()} รายการ...`);
 
   // Remove previous load-test rows only (codes starting with L).
@@ -78,6 +80,7 @@ async function main() {
     for (let j = i; j < batchEnd; j++) {
       const n = j + 1;
       batchData.push({
+        tenantId: tenant.id,
         code: companyCode(n),
         name: companyName(n),
         phone: j % 5 === 0 ? `08${String(10000000 + (j % 89999999)).slice(0, 8)}` : null,

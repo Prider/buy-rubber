@@ -29,6 +29,7 @@ describe('GET /api/backup/[id]/download', () => {
 
   const mockBackup = {
     id: 'backup-1',
+    tenantId: 'tenant-1',
     fileName: 'backup-2024-01-15.db',
     filePath: '/path/to/backup-2024-01-15.db',
     fileSize: 1024,

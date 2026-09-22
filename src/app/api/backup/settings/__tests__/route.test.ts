@@ -43,7 +43,7 @@ describe('GET /api/backup/settings', () => {
   it('should return default settings when no settings exist', async () => {
     vi.mocked(prisma.setting.findMany).mockResolvedValue([]);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup/settings'));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -69,7 +69,7 @@ describe('GET /api/backup/settings', () => {
 
     vi.mocked(prisma.setting.findMany).mockResolvedValue(mockSettings);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup/settings'));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -90,7 +90,7 @@ describe('GET /api/backup/settings', () => {
 
     vi.mocked(prisma.setting.findMany).mockResolvedValue(mockSettings);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup/settings'));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -110,7 +110,7 @@ describe('GET /api/backup/settings', () => {
 
     vi.mocked(prisma.setting.findMany).mockResolvedValue(mockSettings);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup/settings'));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -121,7 +121,7 @@ describe('GET /api/backup/settings', () => {
     const error = new Error('Database connection failed');
     vi.mocked(prisma.setting.findMany).mockRejectedValue(error);
 
-    const response = await GET();
+    const response = await GET(new NextRequest('http://localhost/api/backup/settings'));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -189,23 +189,23 @@ describe('POST /api/backup/settings', () => {
     expect(data.success).toBe(true);
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_frequency' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_frequency' } },
         update: { value: 'daily' },
-        create: { key: 'backup_frequency', value: 'daily' },
+        create: { tenantId: 'tenant-1', key: 'backup_frequency', value: 'daily' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_weekly_day' } },
         update: { value: '0' },
-        create: { key: 'backup_weekly_day', value: '0' },
+        create: { tenantId: 'tenant-1', key: 'backup_weekly_day', value: '0' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_monthly_day' } },
         update: { value: '1' },
-        create: { key: 'backup_monthly_day', value: '1' },
+        create: { tenantId: 'tenant-1', key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -226,31 +226,31 @@ describe('POST /api/backup/settings', () => {
 
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_enabled' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_enabled' } },
         update: { value: 'true' },
-        create: { key: 'backup_enabled', value: 'true' },
+        create: { tenantId: 'tenant-1', key: 'backup_enabled', value: 'true' },
       })
     );
 
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_auto_cleanup' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_auto_cleanup' } },
         update: { value: 'false' },
-        create: { key: 'backup_auto_cleanup', value: 'false' },
+        create: { tenantId: 'tenant-1', key: 'backup_auto_cleanup', value: 'false' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_weekly_day' } },
         update: { value: '0' },
-        create: { key: 'backup_weekly_day', value: '0' },
+        create: { tenantId: 'tenant-1', key: 'backup_weekly_day', value: '0' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_monthly_day' } },
         update: { value: '1' },
-        create: { key: 'backup_monthly_day', value: '1' },
+        create: { tenantId: 'tenant-1', key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -270,23 +270,23 @@ describe('POST /api/backup/settings', () => {
 
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_max_count' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_max_count' } },
         update: { value: '100' },
-        create: { key: 'backup_max_count', value: '100' },
+        create: { tenantId: 'tenant-1', key: 'backup_max_count', value: '100' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_weekly_day' } },
         update: { value: '0' },
-        create: { key: 'backup_weekly_day', value: '0' },
+        create: { tenantId: 'tenant-1', key: 'backup_weekly_day', value: '0' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_monthly_day' } },
         update: { value: '1' },
-        create: { key: 'backup_monthly_day', value: '1' },
+        create: { tenantId: 'tenant-1', key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -306,23 +306,23 @@ describe('POST /api/backup/settings', () => {
 
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_max_count' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_max_count' } },
         update: { value: '30' },
-        create: { key: 'backup_max_count', value: '30' },
+        create: { tenantId: 'tenant-1', key: 'backup_max_count', value: '30' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_weekly_day' } },
         update: { value: '0' },
-        create: { key: 'backup_weekly_day', value: '0' },
+        create: { tenantId: 'tenant-1', key: 'backup_weekly_day', value: '0' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_monthly_day' } },
         update: { value: '1' },
-        create: { key: 'backup_monthly_day', value: '1' },
+        create: { tenantId: 'tenant-1', key: 'backup_monthly_day', value: '1' },
       })
     );
   });
@@ -367,16 +367,16 @@ describe('POST /api/backup/settings', () => {
     // Ensure weekly/monthly defaults are attempted
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_weekly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_weekly_day' } },
         update: { value: '0' },
-        create: { key: 'backup_weekly_day', value: '0' },
+        create: { tenantId: 'tenant-1', key: 'backup_weekly_day', value: '0' },
       })
     );
     expect(vi.mocked(prisma.setting.upsert)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { key: 'backup_monthly_day' },
+        where: { tenantId_key: { tenantId: 'tenant-1', key: 'backup_monthly_day' } },
         update: { value: '1' },
-        create: { key: 'backup_monthly_day', value: '1' },
+        create: { tenantId: 'tenant-1', key: 'backup_monthly_day', value: '1' },
       })
     );
   });

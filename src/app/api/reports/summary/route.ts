@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,11 +88,13 @@ function parseProductTypeIds(raw: string | null): string[] {
 }
 
 function buildPurchaseWhere(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   productTypeIds: string[],
 ): Prisma.PurchaseWhereInput {
   const where: Prisma.PurchaseWhereInput = {
+    tenantId,
     date: { gte: startDate, lte: endDate },
   };
   if (productTypeIds.length === 1) {
@@ -103,11 +106,13 @@ function buildPurchaseWhere(
 }
 
 function buildSaleWhere(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   productTypeIds: string[],
 ): Prisma.SaleWhereInput {
   const where: Prisma.SaleWhereInput = {
+    tenantId,
     date: { gte: startDate, lte: endDate },
   };
   if (productTypeIds.length === 1) {
@@ -118,8 +123,9 @@ function buildSaleWhere(
   return where;
 }
 
-function buildExpenseWhere(startDate: Date, endDate: Date): Prisma.ExpenseWhereInput {
+function buildExpenseWhere(tenantId: string, startDate: Date, endDate: Date): Prisma.ExpenseWhereInput {
   return {
+    tenantId,
     date: { gte: startDate, lte: endDate },
   };
 }
@@ -213,11 +219,12 @@ async function memberSummaryReport(
   const skip = (page - 1) * pageSize;
   const pageGroups = groups.slice(skip, skip + pageSize);
   const memberIds = pageGroups.map((group) => group.memberId);
+  const tenantId = typeof where.tenantId === 'string' ? where.tenantId : undefined;
   const members =
     memberIds.length === 0
       ? []
       : await prisma.member.findMany({
-          where: { id: { in: memberIds } },
+          where: { tenantId, id: { in: memberIds } },
           select: { id: true, name: true },
         });
   const memberById = new Map(members.map((member) => [member.id, member]));
@@ -288,6 +295,10 @@ async function expenseSummaryReport(
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const typeParam = searchParams.get('type');
     if (!isReportType(typeParam)) {
@@ -329,24 +340,24 @@ export async function GET(request: NextRequest) {
 
     if (typeParam === 'daily_purchase') {
       payload = await dailyPurchaseReport(
-        buildPurchaseWhere(startDate, endDate, productTypeIds),
+        buildPurchaseWhere(tenantId, startDate, endDate, productTypeIds),
         page,
         pageSize,
       );
     } else if (typeParam === 'sell_summary') {
       payload = await sellSummaryReport(
-        buildSaleWhere(startDate, endDate, productTypeIds),
+        buildSaleWhere(tenantId, startDate, endDate, productTypeIds),
         page,
         pageSize,
       );
     } else if (typeParam === 'member_summary') {
       payload = await memberSummaryReport(
-        buildPurchaseWhere(startDate, endDate, productTypeIds),
+        buildPurchaseWhere(tenantId, startDate, endDate, productTypeIds),
         page,
         pageSize,
       );
     } else {
-      payload = await expenseSummaryReport(buildExpenseWhere(startDate, endDate), page, pageSize);
+      payload = await expenseSummaryReport(buildExpenseWhere(tenantId, startDate, endDate), page, pageSize);
     }
 
     const truncated = exporting && payload.total > pageSize;

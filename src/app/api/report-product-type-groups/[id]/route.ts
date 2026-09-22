@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -47,13 +48,13 @@ function parseProductTypeIds(data: unknown): string[] {
   return [...new Set(data.map((id) => String(id).trim()).filter(Boolean))];
 }
 
-async function validateProductTypeIds(productTypeIds: string[]) {
+async function validateProductTypeIds(tenantId: string, productTypeIds: string[]) {
   if (productTypeIds.length === 0) {
     return { error: 'กรุณาเลือกประเภทสินค้าอย่างน้อย 1 รายการ' };
   }
 
   const productTypes = await prisma.productType.findMany({
-    where: { id: { in: productTypeIds }, isActive: true },
+    where: { tenantId, id: { in: productTypeIds }, isActive: true },
     select: { id: true },
   });
 
@@ -69,17 +70,21 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     const existing = await prisma.reportProductTypeGroup.findUnique({
       where: { id: params.id },
     });
 
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบกลุ่มรายงาน' }, { status: 404 });
     }
 
     const productTypeIds = parseProductTypeIds(data.productTypeIds);
-    const validation = await validateProductTypeIds(productTypeIds);
+    const validation = await validateProductTypeIds(tenantId, productTypeIds);
 
     if ('error' in validation) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
@@ -122,15 +127,19 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const existing = await prisma.reportProductTypeGroup.findUnique({
       where: { id: params.id },
     });
 
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบกลุ่มรายงาน' }, { status: 404 });
     }
 

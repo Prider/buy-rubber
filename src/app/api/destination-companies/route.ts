@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { cache, CACHE_TTL, generateCacheKey, tenantKey } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -10,6 +11,10 @@ const MAX_LIMIT = 1000;
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const active = searchParams.get('active');
@@ -26,11 +31,11 @@ export async function GET(request: NextRequest) {
 
     const cacheKey = search
       ? null
-      : generateCacheKey('destination-companies', {
+      : tenantKey(tenantId, generateCacheKey('destination-companies', {
           active,
           page: page.toString(),
           limit: limit.toString(),
-        });
+        }));
 
     if (cacheKey) {
       const cachedData = cache.get(cacheKey);
@@ -39,7 +44,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { tenantId };
 
     if (search) {
       where.OR = [
@@ -89,6 +94,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     logger.info('POST /api/destination-companies - Request', { code: data.code, name: data.name });
 
@@ -103,7 +112,7 @@ export async function POST(request: NextRequest) {
     const name = String(data.name).trim();
 
     const existingCode = await prisma.destinationCompany.findUnique({
-      where: { code },
+      where: { tenantId_code: { tenantId, code } },
     });
     if (existingCode) {
       return NextResponse.json({ error: 'รหัสบริษัทนี้มีอยู่แล้ว' }, { status: 400 });
@@ -113,6 +122,7 @@ export async function POST(request: NextRequest) {
       SELECT id, code, name
       FROM "DestinationCompany"
       WHERE LOWER(name) = LOWER(${name})
+        AND "tenantId" = ${tenantId}
       LIMIT 1
     `;
 
@@ -126,6 +136,7 @@ export async function POST(request: NextRequest) {
 
     const company = await prisma.destinationCompany.create({
       data: {
+        tenantId,
         code,
         name,
         phone: data.phone ? String(data.phone).trim() : null,
@@ -133,7 +144,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    cache.deletePattern('^destination-companies:');
+    cache.deletePattern(`^tenant:${tenantId}:destination-companies:`);
 
     return NextResponse.json(company, { status: 201 });
   } catch (error) {

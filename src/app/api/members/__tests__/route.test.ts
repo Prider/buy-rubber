@@ -50,6 +50,7 @@ vi.mock('@/lib/cache', () => {
         .join('&');
       return `${prefix}:${sortedParams}`;
     },
+    tenantKey: (tenantId: string, key: string) => `tenant:${tenantId}:${key}`,
   };
 });
 
@@ -169,6 +170,7 @@ describe('GET /api/members', () => {
       expect(vi.mocked(prisma.member.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             isActive: true,
           }),
         })
@@ -185,6 +187,7 @@ describe('GET /api/members', () => {
       expect(vi.mocked(prisma.member.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             isActive: false,
           }),
         })
@@ -249,6 +252,7 @@ describe('GET /api/members', () => {
       expect(vi.mocked(prisma.member.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             OR: expect.any(Array),
             isActive: true,
           }),

@@ -1227,7 +1227,7 @@ describe('GET /api/purchases/transactions', () => {
       );
       await GET(request);
 
-      expect(transactionQuery.resolveSearchMemberIds).toHaveBeenCalledWith('สมชาย', null);
+      expect(transactionQuery.resolveSearchMemberIds).toHaveBeenCalledWith('tenant-1', 'สมชาย', null);
     });
 
     it('passes search filters into grouped transaction queries', async () => {
@@ -1259,7 +1259,7 @@ describe('GET /api/purchases/transactions', () => {
       );
       await GET(request);
 
-      expect(transactionQuery.resolveSearchMemberIds).toHaveBeenCalledWith('abc', 'member-1');
+      expect(transactionQuery.resolveSearchMemberIds).toHaveBeenCalledWith('tenant-1', 'abc', 'member-1');
     });
   });
 });

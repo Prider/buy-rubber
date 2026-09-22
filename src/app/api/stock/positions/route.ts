@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockPosition } from '@/lib/prismaStock';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -16,12 +17,16 @@ type SaleAgg = { productTypeId: string; soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.trim() ?? '';
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit');
 
-    const where: Prisma.ProductTypeWhereInput = { isActive: true };
+    const where: Prisma.ProductTypeWhereInput = { tenantId, isActive: true };
     if (search) {
       where.OR = [{ code: { contains: search } }, { name: { contains: search } }];
     }
@@ -49,7 +54,7 @@ export async function GET(request: NextRequest) {
       ids.length === 0
         ? []
         : await stockPosition.findMany({
-            where: { productTypeId: { in: ids } },
+            where: { tenantId, productTypeId: { in: ids } },
             select: { productTypeId: true, quantityKg: true, avgCostPerKg: true },
           })
     ) as StockPositionRow[];
@@ -70,7 +75,8 @@ export async function GET(request: NextRequest) {
                CAST(COALESCE(SUM(weight), 0) AS REAL) AS "soldKg",
                CAST(COALESCE(SUM(weight * "pricePerUnit" - COALESCE("expenseCost", 0)), 0) AS REAL) AS revenue
         FROM "Sale"
-        WHERE "productTypeId" IN (${Prisma.join(ids)})
+        WHERE "tenantId" = ${tenantId}
+          AND "productTypeId" IN (${Prisma.join(ids)})
         GROUP BY "productTypeId"
       `;
       for (const row of saleAggs) {

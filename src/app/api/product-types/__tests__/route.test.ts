@@ -41,6 +41,7 @@ vi.mock('@/lib/cache', () => ({
   CACHE_TTL: {
     PRODUCT_TYPES: 1800000,
   },
+  tenantKey: (tenantId: string, key: string) => `tenant:${tenantId}:${key}`,
   invalidateProductTypesCache,
 }));
 
@@ -85,7 +86,7 @@ describe('GET /api/product-types', () => {
       expect(data).toHaveLength(1);
       expect(data[0].code).toBe(mockProductType.code);
       expect(vi.mocked(prisma.productType.findMany)).toHaveBeenCalledWith({
-        where: { isActive: true },
+        where: { tenantId: 'tenant-1', isActive: true },
         orderBy: { code: 'asc' },
       });
     });
@@ -101,7 +102,7 @@ describe('GET /api/product-types', () => {
       expect(data).toHaveLength(1);
       const findArg = vi.mocked(prisma.productType.findMany).mock.calls[0][0];
       expect(findArg.orderBy).toEqual({ code: 'asc' });
-      expect(findArg.where).toBeUndefined();
+      expect(findArg.where).toEqual({ tenantId: 'tenant-1' });
     });
 
     it('should return empty array when no product types exist', async () => {
@@ -275,6 +276,7 @@ describe('POST /api/product-types', () => {
       expect(data.name).toBe(mockProductType.name);
       expect(vi.mocked(prisma.productType.create)).toHaveBeenCalledWith({
         data: {
+          tenantId: 'tenant-1',
           code: 'PT001',
           name: 'น้ำยางสด',
           description: null,
@@ -302,6 +304,7 @@ describe('POST /api/product-types', () => {
       expect(response.status).toBe(201);
       expect(vi.mocked(prisma.productType.create)).toHaveBeenCalledWith({
         data: {
+          tenantId: 'tenant-1',
           code: 'PT001',
           name: 'น้ำยางสด',
           description: 'Test description',
@@ -325,6 +328,7 @@ describe('POST /api/product-types', () => {
 
       expect(vi.mocked(prisma.productType.create)).toHaveBeenCalledWith({
         data: {
+          tenantId: 'tenant-1',
           code: 'PT001',
           name: 'น้ำยางสด',
           description: null,

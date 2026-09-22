@@ -101,6 +101,21 @@ export function parseSaleNosJson(raw: string | null | undefined): string[] {
   }
 }
 
+async function tenantIdForProductType(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tx: any,
+  productTypeId: string,
+): Promise<string> {
+  const productType = await tx.productType.findUnique({
+    where: { id: productTypeId },
+    select: { tenantId: true },
+  });
+  if (!productType?.tenantId) {
+    throw new Error(`Product type not found: ${productTypeId}`);
+  }
+  return productType.tenantId;
+}
+
 /** Open a new gang when stock leaves zero (purchase / restore). */
 export async function openStockGangIfNeeded(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,8 +131,11 @@ export async function openStockGangIfNeeded(
     select: { gangNo: true },
   })) as { gangNo: number } | null;
 
+  const tenantId = await tenantIdForProductType(tx, productTypeId);
+
   await tx.stockGang.create({
     data: {
+      tenantId,
       productTypeId,
       gangNo: (last?.gangNo ?? 0) + 1,
       startDate: date,
@@ -158,8 +176,11 @@ export async function applySaleToOpenStockGang(
       select: { gangNo: true },
     })) as { gangNo: number } | null;
 
+    const tenantId = await tenantIdForProductType(tx, productTypeId);
+
     open = (await tx.stockGang.create({
       data: {
+        tenantId,
         productTypeId,
         gangNo: (last?.gangNo ?? 0) + 1,
         startDate: date,
@@ -233,11 +254,14 @@ export async function rebuildStockGangs(
     const drafts = splitLedgerIntoGangs(ptId, entries);
     if (drafts.length === 0) continue;
 
+    const tenantId = await tenantIdForProductType(db, ptId);
+
     const BATCH = 500;
     for (let i = 0; i < drafts.length; i += BATCH) {
       const chunk = drafts.slice(i, i + BATCH);
       await db.stockGang.createMany({
         data: chunk.map((g) => ({
+          tenantId,
           productTypeId: g.productTypeId,
           gangNo: g.gangNo,
           startDate: g.startDate,

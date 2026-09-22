@@ -25,6 +25,17 @@ type StockPositionLike = {
   avgCostPerKg: number;
 };
 
+async function tenantIdForProductType(tx: any, productTypeId: string): Promise<string> {
+  const productType = await tx.productType.findUnique({
+    where: { id: productTypeId },
+    select: { tenantId: true },
+  });
+  if (!productType?.tenantId) {
+    throw new Error(`Product type not found: ${productTypeId}`);
+  }
+  return productType.tenantId;
+}
+
 export async function applyPurchaseToStock(
   tx: any,
   input: {
@@ -45,6 +56,8 @@ export async function applyPurchaseToStock(
     // Allow 0 cost if you really want, but keep it safe.
   }
 
+  const tenantId = await tenantIdForProductType(tx, productTypeId);
+
   const existing = (await tx.stockPosition.findUnique({
     where: { productTypeId },
   })) as StockPositionLike | null;
@@ -52,7 +65,7 @@ export async function applyPurchaseToStock(
   const pos: StockPositionLike =
     existing ??
     ((await tx.stockPosition.create({
-      data: { productTypeId, quantityKg: 0, avgCostPerKg: 0 },
+      data: { tenantId, productTypeId, quantityKg: 0, avgCostPerKg: 0 },
     })) as StockPositionLike);
 
   const oldQty = Number(pos.quantityKg) || 0;
@@ -69,6 +82,7 @@ export async function applyPurchaseToStock(
 
   await tx.stockLedgerEntry.create({
     data: {
+      tenantId,
       productTypeId,
       refType: 'PURCHASE',
       refNo,
@@ -105,6 +119,8 @@ export async function applySaleToStock(
 
   if (!Number.isFinite(qtyKg) || qtyKg < 0) return;
 
+  const tenantId = await tenantIdForProductType(tx, productTypeId);
+
   const pos = (await tx.stockPosition.findUnique({
     where: { productTypeId },
   })) as StockPositionLike | null;
@@ -132,6 +148,7 @@ export async function applySaleToStock(
 
   await tx.stockLedgerEntry.create({
     data: {
+      tenantId,
       productTypeId,
       refType: 'SALE',
       refNo,
@@ -172,6 +189,8 @@ export async function reverseSaleFromStock(
 
   if (!Number.isFinite(qtyKg) || qtyKg <= 0) return;
 
+  const tenantId = await tenantIdForProductType(tx, productTypeId);
+
   const saleEntry = (await tx.stockLedgerEntry.findFirst({
     where: { productTypeId, refType: 'SALE', refNo },
     orderBy: { createdAt: 'desc' },
@@ -195,7 +214,7 @@ export async function reverseSaleFromStock(
 
   if (!pos) {
     await tx.stockPosition.create({
-      data: { productTypeId, quantityKg: newQty, avgCostPerKg: newAvg },
+      data: { tenantId, productTypeId, quantityKg: newQty, avgCostPerKg: newAvg },
     });
   } else {
     await tx.stockPosition.update({
@@ -210,6 +229,7 @@ export async function reverseSaleFromStock(
 
   await tx.stockLedgerEntry.create({
     data: {
+      tenantId,
       productTypeId,
       refType: 'SALE_DELETE',
       refNo,
@@ -247,6 +267,8 @@ export async function reversePurchaseFromStock(
   const { purchaseId, productTypeId, purchaseNo, netWeight, unitCostPerKg, date, notes } = input;
 
   if (!Number.isFinite(netWeight) || netWeight <= 0) return;
+
+  const tenantId = await tenantIdForProductType(tx, productTypeId);
 
   let purchaseEntry = (await tx.stockLedgerEntry.findFirst({
     where: { productTypeId, refType: 'PURCHASE', refId: purchaseId },
@@ -316,7 +338,7 @@ export async function reversePurchaseFromStock(
     });
   } else if (newQty > EPS) {
     await tx.stockPosition.create({
-      data: { productTypeId, quantityKg: newQty, avgCostPerKg: newAvg },
+      data: { tenantId, productTypeId, quantityKg: newQty, avgCostPerKg: newAvg },
     });
   }
 
@@ -326,6 +348,7 @@ export async function reversePurchaseFromStock(
 
   await tx.stockLedgerEntry.create({
     data: {
+      tenantId,
       productTypeId,
       refType: 'PURCHASE_DELETE',
       refNo: purchaseNo,

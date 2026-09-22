@@ -1,11 +1,16 @@
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, type AuthKind, type TenantPlan, type TenantStatus } from '@/lib/auth';
 import { isAdminLike } from '@/types/user';
 
 export interface DecodedTokenPayload {
+  kind?: AuthKind;
   userId: string;
   username: string;
   role: string;
+  tenantId?: string;
+  tenantSlug?: string;
+  plan?: TenantPlan;
+  tenantStatus?: TenantStatus;
   exp?: number;
 }
 
@@ -33,9 +38,14 @@ function decodeLegacyToken(token: string): DecodedTokenPayload | null {
     }
 
     return {
+      kind: decoded.kind,
       userId: decoded.userId,
       username: decoded.username || 'Unknown',
       role: decoded.role,
+      tenantId: decoded.tenantId,
+      tenantSlug: decoded.tenantSlug,
+      plan: decoded.plan,
+      tenantStatus: decoded.tenantStatus,
     };
   } catch {
     return null;
@@ -54,9 +64,14 @@ export function decodeTokenPayload(token: string): DecodedTokenPayload | null {
       }
 
       return {
+        kind: payload.kind,
         userId: payload.userId,
         username: payload.username || 'Unknown',
         role: payload.role,
+        tenantId: payload.tenantId,
+        tenantSlug: payload.tenantSlug,
+        plan: payload.plan,
+        tenantStatus: payload.tenantStatus,
         exp: payload.exp,
       };
     }
@@ -118,9 +133,14 @@ export function getVerifiedUserFromToken(
   }
 
   return {
+    kind: payload.kind,
     userId: payload.userId,
     username: payload.username,
     role: payload.role,
+    tenantId: payload.tenantId,
+    tenantSlug: payload.tenantSlug,
+    plan: payload.plan,
+    tenantStatus: payload.tenantStatus,
   };
 }
 

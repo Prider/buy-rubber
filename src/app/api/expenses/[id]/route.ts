@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // DELETE /api/expenses/[id]
 export async function DELETE(
@@ -7,6 +8,20 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const existing = await prisma.expense.findUnique({
+      where: { id: params.id },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลค่าใช้จ่าย' },
+        { status: 404 }
+      );
+    }
+
     await prisma.expense.delete({
       where: { id: params.id },
     });

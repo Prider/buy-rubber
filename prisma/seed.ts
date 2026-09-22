@@ -119,6 +119,10 @@ async function clearAll() {
   await prisma.user.deleteMany({});
   await prisma.setting.deleteMany({});
   await prisma.backup.deleteMany({});
+  await prisma.paymentRequest.deleteMany({});
+  await prisma.platformUser.deleteMany({});
+  await prisma.platformSettings.deleteMany({});
+  await prisma.tenant.deleteMany({});
 
   console.log('✅ ลบข้อมูลเก่าเรียบร้อยแล้ว');
   console.log('');
@@ -130,8 +134,40 @@ async function main() {
 
   await clearAll();
 
+  const slug = process.env.DEFAULT_TENANT_SLUG || 'demo';
+  const tenant = await prisma.tenant.create({
+    data: {
+      slug,
+      name: 'ร้านตัวอย่าง',
+      address: '',
+      plan: 'premium',
+      status: 'active',
+    },
+  });
+  console.log('✅ สร้างร้าน:', tenant.slug);
+
+  await prisma.platformUser.create({
+    data: {
+      username: process.env.PLATFORM_OWNER_USERNAME || 'owner',
+      password: simpleHash(process.env.PLATFORM_OWNER_PASSWORD || 'owner123'),
+      isActive: true,
+    },
+  });
+  await prisma.platformSettings.create({
+    data: {
+      id: 'default',
+      bankName: 'ธนาคารกสิกรไทย',
+      accountName: 'บริษัท ปันสุข อินโนเทค',
+      accountNumber: '123-4-56789-0',
+      promptPayId: '0123456789',
+      premiumPriceThb: 1990,
+    },
+  });
+  console.log('✅ สร้างบัญชีเจ้าของแพลตฟอร์ม: owner');
+
   await prisma.user.createMany({
     data: USERS.map((user) => ({
+      tenantId: tenant.id,
       username: user.username,
       password: user.password,
       role: user.role,
@@ -142,6 +178,7 @@ async function main() {
 
   const productTypes = await prisma.productType.createManyAndReturn({
     data: PRODUCT_TYPES.map((productType) => ({
+      tenantId: tenant.id,
       code: productType.code,
       name: productType.name,
       description: productType.description,
@@ -155,6 +192,7 @@ async function main() {
 
   await prisma.member.createMany({
     data: MEMBERS.map((member) => ({
+      tenantId: tenant.id,
       code: member.code,
       name: member.name,
       phone: '',
@@ -169,6 +207,7 @@ async function main() {
 
   await prisma.setting.createMany({
     data: SETTINGS.map((setting) => ({
+      tenantId: tenant.id,
       key: setting.key,
       value: setting.value,
     })),
@@ -183,6 +222,7 @@ async function main() {
       }
       await prisma.reportProductTypeGroup.create({
         data: {
+          tenantId: tenant.id,
           name: null,
           kind,
           sortOrder: 0,
@@ -205,7 +245,11 @@ async function main() {
   console.log('');
   console.log('ข้อมูลการเข้าสู่ระบบ:');
   console.log('');
+  console.log('  รหัสร้าน (slug):', slug);
   console.log('  Username: admin     Password: admin123');
+  console.log('');
+  console.log('เจ้าของแพลตฟอร์ม: /platform/login');
+  console.log('  owner / owner123');
   console.log('  Username: mayrin    Password: mayrin123');
   console.log('  Username: user      Password: user123');
   console.log('  Username: viewer    Password: viewer123');

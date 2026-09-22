@@ -9,6 +9,7 @@ import Logo from './Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
+import WaitingForPayment from '@/components/WaitingForPayment';
 
 interface NavigationItem {
   name: string;
@@ -41,6 +42,7 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [liveStatus, setLiveStatus] = useState(user?.tenantStatus);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -71,6 +73,19 @@ export default function Layout({ children }: LayoutProps) {
     loadSlipSettings();
   }, []);
 
+  useEffect(() => {
+    const token = typeof window === 'undefined' ? null : localStorage.getItem('auth_token');
+    if (!token) return;
+    fetch('/api/tenant/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.tenantStatus) {
+          setLiveStatus(data.tenantStatus);
+        }
+      })
+      .catch(() => undefined);
+  }, [user?.id]);
+
 
   // Redirect to login if username is Unknown (but only after auth has finished loading)
   useEffect(() => {
@@ -89,6 +104,8 @@ export default function Layout({ children }: LayoutProps) {
     }
     return true;
   });
+
+  const locked = liveStatus === 'pending_payment' || liveStatus === 'rejected';
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -329,7 +346,11 @@ export default function Layout({ children }: LayoutProps) {
           className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6"
           ref={mainContentRef}
         >
-          {children}
+          {locked ? (
+            <WaitingForPayment status={liveStatus === 'rejected' ? 'rejected' : 'pending_payment'} />
+          ) : (
+            children
+          )}
         </main>
       </div>
 

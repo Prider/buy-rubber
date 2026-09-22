@@ -30,6 +30,7 @@ describe('PUT /api/product-types/[id]', () => {
 
   const mockProductType = {
     id: 'product-1',
+    tenantId: 'tenant-1',
     code: 'PT001',
     name: 'น้ำยางสด',
     description: 'Updated description',
@@ -44,6 +45,10 @@ describe('PUT /api/product-types/[id]', () => {
     
     const prismaModule = await import('@/lib/prisma');
     prisma = prismaModule.prisma;
+    vi.mocked(prisma.productType.findUnique).mockResolvedValue({
+      id: 'product-1',
+      tenantId: 'tenant-1',
+    });
   });
 
   describe('Validation errors', () => {
@@ -258,7 +263,10 @@ describe('DELETE /api/product-types/[id]', () => {
 
   describe('Successful deletion', () => {
     it('should delete a product type when nothing references it', async () => {
-      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({
+        id: 'product-1',
+        tenantId: 'tenant-1',
+      });
       vi.mocked(prisma.purchase.count).mockResolvedValue(0);
       vi.mocked(prisma.sale.count).mockResolvedValue(0);
       vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
@@ -292,7 +300,10 @@ describe('DELETE /api/product-types/[id]', () => {
     });
 
     it('should deactivate (soft) when purchases reference the product type', async () => {
-      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({
+        id: 'product-1',
+        tenantId: 'tenant-1',
+      });
       vi.mocked(prisma.purchase.count).mockResolvedValue(2);
       vi.mocked(prisma.sale.count).mockResolvedValue(0);
       vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
@@ -319,7 +330,10 @@ describe('DELETE /api/product-types/[id]', () => {
     });
 
     it('should return 500 when database delete fails', async () => {
-      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: 'product-1' });
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({
+        id: 'product-1',
+        tenantId: 'tenant-1',
+      });
       vi.mocked(prisma.purchase.count).mockResolvedValue(0);
       vi.mocked(prisma.sale.count).mockResolvedValue(0);
       vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);
@@ -351,7 +365,10 @@ describe('DELETE /api/product-types/[id]', () => {
 
     it('should handle UUID format id', async () => {
       const uuidId = '550e8400-e29b-41d4-a716-446655440000';
-      vi.mocked(prisma.productType.findUnique).mockResolvedValue({ id: uuidId });
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue({
+        id: uuidId,
+        tenantId: 'tenant-1',
+      });
       vi.mocked(prisma.purchase.count).mockResolvedValue(0);
       vi.mocked(prisma.sale.count).mockResolvedValue(0);
       vi.mocked(prisma.stockLedgerEntry.count).mockResolvedValue(0);

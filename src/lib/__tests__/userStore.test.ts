@@ -35,6 +35,7 @@ describe('userStore', () => {
 
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -46,14 +47,15 @@ describe('userStore', () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.user.create).mockResolvedValue(mockUser as any);
 
-      const result = await userStore.createUser(userData);
+      const result = await userStore.createUser('tenant-1', userData);
 
       expect(result).toEqual(mockUser);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { username: 'testuser' },
+        where: { tenantId_username: { tenantId: 'tenant-1', username: 'testuser' } },
       });
       expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
+          tenantId: 'tenant-1',
           username: 'testuser',
           password: expect.any(String),
           role: 'admin',
@@ -71,6 +73,7 @@ describe('userStore', () => {
 
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'existinguser',
         password: 'hashed-password',
         role: 'admin',
@@ -81,7 +84,7 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(existingUser as any);
 
-      await expect(userStore.createUser(userData)).rejects.toThrow('Username already exists');
+      await expect(userStore.createUser('tenant-1', userData)).rejects.toThrow('Username already exists');
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
@@ -92,7 +95,7 @@ describe('userStore', () => {
         role: 'root',
       };
 
-      await expect(userStore.createUser(userData)).rejects.toThrow(
+      await expect(userStore.createUser('tenant-1', userData)).rejects.toThrow(
         'Cannot create root user'
       );
       expect(prisma.user.create).not.toHaveBeenCalled();
@@ -105,7 +108,7 @@ describe('userStore', () => {
         role: 'superadmin',
       } as unknown as CreateUserRequest;
 
-      await expect(userStore.createUser(userData)).rejects.toThrow('Invalid role');
+      await expect(userStore.createUser('tenant-1', userData)).rejects.toThrow('Invalid role');
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
@@ -118,6 +121,7 @@ describe('userStore', () => {
 
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'user',
@@ -129,7 +133,7 @@ describe('userStore', () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.user.create).mockResolvedValue(mockUser as any);
 
-      await userStore.createUser(userData);
+      await userStore.createUser('tenant-1', userData);
 
       const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
       expect(createCall.data.password).not.toBe('password123');
@@ -141,6 +145,7 @@ describe('userStore', () => {
     it('should return user when found', async () => {
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -172,6 +177,7 @@ describe('userStore', () => {
     it('should return user when found', async () => {
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -182,18 +188,18 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
-      const result = await userStore.getUserByUsername('testuser');
+      const result = await userStore.getUserByUsername('tenant-1', 'testuser');
 
       expect(result).toEqual(mockUser);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { username: 'testuser' },
+        where: { tenantId_username: { tenantId: 'tenant-1', username: 'testuser' } },
       });
     });
 
     it('should return null when user not found', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      const result = await userStore.getUserByUsername('non-existent');
+      const result = await userStore.getUserByUsername('tenant-1', 'non-existent');
 
       expect(result).toBeNull();
     });
@@ -204,6 +210,7 @@ describe('userStore', () => {
       const mockUsers: User[] = [
         {
           id: 'user-1',
+          tenantId: 'tenant-1',
           username: 'user1',
           password: 'hash1',
           role: 'admin',
@@ -213,6 +220,7 @@ describe('userStore', () => {
         },
         {
           id: 'user-2',
+          tenantId: 'tenant-1',
           username: 'user2',
           password: 'hash2',
           role: 'user',
@@ -224,10 +232,11 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any);
 
-      const result = await userStore.getAllUsers();
+      const result = await userStore.getAllUsers('tenant-1');
 
       expect(result).toEqual(mockUsers);
       expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1' },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -236,7 +245,7 @@ describe('userStore', () => {
       const error = new Error('Database connection failed');
       vi.mocked(prisma.user.findMany).mockRejectedValue(error);
 
-      await expect(userStore.getAllUsers()).rejects.toThrow('Database connection failed');
+      await expect(userStore.getAllUsers('tenant-1')).rejects.toThrow('Database connection failed');
     });
   });
 
@@ -244,6 +253,7 @@ describe('userStore', () => {
     it('should update user successfully', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -293,6 +303,7 @@ describe('userStore', () => {
     it('should throw error when username already exists', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -303,6 +314,7 @@ describe('userStore', () => {
 
       const otherUser: User = {
         id: 'user-2',
+        tenantId: 'tenant-1',
         username: 'existinguser',
         password: 'hashed-password',
         role: 'user',
@@ -326,6 +338,7 @@ describe('userStore', () => {
     it('should allow updating username to same value', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -358,6 +371,7 @@ describe('userStore', () => {
     it('should hash password when updating', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'old-hash',
         role: 'admin',
@@ -389,6 +403,7 @@ describe('userStore', () => {
     it('should reject updating a root user', async () => {
       const existingUser: User = {
         id: 'root-1',
+        tenantId: 'tenant-1',
         username: 'root',
         password: 'old-hash',
         role: 'root',
@@ -411,6 +426,7 @@ describe('userStore', () => {
     it('should reject assigning the root role', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -430,6 +446,7 @@ describe('userStore', () => {
     it('should update isActive status', async () => {
       const existingUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -467,6 +484,7 @@ describe('userStore', () => {
     it('should delete user successfully when no linked records', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         role: 'user',
         _count: { purchases: 0, sales: 0 },
@@ -484,6 +502,7 @@ describe('userStore', () => {
     it('should deactivate user when they have linked purchases or sales', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         role: 'user',
         _count: { purchases: 2, sales: 0 },
@@ -503,6 +522,7 @@ describe('userStore', () => {
     it('should deactivate when hard delete fails', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         role: 'user',
         _count: { purchases: 0, sales: 0 },
@@ -530,6 +550,7 @@ describe('userStore', () => {
     it('should throw when deleting a root user', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'root-1',
+        tenantId: 'tenant-1',
         username: 'root',
         role: 'root',
         _count: { purchases: 0, sales: 0 },
@@ -546,6 +567,7 @@ describe('userStore', () => {
     it('should return user when credentials are valid', async () => {
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password', // This will be compared with hashed input
         role: 'admin',
@@ -574,18 +596,18 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithHashedPassword as any);
 
-      const result = await userStore.authenticateUser('testuser', password);
+      const result = await userStore.authenticateUser('tenant-1', 'testuser', password);
 
       expect(result).toEqual(userWithHashedPassword);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { username: 'testuser' },
+        where: { tenantId_username: { tenantId: 'tenant-1', username: 'testuser' } },
       });
     });
 
     it('should return null when user not found', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      const result = await userStore.authenticateUser('non-existent', 'password');
+      const result = await userStore.authenticateUser('tenant-1', 'non-existent', 'password');
 
       expect(result).toBeNull();
     });
@@ -593,6 +615,7 @@ describe('userStore', () => {
     it('should return null when user is inactive', async () => {
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',
@@ -603,7 +626,7 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
-      const result = await userStore.authenticateUser('testuser', 'password');
+      const result = await userStore.authenticateUser('tenant-1', 'testuser', 'password');
 
       expect(result).toBeNull();
     });
@@ -620,6 +643,7 @@ describe('userStore', () => {
 
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: hashedPassword,
         role: 'admin',
@@ -630,7 +654,7 @@ describe('userStore', () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
-      const result = await userStore.authenticateUser('testuser', 'wrongpassword');
+      const result = await userStore.authenticateUser('tenant-1', 'testuser', 'wrongpassword');
 
       expect(result).toBeNull();
     });
@@ -639,7 +663,7 @@ describe('userStore', () => {
       const error = new Error('Database connection failed');
       vi.mocked(prisma.user.findUnique).mockRejectedValue(error);
 
-      await expect(userStore.authenticateUser('testuser', 'password')).rejects.toThrow('Database connection failed');
+      await expect(userStore.authenticateUser('tenant-1', 'testuser', 'password')).rejects.toThrow('Database connection failed');
     });
   });
 
@@ -656,6 +680,7 @@ describe('userStore', () => {
 
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: hashedCurrentPassword,
         role: 'admin',
@@ -696,6 +721,7 @@ describe('userStore', () => {
     it('should return false when current password is incorrect', async () => {
       const mockUser: User = {
         id: 'user-1',
+        tenantId: 'tenant-1',
         username: 'testuser',
         password: 'hashed-password',
         role: 'admin',

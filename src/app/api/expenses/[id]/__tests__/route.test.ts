@@ -6,6 +6,7 @@ import { DELETE } from '../route';
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     expense: {
+      findUnique: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -19,6 +20,7 @@ describe('DELETE /api/expenses/[id]', () => {
 
   const mockExpense = {
     id: 'expense-1',
+    tenantId: 'tenant-1',
     expenseNo: 'EXP-20240115-001',
     date: new Date('2024-01-15'),
     category: 'ค่าน้ำมัน',
@@ -34,6 +36,7 @@ describe('DELETE /api/expenses/[id]', () => {
     
     const prismaModule = await import('@/lib/prisma');
     prisma = prismaModule.prisma;
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense);
   });
 
   describe('Successful deletion', () => {
@@ -53,17 +56,16 @@ describe('DELETE /api/expenses/[id]', () => {
   });
 
   describe('Error handling', () => {
-    it('should return 500 when expense does not exist', async () => {
-      const dbError = new Error('Record to delete does not exist');
-      vi.mocked(prisma.expense.delete).mockRejectedValue(dbError);
+    it('should return 404 when expense does not exist', async () => {
+      vi.mocked(prisma.expense.findUnique).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/expenses/nonexistent');
       const response = await DELETE(request, { params: { id: 'nonexistent' } });
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('เกิดข้อผิดพลาดในการลบค่าใช้จ่าย');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Delete expense error:', dbError);
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('ไม่พบข้อมูลค่าใช้จ่าย');
+      expect(vi.mocked(prisma.expense.delete)).not.toHaveBeenCalled();
     });
 
     it('should return 500 when database delete fails', async () => {

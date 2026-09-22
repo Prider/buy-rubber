@@ -41,7 +41,7 @@ describe('/api/slip/settings', () => {
     it('returns default 80mm paper size when not configured', async () => {
       vi.mocked(prisma.setting.findMany).mockResolvedValue([]);
 
-      const response = await GET();
+      const response = await GET(new NextRequest('http://localhost/api/slip/settings'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -53,7 +53,7 @@ describe('/api/slip/settings', () => {
         { key: 'slip_paperSize', value: '58mm' },
       ]);
 
-      const response = await GET();
+      const response = await GET(new NextRequest('http://localhost/api/slip/settings'));
       const data = await response.json();
 
       expect(data.paperSize).toBe('58mm');
@@ -64,7 +64,7 @@ describe('/api/slip/settings', () => {
         { key: 'slip_paperSize', value: 'a4' },
       ]);
 
-      const response = await GET();
+      const response = await GET(new NextRequest('http://localhost/api/slip/settings'));
       const data = await response.json();
 
       expect(data.paperSize).toBe('80mm');
@@ -85,9 +85,9 @@ describe('/api/slip/settings', () => {
       expect(data.paperSize).toBe('104mm');
       expect(prisma.setting.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { key: 'slip_paperSize' },
+          where: { tenantId_key: { tenantId: 'tenant-1', key: 'slip_paperSize' } },
           update: { value: '104mm' },
-          create: { key: 'slip_paperSize', value: '104mm' },
+          create: { tenantId: 'tenant-1', key: 'slip_paperSize', value: '104mm' },
         })
       );
     });

@@ -117,17 +117,15 @@ npm run setup:postgres
 
 After seeding the database, you can login with:
 
-**Admin Account** (Full access):
-- Username: `admin`
-- Password: `admin123`
+**Shop login** (`/login`):
+- Shop slug: `demo` (or `DEFAULT_TENANT_SLUG`)
+- Admin: `admin` / `admin123`
+- User: `user` / `user123`
+- Viewer: `viewer` / `viewer123`
 
-**User Account** (Edit access):
-- Username: `user`
-- Password: `user123`
-
-**Viewer Account** (Read-only):
-- Username: `viewer`
-- Password: `viewer123`
+**Platform owner** (`/platform/login`):
+- Username: `owner`
+- Password: `owner123`
 
 ---
 

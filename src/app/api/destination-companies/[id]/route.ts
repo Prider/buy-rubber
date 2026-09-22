@@ -2,19 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const company = await prisma.destinationCompany.findUnique({
       where: { id: params.id },
     });
 
-    if (!company) {
+    if (!company || company.tenantId !== tenantId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง' }, { status: 404 });
     }
 
@@ -33,6 +38,18 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const existing = await prisma.destinationCompany.findUnique({
+      where: { id: params.id },
+      select: { id: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง' }, { status: 404 });
+    }
+
     const data = await request.json();
 
     if (!data.name || !String(data.name).trim()) {
@@ -46,6 +63,7 @@ export async function PUT(
       FROM "DestinationCompany"
       WHERE LOWER(name) = LOWER(${name})
         AND id != ${params.id}
+        AND "tenantId" = ${tenantId}
       LIMIT 1
     `;
 
@@ -69,11 +87,11 @@ export async function PUT(
 
     // Keep denormalized sale.companyName in sync when renaming
     await prisma.sale.updateMany({
-      where: { destinationCompanyId: params.id },
+      where: { tenantId, destinationCompanyId: params.id },
       data: { companyName: name },
     });
 
-    cache.deletePattern('^destination-companies:');
+    cache.deletePattern(`^tenant:${tenantId}:destination-companies:`);
 
     return NextResponse.json(company);
   } catch (error) {
@@ -86,12 +104,24 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const existing = await prisma.destinationCompany.findUnique({
+      where: { id: params.id },
+      select: { id: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json({ error: 'ไม่พบข้อมูลบริษัทปลายทาง' }, { status: 404 });
+    }
+
     const saleCount = await prisma.sale.count({
-      where: { destinationCompanyId: params.id },
+      where: { tenantId, destinationCompanyId: params.id },
     });
 
     if (saleCount > 0) {
@@ -99,7 +129,7 @@ export async function DELETE(
         where: { id: params.id },
         data: { isActive: false },
       });
-      cache.deletePattern('^destination-companies:');
+      cache.deletePattern(`^tenant:${tenantId}:destination-companies:`);
 
       return NextResponse.json({
         message: 'ปิดการใช้งานบริษัทปลายทางเรียบร้อยแล้ว',
@@ -112,7 +142,7 @@ export async function DELETE(
       await prisma.destinationCompany.delete({
         where: { id: params.id },
       });
-      cache.deletePattern('^destination-companies:');
+      cache.deletePattern(`^tenant:${tenantId}:destination-companies:`);
 
       return NextResponse.json({
         message: 'ลบบริษัทปลายทางเรียบร้อยแล้ว',
@@ -125,7 +155,7 @@ export async function DELETE(
           where: { id: params.id },
           data: { isActive: false },
         });
-        cache.deletePattern('^destination-companies:');
+        cache.deletePattern(`^tenant:${tenantId}:destination-companies:`);
 
         return NextResponse.json({
           message: 'ปิดการใช้งานบริษัทปลายทางเรียบร้อยแล้ว',

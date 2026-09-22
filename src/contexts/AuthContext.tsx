@@ -27,11 +27,15 @@ function userFromToken(token: string): Omit<User, 'password'> | null {
 
   return {
     id: decoded.userId,
+    tenantId: decoded.tenantId || '',
     username: decoded.username,
     role: decoded.role as UserRole,
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
+    tenantSlug: decoded.tenantSlug,
+    plan: decoded.plan,
+    tenantStatus: decoded.tenantStatus,
   };
 }
 
@@ -75,14 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (slug: string, username: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ slug, username, password }),
       });
 
       const data = await response.json();

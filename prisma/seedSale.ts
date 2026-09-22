@@ -13,6 +13,7 @@
  *   SALES=50 npm run db:seed:sales:for:test
  */
 import { PrismaClient } from '@prisma/client';
+import { resolveDefaultTenant } from './resolveDefaultTenant';
 
 const prisma = new PrismaClient();
 
@@ -37,12 +38,14 @@ const BATCH_SIZE = 1_000;
 async function main() {
   console.log(`🧾 seedSale: สร้างรายการขายตัวอย่าง... (${SALE_COUNT.toLocaleString()} รายการ)`);
 
+  const tenant = await resolveDefaultTenant(prisma);
   const users = await prisma.user.findMany({
-    where: { isActive: true },
+    where: { tenantId: tenant.id, isActive: true },
     orderBy: { createdAt: 'asc' },
     take: 20,
   });
   const productTypes = await prisma.productType.findMany({
+    where: { tenantId: tenant.id },
     orderBy: { code: 'asc' },
   });
 
@@ -61,13 +64,13 @@ async function main() {
     const name = COMPANY_NAMES[i];
     const code = `C${String(i + 1).padStart(3, '0')}`;
     const existing = await prisma.destinationCompany.findFirst({
-      where: { name },
+      where: { tenantId: tenant.id, name },
     });
     if (existing) {
       companyIds.push(existing.id);
     } else {
       const created = await prisma.destinationCompany.create({
-        data: { code, name },
+        data: { tenantId: tenant.id, code, name },
       });
       companyIds.push(created.id);
     }
@@ -113,6 +116,7 @@ async function main() {
       const saleNo = `SAL-${year}${month}-${seq}`;
 
       batchData.push({
+        tenantId: tenant.id,
         saleNo,
         date,
         createdAt: date,

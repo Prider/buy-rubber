@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 export const DEFAULT_TRANSACTION_DATE_RANGE_DAYS = 90;
 
 export interface TransactionQueryFilters {
+  tenantId: string;
   startDate: Date;
   endDate: Date;
   memberId?: string;
@@ -55,6 +56,7 @@ export function buildTransactionPrismaWhere(
   filters: TransactionQueryFilters,
 ): Prisma.PurchaseWhereInput {
   const where: Prisma.PurchaseWhereInput = {
+    tenantId: filters.tenantId,
     date: {
       gte: filters.startDate,
       lte: filters.endDate,
@@ -82,6 +84,7 @@ export function buildTransactionPrismaWhere(
 
 function buildTransactionWhereSql(filters: TransactionQueryFilters): Prisma.Sql {
   const parts: Prisma.Sql[] = [
+    Prisma.sql`"tenantId" = ${filters.tenantId}`,
     Prisma.sql`"date" >= ${filters.startDate}`,
     Prisma.sql`"date" <= ${filters.endDate}`,
   ];
@@ -150,6 +153,7 @@ function mapGroupRow(row: {
 export const SEARCH_MEMBER_ID_LIMIT = 50;
 
 export async function resolveSearchMemberIds(
+  tenantId: string,
   searchTerm: string | null | undefined,
   memberId: string | null | undefined,
 ): Promise<string[] | undefined> {
@@ -159,6 +163,7 @@ export async function resolveSearchMemberIds(
 
   const matchingMembers = await prisma.member.findMany({
     where: {
+      tenantId,
       OR: [
         { name: { contains: searchTerm } },
         { code: { contains: searchTerm } },

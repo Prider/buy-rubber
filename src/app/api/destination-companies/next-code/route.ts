@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { sqlNumericCodeSuffix } from '@/lib/dbProvider';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -21,8 +22,12 @@ function parseMaxNum(value: unknown): number | null {
  * GET /api/destination-companies/next-code
  * Generates next code in format C### (e.g. C001, C002).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     let maxNumber = 0;
 
     try {
@@ -31,6 +36,7 @@ export async function GET() {
         FROM "DestinationCompany"
         WHERE code LIKE 'C%'
           AND LENGTH(code) >= 2
+          AND "tenantId" = ${tenantId}
           AND ${sqlNumericCodeSuffix()}
       `;
 
@@ -40,7 +46,7 @@ export async function GET() {
       } else {
         const companies = await prisma.destinationCompany.findMany({
           select: { code: true },
-          where: { code: { startsWith: 'C' } },
+          where: { tenantId, code: { startsWith: 'C' } },
         });
         const existingNumbers = companies
           .map((c) => c.code)
@@ -53,7 +59,7 @@ export async function GET() {
       logger.warn('Raw query failed for destination company next-code', { error: queryError });
       const companies = await prisma.destinationCompany.findMany({
         select: { code: true },
-        where: { code: { startsWith: 'C' } },
+        where: { tenantId, code: { startsWith: 'C' } },
       });
       const existingNumbers = companies
         .map((c) => c.code)
@@ -70,7 +76,7 @@ export async function GET() {
 
     while (attempts < maxAttempts) {
       const existing = await prisma.destinationCompany.findUnique({
-        where: { code: nextCode },
+        where: { tenantId_code: { tenantId, code: nextCode } },
         select: { id: true },
       });
 

@@ -23,8 +23,14 @@ async function rebuildStock(databaseUrl) {
     await prisma.stockLedgerEntry.deleteMany({});
     await prisma.stockPosition.deleteMany({});
 
+    const productTypes = await prisma.productType.findMany({
+      select: { id: true, tenantId: true },
+    });
+    const tenantByProduct = new Map(productTypes.map((p) => [p.id, p.tenantId]));
+
     const purchases = await prisma.purchase.findMany({
       select: {
+        tenantId: true,
         purchaseNo: true,
         productTypeId: true,
         netWeight: true,
@@ -38,6 +44,7 @@ async function rebuildStock(databaseUrl) {
 
     const sales = await prisma.sale.findMany({
       select: {
+        tenantId: true,
         saleNo: true,
         productTypeId: true,
         weight: true,
@@ -53,6 +60,7 @@ async function rebuildStock(databaseUrl) {
     for (const p of purchases) {
       events.push({
         type: 'PURCHASE',
+        tenantId: p.tenantId || tenantByProduct.get(p.productTypeId),
         productTypeId: p.productTypeId,
         qtyKg: p.netWeight,
         unitCostPerKg: p.finalPrice,
@@ -65,6 +73,7 @@ async function rebuildStock(databaseUrl) {
     for (const s of sales) {
       events.push({
         type: 'SALE',
+        tenantId: s.tenantId || tenantByProduct.get(s.productTypeId),
         productTypeId: s.productTypeId,
         qtyToDeductKg: s.weight,
         refNo: s.saleNo,
@@ -96,6 +105,7 @@ async function rebuildStock(databaseUrl) {
         stockByProduct.set(ev.productTypeId, { qtyKg: newQty, avgCostPerKg: newAvg });
 
         ledgerEntries.push({
+          tenantId: ev.tenantId,
           productTypeId: ev.productTypeId,
           refType: 'PURCHASE',
           refNo: ev.refNo,
@@ -116,6 +126,7 @@ async function rebuildStock(databaseUrl) {
         stockByProduct.set(ev.productTypeId, { qtyKg: newQty, avgCostPerKg: newAvg });
 
         ledgerEntries.push({
+          tenantId: ev.tenantId,
           productTypeId: ev.productTypeId,
           refType: 'SALE',
           refNo: ev.refNo,
@@ -131,6 +142,7 @@ async function rebuildStock(databaseUrl) {
     }
 
     const positionsData = Array.from(stockByProduct.entries()).map(([productTypeId, st]) => ({
+      tenantId: tenantByProduct.get(productTypeId),
       productTypeId,
       quantityKg: st.qtyKg,
       avgCostPerKg: st.avgCostPerKg,
@@ -145,6 +157,7 @@ async function rebuildStock(databaseUrl) {
       const chunk = ledgerEntries.slice(i, i + chunkSize);
       await prisma.stockLedgerEntry.createMany({
         data: chunk.map((e) => ({
+          tenantId: e.tenantId,
           productTypeId: e.productTypeId,
           refType: e.refType,
           refNo: e.refNo ?? null,
@@ -180,6 +193,7 @@ async function rebuildStock(databaseUrl) {
           inGang = true;
           gangCounter += 1;
           current = {
+            tenantId: e.tenantId,
             productTypeId,
             gangNo: gangCounter,
             startDate: e.date,
@@ -215,6 +229,7 @@ async function rebuildStock(databaseUrl) {
       const chunk = gangRows.slice(i, i + chunkSize);
       await prisma.stockGang.createMany({
         data: chunk.map((g) => ({
+          tenantId: g.tenantId,
           productTypeId: g.productTypeId,
           gangNo: g.gangNo,
           startDate: g.startDate,

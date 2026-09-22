@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -24,6 +25,10 @@ type SaleAggResult = { soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const productTypeId = searchParams.get('productTypeId');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -46,12 +51,13 @@ export async function GET(request: NextRequest) {
         CAST(COALESCE(SUM(weight * "pricePerUnit"), 0) AS REAL) AS revenue
       FROM "Sale"
       WHERE "productTypeId" = ${productTypeId}
+        AND "tenantId" = ${tenantId}
     `;
 
     const [productType, position, saleAgg, entries, total] = await Promise.all([
       prisma.productType.findUnique({
         where: { id: productTypeId },
-        select: { id: true, code: true, name: true },
+        select: { id: true, code: true, name: true, tenantId: true },
       }),
       stockPosition.findUnique({
         where: { productTypeId },
@@ -59,7 +65,7 @@ export async function GET(request: NextRequest) {
       }),
       saleAggPromise,
       stockLedgerEntry.findMany({
-        where: { productTypeId },
+        where: { tenantId, productTypeId },
         orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
         skip: (page - 1) * limit,
         take: limit,
@@ -76,14 +82,18 @@ export async function GET(request: NextRequest) {
           notes: true,
         },
       }),
-      stockLedgerEntry.count({ where: { productTypeId } }),
+      stockLedgerEntry.count({ where: { tenantId, productTypeId } }),
     ]) as [
-      { id: string; code: string; name: string } | null,
+      { id: string; code: string; name: string; tenantId: string } | null,
       StockPositionRow | null,
       SaleAggResult[],
       StockLedgerRow[],
       number,
     ];
+
+    if (!productType || productType.tenantId !== tenantId) {
+      return NextResponse.json({ error: 'ไม่พบประเภทสินค้า' }, { status: 404 });
+    }
 
     const soldKg = Number(saleAgg[0]?.soldKg ?? 0);
     const revenue = Number(saleAgg[0]?.revenue ?? 0);
@@ -91,7 +101,7 @@ export async function GET(request: NextRequest) {
     const positionData = (position ?? null) as StockPositionRow | null;
 
     return NextResponse.json({
-      productType: productType ?? { id: productTypeId, code: '-', name: '-' },
+      productType: { id: productType.id, code: productType.code, name: productType.name },
       position: {
         quantityKg: positionData?.quantityKg ?? 0,
         avgCostPerKg: positionData?.avgCostPerKg ?? 0,

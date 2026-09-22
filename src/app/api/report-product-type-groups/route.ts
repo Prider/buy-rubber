@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 
@@ -47,13 +48,13 @@ function parseProductTypeIds(data: unknown): string[] {
   return [...new Set(data.map((id) => String(id).trim()).filter(Boolean))];
 }
 
-async function validateProductTypeIds(productTypeIds: string[]) {
+async function validateProductTypeIds(tenantId: string, productTypeIds: string[]) {
   if (productTypeIds.length === 0) {
     return { error: 'กรุณาเลือกประเภทสินค้าอย่างน้อย 1 รายการ' };
   }
 
   const productTypes = await prisma.productType.findMany({
-    where: { id: { in: productTypeIds }, isActive: true },
+    where: { tenantId, id: { in: productTypeIds }, isActive: true },
     select: { id: true },
   });
 
@@ -66,6 +67,10 @@ async function validateProductTypeIds(productTypeIds: string[]) {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === '1';
     const kind = parseReportProductTypeGroupKind(searchParams.get('kind'));
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
     logger.info('GET /api/report-product-type-groups', { includeInactive, kind });
 
     const groups = await prisma.reportProductTypeGroup.findMany({
-      where: includeInactive ? { kind } : { kind, isActive: true },
+      where: includeInactive ? { tenantId, kind } : { tenantId, kind, isActive: true },
       include: groupInclude,
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
@@ -90,9 +95,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const data = await request.json();
     const productTypeIds = parseProductTypeIds(data.productTypeIds);
-    const validation = await validateProductTypeIds(productTypeIds);
+    const validation = await validateProductTypeIds(tenantId, productTypeIds);
 
     if ('error' in validation) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
@@ -107,6 +116,7 @@ export async function POST(request: NextRequest) {
 
     const group = await prisma.reportProductTypeGroup.create({
       data: {
+        tenantId,
         name,
         kind,
         sortOrder,

@@ -14,6 +14,7 @@
  *   PURCHASES=20 npm run db:seed:purchases:for:test
  */
 import { PrismaClient } from '@prisma/client';
+import { resolveDefaultTenant } from './resolveDefaultTenant';
 
 const prisma = new PrismaClient();
 
@@ -52,16 +53,18 @@ const EXAMPLE_MEMBERS = [
 async function main() {
   console.log(`🛒 seedPurchase: สร้างรายการรับซื้อตัวอย่าง... (${PURCHASE_COUNT.toLocaleString()} รายการ)`);
 
+  const tenant = await resolveDefaultTenant(prisma);
   const users = await prisma.user.findMany({
-    where: { isActive: true },
+    where: { tenantId: tenant.id, isActive: true },
     orderBy: { createdAt: 'asc' },
     take: 20,
   });
   let members = await prisma.member.findMany({
-    where: { isActive: true },
+    where: { tenantId: tenant.id, isActive: true },
     orderBy: { code: 'asc' },
   });
   const productTypes = await prisma.productType.findMany({
+    where: { tenantId: tenant.id },
     orderBy: { code: 'asc' },
   });
 
@@ -77,7 +80,7 @@ async function main() {
   if (members.length === 0) {
     console.log('   - ไม่พบสมาชิก สร้างสมาชิกตัวอย่าง...');
     members = await Promise.all(
-      EXAMPLE_MEMBERS.map((data) => prisma.member.create({ data })),
+      EXAMPLE_MEMBERS.map((data) => prisma.member.create({ data: { ...data, tenantId: tenant.id } })),
     );
     console.log(`   - สมาชิกตัวอย่าง: ${members.length} ราย`);
   }
@@ -128,6 +131,7 @@ async function main() {
       const purchaseNo = `PUR-${year}${month}-${seq}`;
 
       batchData.push({
+        tenantId: tenant.id,
         purchaseNo,
         date,
         createdAt: date,

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS } from '@/lib/cache';
+import { cache, CACHE_KEYS, tenantKey } from '@/lib/cache';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // GET /api/members/[id]
 export async function GET(
@@ -9,11 +10,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const member = await prisma.member.findUnique({
       where: { id: params.id },
     });
 
-    if (!member) {
+    if (!member || member.tenantId !== tenantId) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลสมาชิก' },
         { status: 404 }
@@ -36,6 +41,21 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const existing = await prisma.member.findUnique({
+      where: { id: params.id },
+      select: { id: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลสมาชิก' },
+        { status: 404 }
+      );
+    }
+
     const data = await request.json();
 
     // ตรวจสอบชื่อซ้ำ (case-insensitive) - แต่ไม่นับสมาชิกที่กำลังแก้ไข
@@ -45,6 +65,7 @@ export async function PUT(
       FROM "Member" 
       WHERE LOWER(name) = LOWER(${data.name})
         AND id != ${params.id}
+        AND "tenantId" = ${tenantId}
       LIMIT 1
     `;
 
@@ -75,8 +96,8 @@ export async function PUT(
     });
 
     // Invalidate members cache and dashboard cache when a member is updated
-    cache.deletePattern('^members:');
-    cache.delete(CACHE_KEYS.DASHBOARD);
+    cache.deletePattern(`^tenant:${tenantId}:members:`);
+    cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
     return NextResponse.json(member);
   } catch (error) {
@@ -94,10 +115,25 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const existing = await prisma.member.findUnique({
+      where: { id: params.id },
+      select: { id: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลสมาชิก' },
+        { status: 404 }
+      );
+    }
+
     // Check if member has any related records (purchases, payments, etc.)
     const [purchaseCount] = await Promise.all([
       prisma.purchase.count({
-        where: { memberId: params.id },
+        where: { tenantId, memberId: params.id },
       })
     ]);
 
@@ -117,8 +153,8 @@ export async function DELETE(
       });
 
       // Invalidate members cache and dashboard cache when a member is soft deleted
-      cache.deletePattern('^members:');
-      cache.delete(CACHE_KEYS.DASHBOARD);
+      cache.deletePattern(`^tenant:${tenantId}:members:`);
+      cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
       const notes = [];
       if (purchaseCount > 0) {
@@ -140,8 +176,8 @@ export async function DELETE(
       });
 
       // Invalidate members cache and dashboard cache when a member is deleted
-      cache.deletePattern('^members:');
-      cache.delete(CACHE_KEYS.DASHBOARD);
+      cache.deletePattern(`^tenant:${tenantId}:members:`);
+      cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
       logger.info('Hard deleted member', { memberId: params.id });
       return NextResponse.json({
@@ -162,8 +198,8 @@ export async function DELETE(
         });
 
         // Invalidate members cache and dashboard cache when a member is soft deleted
-        cache.deletePattern('^members:');
-        cache.delete(CACHE_KEYS.DASHBOARD);
+        cache.deletePattern(`^tenant:${tenantId}:members:`);
+        cache.delete(tenantKey(tenantId, CACHE_KEYS.DASHBOARD));
 
         return NextResponse.json({ 
           message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',

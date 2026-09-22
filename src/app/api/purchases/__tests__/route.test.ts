@@ -51,6 +51,7 @@ vi.mock('@/lib/cache', () => ({
     DASHBOARD: 'dashboard',
     PURCHASE_TX_COUNT: 'purchase-tx-count',
   },
+  tenantKey: (tenantId: string, key: string) => `tenant:${tenantId}:${key}`,
   invalidatePurchaseCaches: vi.fn(),
 }));
 
@@ -151,7 +152,7 @@ describe('GET /api/purchases', () => {
       expect(data).toHaveLength(1);
       expect(data[0].purchaseNo).toBe(mockPurchase.purchaseNo);
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith({
-        where: {},
+        where: { tenantId: 'tenant-1' },
         include: {
           member: true,
           productType: true,
@@ -172,6 +173,7 @@ describe('GET /api/purchases', () => {
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               gte: expect.any(Date),
             }),
@@ -190,6 +192,7 @@ describe('GET /api/purchases', () => {
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               lte: expect.any(Date),
             }),
@@ -208,6 +211,7 @@ describe('GET /api/purchases', () => {
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             date: expect.objectContaining({
               gte: expect.any(Date),
               lte: expect.any(Date),
@@ -227,6 +231,7 @@ describe('GET /api/purchases', () => {
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             memberId: 'member-1',
           }),
         })
@@ -358,6 +363,7 @@ describe('GET /api/purchases', () => {
       expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId: 'tenant-1',
             memberId: 'member-1',
             productTypeId: 'product-1',
             isPaid: false,
@@ -421,6 +427,7 @@ describe('POST /api/purchases', () => {
 
   const mockMember = {
     id: 'member-1',
+    tenantId: 'tenant-1',
     code: 'M001',
     name: 'Test Member',
     ownerPercent: 100,
@@ -429,12 +436,14 @@ describe('POST /api/purchases', () => {
 
   const mockProductType = {
     id: 'product-1',
+    tenantId: 'tenant-1',
     code: 'PT001',
     name: 'น้ำยางสด',
   };
 
   const mockUser = {
     id: 'user-1',
+    tenantId: 'tenant-1',
     username: 'testuser',
     role: 'user',
   };
@@ -853,6 +862,7 @@ describe('POST /api/purchases', () => {
 
           expect(vi.mocked(prisma.productPrice.findFirst)).toHaveBeenCalledWith({
             where: {
+              tenantId: 'tenant-1',
               date: {
                 gte: new Date(`${purchaseDate}T00:00:00`),
                 lte: new Date(`${purchaseDate}T23:59:59`),
@@ -1001,6 +1011,7 @@ describe('POST /api/purchases', () => {
 
             expect(vi.mocked(prisma.productPrice.findMany)).toHaveBeenCalledWith({
               where: {
+                tenantId: 'tenant-1',
                 productTypeId: { in: ['product-1'] },
                 date: {
                   gte: new Date(`${purchaseDate}T00:00:00`),

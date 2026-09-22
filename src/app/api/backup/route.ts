@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBackup, getBackupList, restoreBackup, deleteBackup } from '@/lib/backup';
 import { logger } from '@/lib/logger';
+import { requireTenantAuth } from '@/lib/tenant';
 
 // Force Node.js runtime for file system operations
 export const runtime = 'nodejs';
 
 // GET /api/backup - ดึงรายการสำรองข้อมูล
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const backups = await getBackupList();
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
+    const backups = await getBackupList(tenantId);
     return NextResponse.json({ backups });
   } catch (error: any) {
     logger.error('Failed to get backup list', error);
@@ -22,8 +27,12 @@ export async function GET() {
 // POST /api/backup - สร้างสำรองข้อมูล
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { type } = await request.json().catch(() => ({}));
-    const result = await createBackup(type || 'manual');
+    const result = await createBackup(type || 'manual', tenantId);
 
     if (result.success) {
       return NextResponse.json(result);
@@ -45,6 +54,10 @@ export async function POST(request: NextRequest) {
 // PUT /api/backup - เรียกคืนข้อมูล
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { id } = await request.json();
     
     if (!id) {
@@ -54,7 +67,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await restoreBackup(id);
+    const result = await restoreBackup(id, tenantId);
 
     if (result.success) {
       return NextResponse.json(result);
@@ -76,6 +89,10 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/backup - ลบไฟล์สำรอง
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -86,7 +103,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = await deleteBackup(id);
+    const result = await deleteBackup(id, tenantId);
 
     if (result.success) {
       return NextResponse.json(result);

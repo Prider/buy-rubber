@@ -207,6 +207,16 @@ function LandingPage() {
                 รีวิว
               </a>
               <a 
+                href="#pricing" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                แพ็คเกจ
+              </a>
+              <a 
                 href="#faq" 
                 onClick={(e) => {
                   e.preventDefault();
@@ -247,10 +257,16 @@ function LandingPage() {
                 )}
               </button>
               <Link
-                href="/login"
+                href="/signup?plan=freemium"
                 className="px-3 md:px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-medium text-xs md:text-sm shadow-md hover:shadow-lg"
               >
                 ทดลองใช้ฟรี
+              </Link>
+              <Link
+                href="/login"
+                className="hidden md:inline text-sm text-gray-600 dark:text-gray-400 hover:text-green-600"
+              >
+                เข้าสู่ระบบ
               </Link>
             </div>
           </div>
@@ -359,7 +375,7 @@ function LandingPage() {
             
             <div className="flex flex-col items-start gap-4">
               <Link
-                href="/login"
+                href="/signup?plan=freemium"
                 className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 เริ่มใช้งาน
@@ -1058,6 +1074,39 @@ function LandingPage() {
       </section>
 
       {/* FAQ Section */}
+      <section id="pricing" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">แพ็คเกจ</h2>
+          <p className="text-gray-600 dark:text-gray-300">เลือกแผนแล้วสมัครร้านของคุณบนแพลตฟอร์ม</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-8 shadow-lg">
+            <h3 className="text-2xl font-bold mb-2">ทดลองใช้ฟรี</h3>
+            <p className="text-gray-500 mb-6">ผู้ใช้ 1 คน · ไม่ต้องชำระเงิน</p>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-8">
+              <li>รับซื้อ ขาย สต็อก รายงาน</li>
+              <li>พิมพ์สลิปใบรับซื้อ</li>
+              <li>ข้อมูลร้านแยกจากร้านอื่น</li>
+            </ul>
+            <Link href="/signup?plan=freemium" className="block text-center rounded-xl bg-green-600 text-white py-3 font-semibold">
+              สมัครฟรี
+            </Link>
+          </div>
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-3xl border border-green-200 dark:border-green-800 p-8 shadow-lg">
+            <h3 className="text-2xl font-bold mb-2">Premium</h3>
+            <p className="text-gray-500 mb-6">เพิ่มพนักงานได้ · โอนเงิน + อัปโหลดสลิป</p>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-8">
+              <li>ทุกอย่างในแพ็คเกจฟรี</li>
+              <li>เพิ่มผู้ใช้ admin / user / viewer</li>
+              <li>เจ้าของแพลตฟอร์มตรวจสอบสลิปแล้วเปิดใช้งาน</li>
+            </ul>
+            <Link href="/signup?plan=premium" className="block text-center rounded-xl bg-green-700 text-white py-3 font-semibold">
+              สมัคร Premium
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -1097,7 +1146,7 @@ function LandingPage() {
               สามารถทดลองใช้งานก่อนได้ไหม?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              ได้ครับ คุณสามารถทดลองใช้งานฟรีได้ทันทีด้วยแพ็คเกจเริ่มต้น ไม่ต้องใส่บัตรเครดิต ไม่มีข้อผูกมัด
+              ได้ครับ คุณสามารถทดลองใช้งานฟรีได้ทันทีด้วยแพ็คเกจเริ่มต้น (ผู้ใช้ 1 คน) ไม่ต้องใส่บัตรเครดิต ไม่มีข้อผูกมัด
             </p>
           </div>
 
@@ -1107,7 +1156,7 @@ function LandingPage() {
               รองรับหลายสาขาหรือไม่?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              รองรับครับ แพ็คเกจมาตรฐานรองรับหลายสาขา และแพ็คเกจองค์กรรองรับหลายสาขาไม่จำกัด พร้อมระบบจัดการข้อมูลแยกตามสาขา
+              แพ็คเกจ Premium รองรับพนักงานเพิ่มได้หลายคน ข้อมูลแต่ละร้านแยกกันบนแพลตฟอร์มเดียวกัน
             </p>
           </div>
 
@@ -1117,7 +1166,7 @@ function LandingPage() {
               มีการอบรมการใช้งานไหม?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              แพ็คเกจมาตรฐานและแพ็คเกจองค์กรมีคู่มือการใช้งานและวิดีโอสอนใช้งานออนไลน์ ส่วนแพ็คเกจองค์กรมีบริการฝึกอบรมการใช้งานแบบตัวต่อตัวเพิ่มเติม
+              ทุกแพ็คเกจมีคู่มือการใช้งานบนเว็บ ส่วน Premium มีช่องทางติดต่อเจ้าของแพลตฟอร์มโดยตรงเมื่อชำระเงินแล้ว
             </p>
           </div>
 
@@ -1150,7 +1199,7 @@ function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link
-                href="/login"
+                href="/signup?plan=freemium"
                 className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 ทดลองใช้ฟรี

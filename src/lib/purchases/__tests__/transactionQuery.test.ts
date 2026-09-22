@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
 
 describe('transactionQuery', () => {
   const filters: TransactionQueryFilters = {
+    tenantId: 'tenant-1',
     startDate: new Date('2024-01-01T00:00:00.000Z'),
     endDate: new Date('2024-01-31T23:59:59.999Z'),
     searchTerm: 'PUR',
@@ -131,9 +132,9 @@ describe('transactionQuery', () => {
 
   it('caps member search results so name matches cannot dump the whole table', async () => {
     const prisma = (await import('@/lib/prisma')).prisma;
-    vi.mocked(prisma.member.findMany).mockResolvedValue([{ id: 'member-1' }]);
+    vi.mocked(prisma.member.findMany).mockResolvedValue([{ id: 'member-1' }] as never);
 
-    const ids = await resolveSearchMemberIds('สม', null);
+    const ids = await resolveSearchMemberIds('tenant-1', 'สม', null);
 
     expect(ids).toEqual(['member-1']);
     expect(prisma.member.findMany).toHaveBeenCalledWith(
@@ -148,7 +149,7 @@ describe('transactionQuery', () => {
     const prisma = (await import('@/lib/prisma')).prisma;
     vi.mocked(prisma.member.findMany).mockClear();
 
-    await expect(resolveSearchMemberIds('สม', 'member-1')).resolves.toBeUndefined();
+    await expect(resolveSearchMemberIds('tenant-1', 'สม', 'member-1')).resolves.toBeUndefined();
     expect(prisma.member.findMany).not.toHaveBeenCalled();
   });
 });

@@ -4,13 +4,6 @@ export type AuthFixtures = {
   authedPage: Page
 }
 
-/**
- * Extends Playwright's base test with an `authedPage` fixture that navigates
- * to /dashboard and verifies the session is alive before each test.
- *
- * storageState (set in playwright.config.ts) restores the localStorage token
- * saved by auth.setup.ts, so no actual login request is made here.
- */
 export const test = base.extend<AuthFixtures>({
   authedPage: async ({ page }, use) => {
     await page.goto('/dashboard')
@@ -21,41 +14,20 @@ export const test = base.extend<AuthFixtures>({
 
 export { expect }
 
-/**
- * Logs in directly via the UI. Used only in specs that explicitly test
- * the authentication flow (auth/login.spec.ts).
- */
-async function waitForLoginPrefill(page: Page) {
-  const usernameInput = page.getByPlaceholder('กรอกชื่อผู้ใช้')
-  await usernameInput.waitFor({ state: 'visible' })
-  // Login pre-fills demo credentials in useEffect; wait so fill() does not race it.
-  await page.waitForFunction(
-    () => {
-      const input = document.querySelector<HTMLInputElement>(
-        'input[placeholder="กรอกชื่อผู้ใช้"]'
-      )
-      return Boolean(input && input.value.length > 0)
-    },
-    { timeout: 5000 }
-  )
-}
-
 export async function submitLogin(
   page: Page,
   username: string,
-  password: string
+  password: string,
+  slug = 'demo',
 ) {
-  await waitForLoginPrefill(page)
-
+  const slugInput = page.getByPlaceholder('เช่น my-shop')
   const usernameInput = page.getByPlaceholder('กรอกชื่อผู้ใช้')
   const passwordInput = page.getByPlaceholder('กรอกรหัสผ่าน')
 
-  if ((await usernameInput.inputValue()) !== username) {
-    await usernameInput.fill(username)
-  }
-  if ((await passwordInput.inputValue()) !== password) {
-    await passwordInput.fill(password)
-  }
+  await slugInput.waitFor({ state: 'visible' })
+  await slugInput.fill(slug)
+  await usernameInput.fill(username)
+  await passwordInput.fill(password)
 
   const loginReq = page.waitForResponse(
     (r) => r.url().includes('/api/auth/login') && r.request().method() === 'POST'
@@ -67,10 +39,11 @@ export async function submitLogin(
 export async function loginAs(
   page: Page,
   username: string,
-  password: string
+  password: string,
+  slug = 'demo',
 ): Promise<void> {
   await page.goto('/login')
-  const loginRes = await submitLogin(page, username, password)
+  const loginRes = await submitLogin(page, username, password, slug)
   expect(loginRes.ok()).toBeTruthy()
   await page.waitForURL('/dashboard')
 }

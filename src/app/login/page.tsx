@@ -14,6 +14,7 @@ interface LoginPageProps {
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
   const { login } = useAuth();
+  const [slug, setSlug] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,10 +23,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   useArrowFocusNavigation();
 
-  // Pre-fill demo credentials
   useEffect(() => {
-    setUsername('demo');
-    setPassword('demo@123');
+    const params = new URLSearchParams(window.location.search);
+    const slugParam = params.get('slug');
+    if (slugParam) {
+      setSlug(slugParam);
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +37,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const success = await login(username, password);
+      const success = await login(slug, username, password);
       
       if (success) {
         // Call onLogin callback if provided
@@ -92,6 +95,21 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  รหัสร้าน <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                  placeholder="เช่น my-shop"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                   ชื่อผู้ใช้ <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -107,7 +125,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
                     placeholder="กรอกชื่อผู้ใช้"
                     required
-                    autoFocus
                   />
                 </div>
               </div>
@@ -175,8 +192,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </form>
           </div>
 
-          {/* Footer */}
-          <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50">
+          <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50 space-y-2">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+              ยังไม่มีบัญชี?{' '}
+              <a href="/landing#pricing" className="font-semibold text-green-600 dark:text-green-400 hover:underline">
+                สมัครใช้งาน
+              </a>
+            </p>
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
               © 2025 Punsook Innotech. All rights reserved.
             </p>

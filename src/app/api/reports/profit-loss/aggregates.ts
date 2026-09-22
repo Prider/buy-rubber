@@ -39,6 +39,7 @@ function sqlitePeriodExpr(viewMode: ViewMode) {
 }
 
 async function fetchPostgresSaleAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -50,12 +51,13 @@ async function fetchPostgresSaleAggregates(
            COALESCE(SUM("pricePerUnit" * weight), 0)::float AS weighted_price,
            COALESCE(SUM(weight), 0)::float AS weight
     FROM "Sale"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 async function fetchSqliteSaleAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -67,12 +69,13 @@ async function fetchSqliteSaleAggregates(
            CAST(COALESCE(SUM("pricePerUnit" * weight), 0) AS REAL) AS weighted_price,
            CAST(COALESCE(SUM(weight), 0) AS REAL) AS weight
     FROM "Sale"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 async function fetchPostgresPurchaseAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -84,12 +87,13 @@ async function fetchPostgresPurchaseAggregates(
            COALESCE(SUM("finalPrice" * "netWeight"), 0)::float AS weighted_price,
            COALESCE(SUM("netWeight"), 0)::float AS weight
     FROM "Purchase"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 async function fetchSqlitePurchaseAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -101,12 +105,13 @@ async function fetchSqlitePurchaseAggregates(
            CAST(COALESCE(SUM("finalPrice" * "netWeight"), 0) AS REAL) AS weighted_price,
            CAST(COALESCE(SUM("netWeight"), 0) AS REAL) AS weight
     FROM "Purchase"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 async function fetchPostgresExpenseAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -116,12 +121,13 @@ async function fetchPostgresExpenseAggregates(
     SELECT DATE_TRUNC(${truncUnit}, date) AS period,
            COALESCE(SUM(amount), 0)::float AS total
     FROM "Expense"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 async function fetchSqliteExpenseAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
@@ -131,27 +137,28 @@ async function fetchSqliteExpenseAggregates(
     SELECT ${periodExpr} AS period,
            CAST(COALESCE(SUM(amount), 0) AS REAL) AS total
     FROM "Expense"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
+    WHERE "tenantId" = ${tenantId} AND "date" >= ${startDate} AND "date" <= ${endDate}
     GROUP BY 1
   `;
 }
 
 export async function fetchProfitLossAggregates(
+  tenantId: string,
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
 ): Promise<[PurchaseSaleAgg[], PurchaseSaleAgg[], ExpenseAgg[]]> {
   if (isPostgresDatabase()) {
     return Promise.all([
-      fetchPostgresSaleAggregates(startDate, endDate, viewMode),
-      fetchPostgresPurchaseAggregates(startDate, endDate, viewMode),
-      fetchPostgresExpenseAggregates(startDate, endDate, viewMode),
+      fetchPostgresSaleAggregates(tenantId, startDate, endDate, viewMode),
+      fetchPostgresPurchaseAggregates(tenantId, startDate, endDate, viewMode),
+      fetchPostgresExpenseAggregates(tenantId, startDate, endDate, viewMode),
     ]);
   }
 
   return Promise.all([
-    fetchSqliteSaleAggregates(startDate, endDate, viewMode),
-    fetchSqlitePurchaseAggregates(startDate, endDate, viewMode),
-    fetchSqliteExpenseAggregates(startDate, endDate, viewMode),
+    fetchSqliteSaleAggregates(tenantId, startDate, endDate, viewMode),
+    fetchSqlitePurchaseAggregates(tenantId, startDate, endDate, viewMode),
+    fetchSqliteExpenseAggregates(tenantId, startDate, endDate, viewMode),
   ]);
 }

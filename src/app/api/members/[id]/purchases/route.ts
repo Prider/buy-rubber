@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const fetchAll = searchParams.get('fetchAll') === 'true';
@@ -19,6 +24,7 @@ export async function GET(
 
     // Build where clause
     const where: any = {
+      tenantId,
       memberId: params.id,
     };
 

@@ -12,6 +12,7 @@ import {
   serviceFeeTransactionSelect,
   type TransactionQueryFilters,
 } from '@/lib/purchases/transactionQuery';
+import { requireTenantAuth } from '@/lib/tenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,10 @@ export const dynamic = 'force-dynamic';
 // GET /api/purchases/transactions - Get purchase transactions grouped by purchaseNo with service fees
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireTenantAuth(request);
+    if (!auth.ok) return auth.response;
+    const { tenantId } = auth.auth;
+
     const { searchParams } = new URL(request.url);
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
@@ -37,9 +42,10 @@ export async function GET(request: NextRequest) {
     });
 
     const { startDate, endDate } = parseTransactionDateRange(startDateParam, endDateParam);
-    const searchMemberIds = await resolveSearchMemberIds(searchTerm, memberId);
+    const searchMemberIds = await resolveSearchMemberIds(tenantId, searchTerm, memberId);
 
     const filters: TransactionQueryFilters = {
+      tenantId,
       startDate,
       endDate,
       memberId: memberId || undefined,
@@ -77,12 +83,12 @@ export async function GET(request: NextRequest) {
         orderBy: [{ createdAt: 'desc' }, { date: 'desc' }, { purchaseNo: 'desc' }],
       }),
       prisma.serviceFee.findMany({
-        where: { purchaseNo: { in: paginatedPurchaseNos } },
+        where: { tenantId, purchaseNo: { in: paginatedPurchaseNos } },
         select: serviceFeeTransactionSelect,
         orderBy: { date: 'desc' },
       }),
       prisma.member.findMany({
-        where: { id: { in: paginatedMemberIds } },
+        where: { tenantId, id: { in: paginatedMemberIds } },
         select: { id: true, name: true, code: true },
       }),
     ]);
