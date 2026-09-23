@@ -168,6 +168,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
               </div>
 
+              <div className="text-right">
+                <a
+                  href="/forgot-password"
+                  className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  ลืมรหัสผ่าน?
+                </a>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}

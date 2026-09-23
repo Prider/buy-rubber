@@ -4,7 +4,6 @@ import { ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DarkModeToggle from './DarkModeToggle';
-import HeaderTime from './HeaderTime';
 import Logo from './Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
@@ -338,9 +337,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center space-x-3">
               {/* Dark Mode Toggle */}
               <DarkModeToggle />
-              
-              {/* Date Display */}
-              <HeaderTime />
+            
             </div>
           </div>
         </header>

@@ -39,6 +39,7 @@ model Tenant {
 
   @@index([status])
   @@index([plan])
+  @@index([email])
 }
 
 model PlatformUser {
@@ -90,12 +91,25 @@ model User {
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  purchases Purchase[]
-  sales     Sale[]
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  purchases           Purchase[]
+  sales               Sale[]
+  passwordResetTokens PasswordResetToken[]
 
   @@unique([tenantId, username])
   @@index([tenantId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Member {
