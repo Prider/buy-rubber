@@ -14,6 +14,13 @@ const WEB_NAV_ROUTES: Array<{
     },
   },
   {
+    name: 'โปรไฟล์ร้าน',
+    href: '/profile',
+    verify: async (page) => {
+      await expect(page.getByRole('heading', { name: 'โปรไฟล์ร้าน' })).toBeVisible()
+    },
+  },
+  {
     name: 'รับซื้อยาง',
     href: '/purchases',
     verify: async (page) => {

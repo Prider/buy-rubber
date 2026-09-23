@@ -13,6 +13,7 @@ export const DEFAULT_TENANT_PRODUCT_TYPES = [
 export async function provisionTenant(input: {
   slug: string;
   name: string;
+  email?: string | null;
   address?: string | null;
   plan: TenantPlan;
   status: TenantStatus;
@@ -32,6 +33,9 @@ export async function provisionTenant(input: {
         status: input.status,
       },
     });
+    if (input.email) {
+      await tx.$executeRaw`UPDATE "Tenant" SET "email" = ${input.email} WHERE "id" = ${tenant.id}`;
+    }
 
     const user = await tx.user.create({
       data: {

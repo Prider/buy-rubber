@@ -6,6 +6,7 @@ const RESERVED_SLUGS = new Set([
   'platform',
   'landing',
   'dashboard',
+  'profile',
   'www',
   'app',
   'static',

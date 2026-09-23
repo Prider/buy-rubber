@@ -20,6 +20,7 @@ interface NavigationItem {
 
 const NAV_ITEMS: NavigationItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
+  { name: 'โปรไฟล์ร้าน', href: '/profile', icon: '👤' },
   { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
   { name: 'ขายสินค้า', href: '/sales', icon: '🚚' },
   { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
@@ -105,11 +106,12 @@ export default function Layout({ children }: LayoutProps) {
     return true;
   });
 
-  const locked = liveStatus === 'pending_payment' || liveStatus === 'rejected';
+  const accountLocked = liveStatus === 'pending_payment' || liveStatus === 'rejected';
+  const showWaitingScreen = accountLocked && pathname !== '/profile' && pathname !== '/signup/payment';
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
+      {!accountLocked && (
       <aside
         ref={sidebarRef}
         className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out ${
@@ -266,11 +268,12 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Main content */}
       <div
         className={`flex h-full min-h-0 min-w-0 flex-col transition-all duration-200 ${
-          sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
+          accountLocked ? '' : sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
         }`}
       >
         {/* Top bar */}
@@ -278,6 +281,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="relative flex items-center justify-between px-6 py-3">
             {/* Left side - Menu button */}
             <div className="flex items-center space-x-4">
+              {!accountLocked && (
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group"
@@ -313,6 +317,7 @@ export default function Layout({ children }: LayoutProps) {
                   </svg>
                 )}
               </button>
+              )}
               
             </div>
 
@@ -346,7 +351,7 @@ export default function Layout({ children }: LayoutProps) {
           className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6"
           ref={mainContentRef}
         >
-          {locked ? (
+          {showWaitingScreen ? (
             <WaitingForPayment status={liveStatus === 'rejected' ? 'rejected' : 'pending_payment'} />
           ) : (
             children
@@ -355,7 +360,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
+      {!accountLocked && sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}

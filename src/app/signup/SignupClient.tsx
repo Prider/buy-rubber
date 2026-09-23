@@ -6,8 +6,16 @@ import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
 import type { CartItem } from '@/components/purchases/types';
+import { slipWidthPxFor } from '@/lib/slipPaper';
 
 type Plan = 'freemium' | 'premium';
+
+const SLIP_PREVIEW_SIZE = '80mm' as const;
+const SLIP_PREVIEW_WIDTH_PX = slipWidthPxFor(SLIP_PREVIEW_SIZE);
+const SLIP_PREVIEW_STAGE_WIDTH = 480;
+const SLIP_PREVIEW_IFRAME_HEIGHT = 560;
+const SLIP_PREVIEW_SCALE = SLIP_PREVIEW_STAGE_WIDTH / SLIP_PREVIEW_WIDTH_PX;
+const SLIP_PREVIEW_STAGE_HEIGHT = Math.round(SLIP_PREVIEW_IFRAME_HEIGHT * SLIP_PREVIEW_SCALE);
 
 const SAMPLE_ITEMS: CartItem[] = [
   {
@@ -33,6 +41,7 @@ export default function SignupClient() {
   const [slug, setSlug] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
   const [slugMessage, setSlugMessage] = useState('');
@@ -61,18 +70,20 @@ export default function SignupClient() {
     return () => clearTimeout(handle);
   }, [slug]);
 
-  const previewHtml = useMemo(
-    () =>
-      generateSlipHTMLFromItems(SAMPLE_ITEMS, {
-        purchaseNo: 'PREVIEW-001',
-        memberName: 'คุณสมชาย',
-        memberCode: 'M001',
-        companyName: companyName || 'ชื่อร้านของคุณ',
-        companyAddress: companyAddress || 'ที่อยู่ร้าน',
-        paperSize: '80mm',
-      }),
-    [companyName, companyAddress],
-  );
+  const previewHtml = useMemo(() => {
+    const html = generateSlipHTMLFromItems(SAMPLE_ITEMS, {
+      purchaseNo: 'PREVIEW-001',
+      memberName: 'คุณสมชาย',
+      memberCode: 'M001',
+      companyName: companyName || 'ชื่อร้านของคุณ',
+      companyAddress: companyAddress || 'ที่อยู่ร้าน',
+      paperSize: SLIP_PREVIEW_SIZE,
+    });
+    return html.replace(
+      '</style>',
+      `@media screen { html, body { min-height: 0 !important; height: auto !important; display: block !important; padding-top: 12px !important; } }</style>`,
+    );
+  }, [companyName, companyAddress]);
 
   const handleSubmit = async () => {
     if (!plan) return;
@@ -87,6 +98,7 @@ export default function SignupClient() {
           slug,
           username,
           password,
+          email,
           companyName,
           companyAddress,
         }),
@@ -117,14 +129,14 @@ export default function SignupClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-4">
-      <div className="max-w-3xl mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 px-4 sm:px-8 lg:px-12">
+      <div className={`mx-auto py-8 lg:py-10 ${step === 2 ? 'w-full max-w-[1440px]' : 'max-w-xl'}`}>
+        <div className="flex items-center justify-between mb-6 lg:mb-8">
           <div className="flex items-center gap-3">
             <Logo className="h-10 w-auto" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">สมัครใช้งาน</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">สมัครใช้งาน</h1>
+              <p className="text-sm lg:text-base text-gray-500">
                 แพ็คเกจ {plan === 'premium' ? 'Premium' : 'ทดลองใช้ฟรี'} · ขั้นตอน {step}/2
               </p>
             </div>
@@ -132,7 +144,7 @@ export default function SignupClient() {
           <DarkModeToggle />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200/70 dark:border-gray-700 p-6 md:p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200/70 dark:border-gray-700 p-6 md:p-8 lg:p-10">
           {error && (
             <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-4 py-3 text-sm">
               {error}
@@ -171,9 +183,19 @@ export default function SignupClient() {
                   className="mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3"
                 />
               </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">อีเมล</span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3"
+                  placeholder="shop@email.com"
+                />
+              </label>
               <button
                 type="button"
-                disabled={!slugOk || username.length < 2 || password.length < 6}
+                disabled={!slugOk || username.length < 2 || password.length < 6 || !email.includes('@')}
                 onClick={() => setStep(2)}
                 className="w-full rounded-xl bg-green-600 text-white py-3 font-semibold disabled:opacity-50"
               >
@@ -183,41 +205,65 @@ export default function SignupClient() {
           )}
 
           {step === 2 && (
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(420px,1fr)_minmax(520px,1fr)] gap-8 xl:gap-12 items-start">
+              <div className="space-y-6">
                 <label className="block">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">ชื่อร้านบนสลิป</span>
+                  <span className="text-sm lg:text-base font-semibold text-gray-700 dark:text-gray-300">ชื่อร้านบนสลิป</span>
                   <input
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3"
+                    className="mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3.5 text-base lg:text-lg"
+                    placeholder="เช่น ร้านยางสวนไทย"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่ร้าน</span>
+                  <span className="text-sm lg:text-base font-semibold text-gray-700 dark:text-gray-300">ที่อยู่ร้าน</span>
                   <textarea
                     value={companyAddress}
                     onChange={(e) => setCompanyAddress(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3"
-                    rows={3}
+                    className="mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3.5 text-base lg:text-lg"
+                    rows={6}
+                    placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด"
                   />
                 </label>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setStep(1)} className="flex-1 rounded-xl border py-3">
+                <div className="flex gap-4 pt-2">
+                  <button type="button" onClick={() => setStep(1)} className="flex-1 rounded-xl border py-3.5 text-base font-medium">
                     ย้อนกลับ
                   </button>
                   <button
                     type="button"
                     disabled={loading || !companyName.trim()}
                     onClick={handleSubmit}
-                    className="flex-1 rounded-xl bg-green-600 text-white py-3 font-semibold disabled:opacity-50"
+                    className="flex-1 rounded-xl bg-green-600 text-white py-3.5 text-base font-semibold disabled:opacity-50"
                   >
                     {loading ? 'กำลังสร้างร้าน...' : plan === 'premium' ? 'ไปหน้าชำระเงิน' : 'สร้างร้านและเข้าสู่ระบบ'}
                   </button>
                 </div>
               </div>
-              <div className="bg-gray-100 dark:bg-gray-900 rounded-2xl p-3 overflow-auto max-h-[480px]">
-                <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 p-5 lg:p-8 md:sticky md:top-8">
+                <p className="text-sm lg:text-base font-semibold text-gray-700 dark:text-gray-300 mb-5">ตัวอย่างสลิป</p>
+                <div className="flex justify-center">
+                  <div
+                    className="relative shrink-0 overflow-hidden rounded-md bg-white shadow-lg"
+                    style={{
+                      width: SLIP_PREVIEW_STAGE_WIDTH,
+                      height: SLIP_PREVIEW_STAGE_HEIGHT,
+                    }}
+                  >
+                    <iframe
+                      title="ตัวอย่างสลิป"
+                      srcDoc={previewHtml}
+                      className="absolute top-0 left-0 bg-white"
+                      style={{
+                        width: SLIP_PREVIEW_WIDTH_PX,
+                        height: SLIP_PREVIEW_IFRAME_HEIGHT,
+                        border: 'none',
+                        transform: `scale(${SLIP_PREVIEW_SCALE})`,
+                        transformOrigin: 'top left',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

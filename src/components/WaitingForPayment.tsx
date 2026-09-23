@@ -42,7 +42,7 @@ export default function WaitingForPayment({
       <p className="text-gray-600 dark:text-gray-300">
         {status === 'rejected'
           ? 'สลิปไม่ผ่านการตรวจสอบ กรุณาอัปโหลดใหม่'
-          : 'เรากำลังตรวจสอบสลิปการโอนเงิน เมื่ออนุมัติแล้วจะใช้งาน Premium ได้ทันที'}
+          : 'เรากำลังตรวจสอบสลิปการโอนเงิน เมื่ออนุมัติแล้วจะใช้งานระบบ POS ได้ทันที'}
       </p>
       {rejectReason && <p className="text-sm text-red-600">{rejectReason}</p>}
       <button
@@ -51,6 +51,13 @@ export default function WaitingForPayment({
         className="rounded-xl bg-green-600 text-white px-6 py-3 font-semibold"
       >
         {status === 'rejected' ? 'อัปโหลดสลิปใหม่' : 'ดูหน้าชำระเงิน'}
+      </button>
+      <button
+        type="button"
+        onClick={() => router.push('/profile')}
+        className="block mx-auto rounded-xl border border-gray-200 dark:border-gray-600 px-6 py-3 font-semibold"
+      >
+        ดูโปรไฟล์ร้าน
       </button>
       <button type="button" onClick={() => logout()} className="block mx-auto text-sm text-gray-500">
         ออกจากระบบ

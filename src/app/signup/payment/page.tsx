@@ -82,6 +82,9 @@ export default function PaymentPage() {
           {done ? (
             <div className="text-center space-y-4">
               <p className="text-lg font-semibold">ส่งสลิปแล้ว รอเจ้าของแพลตฟอร์มตรวจสอบ</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                เมื่ออนุมัติแล้วจะใช้งานระบบ POS ได้ทันที
+              </p>
               <button
                 onClick={() => router.push('/dashboard')}
                 className="rounded-xl bg-green-600 text-white px-6 py-3 font-semibold"

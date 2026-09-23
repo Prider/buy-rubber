@@ -40,6 +40,7 @@ export async function POST(
         data: { plan: 'premium', status: 'active' },
       }),
     ]);
+
     return NextResponse.json({ success: true, status: 'approved' });
   }
 

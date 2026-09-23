@@ -20,6 +20,7 @@ export default function PlatformPaymentsPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [reason, setReason] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState('');
 
   const load = async () => {
     const res = await fetch('/api/platform/payments', { headers: authHeader() });
@@ -37,17 +38,22 @@ export default function PlatformPaymentsPage() {
 
   const review = async (id: string, action: 'approve' | 'reject') => {
     setError('');
-    const res = await fetch(`/api/platform/payments/${id}/review`, {
-      method: 'POST',
-      headers: { ...authHeader(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, rejectReason: reason[id] || '' }),
-    });
-    const data = await res.json();
-    if (!data.success) {
-      setError(data.message || 'ไม่สำเร็จ');
-      return;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/platform/payments/${id}/review`, {
+        method: 'POST',
+        headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, rejectReason: reason[id] || '' }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || 'ไม่สำเร็จ');
+        return;
+      }
+      await load();
+    } finally {
+      setBusyId('');
     }
-    await load();
   };
 
   return (
@@ -67,8 +73,9 @@ export default function PlatformPaymentsPage() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
+                    disabled={busyId === row.id}
                     onClick={() => review(row.id, 'approve')}
-                    className="rounded-lg bg-green-600 text-white px-3 py-2 text-sm"
+                    className="rounded-lg bg-green-600 text-white px-3 py-2 text-sm disabled:opacity-50"
                   >
                     อนุมัติ Premium
                   </button>
@@ -80,8 +87,9 @@ export default function PlatformPaymentsPage() {
                   />
                   <button
                     type="button"
+                    disabled={busyId === row.id}
                     onClick={() => review(row.id, 'reject')}
-                    className="rounded-lg bg-red-600 text-white px-3 py-2 text-sm"
+                    className="rounded-lg bg-red-600 text-white px-3 py-2 text-sm disabled:opacity-50"
                   >
                     ปฏิเสธ
                   </button>

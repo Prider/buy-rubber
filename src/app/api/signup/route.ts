@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateToken, type TenantPlan } from '@/lib/auth';
 import { validateSlug } from '@/lib/slug';
+import { isValidEmail, normalizeEmail } from '@/lib/email';
 import { provisionTenant } from '@/lib/provisionTenant';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
     const password = String(body.password || '');
     const name = String(body.companyName || '').trim();
     const address = String(body.companyAddress || '').trim();
+    const email = normalizeEmail(String(body.email || ''));
     const slugResult = validateSlug(String(body.slug || ''));
 
     if (!slugResult.ok) {
@@ -29,6 +31,9 @@ export async function POST(request: NextRequest) {
     if (!name) {
       return NextResponse.json({ success: false, message: 'กรุณากรอกชื่อร้านสำหรับสลิป' }, { status: 400 });
     }
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ success: false, message: 'กรุณากรอกอีเมลให้ถูกต้อง' }, { status: 400 });
+    }
 
     const existing = await prisma.tenant.findUnique({
       where: { slug: slugResult.slug },
@@ -41,6 +46,7 @@ export async function POST(request: NextRequest) {
     const { tenant, user } = await provisionTenant({
       slug: slugResult.slug,
       name,
+      email,
       address,
       plan,
       status: plan === 'premium' ? 'pending_payment' : 'active',

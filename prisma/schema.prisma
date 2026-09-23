@@ -15,6 +15,7 @@ model Tenant {
   id        String   @id @default(uuid())
   slug      String   @unique
   name      String
+  email     String?
   address   String?
   plan      String   @default("freemium") // freemium | premium
   status    String   @default("active") // active | pending_payment | rejected
