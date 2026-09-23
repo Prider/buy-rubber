@@ -24,8 +24,24 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
       <header className="border-b bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
         <div className="font-bold">Punsook Platform</div>
         <nav className="flex gap-4 text-sm">
-          <Link href="/platform/payments">สลิปชำระเงิน</Link>
-          <Link href="/platform/settings">บัญชีรับเงิน</Link>
+          <Link
+            href="/platform"
+            className={pathname === '/platform' ? 'font-semibold' : 'text-slate-500'}
+          >
+            ร้านค้า
+          </Link>
+          <Link
+            href="/platform/payments"
+            className={pathname === '/platform/payments' ? 'font-semibold' : 'text-slate-500'}
+          >
+            สลิปชำระเงิน
+          </Link>
+          <Link
+            href="/platform/settings"
+            className={pathname === '/platform/settings' ? 'font-semibold' : 'text-slate-500'}
+          >
+            บัญชีรับเงิน
+          </Link>
           <button
             type="button"
             onClick={() => {

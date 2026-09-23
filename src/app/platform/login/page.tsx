@@ -29,7 +29,7 @@ export default function PlatformLoginPage() {
         return;
       }
       localStorage.setItem(TOKEN_KEY, data.token);
-      router.push('/platform/payments');
+      router.push('/platform');
     } catch {
       setError('เข้าสู่ระบบไม่สำเร็จ');
     } finally {
