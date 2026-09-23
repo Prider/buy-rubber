@@ -77,13 +77,6 @@ const WEB_NAV_ROUTES: Array<{
     },
   },
   {
-    name: 'สำรองข้อมูล',
-    href: '/backup',
-    verify: async (page) => {
-      await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
-    },
-  },
-  {
     name: 'ตั้งค่า',
     href: '/admin',
     verify: async (page) => {
@@ -155,17 +148,6 @@ test.describe('UI flow', () => {
       await Promise.all([page.waitForURL(route.href), link.click()])
       await route.verify(page)
     }
-  })
-
-  test('REQ-UI-03: backup nav is visible to admin', async ({ page }) => {
-    await page.goto('/dashboard')
-    await expect(page.getByRole('heading', { name: /แดชบอร์ด/i })).toBeVisible()
-
-    const backupLink = page.locator('[data-nav-link="/backup"]')
-    await expect(backupLink).toBeVisible()
-    await backupLink.click()
-    await expect(page).toHaveURL('/backup')
-    await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
   })
 
   test('REQ-UI-04: Thai text renders correctly in navigation, forms, and tables', async ({

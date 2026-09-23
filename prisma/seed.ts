@@ -1,6 +1,6 @@
 /**
  * Seeds the same baseline data as prisma/backups/initial-data.db:
- * users, product types, members, backup settings, and report groups.
+ * users, product types, members, and report groups.
  * Purchases, sales, expenses, and stock tables stay empty.
  */
 import { PrismaClient } from '@prisma/client';
@@ -79,16 +79,6 @@ const MEMBERS: Array<{
   { code: 'M034', name: 'สาว', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
 ];
 
-const SETTINGS = [
-  { key: 'backup_enabled', value: 'true' },
-  { key: 'backup_frequency', value: 'weekly' },
-  { key: 'backup_weekly_day', value: '1' },
-  { key: 'backup_time', value: '17:14' },
-  { key: 'backup_max_count', value: '30' },
-  { key: 'backup_auto_cleanup', value: 'true' },
-  { key: 'backup_monthly_day', value: '1' },
-] as const;
-
 /** One unnamed group per product type, for both purchase and sale reports. */
 const REPORT_GROUP_PRODUCT_CODES = [
   'NUTS',
@@ -118,7 +108,6 @@ async function clearAll() {
   await prisma.productType.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.setting.deleteMany({});
-  await prisma.backup.deleteMany({});
   await prisma.paymentRequest.deleteMany({});
   await prisma.platformUser.deleteMany({});
   await prisma.platformSettings.deleteMany({});
@@ -204,15 +193,6 @@ async function main() {
     })),
   });
   console.log('✅ สร้างสมาชิก:', MEMBERS.length, 'ราย');
-
-  await prisma.setting.createMany({
-    data: SETTINGS.map((setting) => ({
-      tenantId: tenant.id,
-      key: setting.key,
-      value: setting.value,
-    })),
-  });
-  console.log('✅ สร้างการตั้งค่า:', SETTINGS.length, 'รายการ');
 
   for (const kind of ['purchase', 'sale'] as const) {
     for (const code of REPORT_GROUP_PRODUCT_CODES) {

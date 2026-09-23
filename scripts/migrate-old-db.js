@@ -48,7 +48,6 @@ const REQUIRED_TABLES = [
   'Expense',
   'ServiceFee',
   'Setting',
-  'Backup',
   'Sale',
   'SaleExpense',
   'StockPosition',

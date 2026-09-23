@@ -30,7 +30,6 @@ model Tenant {
   expenses                 Expense[]
   serviceFees              ServiceFee[]
   settings                 Setting[]
-  backups                  Backup[]
   sales                    Sale[]
   stockPositions           StockPosition[]
   stockLedgerEntries       StockLedgerEntry[]
@@ -271,22 +270,6 @@ model Setting {
 
   @@unique([tenantId, key])
   @@index([tenantId])
-}
-
-model Backup {
-  id         String   @id @default(uuid())
-  tenantId   String
-  fileName   String
-  filePath   String
-  fileSize   Int
-  backupType String
-  createdAt  DateTime @default(now())
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, fileName])
-  @@index([tenantId])
-  @@index([createdAt])
-  @@index([backupType])
 }
 
 model Sale {

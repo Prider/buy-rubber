@@ -30,7 +30,6 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
-  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];
 

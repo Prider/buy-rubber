@@ -6,7 +6,7 @@ const e2eBaseURL = `http://localhost:${e2ePort}`
 
 export default defineConfig({
   testDir: './tests/e2e',
-  // Single worker: all specs share one SQLite file; parallel runs + backup restore corrupt it.
+  // Single worker: all specs share one SQLite file; parallel runs corrupt it.
   workers: 1,
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,

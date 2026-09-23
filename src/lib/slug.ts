@@ -12,7 +12,6 @@ const RESERVED_SLUGS = new Set([
   'static',
   'assets',
   'health',
-  'backup',
   'purchases',
   'sales',
   'members',

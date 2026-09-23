@@ -2,19 +2,15 @@ import { test, expect } from '@playwright/test'
 import { loginAs } from '../fixtures/auth.fixture'
 import {
   apiHeaders,
-  createBackupViaApi,
   createMember,
-  deleteBackupViaApi,
   deleteMember,
   deleteUser,
-  downloadBackupViaApi,
   E2E_BASE_URL,
   ensureViewerUser,
   generateExpiredToken,
   getAdminToken,
   getStoredPasswordHash,
   getViewerToken,
-  listBackups,
   uniqueSuffix,
 } from '../fixtures/data.fixture'
 
@@ -23,7 +19,6 @@ test.describe('Security requirements', () => {
   let viewerToken: string
   let createdUserId: string | null = null
   const createdMemberIds: string[] = []
-  const createdBackupIds: string[] = []
 
   test.beforeAll(async ({ request }) => {
     adminToken = await getAdminToken(request)
@@ -39,14 +34,6 @@ test.describe('Security requirements', () => {
     while (createdMemberIds.length > 0) {
       const id = createdMemberIds.pop()!
       await deleteMember(request, id, adminToken)
-    }
-    while (createdBackupIds.length > 0) {
-      const id = createdBackupIds.pop()!
-      try {
-        await deleteBackupViaApi(request, id, adminToken)
-      } catch {
-        // Backup may already be removed by the test.
-      }
     }
   })
 
@@ -246,37 +233,5 @@ test.describe('Security requirements', () => {
     const literalSearchBody = await literalSearchRes.json()
     const leakedNames = (literalSearchBody.members ?? []).map((m: { name: string }) => m.name)
     expect(leakedNames).not.toContain(safeName)
-  })
-
-  test('REQ-SEC-06: backup access restricted to admin', async ({
-    page,
-    browser,
-    request,
-  }) => {
-    const backup = await createBackupViaApi(request, adminToken, 'manual')
-    createdBackupIds.push(backup.id)
-
-    const adminDownload = await downloadBackupViaApi(request, backup.id, adminToken)
-    expect(adminDownload.status).toBe(200)
-    expect(adminDownload.body.length).toBeGreaterThan(0)
-
-    const adminBackups = await listBackups(request, adminToken)
-    expect(adminBackups.some((item) => item.id === backup.id)).toBe(true)
-
-    const backupReq = page.waitForResponse(
-      (r) => r.url().includes('/api/backup') && r.ok()
-    )
-    await page.goto('/backup')
-    await backupReq
-    await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
-    await expect(page.getByText(backup.fileName)).toBeVisible()
-
-    const viewerContext = await browser.newContext()
-    const viewerPage = await viewerContext.newPage()
-    await loginAs(viewerPage, 'demo', 'demo@123')
-    await viewerPage.goto('/backup')
-    await expect(viewerPage).toHaveURL('/dashboard')
-    await expect(viewerPage.getByRole('link', { name: 'สำรองข้อมูล' })).not.toBeVisible()
-    await viewerContext.close()
   })
 })

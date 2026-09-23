@@ -18,7 +18,6 @@ const POS_TABLES = [
   'Expense',
   'ServiceFee',
   'Setting',
-  'Backup',
   'Sale',
   'StockPosition',
   'StockLedgerEntry',

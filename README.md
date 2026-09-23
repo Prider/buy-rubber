@@ -44,7 +44,6 @@
 - Dashboard แสดงสถิติแบบ Real-time
 
 ### ✅ การจัดการระบบ
-- สำรองข้อมูล (Backup) - เฉพาะ Admin
 - ตั้งค่าระบบ - เฉพาะ Admin
 - จัดการผู้ใช้งาน (User Management)
 - กำหนดสิทธิ์การใช้งานผู้ใช้ (Admin, User, Viewer)
@@ -119,7 +118,6 @@ punsook-innotech/
 │   │   │   ├── expenses/       # ค่าใช้จ่าย
 │   │   │   ├── servicefees/    # ค่าบริการ
 │   │   │   ├── dashboard/      # ข้อมูลแดชบอร์ด
-│   │   │   ├── backup/         # สำรองข้อมูล
 │   │   │   └── users/          # จัดการผู้ใช้
 │   │   ├── (authenticated)/    # หน้าที่ต้อง Login
 │   │   │   ├── dashboard/      # หน้าแดชบอร์ด
@@ -129,7 +127,6 @@ punsook-innotech/
 │   │   │   ├── expenses/       # ค่าใช้จ่าย
 │   │   │   ├── prices/         # ตั้งราคา
 │   │   │   ├── reports/        # รายงาน
-│   │   │   ├── backup/         # สำรองข้อมูล
 │   │   │   └── admin/          # ตั้งค่า
 │   │   └── login/              # หน้า Login
 │   ├── components/             # React Components
@@ -303,12 +300,6 @@ vercel --prod
 
 ### Dashboard
 - `GET /api/dashboard` - ข้อมูล Dashboard
-
-### Backup
-- `GET /api/backup` - ดึงรายการ Backup
-- `POST /api/backup` - สร้าง Backup
-- `GET /api/backup/[id]/download` - ดาวน์โหลด Backup
-- `GET /api/backup/settings` - ตั้งค่า Backup
 
 ### Users
 - `GET /api/users` - ดึงรายการผู้ใช้

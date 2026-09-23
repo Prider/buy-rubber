@@ -69,7 +69,6 @@ const features = [
     {
       title: 'การจัดการระบบ',
       items: [
-        'สำรองข้อมูล (Backup) - เฉพาะ Admin',
         'ตั้งค่าระบบ - เฉพาะ Admin',
         'จัดการผู้ใช้งาน (User Management)',
         'กำหนดสิทธิ์การใช้งานผู้ใช้ (Admin, User, Viewer)',
@@ -683,20 +682,6 @@ function LandingPage() {
                 </div>
               </div>
             </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/backup.png"
-                  alt="การจัดการระบบ"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">การจัดการระบบ</p>
-                </div>
-              </div>
-            </SwiperSlide>
           </Swiper>
         )}
       </section>
@@ -847,7 +832,7 @@ function LandingPage() {
               ปลอดภัยและเชื่อถือได้
             </h4>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              ข้อมูลของคุณปลอดภัยด้วยระบบสำรองข้อมูลอัตโนมัติ
+              ข้อมูลแต่ละร้านแยกจากกัน และควบคุมการเข้าถึงด้วยสิทธิ์ผู้ใช้
             </p>
           </div>
         </div>
@@ -1047,7 +1032,7 @@ function LandingPage() {
               </div>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ระบบเสถียร ไม่เคยมีปัญหา ข้อมูลปลอดภัย มีการสำรองข้อมูลอัตโนมัติ ใช้งานสบายใจครับ&quot;
+              &quot;ระบบเสถียร ไม่เคยมีปัญหา ข้อมูลปลอดภัย ใช้งานสบายใจครับ&quot;
             </p>
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <p className="font-semibold text-gray-900 dark:text-white">คุณอานนท์ ศรีสุข</p>
@@ -1136,7 +1121,7 @@ function LandingPage() {
               ข้อมูลจะปลอดภัยไหม?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              ปลอดภัยครับ เรามีระบบสำรองข้อมูลอัตโนมัติทุกวัน ข้อมูลเข้ารหัส SSL และมีการควบคุมการเข้าถึงด้วยระบบ User Permission
+              ปลอดภัยครับ ข้อมูลเข้ารหัส SSL และมีการควบคุมการเข้าถึงด้วยระบบ User Permission
             </p>
           </div>
 

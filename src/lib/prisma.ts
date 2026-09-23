@@ -54,7 +54,7 @@ function getActivePrisma(): PrismaClient {
 	return globalForPrisma.prisma;
 }
 
-/** Routes through the global singleton so backup restore can swap the client. */
+/** Routes through the global singleton so the client is created on first use. */
 export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
 	get(_target, prop) {
 		const client = getActivePrisma();
@@ -68,20 +68,4 @@ export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
 
 export function getPrisma(): PrismaClient {
 	return getActivePrisma();
-}
-
-/** Disconnect and recreate the client after replacing the SQLite file (e.g. backup restore). */
-export async function resetPrismaConnection(): Promise<void> {
-	const current = globalForPrisma.prisma;
-	if (current) {
-		try {
-			await current.$disconnect();
-		} catch {
-			// ignore disconnect errors during restore
-		}
-	}
-
-	globalForPrisma.prisma = undefined;
-	const client = createPrismaClient();
-	await client.$connect();
 }
