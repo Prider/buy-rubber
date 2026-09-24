@@ -190,7 +190,7 @@ export default function ShopProfilePage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             แพ็คเกจปัจจุบัน: {shop?.plan === 'premium' ? 'Premium' : 'ทดลองใช้ฟรี'}
           </p>
-          {(shop?.tenantStatus === 'pending_payment' || shop?.tenantStatus === 'rejected' || shop?.plan === 'freemium') && (
+          {(shop?.tenantStatus === 'not_yet_payment' || shop?.tenantStatus === 'pending_payment' || shop?.tenantStatus === 'rejected' || shop?.plan === 'freemium') && (
             <button
               type="button"
               onClick={() => router.push('/signup/payment')}

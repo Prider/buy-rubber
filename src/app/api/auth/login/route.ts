@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LoginRequest, LoginResponse } from '@/types/user';
+import { LoginRequest, LoginResponse, type TenantPlan, type TenantStatus } from '@/types/user';
 import { logger } from '@/lib/logger';
 import { userStore } from '@/lib/userStore';
 import { generateToken } from '@/lib/auth';
@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { password: _password, ...userWithoutPassword } = user;
+    const plan = tenant.plan as TenantPlan;
+    const tenantStatus = tenant.status as TenantStatus;
 
     const token = generateToken({
       kind: 'shop',
@@ -52,8 +54,8 @@ export async function POST(request: NextRequest) {
       role: user.role,
       tenantId: tenant.id,
       tenantSlug: tenant.slug,
-      plan: tenant.plan as 'freemium' | 'premium',
-      tenantStatus: tenant.status as 'active' | 'pending_payment' | 'rejected',
+      plan,
+      tenantStatus,
     });
 
     return NextResponse.json<LoginResponse>({
@@ -62,8 +64,8 @@ export async function POST(request: NextRequest) {
         ...userWithoutPassword,
         tenantId: tenant.id,
         tenantSlug: tenant.slug,
-        plan: tenant.plan as 'freemium' | 'premium',
-        tenantStatus: tenant.status as 'active' | 'pending_payment' | 'rejected',
+        plan,
+        tenantStatus,
       },
       token,
     });

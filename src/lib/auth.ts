@@ -1,12 +1,12 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import type { TenantPlan, TenantStatus } from '@/types/user';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '7d') as SignOptions['expiresIn'];
 
+export type { TenantPlan, TenantStatus };
 export type AuthKind = 'shop' | 'platform';
-export type TenantPlan = 'freemium' | 'premium';
-export type TenantStatus = 'active' | 'pending_payment' | 'rejected';
 
 export interface JWTPayload {
   kind: AuthKind;

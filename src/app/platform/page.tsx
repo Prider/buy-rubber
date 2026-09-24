@@ -52,19 +52,21 @@ export default function PlatformTenantsPage() {
     (acc, tenant) => {
       acc.total += 1;
       if (tenant.status === 'pending_payment') acc.pending += 1;
+      else if (tenant.status === 'not_yet_payment') acc.unpaid += 1;
       else if (tenant.status === 'rejected') acc.rejected += 1;
       else acc.active += 1;
       return acc;
     },
-    { total: 0, active: 0, pending: 0, rejected: 0 },
+    { total: 0, active: 0, pending: 0, unpaid: 0, rejected: 0 },
   );
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">ร้านค้า</h1>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Summary label="ทั้งหมด" value={counts.total} />
         <Summary label="ใช้งานได้" value={counts.active} />
+        <Summary label="ยังไม่ชำระเงิน" value={counts.unpaid} />
         <Summary label="รอตรวจสอบสลิป" value={counts.pending} />
         <Summary label="สลิปไม่ผ่าน" value={counts.rejected} />
       </div>

@@ -18,7 +18,7 @@ model Tenant {
   email     String?
   address   String?
   plan      String   @default("freemium") // freemium | premium
-  status    String   @default("active") // active | pending_payment | rejected
+  status    String   @default("active") // active | not_yet_payment | pending_payment | rejected
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -41,6 +41,26 @@ model Tenant {
   @@index([status])
   @@index([plan])
   @@index([email])
+}
+
+model PendingSignup {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  username       String
+  passwordHash   String
+  email          String
+  companyName    String
+  companyAddress String   @default("")
+  plan           String
+  tokenHash      String   @unique
+  failedAttempts Int      @default(0)
+  expiresAt      DateTime
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 model PlatformUser {

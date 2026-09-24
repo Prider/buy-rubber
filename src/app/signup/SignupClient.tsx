@@ -17,6 +17,8 @@ const SLIP_PREVIEW_IFRAME_HEIGHT = 560;
 const SLIP_PREVIEW_SCALE = SLIP_PREVIEW_STAGE_WIDTH / SLIP_PREVIEW_WIDTH_PX;
 const SLIP_PREVIEW_STAGE_HEIGHT = Math.round(SLIP_PREVIEW_IFRAME_HEIGHT * SLIP_PREVIEW_SCALE);
 
+const PENDING_KEY = 'signup_pending_verification';
+
 const SAMPLE_ITEMS: CartItem[] = [
   {
     id: 'preview-1',
@@ -48,12 +50,40 @@ export default function SignupClient() {
   const [slugOk, setSlugOk] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState('');
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     if (!plan) {
       router.replace('/landing#pricing');
     }
   }, [plan, router]);
+
+  useEffect(() => {
+    if (!plan) return;
+    const raw = sessionStorage.getItem(PENDING_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw) as { plan?: string; slug?: string; email?: string; cooldownUntil?: number };
+      if (saved.plan !== plan || !saved.slug || !saved.email) return;
+      setSlug(saved.slug);
+      setEmail(saved.email);
+      setStep(3);
+      const remaining = Math.ceil(((saved.cooldownUntil || 0) - Date.now()) / 1000);
+      setCooldown(remaining > 0 ? remaining : 0);
+    } catch {
+      sessionStorage.removeItem(PENDING_KEY);
+    }
+  }, [plan]);
+
+  useEffect(() => {
+    if (step !== 3 || cooldown <= 0) return;
+    const id = window.setInterval(() => {
+      setCooldown((current) => (current <= 1 ? 0 : current - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [step, cooldown > 0]);
 
   useEffect(() => {
     if (!slug) {
@@ -108,17 +138,82 @@ export default function SignupClient() {
         setError(data.message || 'สมัครไม่สำเร็จ');
         return;
       }
-      if (data.token && data.user) {
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-      }
-      if (plan === 'premium') {
-        router.push('/signup/payment');
-      } else {
-        router.push('/dashboard');
-      }
+      const seconds = Number(data.cooldownSeconds) || 60;
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+        plan,
+        slug,
+        email: data.email || email,
+        cooldownUntil: Date.now() + seconds * 1000,
+      }));
+      setCooldown(seconds);
+      setResendMessage('');
+      setStep(3);
     } catch {
       setError('สมัครไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!plan || cooldown > 0) return;
+    setError('');
+    setResendMessage('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/signup/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, email }),
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        const seconds = Number(data.retryAfterSeconds) || 60;
+        setCooldown(seconds);
+        return;
+      }
+      if (!res.ok || !data.success) {
+        setError(data.message || 'ส่งอีเมลไม่สำเร็จ');
+        return;
+      }
+      const seconds = Number(data.cooldownSeconds) || 60;
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+        plan,
+        slug,
+        email,
+        cooldownUntil: Date.now() + seconds * 1000,
+      }));
+      setCooldown(seconds);
+      setCode('');
+      setResendMessage('ส่งรหัสยืนยันอีกครั้งแล้ว');
+    } catch {
+      setError('ส่งอีเมลไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!plan || !/^\d{4}$/.test(code)) return;
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/signup/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, code }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.token || !data.user) {
+        setError(data.message || 'รหัสยืนยันไม่ถูกต้อง');
+        return;
+      }
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_user', JSON.stringify(data.user));
+      sessionStorage.removeItem(PENDING_KEY);
+      window.location.assign(data.next || '/dashboard');
+    } catch {
+      setError('ไม่สามารถยืนยันรหัสได้');
     } finally {
       setLoading(false);
     }
@@ -137,7 +232,8 @@ export default function SignupClient() {
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">สมัครใช้งาน</h1>
               <p className="text-sm lg:text-base text-gray-500">
-                แพ็คเกจ {plan === 'premium' ? 'Premium' : 'ทดลองใช้ฟรี'} · ขั้นตอน {step}/2
+                แพ็คเกจ {plan === 'premium' ? 'Premium' : 'ทดลองใช้ฟรี'}
+                {step < 3 ? ` · ขั้นตอน ${step}/2` : ' · ยืนยันอีเมล'}
               </p>
             </div>
           </div>
@@ -236,7 +332,7 @@ export default function SignupClient() {
                     onClick={handleSubmit}
                     className="flex-1 rounded-xl bg-green-600 text-white py-3.5 text-base font-semibold disabled:opacity-50"
                   >
-                    {loading ? 'กำลังสร้างร้าน...' : plan === 'premium' ? 'ไปหน้าชำระเงิน' : 'สร้างร้านและเข้าสู่ระบบ'}
+                    {loading ? 'กำลังส่งอีเมล...' : 'ส่งอีเมลยืนยัน'}
                   </button>
                 </div>
               </div>
@@ -265,6 +361,44 @@ export default function SignupClient() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4 text-center">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">ตรวจสอบอีเมลของคุณ</h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                เราส่งรหัส 4 หลักไปที่ <span className="font-semibold">{email}</span>
+              </p>
+              <p className="text-sm text-gray-500">รหัสใช้ได้ 15 นาที</p>
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={4}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 px-4 py-3 text-center text-2xl tracking-[0.4em]"
+                placeholder="0000"
+              />
+              {resendMessage && (
+                <p className="text-sm text-green-600">{resendMessage}</p>
+              )}
+              <button
+                type="button"
+                disabled={loading || code.length !== 4}
+                onClick={handleConfirm}
+                className="w-full rounded-xl bg-green-600 text-white py-3 font-semibold disabled:opacity-50"
+              >
+                {loading ? 'กำลังยืนยัน...' : 'ยืนยันรหัส'}
+              </button>
+              <button
+                type="button"
+                disabled={loading || cooldown > 0}
+                onClick={handleResend}
+                className="w-full rounded-xl border py-3 font-semibold disabled:opacity-50"
+              >
+                {cooldown > 0 ? `ส่งอีกครั้งใน ${cooldown} วินาที` : 'ส่งรหัสอีกครั้ง'}
+              </button>
             </div>
           )}
         </div>

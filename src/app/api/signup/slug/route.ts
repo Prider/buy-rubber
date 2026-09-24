@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
     where: { slug: result.slug },
     select: { id: true },
   });
+  const pending = await prisma.pendingSignup.findFirst({
+    where: { slug: result.slug, expiresAt: { gt: new Date() } },
+    select: { id: true },
+  });
 
-  if (existing) {
+  if (existing || pending) {
     return NextResponse.json({
       available: false,
       message: 'รหัสร้านนี้ถูกใช้แล้ว',

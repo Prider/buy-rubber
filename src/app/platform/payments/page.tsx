@@ -20,6 +20,8 @@ export default function PlatformPaymentsPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [reason, setReason] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [noticeOk, setNoticeOk] = useState(true);
   const [busyId, setBusyId] = useState('');
 
   const load = async () => {
@@ -38,6 +40,7 @@ export default function PlatformPaymentsPage() {
 
   const review = async (id: string, action: 'approve' | 'reject') => {
     setError('');
+    setNotice('');
     setBusyId(id);
     try {
       const res = await fetch(`/api/platform/payments/${id}/review`, {
@@ -50,6 +53,10 @@ export default function PlatformPaymentsPage() {
         setError(data.message || 'ไม่สำเร็จ');
         return;
       }
+      if (data.message) {
+        setNotice(data.message);
+        setNoticeOk(data.emailSent !== false);
+      }
       await load();
     } finally {
       setBusyId('');
@@ -60,6 +67,9 @@ export default function PlatformPaymentsPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">ตรวจสอบสลิปชำระเงิน</h1>
       {error && <p className="text-red-600 text-sm">{error}</p>}
+      {notice && (
+        <p className={`text-sm ${noticeOk ? 'text-green-700' : 'text-amber-600'}`}>{notice}</p>
+      )}
       {payments.length === 0 && <p className="text-gray-500">ยังไม่มีรายการ</p>}
       <div className="space-y-4">
         {payments.map((row) => (

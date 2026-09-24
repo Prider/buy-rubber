@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { paymentRequestLabel, shopPaymentStatus } from '../tenantProfile';
 
 describe('shopPaymentStatus', () => {
+  it('marks a premium shop that has not paid yet', () => {
+    expect(shopPaymentStatus({ plan: 'premium', tenantStatus: 'not_yet_payment' })).toEqual({
+      key: 'unpaid',
+      label: 'ยังไม่ชำระเงิน',
+      tone: 'gray',
+    });
+  });
+
   it('marks a pending premium signup as waiting for slip review', () => {
     expect(shopPaymentStatus({ plan: 'premium', tenantStatus: 'pending_payment' })).toEqual({
       key: 'pending',

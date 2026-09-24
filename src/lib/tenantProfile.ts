@@ -6,6 +6,9 @@ export function shopPaymentStatus(input: {
   plan: TenantPlan | string;
   tenantStatus: TenantStatus | string;
 }): { key: string; label: string; tone: 'green' | 'amber' | 'red' | 'gray' } {
+  if (input.tenantStatus === 'not_yet_payment') {
+    return { key: 'unpaid', label: 'ยังไม่ชำระเงิน', tone: 'gray' };
+  }
   if (input.tenantStatus === 'pending_payment') {
     return { key: 'pending', label: 'รอตรวจสอบสลิป', tone: 'amber' };
   }

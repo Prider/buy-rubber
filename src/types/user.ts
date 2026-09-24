@@ -1,6 +1,10 @@
 export type UserRole = 'root' | 'admin' | 'user' | 'viewer';
-export type TenantPlan = 'freemium' | 'premium';
-export type TenantStatus = 'active' | 'pending_payment' | 'rejected';
+
+export const TENANT_PLANS = ['freemium', 'premium'] as const;
+export type TenantPlan = (typeof TENANT_PLANS)[number];
+
+export const TENANT_STATUSES = ['active', 'not_yet_payment', 'pending_payment', 'rejected'] as const;
+export type TenantStatus = (typeof TENANT_STATUSES)[number];
 
 /** Roles that can be assigned via the admin UI / API (root is seed-only). */
 export const ASSIGNABLE_ROLES: UserRole[] = ['viewer', 'user', 'admin'];

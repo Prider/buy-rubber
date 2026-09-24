@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateToken, type TenantPlan } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
+import type { TenantPlan } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 import { validateSlug } from '@/lib/slug';
 import { isValidEmail, normalizeEmail } from '@/lib/email';
-import { provisionTenant } from '@/lib/provisionTenant';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { sendSignupVerificationEmail } from '@/lib/mail';
+import {
+  SIGNUP_RESEND_COOLDOWN_MS,
+  createSignupCode,
+} from '@/lib/signupVerification';
+import { SIGNUP_RATE_LIMIT, clientIp, rateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
+
+const SLUG_TAKEN = 'รหัสร้านนี้ถูกใช้แล้ว';
+
+function isSlugTaken(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
+  }
+  const target = error.meta?.target;
+  const fields = Array.isArray(target) ? target.map(String) : typeof target === 'string' ? [target] : [];
+  return fields.some((field) => field === 'slug' || field.includes('slug'));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,58 +53,82 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'กรุณากรอกอีเมลให้ถูกต้อง' }, { status: 400 });
     }
 
+    const limited = rateLimit(
+      `signup:${clientIp(request)}`,
+      SIGNUP_RATE_LIMIT.limit,
+      SIGNUP_RATE_LIMIT.windowMs,
+    );
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, message: 'คำขอมากเกินไป กรุณาลองใหม่ภายหลัง', retryAfterSeconds: limited.retryAfterSeconds },
+        { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } },
+      );
+    }
+
     const existing = await prisma.tenant.findUnique({
       where: { slug: slugResult.slug },
       select: { id: true },
     });
     if (existing) {
-      return NextResponse.json({ success: false, message: 'รหัสร้านนี้ถูกใช้แล้ว' }, { status: 409 });
+      return NextResponse.json({ success: false, message: SLUG_TAKEN }, { status: 409 });
     }
 
-    const { tenant, user } = await provisionTenant({
-      slug: slugResult.slug,
-      name,
-      email,
-      address,
-      plan,
-      status: plan === 'premium' ? 'pending_payment' : 'active',
-      adminUsername: username,
-      adminPassword: password,
-      adminRole: 'admin',
+    const now = new Date();
+    await prisma.pendingSignup.deleteMany({
+      where: { slug: slugResult.slug, expiresAt: { lte: now } },
     });
 
-    const token = generateToken({
-      kind: 'shop',
-      userId: user.id,
-      username: user.username,
-      role: user.role,
-      tenantId: tenant.id,
-      tenantSlug: tenant.slug,
-      plan: tenant.plan as TenantPlan,
-      tenantStatus: tenant.status as 'active' | 'pending_payment' | 'rejected',
+    const pendingSlug = await prisma.pendingSignup.findUnique({
+      where: { slug: slugResult.slug },
+      select: { id: true },
+    });
+    if (pendingSlug) {
+      return NextResponse.json({ success: false, message: SLUG_TAKEN }, { status: 409 });
+    }
+
+    const passwordHash = await hashPassword(password);
+    const { code, tokenHash, expiresAt } = createSignupCode(slugResult.slug);
+    const pending = await prisma.pendingSignup.create({
+      data: {
+        slug: slugResult.slug,
+        username,
+        passwordHash,
+        email,
+        companyName: name,
+        companyAddress: address,
+        plan,
+        tokenHash,
+        failedAttempts: 0,
+        expiresAt,
+        sentAt: now,
+      },
     });
 
-    const { password: _pw, ...userWithoutPassword } = user;
+    try {
+      await sendSignupVerificationEmail({
+        to: email,
+        shopName: name,
+        code,
+      });
+    } catch (error) {
+      logger.error('Failed to send signup verification email', error);
+      await prisma.pendingSignup.delete({ where: { id: pending.id } });
+      return NextResponse.json(
+        { success: false, message: 'ไม่สามารถส่งอีเมลยืนยันได้ กรุณาลองใหม่' },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      token,
-      user: {
-        ...userWithoutPassword,
-        tenantId: tenant.id,
-        tenantSlug: tenant.slug,
-        plan: tenant.plan,
-        tenantStatus: tenant.status,
-      },
-      tenant: {
-        id: tenant.id,
-        slug: tenant.slug,
-        plan: tenant.plan,
-        status: tenant.status,
-      },
-      next: plan === 'premium' ? '/signup/payment' : '/login',
+      email,
+      slug: slugResult.slug,
+      cooldownSeconds: SIGNUP_RESEND_COOLDOWN_MS / 1000,
     }, { status: 201 });
   } catch (error) {
+    if (isSlugTaken(error)) {
+      return NextResponse.json({ success: false, message: SLUG_TAKEN }, { status: 409 });
+    }
     logger.error('Signup failed', error);
     return NextResponse.json({ success: false, message: 'ไม่สามารถสมัครใช้งานได้' }, { status: 500 });
   }

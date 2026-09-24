@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function WaitingForPayment({
   status,
 }: {
-  status: 'pending_payment' | 'rejected';
+  status: 'not_yet_payment' | 'pending_payment' | 'rejected';
 }) {
   const router = useRouter();
   const { logout } = useAuth();
@@ -38,11 +38,15 @@ export default function WaitingForPayment({
 
   return (
     <div className="max-w-lg mx-auto bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl text-center space-y-4">
-      <h1 className="text-2xl font-bold">รอตรวจสอบสลิป</h1>
+      <h1 className="text-2xl font-bold">
+        {status === 'not_yet_payment' ? 'ยังไม่ได้ชำระเงิน' : 'รอตรวจสอบสลิป'}
+      </h1>
       <p className="text-gray-600 dark:text-gray-300">
-        {status === 'rejected'
-          ? 'สลิปไม่ผ่านการตรวจสอบ กรุณาอัปโหลดใหม่'
-          : 'เรากำลังตรวจสอบสลิปการโอนเงิน เมื่ออนุมัติแล้วจะใช้งานระบบ POS ได้ทันที'}
+        {status === 'not_yet_payment'
+          ? 'กรุณาโอนเงินและอัปโหลดสลิปเพื่อเปิดใช้งาน Premium'
+          : status === 'rejected'
+            ? 'สลิปไม่ผ่านการตรวจสอบ กรุณาอัปโหลดใหม่'
+            : 'เรากำลังตรวจสอบสลิปการโอนเงิน เมื่ออนุมัติแล้วจะใช้งานระบบ POS ได้ทันที'}
       </p>
       {rejectReason && <p className="text-sm text-red-600">{rejectReason}</p>}
       <button
@@ -50,7 +54,7 @@ export default function WaitingForPayment({
         onClick={() => router.push('/signup/payment')}
         className="rounded-xl bg-green-600 text-white px-6 py-3 font-semibold"
       >
-        {status === 'rejected' ? 'อัปโหลดสลิปใหม่' : 'ดูหน้าชำระเงิน'}
+        {status === 'rejected' ? 'อัปโหลดสลิปใหม่' : status === 'not_yet_payment' ? 'ไปหน้าชำระเงิน' : 'ดูหน้าชำระเงิน'}
       </button>
       <button
         type="button"

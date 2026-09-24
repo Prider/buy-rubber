@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import type { TenantPlan, TenantStatus } from '@/lib/auth';
@@ -10,21 +11,27 @@ export const DEFAULT_TENANT_PRODUCT_TYPES = [
   { code: 'RUBER5', name: 'ยางแผ่น', description: 'ยางแผ่น' },
 ] as const;
 
-export async function provisionTenant(input: {
-  slug: string;
-  name: string;
-  email?: string | null;
-  address?: string | null;
-  plan: TenantPlan;
-  status: TenantStatus;
-  adminUsername: string;
-  adminPassword: string;
-  adminRole?: string;
-}) {
-  const password = await hashPassword(input.adminPassword);
+export async function provisionTenant(
+  input: {
+    slug: string;
+    name: string;
+    email?: string | null;
+    address?: string | null;
+    plan: TenantPlan;
+    status: TenantStatus;
+    adminUsername: string;
+    adminPassword: string;
+    adminRole?: string;
+    passwordAlreadyHashed?: boolean;
+  },
+  tx?: Prisma.TransactionClient,
+) {
+  const password = input.passwordAlreadyHashed
+    ? input.adminPassword
+    : await hashPassword(input.adminPassword);
 
-  return prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({
+  const write = async (db: Prisma.TransactionClient) => {
+    const tenant = await db.tenant.create({
       data: {
         slug: input.slug,
         name: input.name,
@@ -34,10 +41,10 @@ export async function provisionTenant(input: {
       },
     });
     if (input.email) {
-      await tx.$executeRaw`UPDATE "Tenant" SET "email" = ${input.email} WHERE "id" = ${tenant.id}`;
+      await db.$executeRaw`UPDATE "Tenant" SET "email" = ${input.email} WHERE "id" = ${tenant.id}`;
     }
 
-    const user = await tx.user.create({
+    const user = await db.user.create({
       data: {
         tenantId: tenant.id,
         username: input.adminUsername,
@@ -47,7 +54,7 @@ export async function provisionTenant(input: {
       },
     });
 
-    await tx.productType.createMany({
+    await db.productType.createMany({
       data: DEFAULT_TENANT_PRODUCT_TYPES.map((productType) => ({
         tenantId: tenant.id,
         code: productType.code,
@@ -57,7 +64,7 @@ export async function provisionTenant(input: {
       })),
     });
 
-    await tx.setting.createMany({
+    await db.setting.createMany({
       data: [
         { tenantId: tenant.id, key: 'slip_companyName', value: input.name },
         { tenantId: tenant.id, key: 'slip_companyAddress', value: input.address ?? '' },
@@ -66,5 +73,8 @@ export async function provisionTenant(input: {
     });
 
     return { tenant, user };
-  });
+  };
+
+  if (tx) return write(tx);
+  return prisma.$transaction(write);
 }

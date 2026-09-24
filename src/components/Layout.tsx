@@ -109,7 +109,7 @@ export default function Layout({ children }: LayoutProps) {
     return true;
   });
 
-  const accountLocked = liveStatus === 'pending_payment' || liveStatus === 'rejected';
+  const accountLocked = liveStatus === 'not_yet_payment' || liveStatus === 'pending_payment' || liveStatus === 'rejected';
   const showWaitingScreen = accountLocked && pathname !== '/profile' && pathname !== '/signup/payment';
 
   return (
@@ -334,7 +334,15 @@ export default function Layout({ children }: LayoutProps) {
           ref={mainContentRef}
         >
           {showWaitingScreen ? (
-            <WaitingForPayment status={liveStatus === 'rejected' ? 'rejected' : 'pending_payment'} />
+            <WaitingForPayment
+              status={
+                liveStatus === 'rejected'
+                  ? 'rejected'
+                  : liveStatus === 'not_yet_payment'
+                    ? 'not_yet_payment'
+                    : 'pending_payment'
+              }
+            />
           ) : (
             children
           )}
