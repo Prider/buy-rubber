@@ -10,11 +10,12 @@ export async function GET(request: NextRequest) {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: auth.auth.tenantId },
-    select: { id: true, slug: true, name: true, plan: true, status: true },
+    select: { id: true, slug: true, name: true, email: true, plan: true, status: true },
   });
 
   return NextResponse.json({
     ...auth.auth,
     name: tenant?.name,
+    email: tenant?.email ?? null,
   });
 }

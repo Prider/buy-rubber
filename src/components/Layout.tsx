@@ -42,6 +42,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [liveStatus, setLiveStatus] = useState(user?.tenantStatus);
+  const [shopEmail, setShopEmail] = useState<string | null | undefined>(undefined);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -74,15 +75,19 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     const token = typeof window === 'undefined' ? null : localStorage.getItem('auth_token');
-    if (!token) return;
+    if (!token) {
+      setShopEmail(null);
+      return;
+    }
     fetch('/api/tenant/me', { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
       .then((data) => {
         if (data.tenantStatus) {
           setLiveStatus(data.tenantStatus);
         }
+        setShopEmail(typeof data.email === 'string' && data.email ? data.email : null);
       })
-      .catch(() => undefined);
+      .catch(() => setShopEmail(null));
   }, [user?.id]);
 
 
@@ -216,54 +221,6 @@ export default function Layout({ children }: LayoutProps) {
               })}
             </div>
           </nav>
-
-          {/* User info */}
-          <div className={`border-t border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
-            sidebarOpen ? 'px-3 py-4' : 'px-0 py-4'
-          }`}>
-            <div className={`flex items-center transition-all duration-200 ${
-              sidebarOpen ? 'space-x-3' : 'justify-center'
-            }`}>
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
-                  {user?.username?.charAt(0) || 'A'}
-                </div>
-              </div>
-              {sidebarOpen && (
-                <div className="flex-1 min-w-0 transition-all duration-200 overflow-hidden">
-                  <p className="text-sm font-semibold truncate">
-                    <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                      {user?.username || 'ผู้ใช้งาน'}
-                    </span>
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
-                    {user?.role || 'User'}
-                  </p>
-                </div>
-              )}
-              {sidebarOpen && (
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0"
-                  title="ออกจากระบบ"
-                >
-                  <svg
-                    className="w-4 h-4 group-hover:scale-110 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
         </div>
       </aside>
       )}
@@ -276,7 +233,7 @@ export default function Layout({ children }: LayoutProps) {
       >
         {/* Top bar */}
         <header className="shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
-          <div className="relative flex items-center justify-between px-6 py-3">
+          <div className="relative flex items-center justify-between px-3 py-3 sm:px-6">
             {/* Left side - Menu button */}
             <div className="flex items-center space-x-4">
               {!accountLocked && (
@@ -320,7 +277,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             {/* Center - Company name */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
+            <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
               <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent"> 
                 <span className="text-fuchsia-500 dark:text-fuchsia-400">P</span>
                 <span className="text-violet-500 dark:text-violet-400">u</span>
@@ -333,11 +290,40 @@ export default function Layout({ children }: LayoutProps) {
               </h1>
             </div>
 
-            {/* Right side - Controls */}
-            <div className="flex items-center space-x-3">
-              {/* Dark Mode Toggle */}
+            {/* Right side - Account and controls */}
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2 rounded-xl border border-gray-200/70 bg-gray-50/80 py-1 pl-1 pr-2 dark:border-gray-700/70 dark:bg-gray-900/40">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white shadow-sm">
+                  {user?.username?.charAt(0) || 'A'}
+                </div>
+                <div className="min-w-0 max-w-[7.5rem] sm:max-w-[12rem]">
+                  <p className="truncate text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100">
+                    {user?.username || 'ผู้ใช้งาน'}
+                  </p>
+                  <p
+                    className="truncate text-xs leading-tight text-gray-500 dark:text-gray-400"
+                    title={shopEmail || undefined}
+                  >
+                    {shopEmail === undefined ? '…' : shopEmail || 'ยังไม่มีอีเมล'}
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  title="ออกจากระบบ"
+                  aria-label="ออกจากระบบ"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                </button>
+              </div>
               <DarkModeToggle />
-            
             </div>
           </div>
         </header>
