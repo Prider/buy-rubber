@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/platform/AuthContext';
 import DarkModeToggle from '@/shared/ui/DarkModeToggle';
@@ -10,6 +11,9 @@ import useArrowFocusNavigation from '@/shared/hooks/useArrowFocusNavigation';
 interface LoginPageProps {
   onLogin?: () => void;
 }
+
+const inputClassName =
+  'h-14 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-base text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:bg-gray-800 dark:focus:ring-blue-400/20';
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
@@ -38,13 +42,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
     try {
       const success = await login(slug, username, password);
-      
+
       if (success) {
-        // Call onLogin callback if provided
         if (onLogin) {
           onLogin();
         } else {
-          // ไปหน้าแดชบอร์ด
           router.push('/dashboard');
         }
       } else {
@@ -59,107 +61,93 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900 dark:via-indigo-900 dark:to-purple-900 p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
-          {/* Header */}
-          <div className="px-8 py-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Logo className="h-12 w-auto" />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Punsook Innotech</h1>
-                  <p className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent drop-shadow-sm">ระบบบริหารจัดการรับซื้อยาง</p>
-                </div>
-              </div>
-              <DarkModeToggle />
+    <div className="flex min-h-[100dvh] items-stretch justify-center bg-white dark:bg-gray-950 md:items-center md:bg-slate-200 md:p-5 dark:md:bg-slate-950 lg:p-8 min-[1440px]:bg-gradient-to-br min-[1440px]:from-slate-200 min-[1440px]:via-slate-300 min-[1440px]:to-slate-400 min-[1440px]:p-10 dark:min-[1440px]:from-slate-950 dark:min-[1440px]:via-slate-900 dark:min-[1440px]:to-black">
+      <div className="flex min-h-[100dvh] w-full flex-col bg-white dark:bg-gray-900 md:h-[calc(100dvh-2.5rem)] md:min-h-0 md:max-w-[860px] md:overflow-hidden md:rounded-[2rem] md:shadow-2xl md:ring-1 md:ring-slate-900/10 dark:md:ring-white/10 lg:h-[calc(100dvh-4rem)] lg:max-w-[1120px] lg:rounded-[2.5rem] min-[1440px]:h-[min(844px,calc(100dvh-5rem))] min-[1440px]:max-w-[390px] min-[1440px]:rounded-[2.75rem] min-[1440px]:shadow-[0_40px_80px_-24px_rgba(15,23,42,0.55)] min-[1440px]:ring-[12px] min-[1440px]:ring-slate-900 dark:min-[1440px]:ring-black">
+        <header className="flex items-center justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-6 md:pt-5 lg:px-8">
+          <DarkModeToggle />
+        </header>
+
+        <main className="flex flex-1 flex-col overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 md:px-10 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-12 lg:pb-10 min-[1440px]:flex min-[1440px]:flex-col min-[1440px]:items-stretch min-[1440px]:gap-0 min-[1440px]:px-5 min-[1440px]:pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="flex flex-col items-center pb-6 pt-2 text-center md:pb-8 md:pt-6 lg:pb-0 lg:pt-0 min-[1440px]:pb-6 min-[1440px]:pt-2">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-blue-50 to-indigo-100 shadow-sm ring-1 ring-blue-100 dark:from-gray-800 dark:to-gray-800 dark:ring-gray-700 md:mb-5 md:h-28 md:w-28 md:rounded-[2rem] lg:h-32 lg:w-32 min-[1440px]:mb-4 min-[1440px]:h-20 min-[1440px]:w-20 min-[1440px]:rounded-[1.75rem]">
+              <Logo className="h-12 w-auto md:h-16 lg:h-[4.5rem] min-[1440px]:h-12" />
             </div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl lg:text-5xl min-[1440px]:text-2xl">Punsook Innotech</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 md:mt-2 md:text-base lg:text-lg min-[1440px]:mt-1 min-[1440px]:text-sm">ระบบบริหารจัดการรับซื้อยาง</p>
           </div>
 
-          {/* Form */}
-          <div className="px-8 py-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="flex flex-1 flex-col md:mx-auto md:w-full md:max-w-xl lg:mx-0 lg:max-w-none lg:flex-none min-[1440px]:mx-0 min-[1440px]:max-w-none min-[1440px]:flex-1">
+            {error && (
+              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20" role="alert">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
+              </div>
+            )}
 
-              {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <p className="text-red-700 dark:text-red-300 font-medium text-sm">{error}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  รหัสร้าน <span className="text-red-500">*</span>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="shop-slug" className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  รหัสร้าน
                 </label>
                 <input
+                  id="shop-slug"
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase())}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                  className={inputClassName}
                   placeholder="เช่น my-shop"
+                  autoComplete="organization"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   required
                   autoFocus
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  ชื่อผู้ใช้ <span className="text-red-500">*</span>
+              <div className="space-y-1.5">
+                <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  ชื่อผู้ใช้
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                    placeholder="กรอกชื่อผู้ใช้"
-                    required
-                  />
-                </div>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className={inputClassName}
+                  placeholder="กรอกชื่อผู้ใช้"
+                  autoComplete="username"
+                  required
+                />
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  รหัสผ่าน <span className="text-red-500">*</span>
+              <div className="space-y-1.5">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  รหัสผ่าน
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
                   <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
+                    className={`${inputClassName} pr-14`}
                     placeholder="กรอกรหัสผ่าน"
+                    autoComplete="current-password"
                     required
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
                   >
                     {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.97 0-9-4.03-9-9 0-.834.114-1.64.328-2.404m1.836-3.33C6.378 3.89 8.098 3 10 3c4.97 0 9 4.03 9 9 0 1.902-.89 3.622-2.267 4.836M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
@@ -167,54 +155,37 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   </button>
                 </div>
               </div>
+            </div>
 
-              <div className="text-right">
-                <a
-                  href="/forgot-password"
-                  className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  ลืมรหัสผ่าน?
-                </a>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+            <div className="mt-3 flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-blue-600 dark:text-blue-400"
               >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg className="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>กำลังเข้าสู่ระบบ...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    <span>เข้าสู่ระบบ</span>
-                  </div>
-                )}
-              </button>
-            </form>
-          </div>
+                ลืมรหัสผ่าน?
+              </Link>
+            </div>
 
-          <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50 space-y-2">
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-              ยังไม่มีบัญชี?{' '}
-              <a href="/landing#pricing" className="font-semibold text-green-600 dark:text-green-400 hover:underline">
-                สมัครใช้งาน
-              </a>
-            </p>
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-              © 2025 Punsook Innotech. All rights reserved.
-            </p>
-          </div>
-        </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-4 flex h-14 w-full items-center justify-center rounded-2xl bg-blue-600 text-base font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 active:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:shadow-blue-500/20 dark:hover:bg-blue-400"
+            >
+              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+            </button>
+
+            <div className="mt-auto space-y-3 pt-8 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                ยังไม่มีบัญชี?{' '}
+                <Link href="/landing#pricing" className="font-semibold text-green-600 dark:text-green-400">
+                  สมัครใช้งาน
+                </Link>
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">© 2025 Punsook Innotech. All rights reserved.</p>
+            </div>
+          </form>
+        </main>
       </div>
     </div>
   );
 }
-

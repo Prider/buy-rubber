@@ -12,5 +12,4 @@ export const rubberNav: NavItem[] = [
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
   { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
-  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];

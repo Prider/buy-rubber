@@ -3,6 +3,8 @@
 import { ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AccountMenu from '@/shared/layout/AccountMenu';
+import MobileTabBar from '@/shared/layout/MobileTabBar';
 import DarkModeToggle from '@/shared/ui/DarkModeToggle';
 import Logo from '@/shared/ui/Logo';
 import { useAuth } from '@/platform/AuthContext';
@@ -103,10 +105,8 @@ export default function Layout({ children, navItems }: LayoutProps) {
       {!accountLocked && (
       <aside
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out ${
-          sidebarOpen 
-            ? 'w-44 translate-x-0' 
-            : 'lg:w-16 lg:translate-x-0 -translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 hidden border-r border-gray-200 bg-white transition-all duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-800 lg:block ${
+          sidebarOpen ? 'lg:w-44' : 'lg:w-16'
         }`}
       >
         <div className="flex flex-col h-full">
@@ -121,25 +121,6 @@ export default function Layout({ children, navItems }: LayoutProps) {
                 }`}
               />
             </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden absolute right-5 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors duration-150"
-              aria-label="Close sidebar"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
           </div>
 
           {/* Navigation */}
@@ -221,11 +202,11 @@ export default function Layout({ children, navItems }: LayoutProps) {
         <header className="shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
           <div className="relative flex items-center justify-between px-3 py-3 sm:px-6">
             {/* Left side - Menu button */}
-            <div className="flex items-center space-x-4">
+            <div className="flex min-w-0 items-center gap-2">
               {!accountLocked && (
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group"
+                className="hidden rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 group dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100 lg:inline-flex"
                 aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
               >
                 {sidebarOpen ? (
@@ -259,11 +240,15 @@ export default function Layout({ children, navItems }: LayoutProps) {
                 )}
               </button>
               )}
-              
+              {!accountLocked && (
+                <Link href="/dashboard" className="lg:hidden" aria-label="Punsook Innotech">
+                  <Logo className="h-8 w-auto" />
+                </Link>
+              )}
             </div>
 
             {/* Center - Company name */}
-            <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
+            <div className="absolute left-1/2 hidden -translate-x-1/2 lg:block">
               <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent"> 
                 <span className="text-fuchsia-500 dark:text-fuchsia-400">P</span>
                 <span className="text-violet-500 dark:text-violet-400">u</span>
@@ -278,45 +263,20 @@ export default function Layout({ children, navItems }: LayoutProps) {
 
             {/* Right side - Account and controls */}
             <div className="flex items-center gap-2">
-              <div className="flex min-w-0 items-center gap-2 rounded-xl border border-gray-200/70 bg-gray-50/80 py-1 pl-1 pr-2 dark:border-gray-700/70 dark:bg-gray-900/40">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white shadow-sm">
-                  {user?.username?.charAt(0) || 'A'}
-                </div>
-                <div className="min-w-0 max-w-[7.5rem] sm:max-w-[12rem]">
-                  <p className="truncate text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100">
-                    {user?.username || 'ผู้ใช้งาน'}
-                  </p>
-                  <p
-                    className="truncate text-xs leading-tight text-gray-500 dark:text-gray-400"
-                    title={shopEmail || undefined}
-                  >
-                    {shopEmail === undefined ? '…' : shopEmail || 'ยังไม่มีอีเมล'}
-                  </p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                  title="ออกจากระบบ"
-                  aria-label="ออกจากระบบ"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                </button>
-              </div>
               <DarkModeToggle />
+              <AccountMenu
+                username={user?.username}
+                email={shopEmail}
+                canManageSettings={user?.role === 'admin' || user?.role === 'root'}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </header>
 
         {/* Page content — flex-1 + min-h-0 so pages (e.g. sales table) can fill remaining viewport height */}
         <main
-          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6"
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6 ${accountLocked ? '' : 'pb-24 lg:pb-6'}`}
           ref={mainContentRef}
         >
           {showWaitingScreen ? (
@@ -335,13 +295,7 @@ export default function Layout({ children, navItems }: LayoutProps) {
         </main>
       </div>
 
-      {/* Mobile overlay */}
-      {!accountLocked && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {!accountLocked && <MobileTabBar items={navigation} />}
     </div>
   );
 }

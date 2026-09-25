@@ -99,14 +99,6 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* <button
-                  onClick={handleDownload}
-                  disabled={isDownloading || !hasPurchases}
-                  className="px-4 py-2 bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <DownloadIcon />
-                  {isDownloading ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลด PDF'}
-                </button> */}
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                   <CloseIcon />
                 </button>
