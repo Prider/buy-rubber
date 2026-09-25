@@ -2,22 +2,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { DELETE } from '../route';
 
-vi.mock('@/lib/stock/stockService', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('@/lib/stock/stockService')>();
+vi.mock('@/industries/rubber/domain/stock/stockService', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/industries/rubber/domain/stock/stockService')>();
   return {
     ...mod,
     reversePurchaseFromStock: vi.fn().mockResolvedValue(undefined),
   };
 });
 
-vi.mock('@/lib/cache', () => ({
+vi.mock('@/shared/cache', () => ({
   cache: { delete: vi.fn(), deletePattern: vi.fn() },
   CACHE_KEYS: { DASHBOARD: 'dashboard:stats', PURCHASE_TX_COUNT: 'purchase-tx-count' },
   invalidatePurchaseCaches: vi.fn(),
 }));
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     purchase: {
       findUnique: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -71,8 +71,8 @@ describe('DELETE /api/purchases/[id]', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
 
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
 
@@ -166,7 +166,7 @@ describe('DELETE /api/purchases/[id]', () => {
 
     it('should return 400 when stock insufficient', async () => {
       vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase);
-      const { StockInsufficientError } = await import('@/lib/stock/stockService');
+      const { StockInsufficientError } = await import('@/industries/rubber/domain/stock/stockService');
       vi.mocked(prisma.$transaction).mockRejectedValue(
         new StockInsufficientError('x', 'product-1', 10, 95)
       );

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { parseReportProductTypeGroupKind } from '@/industries/rubber/domain/reportProductTypeGroups';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

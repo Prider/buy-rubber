@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import GamerLoader from '@/components/GamerLoader';
-import { ListPagination } from '@/components/pagination/ListPagination';
-import { formatCurrency, formatNumber } from '@/lib/utils';
-import { logger } from '@/lib/logger';
+import { useAuth } from '@/platform/AuthContext';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import { ListPagination } from '@/shared/ui/pagination/ListPagination';
+import { formatCurrency, formatNumber } from '@/shared/utils';
+import { logger } from '@/shared/logger';
 import { getExportExcelButtonText, getExportPdfButtonText, isExportDisabled } from '../ui';
 import { isDateRangeInvalid, toInputDate } from '../utils';
 import { downloadGangsExcel } from './exportExcel';

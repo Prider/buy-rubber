@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET } from '../route';
 
 // Mock Prisma — only $queryRaw should ever be called (never findMany)
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     $queryRaw: vi.fn(),
     purchase: { findMany: vi.fn() },
@@ -11,7 +11,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
@@ -27,7 +27,7 @@ describe('GET /api/reports/profit-loss', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const m = await import('@/lib/prisma');
+    const m = await import('@/platform/prisma');
     prisma = m.prisma;
     // Default: all three $queryRaw calls return empty arrays
     prisma.$queryRaw.mockResolvedValue([]);

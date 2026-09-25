@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { isValidEmail, normalizeEmail } from '@/lib/email';
-import { validateSlug } from '@/lib/slug';
-import { sendSignupVerificationEmail } from '@/lib/mail';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { isValidEmail, normalizeEmail } from '@/platform/email';
+import { validateSlug } from '@/platform/slug';
+import { sendSignupVerificationEmail } from '@/platform/mail';
 import {
   SIGNUP_RESEND_COOLDOWN_MS,
   createSignupCode,
   resendCooldownSeconds,
-} from '@/lib/signupVerification';
-import { SIGNUP_RESEND_RATE_LIMIT, clientIp, rateLimit } from '@/lib/rateLimit';
+} from '@/platform/signupVerification';
+import { SIGNUP_RESEND_RATE_LIMIT, clientIp, rateLimit } from '@/platform/rateLimit';
 
 export const runtime = 'nodejs';
 

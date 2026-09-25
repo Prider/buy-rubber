@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/platform/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'user-1', username: 'tester', role: 'USER' },
     isLoading: false,
@@ -26,14 +26,14 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useAlert', () => ({
+vi.mock('@/shared/hooks/useAlert', () => ({
   useAlert: () => ({
     showConfirm: mockShowConfirm,
     showAlert: vi.fn(),
   }),
 }));
 
-vi.mock('@/hooks/useDebounce', () => ({
+vi.mock('@/shared/hooks/useDebounce', () => ({
   useDebounce: <T,>(value: T) => value,
 }));
 

@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     member: {
       findMany: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // Mock cache - define inside factory to avoid hoisting issues
-vi.mock('@/lib/cache', () => {
+vi.mock('@/shared/cache', () => {
   const mockCacheInstance = {
     get: vi.fn().mockReturnValue(null), // Always return null (cache miss) by default
     set: vi.fn(),
@@ -80,8 +80,8 @@ describe('GET /api/members', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
   });
@@ -372,8 +372,8 @@ describe('POST /api/members', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
   });

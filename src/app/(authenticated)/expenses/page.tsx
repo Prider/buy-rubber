@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { ExpenseEntryCard } from '@/components/expenses/ExpenseEntryCard';
-import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
-import { useExpenses } from '@/hooks/useExpenses';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAlert } from '@/hooks/useAlert';
+import { ExpenseEntryCard } from '@/industries/rubber/ui/expenses/ExpenseEntryCard';
+import { ExpenseListTable } from '@/industries/rubber/ui/expenses/ExpenseListTable';
+import { useExpenses } from '@/industries/rubber/hooks/useExpenses';
+import { useAuth } from '@/platform/AuthContext';
+import { useAlert } from '@/shared/hooks/useAlert';
 import { useRouter } from 'next/navigation';
-import GamerLoader from '@/components/GamerLoader';
+import GamerLoader from '@/shared/ui/GamerLoader';
 
 export default function ExpensesPage() {
   const { user, isLoading } = useAuth();

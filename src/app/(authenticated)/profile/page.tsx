@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import GamerLoader from '@/components/GamerLoader';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { paymentRequestLabel } from '@/lib/tenantProfile';
+import { useAuth } from '@/platform/AuthContext';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import { formatCurrency, formatDate } from '@/shared/utils';
+import { paymentRequestLabel } from '@/platform/tenantProfile';
 
 interface ShopProfile {
   slug: string;

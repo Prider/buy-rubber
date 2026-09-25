@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { isValidEmail, normalizeEmail } from '@/lib/email';
-import { normalizeSlug } from '@/lib/slug';
-import { sendPasswordResetEmail } from '@/lib/mail';
-import { logger } from '@/lib/logger';
+import { prisma } from '@/platform/prisma';
+import { isValidEmail, normalizeEmail } from '@/platform/email';
+import { normalizeSlug } from '@/platform/slug';
+import { sendPasswordResetEmail } from '@/platform/mail';
+import { logger } from '@/shared/logger';
 import {
   GENERIC_RESET_MESSAGE,
   appBaseUrl,
   createResetToken,
   pickShopAdmin,
-} from '@/lib/passwordReset';
+} from '@/platform/passwordReset';
 
 export const runtime = 'nodejs';
 

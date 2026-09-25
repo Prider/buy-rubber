@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     serviceFee: {
       findMany: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // Mock utility functions
-vi.mock('@/lib/utils', () => ({
+vi.mock('@/shared/utils', () => ({
   generateDocumentNumber: vi.fn(async (prefix: string, date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -54,8 +54,8 @@ describe('GET /api/servicefees', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
     vi.mocked(prisma.serviceFee.count).mockResolvedValue(1);
@@ -239,9 +239,9 @@ describe('POST /api/servicefees', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
-    const utilsModule = await import('@/lib/utils');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
+    const utilsModule = await import('@/shared/utils');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
     utils = utilsModule;

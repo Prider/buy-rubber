@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { PUT, DELETE } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     productType: {
       update: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock cache invalidation
-vi.mock('@/lib/cache', () => ({
+vi.mock('@/shared/cache', () => ({
   invalidateProductTypesCache: vi.fn(),
 }));
 
@@ -43,7 +43,7 @@ describe('PUT /api/product-types/[id]', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
+    const prismaModule = await import('@/platform/prisma');
     prisma = prismaModule.prisma;
     vi.mocked(prisma.productType.findUnique).mockResolvedValue({
       id: 'product-1',
@@ -257,7 +257,7 @@ describe('DELETE /api/product-types/[id]', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
+    const prismaModule = await import('@/platform/prisma');
     prisma = prismaModule.prisma;
   });
 

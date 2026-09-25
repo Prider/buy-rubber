@@ -337,7 +337,7 @@ async function main() {
     },
   });
 
-  const { rebuildStockGangs } = await import('../src/lib/stock/stockGangs');
+  const { rebuildStockGangs } = await import('../src/industries/rubber/domain/stock/stockGangs');
   const gangsResult = await rebuildStockGangs(prisma, productType.id);
   console.log(`   - materialize StockGang: ${gangsResult.gangs.toLocaleString()} rows`);
 

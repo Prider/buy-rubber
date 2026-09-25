@@ -2,22 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import UserManagement from '@/components/UserManagement';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAlert } from '@/hooks/useAlert';
-import { AdminHeader } from '@/components/admin/AdminHeader';
-import { AdminTabs, type AdminSettingsTab } from '@/components/admin/AdminTabs';
-import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
-import GamerLoader from '@/components/GamerLoader';
-import { getApiClient } from '@/lib/apiClient';
-import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
-import type { CartItem } from '@/components/purchases/types';
+import UserManagement from '@/platform/ui/UserManagement';
+import ProtectedRoute from '@/platform/ui/ProtectedRoute';
+import { useAuth } from '@/platform/AuthContext';
+import { useAlert } from '@/shared/hooks/useAlert';
+import { AdminHeader } from '@/industries/rubber/ui/admin/AdminHeader';
+import { AdminTabs, type AdminSettingsTab } from '@/industries/rubber/ui/admin/AdminTabs';
+import { SlipSettingsPanel } from '@/industries/rubber/ui/admin/SlipSettingsPanel';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import { getApiClient } from '@/shared/apiClient';
+import { generateSlipHTMLFromItems } from '@/industries/rubber/ui/purchases/utils/slipGenerator';
+import type { CartItem } from '@/industries/rubber/ui/purchases/types';
 import {
   SLIP_PAPER_SIZE_STORAGE_KEY,
   normalizeSlipPaperSize,
   type SlipPaperSizeId,
-} from '@/lib/slipPaper';
+} from '@/shared/slipPaper';
 
 const SLIP_PREVIEW_ITEMS: CartItem[] = [
   {

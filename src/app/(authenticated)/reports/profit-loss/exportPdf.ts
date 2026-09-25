@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/shared/utils';
 import type { ProfitLossRow, ProfitLossTotals, ViewMode } from './types';
 import { getViewModeLabel } from './ui';
 import { periodLabel } from './utils';

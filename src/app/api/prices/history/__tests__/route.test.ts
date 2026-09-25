@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     productPrice: {
       findMany: vi.fn(),
@@ -37,7 +37,7 @@ describe('GET /api/prices/history', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
+    const prismaModule = await import('@/platform/prisma');
     prisma = prismaModule.prisma;
   });
 

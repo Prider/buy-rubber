@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
-import { isPostgresDatabase } from '@/lib/dbProvider';
+import { prisma } from '@/platform/prisma';
+import { isPostgresDatabase } from '@/platform/dbProvider';
 
 export type ViewMode = 'daily' | 'weekly' | 'monthly';
 

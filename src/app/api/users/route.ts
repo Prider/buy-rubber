@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { userStore } from '@/lib/userStore';
-import { CreateUserRequest, isAdminLike } from '@/types/user';
-import { logger } from '@/lib/logger';
-import { isPremiumActive, requireTenantAuth } from '@/lib/tenant';
+import { userStore } from '@/platform/userStore';
+import { CreateUserRequest, isAdminLike } from '@/platform/types/user';
+import { logger } from '@/shared/logger';
+import { isPremiumActive, requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

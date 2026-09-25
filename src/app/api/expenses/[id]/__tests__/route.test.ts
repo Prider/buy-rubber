@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { DELETE } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     expense: {
       findUnique: vi.fn(),
@@ -34,7 +34,7 @@ describe('DELETE /api/expenses/[id]', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
+    const prismaModule = await import('@/platform/prisma');
     prisma = prismaModule.prisma;
     vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense);
   });

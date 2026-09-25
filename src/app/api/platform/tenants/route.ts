@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { requirePlatformAuth } from '@/lib/tenant';
-import { shopPaymentStatus } from '@/lib/tenantProfile';
+import { prisma } from '@/platform/prisma';
+import { requirePlatformAuth } from '@/platform/tenant';
+import { shopPaymentStatus } from '@/platform/tenantProfile';
 
 export const runtime = 'nodejs';
 

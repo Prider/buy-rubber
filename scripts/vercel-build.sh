@@ -9,14 +9,12 @@ echo "🔧 Starting Vercel build process..."
 
 export NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1
 
-# Vercel / web always uses PostgreSQL (Electron copies the SQLite schema separately).
-if [ -f prisma/schema.postgres.prisma ]; then
-    echo "🐘 Using PostgreSQL Prisma schema..."
-    cp prisma/schema.postgres.prisma prisma/schema.prisma
-else
-    echo "❌ prisma/schema.postgres.prisma not found"
+# Schema lives in prisma/schema (platform.prisma + rubber.prisma), PostgreSQL.
+if [ ! -f prisma/schema/platform.prisma ] || [ ! -f prisma/schema/rubber.prisma ]; then
+    echo "❌ prisma/schema platform and rubber files not found"
     exit 1
 fi
+echo "🐘 Using prisma/schema (PostgreSQL)"
 
 echo "📦 Generating Prisma Client..."
 npx prisma generate

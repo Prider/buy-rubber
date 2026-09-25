@@ -3,22 +3,22 @@
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { DestinationCompanyTable } from '@/components/destination-companies/DestinationCompanyTable';
-import { DestinationCompaniesPageHeader } from '@/components/destination-companies/DestinationCompaniesPageHeader';
-import { MembersSearchBar } from '@/components/members/MembersSearchBar';
-import { MembersPagination } from '@/components/members/MembersPagination';
-import { MembersErrorDisplay } from '@/components/members/MembersErrorDisplay';
-import { useDestinationCompanies } from '@/hooks/useDestinationCompanies';
-import { useDestinationCompanyForm } from '@/hooks/useDestinationCompanyForm';
-import { useDestinationCompanyPageState } from '@/hooks/useDestinationCompanyPageState';
-import { useDestinationCompanyActions } from '@/hooks/useDestinationCompanyActions';
-import { DestinationCompanyFormData } from '@/types/destinationCompany';
-import { useAuth } from '@/contexts/AuthContext';
-import GamerLoader from '@/components/GamerLoader';
+import { DestinationCompanyTable } from '@/industries/rubber/ui/destination-companies/DestinationCompanyTable';
+import { DestinationCompaniesPageHeader } from '@/industries/rubber/ui/destination-companies/DestinationCompaniesPageHeader';
+import { MembersSearchBar } from '@/industries/rubber/ui/members/MembersSearchBar';
+import { MembersPagination } from '@/industries/rubber/ui/members/MembersPagination';
+import { MembersErrorDisplay } from '@/industries/rubber/ui/members/MembersErrorDisplay';
+import { useDestinationCompanies } from '@/industries/rubber/hooks/useDestinationCompanies';
+import { useDestinationCompanyForm } from '@/industries/rubber/hooks/useDestinationCompanyForm';
+import { useDestinationCompanyPageState } from '@/industries/rubber/hooks/useDestinationCompanyPageState';
+import { useDestinationCompanyActions } from '@/industries/rubber/hooks/useDestinationCompanyActions';
+import { DestinationCompanyFormData } from '@/industries/rubber/types/destinationCompany';
+import { useAuth } from '@/platform/AuthContext';
+import GamerLoader from '@/shared/ui/GamerLoader';
 
 const DestinationCompanyForm = dynamic(
   () =>
-    import(/* webpackPrefetch: true */ '@/components/destination-companies/DestinationCompanyForm').then(
+    import(/* webpackPrefetch: true */ '@/industries/rubber/ui/destination-companies/DestinationCompanyForm').then(
       (mod) => mod.DestinationCompanyForm,
     ),
   { ssr: false, loading: () => null },

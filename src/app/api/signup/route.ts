@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
-import type { TenantPlan } from '@/lib/auth';
-import { hashPassword } from '@/lib/auth';
-import { validateSlug } from '@/lib/slug';
-import { isValidEmail, normalizeEmail } from '@/lib/email';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { sendSignupVerificationEmail } from '@/lib/mail';
+import type { TenantPlan } from '@/platform/auth';
+import { hashPassword } from '@/platform/auth';
+import { validateSlug } from '@/platform/slug';
+import { isValidEmail, normalizeEmail } from '@/platform/email';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { sendSignupVerificationEmail } from '@/platform/mail';
 import {
   SIGNUP_RESEND_COOLDOWN_MS,
   createSignupCode,
-} from '@/lib/signupVerification';
-import { SIGNUP_RATE_LIMIT, clientIp, rateLimit } from '@/lib/rateLimit';
+} from '@/platform/signupVerification';
+import { SIGNUP_RATE_LIMIT, clientIp, rateLimit } from '@/platform/rateLimit';
 
 export const runtime = 'nodejs';
 

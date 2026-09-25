@@ -3,28 +3,28 @@
 import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { MemberTable } from '@/components/members/MemberTable';
-import { MembersPageHeader } from '@/components/members/MembersPageHeader';
-import { MembersSearchBar } from '@/components/members/MembersSearchBar';
-import { MembersPagination } from '@/components/members/MembersPagination';
-import { MembersErrorDisplay } from '@/components/members/MembersErrorDisplay';
-import { useMembers } from '@/hooks/useMembers';
-import { useMemberForm } from '@/hooks/useMemberForm';
-import { useMemberPageState } from '@/hooks/useMemberPageState';
-import { useMemberModals } from '@/hooks/useMemberModals';
-import { useMemberActions } from '@/hooks/useMemberActions';
-import { MemberFormData } from '@/types/member';
-import { useAuth } from '@/contexts/AuthContext';
-import GamerLoader from '@/components/GamerLoader';
+import { MemberTable } from '@/industries/rubber/ui/members/MemberTable';
+import { MembersPageHeader } from '@/industries/rubber/ui/members/MembersPageHeader';
+import { MembersSearchBar } from '@/industries/rubber/ui/members/MembersSearchBar';
+import { MembersPagination } from '@/industries/rubber/ui/members/MembersPagination';
+import { MembersErrorDisplay } from '@/industries/rubber/ui/members/MembersErrorDisplay';
+import { useMembers } from '@/industries/rubber/hooks/useMembers';
+import { useMemberForm } from '@/industries/rubber/hooks/useMemberForm';
+import { useMemberPageState } from '@/industries/rubber/hooks/useMemberPageState';
+import { useMemberModals } from '@/industries/rubber/hooks/useMemberModals';
+import { useMemberActions } from '@/industries/rubber/hooks/useMemberActions';
+import { MemberFormData } from '@/industries/rubber/types/member';
+import { useAuth } from '@/platform/AuthContext';
+import GamerLoader from '@/shared/ui/GamerLoader';
 
 const MemberForm = dynamic(
-  () => import(/* webpackPrefetch: true */ '@/components/members/MemberForm').then((mod) => mod.MemberForm),
+  () => import(/* webpackPrefetch: true */ '@/industries/rubber/ui/members/MemberForm').then((mod) => mod.MemberForm),
   { ssr: false, loading: () => null },
 );
 
 const MemberPurchaseHistoryModal = dynamic(
   () =>
-    import('@/components/members/MemberPurchaseHistoryModal').then(
+    import('@/industries/rubber/ui/members/MemberPurchaseHistoryModal').then(
       (mod) => mod.MemberPurchaseHistoryModal
     ),
   { ssr: false, loading: () => null }
@@ -32,7 +32,7 @@ const MemberPurchaseHistoryModal = dynamic(
 
 const MemberServiceFeeModal = dynamic(
   () =>
-    import('@/components/members/MemberServiceFeeModal').then(
+    import('@/industries/rubber/ui/members/MemberServiceFeeModal').then(
       (mod) => mod.MemberServiceFeeModal
     ),
   { ssr: false, loading: () => null }

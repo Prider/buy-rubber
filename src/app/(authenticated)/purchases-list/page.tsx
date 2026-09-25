@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { PurchasesList, PurchasesListRef } from '@/components/purchases/PurchasesList';
+import { PurchasesList, PurchasesListRef } from '@/industries/rubber/ui/purchases/PurchasesList';
 
 export default function PurchasesListPage() {
   const purchasesListRef = useRef<PurchasesListRef>(null);

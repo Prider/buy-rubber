@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { GET, POST } from '../route';
-import { generateToken, verifyToken } from '@/lib/auth';
+import { generateToken, verifyToken } from '@/platform/auth';
 
-vi.mock('@/lib/tenant', () => ({
+vi.mock('@/platform/tenant', () => ({
   requireTenantAuth: vi.fn(async (request: NextRequest) => {
     const header = request.headers.get('authorization');
     if (!header?.startsWith('Bearer ')) {
@@ -38,7 +38,7 @@ vi.mock('@/lib/tenant', () => ({
 }));
 
 // Mock userStore
-vi.mock('@/lib/userStore', () => ({
+vi.mock('@/platform/userStore', () => ({
   userStore: {
     getAllUsers: vi.fn(),
     createUser: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('@/lib/userStore', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -82,8 +82,8 @@ describe('GET /api/users', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    const userStoreModule = await import('@/lib/userStore');
-    const loggerModule = await import('@/lib/logger');
+    const userStoreModule = await import('@/platform/userStore');
+    const loggerModule = await import('@/shared/logger');
     userStore = userStoreModule.userStore;
     logger = loggerModule.logger;
   });
@@ -254,8 +254,8 @@ describe('POST /api/users', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    const userStoreModule = await import('@/lib/userStore');
-    const loggerModule = await import('@/lib/logger');
+    const userStoreModule = await import('@/platform/userStore');
+    const loggerModule = await import('@/shared/logger');
     userStore = userStoreModule.userStore;
     logger = loggerModule.logger;
   });

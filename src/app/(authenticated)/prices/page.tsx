@@ -4,19 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
-import { useAuth } from '@/contexts/AuthContext';
-import { usePriceData } from '@/hooks/usePriceData';
-import { useAlert } from '@/hooks/useAlert';
-import GamerLoader from '@/components/GamerLoader';
-import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
+import { useAuth } from '@/platform/AuthContext';
+import { usePriceData } from '@/industries/rubber/hooks/usePriceData';
+import { useAlert } from '@/shared/hooks/useAlert';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import ProductTypeManagement from '@/industries/rubber/ui/prices/ProductTypeManagement';
 
 const ProductTypeFormModal = dynamic(
-  () => import(/* webpackPrefetch: true */ '@/components/prices/ProductTypeFormModal'),
+  () => import(/* webpackPrefetch: true */ '@/industries/rubber/ui/prices/ProductTypeFormModal'),
   { ssr: false, loading: () => null },
 );
 
 // const SetPriceFormModal = dynamic(
-//   () => import('@/components/prices/SetPriceFormModal'),
+//   () => import('@/industries/rubber/ui/prices/SetPriceFormModal'),
 //   { ssr: false, loading: () => null }
 // );
 

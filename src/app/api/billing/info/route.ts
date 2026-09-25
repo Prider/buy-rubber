@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { bytesToDataUrl, promptPayQrDataUrl } from '@/lib/promptPayQr';
+import { prisma } from '@/platform/prisma';
+import { bytesToDataUrl, promptPayQrDataUrl } from '@/platform/promptPayQr';
 
 export const runtime = 'nodejs';
 

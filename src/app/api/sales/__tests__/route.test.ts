@@ -5,7 +5,7 @@ import { GET } from '../route';
 const findMany = vi.fn();
 const count = vi.fn();
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     sale: {
       findMany: (...args: unknown[]) => findMany(...args),
@@ -17,7 +17,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -26,12 +26,12 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-vi.mock('@/lib/utils', () => ({
+vi.mock('@/shared/utils', () => ({
   generateDocumentNumber: vi.fn(),
   getUserFromToken: vi.fn(),
 }));
 
-vi.mock('@/lib/stock/stockService', () => ({
+vi.mock('@/industries/rubber/domain/stock/stockService', () => ({
   applySaleToStock: vi.fn(),
   StockInsufficientError: class StockInsufficientError extends Error {},
 }));

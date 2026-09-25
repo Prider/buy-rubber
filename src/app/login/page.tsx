@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import DarkModeToggle from '@/components/DarkModeToggle';
-import Logo from '@/components/Logo';
-import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
+import { useAuth } from '@/platform/AuthContext';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
+import useArrowFocusNavigation from '@/shared/hooks/useArrowFocusNavigation';
 
 interface LoginPageProps {
   onLogin?: () => void;

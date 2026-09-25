@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { GET, PUT, DELETE } from '../route';
-import { generateToken, verifyToken } from '@/lib/auth';
+import { generateToken, verifyToken } from '@/platform/auth';
 
-vi.mock('@/lib/tenant', () => ({
+vi.mock('@/platform/tenant', () => ({
   requireTenantAuth: vi.fn(async (request: NextRequest) => {
     const header = request.headers.get('authorization');
     if (!header?.startsWith('Bearer ')) {
@@ -38,7 +38,7 @@ vi.mock('@/lib/tenant', () => ({
 }));
 
 // Mock userStore
-vi.mock('@/lib/userStore', () => ({
+vi.mock('@/platform/userStore', () => ({
   userStore: {
     getUserById: vi.fn(),
     updateUser: vi.fn(),
@@ -77,7 +77,7 @@ describe('GET /api/users/[id]', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    const userStoreModule = await import('@/lib/userStore');
+    const userStoreModule = await import('@/platform/userStore');
     userStore = userStoreModule.userStore;
   });
 
@@ -186,7 +186,7 @@ describe('PUT /api/users/[id]', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    const userStoreModule = await import('@/lib/userStore');
+    const userStoreModule = await import('@/platform/userStore');
     userStore = userStoreModule.userStore;
     vi.mocked(userStore.getUserById).mockResolvedValue(mockUser);
   });
@@ -452,7 +452,7 @@ describe('DELETE /api/users/[id]', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    const userStoreModule = await import('@/lib/userStore');
+    const userStoreModule = await import('@/platform/userStore');
     userStore = userStoreModule.userStore;
     vi.mocked(userStore.getUserById).mockResolvedValue(mockUser);
   });

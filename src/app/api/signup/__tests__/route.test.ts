@@ -3,9 +3,9 @@ import { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
-import { SIGNUP_RATE_LIMIT, resetRateLimits } from '@/lib/rateLimit';
+import { SIGNUP_RATE_LIMIT, resetRateLimits } from '@/platform/rateLimit';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     tenant: { findUnique: vi.fn() },
     pendingSignup: {
@@ -17,15 +17,15 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/platform/auth', () => ({
   hashPassword: vi.fn(async () => 'hashed-password'),
 }));
 
-vi.mock('@/lib/mail', () => ({
+vi.mock('@/platform/mail', () => ({
   sendSignupVerificationEmail: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
@@ -61,8 +61,8 @@ describe('POST /api/signup', () => {
   beforeEach(async () => {
     resetRateLimits();
     vi.clearAllMocks();
-    prisma = (await import('@/lib/prisma')).prisma as never;
-    sendSignupVerificationEmail = (await import('@/lib/mail')).sendSignupVerificationEmail as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
+    sendSignupVerificationEmail = (await import('@/platform/mail')).sendSignupVerificationEmail as never;
     vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.pendingSignup.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.pendingSignup.findUnique).mockResolvedValue(null);

@@ -6,7 +6,7 @@
  *   npm run db:rebuild-gangs
  */
 import { PrismaClient } from '@prisma/client';
-import { rebuildStockGangs } from '../src/lib/stock/stockGangs';
+import { rebuildStockGangs } from '../src/industries/rubber/domain/stock/stockGangs';
 
 const prisma = new PrismaClient();
 

@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
-import type { User } from '@/types/user';
+import type { User } from '@/platform/types/user';
 
-vi.mock('@/lib/userStore', () => ({
+vi.mock('@/platform/userStore', () => ({
   userStore: {
     authenticateUser: vi.fn(),
   },
 }));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     tenant: {
       findUnique: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -50,8 +50,8 @@ describe('POST /api/auth/login', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    userStore = (await import('@/lib/userStore')).userStore as never;
-    prisma = (await import('@/lib/prisma')).prisma as never;
+    userStore = (await import('@/platform/userStore')).userStore as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
     vi.mocked(prisma.tenant.findUnique).mockResolvedValue(mockTenant as never);
   });
 

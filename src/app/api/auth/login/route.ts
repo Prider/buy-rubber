@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LoginRequest, LoginResponse, type TenantPlan, type TenantStatus } from '@/types/user';
-import { logger } from '@/lib/logger';
-import { userStore } from '@/lib/userStore';
-import { generateToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { normalizeSlug } from '@/lib/slug';
+import { LoginRequest, LoginResponse, type TenantPlan, type TenantStatus } from '@/platform/types/user';
+import { logger } from '@/shared/logger';
+import { userStore } from '@/platform/userStore';
+import { generateToken } from '@/platform/auth';
+import { prisma } from '@/platform/prisma';
+import { normalizeSlug } from '@/platform/slug';
 
 export const runtime = 'nodejs';
 

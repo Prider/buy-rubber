@@ -22,13 +22,10 @@ if ! grep -qE '^DIRECT_URL=.+(postgresql|postgres)://' .env; then
     exit 1
 fi
 
-if [ ! -f prisma/schema.postgres.prisma ]; then
-    echo "❌ prisma/schema.postgres.prisma not found"
+if [ ! -f prisma/schema/platform.prisma ] || [ ! -f prisma/schema/rubber.prisma ]; then
+    echo "❌ prisma/schema platform and rubber files not found"
     exit 1
 fi
-
-echo "Copying PostgreSQL schema..."
-cp prisma/schema.postgres.prisma prisma/schema.prisma
 
 echo "Generating Prisma client..."
 npx prisma generate

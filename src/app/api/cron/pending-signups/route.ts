@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
-import { deleteExpiredPendingSignups } from '@/lib/pendingSignupCleanup';
+import { logger } from '@/shared/logger';
+import { deleteExpiredPendingSignups } from '@/platform/pendingSignupCleanup';
 
 export const runtime = 'nodejs';
 

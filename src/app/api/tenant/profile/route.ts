@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { requireTenantAuth } from '@/lib/tenant';
-import { isValidEmail, normalizeEmail } from '@/lib/email';
-import { shopPaymentStatus } from '@/lib/tenantProfile';
+import { prisma } from '@/platform/prisma';
+import { requireTenantAuth } from '@/platform/tenant';
+import { isValidEmail, normalizeEmail } from '@/platform/email';
+import { shopPaymentStatus } from '@/platform/tenantProfile';
 
 export const runtime = 'nodejs';
 

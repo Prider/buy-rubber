@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     purchase: {
       aggregate: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // Mock cache
-vi.mock('@/lib/cache', () => ({
+vi.mock('@/shared/cache', () => ({
   cache: {
     get: vi.fn(),
     set: vi.fn(),
@@ -112,9 +112,9 @@ describe('GET /api/dashboard', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
-    const cacheModule = await import('@/lib/cache');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
+    const cacheModule = await import('@/shared/cache');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
     cache = cacheModule.cache;

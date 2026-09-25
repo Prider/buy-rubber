@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
-import DarkModeToggle from '@/components/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
 
 interface BillingInfo {
   bankName: string;

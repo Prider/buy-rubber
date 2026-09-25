@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
-import { requireTenantAuth } from '@/lib/tenant';
+import { logger } from '@/shared/logger';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export async function POST(request: NextRequest) {
   try {

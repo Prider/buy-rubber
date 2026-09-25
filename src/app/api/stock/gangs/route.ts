@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { stockGang } from '@/lib/prismaStock';
-import { parseSaleNosJson } from '@/lib/stock/stockGangs';
+import { prisma } from '@/platform/prisma';
+import { stockGang } from '@/industries/rubber/domain/prismaStock';
+import { parseSaleNosJson } from '@/industries/rubber/domain/stock/stockGangs';
 import { buildGangWhere, parseGangDateRange } from './dateRange';
-import { requireTenantAuth } from '@/lib/tenant';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

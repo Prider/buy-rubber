@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import DarkModeToggle from '@/components/DarkModeToggle';
-import Logo from '@/components/Logo';
-import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
-import type { CartItem } from '@/components/purchases/types';
-import { slipWidthPxFor } from '@/lib/slipPaper';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
+import { generateSlipHTMLFromItems } from '@/industries/rubber/ui/purchases/utils/slipGenerator';
+import type { CartItem } from '@/industries/rubber/ui/purchases/types';
+import { slipWidthPxFor } from '@/shared/slipPaper';
 
 type Plan = 'freemium' | 'premium';
 

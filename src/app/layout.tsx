@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { DarkModeProvider } from '@/contexts/DarkModeContext';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { AlertProvider } from '@/contexts/AlertContext';
+import { DarkModeProvider } from '@/shared/DarkModeContext';
+import { AuthProvider } from '@/platform/AuthContext';
+import { AlertProvider } from '@/shared/AlertContext';
 
 export const metadata: Metadata = {
   title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อยาง',

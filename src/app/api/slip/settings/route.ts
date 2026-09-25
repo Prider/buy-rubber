@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { normalizeSlipPaperSize, type SlipPaperSizeId } from '@/lib/slipPaper';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { normalizeSlipPaperSize, type SlipPaperSizeId } from '@/shared/slipPaper';
+import { requireTenantAuth } from '@/platform/tenant';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
 const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
-vi.mock('@/lib/tenant', () => ({
+vi.mock('@/platform/tenant', () => ({
   requireTenantAuth: vi.fn(async () => ({
     ok: true,
     auth: {

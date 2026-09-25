@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/platform/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import GamerLoader from '@/components/GamerLoader';
-import { ListPagination } from '@/components/pagination/ListPagination';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import { ListPagination } from '@/shared/ui/pagination/ListPagination';
+import { formatCurrency, formatNumber } from '@/shared/utils';
 
 type LedgerEntry = {
   id: string;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+import Logo from '@/shared/ui/Logo';
 
 const TOKEN_KEY = 'platform_token';
 

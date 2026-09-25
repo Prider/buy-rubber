@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/platform/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'user-1', username: 'tester', role: 'USER' },
     isLoading: false,
@@ -30,7 +30,7 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePurchaseData', () => ({
+vi.mock('@/industries/rubber/hooks/usePurchaseData', () => ({
   usePurchaseData: () => {
     const today = new Date().toISOString().split('T')[0];
     return {
@@ -46,7 +46,7 @@ vi.mock('@/hooks/usePurchaseData', () => ({
   },
 }));
 
-vi.mock('@/hooks/useExpenseForm', () => ({
+vi.mock('@/industries/rubber/hooks/useExpenseForm', () => ({
   useExpenseForm: () => ({
     formData: { category: '', amount: '' },
     error: '',
@@ -57,7 +57,7 @@ vi.mock('@/hooks/useExpenseForm', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useCart', () => ({
+vi.mock('@/industries/rubber/hooks/useCart', () => ({
   useCart: () => {
     const [cart, setCart] = React.useState<any[]>([]);
     const addToCart = (formData: any) => {
@@ -86,7 +86,7 @@ vi.mock('@/hooks/useCart', () => ({
   },
 }));
 
-vi.mock('@/components/purchases/CartTable', () => ({
+vi.mock('@/industries/rubber/ui/purchases/CartTable', () => ({
   CartTable: ({ cart, saveCartToDb }: { cart: any[]; saveCartToDb: () => Promise<void> }) => (
     <div data-testid="cart-table">
       <p>cart-count:{cart.length}</p>
@@ -97,7 +97,7 @@ vi.mock('@/components/purchases/CartTable', () => ({
   ),
 }));
 
-vi.mock('@/components/purchases/ServiceFeeCard', () => ({
+vi.mock('@/industries/rubber/ui/purchases/ServiceFeeCard', () => ({
   ServiceFeeCard: () => <div data-testid="service-fee-card">service-fee-card</div>,
 }));
 

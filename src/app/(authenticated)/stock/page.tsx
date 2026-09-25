@@ -3,17 +3,17 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/platform/AuthContext';
 import { useRouter } from 'next/navigation';
-import GamerLoader from '@/components/GamerLoader';
-import ProductTypeManagement from '@/components/prices/ProductTypeManagement';
-import { ListPagination } from '@/components/pagination/ListPagination';
-import { useAlert } from '@/hooks/useAlert';
-import { usePriceData } from '@/hooks/usePriceData';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import ProductTypeManagement from '@/industries/rubber/ui/prices/ProductTypeManagement';
+import { ListPagination } from '@/shared/ui/pagination/ListPagination';
+import { useAlert } from '@/shared/hooks/useAlert';
+import { usePriceData } from '@/industries/rubber/hooks/usePriceData';
+import { formatCurrency, formatNumber } from '@/shared/utils';
 
 const ProductTypeFormModal = dynamic(
-  () => import(/* webpackPrefetch: true */ '@/components/prices/ProductTypeFormModal'),
+  () => import(/* webpackPrefetch: true */ '@/industries/rubber/ui/prices/ProductTypeFormModal'),
   { ssr: false, loading: () => null },
 );
 

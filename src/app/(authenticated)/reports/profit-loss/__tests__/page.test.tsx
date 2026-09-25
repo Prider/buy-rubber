@@ -10,11 +10,11 @@ vi.mock('axios', () => ({
   },
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/platform/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@/components/GamerLoader', () => ({
+vi.mock('@/shared/ui/GamerLoader', () => ({
   default: ({ message }: { message: string }) => <div>{message}</div>,
 }));
 
@@ -30,7 +30,7 @@ vi.mock('../exportExcel', () => ({
   downloadProfitLossExcel: vi.fn(),
 }));
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/platform/AuthContext';
 import { downloadProfitLossExcel } from '../exportExcel';
 import { downloadProfitLossPdf } from '../exportPdf';
 import ProfitLossReportPage from '../page';

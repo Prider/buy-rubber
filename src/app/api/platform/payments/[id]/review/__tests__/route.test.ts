@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     paymentRequest: {
       findUnique: vi.fn(),
@@ -13,16 +13,16 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/tenant', () => ({
+vi.mock('@/platform/tenant', () => ({
   requirePlatformAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/mail', () => ({
+vi.mock('@/platform/mail', () => ({
   sendPaymentApprovedEmail: vi.fn(),
   sendPaymentRejectedEmail: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -70,10 +70,10 @@ describe('POST /api/platform/payments/[id]/review', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    prisma = (await import('@/lib/prisma')).prisma as never;
-    requirePlatformAuth = (await import('@/lib/tenant')).requirePlatformAuth as never;
-    sendPaymentApprovedEmail = (await import('@/lib/mail')).sendPaymentApprovedEmail as never;
-    sendPaymentRejectedEmail = (await import('@/lib/mail')).sendPaymentRejectedEmail as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
+    requirePlatformAuth = (await import('@/platform/tenant')).requirePlatformAuth as never;
+    sendPaymentApprovedEmail = (await import('@/platform/mail')).sendPaymentApprovedEmail as never;
+    sendPaymentRejectedEmail = (await import('@/platform/mail')).sendPaymentRejectedEmail as never;
     vi.mocked(requirePlatformAuth).mockResolvedValue({
       ok: true,
       auth: { userId: 'platform-1', username: 'platform' },

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { sendPaymentApprovedEmail, sendPaymentRejectedEmail } from '@/lib/mail';
-import { appBaseUrl, pickShopAdmin } from '@/lib/passwordReset';
-import { requirePlatformAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { sendPaymentApprovedEmail, sendPaymentRejectedEmail } from '@/platform/mail';
+import { appBaseUrl, pickShopAdmin } from '@/platform/passwordReset';
+import { requirePlatformAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

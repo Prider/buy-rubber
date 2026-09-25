@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
-import { reverseSaleFromStock } from '@/lib/stock/stockService';
-import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { resolveBusinessDate } from '@/shared/resolveBusinessDate';
+import { reverseSaleFromStock } from '@/industries/rubber/domain/stock/stockService';
+import { parseSaleExpensesFromBody } from '@/industries/rubber/domain/saleExpenses';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

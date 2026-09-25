@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import DarkModeToggle from '@/components/DarkModeToggle';
-import Logo from '@/components/Logo';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';

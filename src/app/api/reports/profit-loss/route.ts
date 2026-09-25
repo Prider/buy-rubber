@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { fetchProfitLossAggregates } from './aggregates';
-import { requireTenantAuth } from '@/lib/tenant';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

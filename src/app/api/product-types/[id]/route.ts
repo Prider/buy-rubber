@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
-import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
-import { invalidateProductTypesCache } from '@/lib/cache';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { stockLedgerEntry, stockPosition } from '@/industries/rubber/domain/prismaStock';
+import { invalidateProductTypesCache } from '@/shared/cache';
+import { requireTenantAuth } from '@/platform/tenant';
 
 type SaleCountDelegate = {
   count(args?: unknown): Promise<number>;

@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     purchase: {
       findMany: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -40,7 +40,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // Mock cache
-vi.mock('@/lib/cache', () => ({
+vi.mock('@/shared/cache', () => ({
   cache: {
     get: vi.fn(),
     set: vi.fn(),
@@ -56,12 +56,12 @@ vi.mock('@/lib/cache', () => ({
 }));
 
 // Mock stock service called inside $transaction
-vi.mock('@/lib/stock/stockService', () => ({
+vi.mock('@/industries/rubber/domain/stock/stockService', () => ({
   applyPurchaseToStock: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock utility functions
-vi.mock('@/lib/utils', () => ({
+vi.mock('@/shared/utils', () => ({
   calculateNetWeight: vi.fn((grossWeight: number, containerWeight: number = 0) =>
     grossWeight - containerWeight
   ),
@@ -133,8 +133,8 @@ describe('GET /api/purchases', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
   });
@@ -487,10 +487,10 @@ describe('POST /api/purchases', () => {
     vi.clearAllMocks();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
-    const utilsModule = await import('@/lib/utils');
-    const cacheModule = await import('@/lib/cache');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
+    const utilsModule = await import('@/shared/utils');
+    const cacheModule = await import('@/shared/cache');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
     utils = utilsModule;

@@ -33,7 +33,7 @@ const mockUser = {
   role: 'USER',
 };
 
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/platform/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
     login: vi.fn(),
@@ -43,14 +43,14 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 // Mock useAlert (showConfirm resolves to true)
-vi.mock('@/hooks/useAlert', () => ({
+vi.mock('@/shared/hooks/useAlert', () => ({
   useAlert: () => ({
     showConfirm: vi.fn().mockResolvedValue(true),
   }),
 }));
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),
@@ -173,10 +173,10 @@ describe('ExpensesPage Integration Tests', () => {
   // describe('Authentication', () => {
   //   it('should redirect to login if user is not authenticated', async () => {
   //     // Temporarily unmock AuthContext
-  //     vi.doUnmock('@/contexts/AuthContext');
+  //     vi.doUnmock('@/platform/AuthContext');
       
   //     // Mock with no user
-  //     vi.doMock('@/contexts/AuthContext', () => ({
+  //     vi.doMock('@/platform/AuthContext', () => ({
   //       useAuth: vi.fn(() => ({
   //         user: null,
   //         login: vi.fn(),
@@ -195,7 +195,7 @@ describe('ExpensesPage Integration Tests', () => {
   //     });
       
   //     // Restore the mock
-  //     vi.doMock('@/contexts/AuthContext', () => ({
+  //     vi.doMock('@/platform/AuthContext', () => ({
   //       useAuth: () => ({
   //         user: mockUser,
   //         login: vi.fn(),

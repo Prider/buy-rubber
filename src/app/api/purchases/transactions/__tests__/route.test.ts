@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
-import * as transactionQuery from '@/lib/purchases/transactionQuery';
+import * as transactionQuery from '@/industries/rubber/domain/purchases/transactionQuery';
 
 // Mock Prisma
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     purchase: {
       findMany: vi.fn(),
@@ -18,8 +18,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/purchases/transactionQuery', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/purchases/transactionQuery')>();
+vi.mock('@/industries/rubber/domain/purchases/transactionQuery', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/industries/rubber/domain/purchases/transactionQuery')>();
   return {
     ...actual,
     countTransactionGroups: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/lib/purchases/transactionQuery', async (importOriginal) => {
 });
 
 // Mock logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -190,12 +190,12 @@ describe('GET /api/purchases/transactions', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { cache } = await import('@/lib/cache');
+    const { cache } = await import('@/shared/cache');
     cache.clear();
     process.env.DATABASE_URL = 'file:./test.db';
     
-    const prismaModule = await import('@/lib/prisma');
-    const loggerModule = await import('@/lib/logger');
+    const prismaModule = await import('@/platform/prisma');
+    const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
 

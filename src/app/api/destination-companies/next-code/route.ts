@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { sqlNumericCodeSuffix } from '@/lib/dbProvider';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { sqlNumericCodeSuffix } from '@/platform/dbProvider';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

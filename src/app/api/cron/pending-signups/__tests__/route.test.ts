@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
 
-vi.mock('@/lib/pendingSignupCleanup', () => ({
+vi.mock('@/platform/pendingSignupCleanup', () => ({
   deleteExpiredPendingSignups: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
@@ -34,7 +34,7 @@ describe('GET /api/cron/pending-signups', () => {
   });
 
   it('deletes expired pending signups for an authorized caller', async () => {
-    const deleteExpiredPendingSignups = (await import('@/lib/pendingSignupCleanup'))
+    const deleteExpiredPendingSignups = (await import('@/platform/pendingSignupCleanup'))
       .deleteExpiredPendingSignups as ReturnType<typeof vi.fn>;
     vi.mocked(deleteExpiredPendingSignups).mockResolvedValue(2);
 

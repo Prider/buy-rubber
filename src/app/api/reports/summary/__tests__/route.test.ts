@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     purchase: {
       findMany: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
@@ -44,7 +44,7 @@ describe('GET /api/reports/summary', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const prismaModule = await import('@/lib/prisma');
+    const prismaModule = await import('@/platform/prisma');
     prisma = prismaModule.prisma as typeof prisma;
   });
 

@@ -4,33 +4,33 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useReportData } from '@/hooks/useReportData';
-import { useReportProductTypeGroups } from '@/hooks/useReportProductTypeGroups';
-import { useAlert } from '@/hooks/useAlert';
-import GamerLoader from '@/components/GamerLoader';
+import { useAuth } from '@/platform/AuthContext';
+import { useReportData } from '@/industries/rubber/hooks/useReportData';
+import { useReportProductTypeGroups } from '@/industries/rubber/hooks/useReportProductTypeGroups';
+import { useAlert } from '@/shared/hooks/useAlert';
+import GamerLoader from '@/shared/ui/GamerLoader';
 import {
   generatePrintPreviewHTML,
   generateDailyPurchaseTableHTML,
   generateSellSummaryTableHTML,
   generateMemberSummaryTableHTML,
   generateExpenseTableHTML,
-} from '@/lib/reportPrintUtils';
-import ReportFilterCard from '@/components/reports/ReportFilterCard';
-import ReportTabs, { type ReportTabId } from '@/components/reports/ReportTabs';
-import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
-import { getSelectedGroupId, isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
-import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
-import DailyPurchaseTable from '@/components/reports/DailyPurchaseTable';
-import SellSummaryTable from '@/components/reports/SellSummaryTable';
-import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
-import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
-import ReportActionButtons from '@/components/reports/ReportActionButtons';
-import { downloadReportPDF } from '@/lib/reportPdfUtils';
-import { PaginationControls } from '@/components/members/history/PaginationControls';
+} from '@/industries/rubber/domain/reportPrintUtils';
+import ReportFilterCard from '@/industries/rubber/ui/reports/ReportFilterCard';
+import ReportTabs, { type ReportTabId } from '@/industries/rubber/ui/reports/ReportTabs';
+import { useReportGroupManagementModal } from '@/industries/rubber/hooks/useReportGroupManagementModal';
+import { getSelectedGroupId, isDailyPurchaseReport, isSellSummaryReport } from '@/industries/rubber/domain/reportProductTypeGroups';
+import ReportSummaryCards from '@/industries/rubber/ui/reports/ReportSummaryCards';
+import DailyPurchaseTable from '@/industries/rubber/ui/reports/DailyPurchaseTable';
+import SellSummaryTable from '@/industries/rubber/ui/reports/SellSummaryTable';
+import MemberSummaryTable from '@/industries/rubber/ui/reports/MemberSummaryTable';
+import ExpenseReportTable from '@/industries/rubber/ui/reports/ExpenseReportTable';
+import ReportActionButtons from '@/industries/rubber/ui/reports/ReportActionButtons';
+import { downloadReportPDF } from '@/industries/rubber/domain/reportPdfUtils';
+import { PaginationControls } from '@/industries/rubber/ui/members/history/PaginationControls';
 
 const ReportGroupManagementModal = dynamic(
-  () => import(/* webpackPrefetch: true */ '@/components/reports/ReportGroupManagementModal'),
+  () => import(/* webpackPrefetch: true */ '@/industries/rubber/ui/reports/ReportGroupManagementModal'),
   { ssr: false, loading: () => null },
 );
 

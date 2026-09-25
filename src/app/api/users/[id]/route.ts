@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { userStore } from '@/lib/userStore';
-import { UpdateUserRequest, isAdminLike } from '@/types/user';
-import { requireTenantAuth } from '@/lib/tenant';
+import { userStore } from '@/platform/userStore';
+import { UpdateUserRequest, isAdminLike } from '@/platform/types/user';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

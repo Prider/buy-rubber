@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { invalidatePurchaseCaches } from '@/lib/cache';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { invalidatePurchaseCaches } from '@/shared/cache';
 import { 
   calculateNetWeight,
   calculateDryWeight,
@@ -9,9 +9,9 @@ import {
   calculateSplit,
   generateDocumentNumber,
   getUserFromToken
-} from '@/lib/utils';
-import { applyPurchaseToStock } from '@/lib/stock/stockService';
-import { requireTenantAuth } from '@/lib/tenant';
+} from '@/shared/utils';
+import { applyPurchaseToStock } from '@/industries/rubber/domain/stock/stockService';
+import { requireTenantAuth } from '@/platform/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';

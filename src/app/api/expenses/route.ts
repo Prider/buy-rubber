@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { cache, CACHE_KEYS, tenantKey } from '@/lib/cache';
-import { getUserFromToken } from '@/lib/utils';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { cache, CACHE_KEYS, tenantKey } from '@/shared/cache';
+import { getUserFromToken } from '@/shared/utils';
 import { Prisma } from '@prisma/client';
-import { requireTenantAuth } from '@/lib/tenant';
+import { requireTenantAuth } from '@/platform/tenant';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';

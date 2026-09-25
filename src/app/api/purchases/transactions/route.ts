@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { countTransactionGroupsCached } from '@/lib/purchases/transactionCountCache';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { countTransactionGroupsCached } from '@/industries/rubber/domain/purchases/transactionCountCache';
 import {
   buildTransactionPrismaWhere,
   dedupeGroupsByPurchaseNo,
@@ -11,8 +11,8 @@ import {
   resolveSearchMemberIds,
   serviceFeeTransactionSelect,
   type TransactionQueryFilters,
-} from '@/lib/purchases/transactionQuery';
-import { requireTenantAuth } from '@/lib/tenant';
+} from '@/industries/rubber/domain/purchases/transactionQuery';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

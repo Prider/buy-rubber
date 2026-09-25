@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateToken, type TenantPlan, type TenantStatus } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { provisionTenant } from '@/lib/provisionTenant';
-import { validateSlug } from '@/lib/slug';
+import { generateToken, type TenantPlan, type TenantStatus } from '@/platform/auth';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { provisionTenant } from '@/platform/provisionTenant';
+import { seedRubberTenant } from '@/industries/rubber/seed';
+import { validateSlug } from '@/platform/slug';
 import {
   SIGNUP_MAX_ATTEMPTS,
   SIGNUP_ATTEMPTS_EXCEEDED,
   INVALID_SIGNUP_CODE,
   hashSignupCode,
-} from '@/lib/signupVerification';
-import { SIGNUP_VERIFY_RATE_LIMIT, clientIp, rateLimit } from '@/lib/rateLimit';
+} from '@/platform/signupVerification';
+import { SIGNUP_VERIFY_RATE_LIMIT, clientIp, rateLimit } from '@/platform/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -109,6 +110,8 @@ export async function POST(request: NextRequest) {
         adminPassword: pending.passwordHash,
         passwordAlreadyHashed: true,
         adminRole: 'admin',
+        industry: 'rubber',
+        seed: seedRubberTenant,
       }, tx);
     });
 

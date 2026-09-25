@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     passwordResetToken: {
       findUnique: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -44,7 +44,7 @@ describe('POST /api/auth/reset-password', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    prisma = (await import('@/lib/prisma')).prisma as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
     vi.mocked(prisma.user.update).mockResolvedValue({ id: 'admin-1' });
     vi.mocked(prisma.passwordResetToken.update).mockResolvedValue({ id: 'reset-1' });
   });

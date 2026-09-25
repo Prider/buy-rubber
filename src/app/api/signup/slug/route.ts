@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { validateSlug } from '@/lib/slug';
+import { prisma } from '@/platform/prisma';
+import { validateSlug } from '@/platform/slug';
 
 export const runtime = 'nodejs';
 

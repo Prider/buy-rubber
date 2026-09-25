@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useAlert } from '@/hooks/useAlert';
-import { clearAuthSession } from '@/lib/sessionToken';
+import { useAuth } from '@/platform/AuthContext';
+import { useDebounce } from '@/shared/hooks/useDebounce';
+import { useAlert } from '@/shared/hooks/useAlert';
+import { clearAuthSession } from '@/platform/sessionToken';
 import {
   buildSalePayload,
   computePagination,
@@ -24,8 +24,8 @@ import {
   type SaleRowApi,
   type SalesPagination,
 } from './page.utils';
-import { MAX_SALE_EXPENSES } from '@/components/sales/salesFormCard.constants';
-import type { DestinationCompany } from '@/types/destinationCompany';
+import { MAX_SALE_EXPENSES } from '@/industries/rubber/ui/sales/salesFormCard.constants';
+import type { DestinationCompany } from '@/industries/rubber/types/destinationCompany';
 
 type SalesFieldError = Partial<Record<'weight' | 'pricePerUnit', string>>;
 

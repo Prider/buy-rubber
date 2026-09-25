@@ -1,0 +1,156 @@
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { isTokenExpired, redirectToLogin } from '@/platform/sessionToken';
+
+class ApiClient {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = this.createClient();
+  }
+
+  private createClient(): AxiosInstance {
+    const baseURL = this.getBaseURL();
+    
+    const client = axios.create({
+      baseURL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Add request interceptor for authentication
+    client.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          if (isTokenExpired(token)) {
+            redirectToLogin();
+            return Promise.reject(new Error('Session expired'));
+          }
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Add response interceptor for error handling
+    client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          redirectToLogin();
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return client;
+  }
+
+  private getBaseURL(): string {
+    // In the browser, use same-origin relative URLs so any dev/e2e port works.
+    if (typeof window !== 'undefined') {
+      return '';
+    }
+
+    return `http://localhost:${process.env.PORT || 3000}`;
+  }
+
+  // Generic API methods
+  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.get(url, config);
+    return response.data;
+  }
+
+  public async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.post(url, data, config);
+    return response.data;
+  }
+
+  public async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.put(url, data, config);
+    return response.data;
+  }
+
+  public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.delete(url, config);
+    return response.data;
+  }
+
+  // Specific API methods
+  public async login(slug: string, username: string, password: string) {
+    return this.post('/api/auth/login', { slug, username, password });
+  }
+
+  public async getDashboard() {
+    return this.get('/api/dashboard');
+  }
+
+  public async getMembers() {
+    return this.get('/api/members');
+  }
+
+  public async getMember(id: string) {
+    return this.get(`/api/members/${id}`);
+  }
+
+  public async createMember(data: any) {
+    return this.post('/api/members', data);
+  }
+
+  public async updateMember(id: string, data: any) {
+    return this.put(`/api/members/${id}`, data);
+  }
+
+  public async deleteMember(id: string) {
+    return this.delete(`/api/members/${id}`);
+  }
+
+  public async getPurchases() {
+    return this.get('/api/purchases');
+  }
+
+  public async createPurchase(data: any) {
+    return this.post('/api/purchases', data);
+  }
+
+  public async getAdvances() {
+    return this.get('/api/advances');
+  }
+
+  public async createAdvance(data: any) {
+    return this.post('/api/advances', data);
+  }
+
+  public async getPrices() {
+    return this.get('/api/prices');
+  }
+
+  public async updatePrices(data: any) {
+    return this.put('/api/prices', data);
+  }
+
+  // Health check for server connectivity
+  public async healthCheck(): Promise<boolean> {
+    try {
+      await this.get('/api/health');
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+}
+
+// Singleton instance
+let apiClientInstance: ApiClient | null = null;
+
+export function getApiClient(): ApiClient {
+  if (!apiClientInstance) {
+    apiClientInstance = new ApiClient();
+  }
+  return apiClientInstance;
+}

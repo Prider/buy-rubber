@@ -1,8 +1,8 @@
 'use client';
 
-import GamerLoader from '@/components/GamerLoader';
-import SalesFormCard from '@/components/sales/SalesFormCard';
-import SalesTable from '@/components/sales/SalesTable';
+import GamerLoader from '@/shared/ui/GamerLoader';
+import SalesFormCard from '@/industries/rubber/ui/sales/SalesFormCard';
+import SalesTable from '@/industries/rubber/ui/sales/SalesTable';
 import { useSalesPageController } from './useSalesPageController';
 
 export default function SalesPage() {

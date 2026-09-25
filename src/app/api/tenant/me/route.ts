@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTenantAuth } from '@/lib/tenant';
-import { prisma } from '@/lib/prisma';
+import { requireTenantAuth } from '@/platform/tenant';
+import { prisma } from '@/platform/prisma';
 
 export const runtime = 'nodejs';
 

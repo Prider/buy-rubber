@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import DarkModeToggle from '@/components/DarkModeToggle';
-import Logo from '@/components/Logo';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

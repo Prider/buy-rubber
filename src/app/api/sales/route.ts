@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
-import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
-import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
-import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
-import { requireTenantAuth } from '@/lib/tenant';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { generateDocumentNumber, getUserFromToken } from '@/shared/utils';
+import { resolveBusinessDate } from '@/shared/resolveBusinessDate';
+import { applySaleToStock, StockInsufficientError } from '@/industries/rubber/domain/stock/stockService';
+import { parseSaleExpensesFromBody } from '@/industries/rubber/domain/saleExpenses';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;

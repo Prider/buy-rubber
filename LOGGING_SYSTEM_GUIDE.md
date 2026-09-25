@@ -66,9 +66,9 @@ The logger supports 4 log levels:
 ### **Import the Logger**
 
 ```typescript
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 // or
-import { log } from '@/lib/logger';
+import { log } from '@/shared/logger';
 ```
 
 ### **Basic Logging**
@@ -143,7 +143,7 @@ The logger is used in **20 files** across the project:
 Old logs are automatically deleted to save disk space:
 
 ```typescript
-import { cleanupOldLogs } from '@/lib/logger';
+import { cleanupOldLogs } from '@/shared/logger';
 
 // Keep logs for 30 days (default)
 cleanupOldLogs();

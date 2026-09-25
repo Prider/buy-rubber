@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     tenant: { findMany: vi.fn() },
     passwordResetToken: {
@@ -14,11 +14,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/mail', () => ({
+vi.mock('@/platform/mail', () => ({
   sendPasswordResetEmail: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
@@ -69,8 +69,8 @@ describe('POST /api/auth/forgot-password', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    prisma = (await import('@/lib/prisma')).prisma as never;
-    sendPasswordResetEmail = (await import('@/lib/mail')).sendPasswordResetEmail as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
+    sendPasswordResetEmail = (await import('@/platform/mail')).sendPasswordResetEmail as never;
     vi.mocked(prisma.passwordResetToken.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.passwordResetToken.create).mockResolvedValue({ id: 'token-1' });
     vi.mocked(prisma.passwordResetToken.deleteMany).mockResolvedValue({ count: 1 });

@@ -3,15 +3,15 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { usePurchaseData } from '@/hooks/usePurchaseData';
-import { usePurchaseForm } from '@/hooks/usePurchaseForm';
-import { useExpenseForm as useServiceFeeForm } from '@/hooks/useExpenseForm';
-import { useCart } from '@/hooks/useCart';
-import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
-import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
-import { CartTable } from '@/components/purchases/CartTable';
-import GamerLoader from '@/components/GamerLoader';
+import { useAuth } from '@/platform/AuthContext';
+import { usePurchaseData } from '@/industries/rubber/hooks/usePurchaseData';
+import { usePurchaseForm } from '@/industries/rubber/hooks/usePurchaseForm';
+import { useExpenseForm as useServiceFeeForm } from '@/industries/rubber/hooks/useExpenseForm';
+import { useCart } from '@/industries/rubber/hooks/useCart';
+import { PurchaseEntryCard } from '@/industries/rubber/ui/purchases/PurchaseEntryCard';
+import { ServiceFeeCard } from '@/industries/rubber/ui/purchases/ServiceFeeCard';
+import { CartTable } from '@/industries/rubber/ui/purchases/CartTable';
+import GamerLoader from '@/shared/ui/GamerLoader';
 
 export default function PurchasesPage() {
   const router = useRouter();

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
-import { resetRateLimits } from '@/lib/rateLimit';
+import { resetRateLimits } from '@/platform/rateLimit';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     pendingSignup: {
       findUnique: vi.fn(),
@@ -17,15 +17,15 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/provisionTenant', () => ({
+vi.mock('@/platform/provisionTenant', () => ({
   provisionTenant: vi.fn(),
 }));
 
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/platform/auth', () => ({
   generateToken: vi.fn(() => 'session-token'),
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/shared/logger', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
@@ -69,8 +69,8 @@ describe('POST /api/signup/verify', () => {
   beforeEach(async () => {
     resetRateLimits();
     vi.clearAllMocks();
-    prisma = (await import('@/lib/prisma')).prisma as never;
-    provisionTenant = (await import('@/lib/provisionTenant')).provisionTenant as never;
+    prisma = (await import('@/platform/prisma')).prisma as never;
+    provisionTenant = (await import('@/platform/provisionTenant')).provisionTenant as never;
     vi.mocked(prisma.pendingSignup.findUnique).mockResolvedValue(pending);
     vi.mocked(prisma.pendingSignup.delete).mockResolvedValue(pending);
     vi.mocked(prisma.pendingSignup.update).mockResolvedValue({ failedAttempts: 1 });

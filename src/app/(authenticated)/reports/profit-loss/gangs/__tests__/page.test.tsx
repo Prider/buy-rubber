@@ -28,7 +28,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/platform/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
     isLoading: false,
@@ -37,7 +37,7 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
-vi.mock('@/components/GamerLoader', () => ({
+vi.mock('@/shared/ui/GamerLoader', () => ({
   default: ({ message }: { message: string }) => <div>{message}</div>,
 }));
 

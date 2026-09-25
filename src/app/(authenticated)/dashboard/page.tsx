@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import DashboardStatsCards from '@/components/dashboard/DashboardStatsCards';
-import RecentPurchasesList from '@/components/dashboard/RecentPurchasesList';
-import RecentSalesList from '@/components/dashboard/RecentSalesList';
-import TopMembersList from '@/components/dashboard/TopMembersList';
-import RecentExpensesList from '@/components/dashboard/RecentExpensesList';
-import GamerLoader from '@/components/GamerLoader';
+import { useDashboardData } from '@/industries/rubber/hooks/useDashboardData';
+import DashboardStatsCards from '@/industries/rubber/ui/dashboard/DashboardStatsCards';
+import RecentPurchasesList from '@/industries/rubber/ui/dashboard/RecentPurchasesList';
+import RecentSalesList from '@/industries/rubber/ui/dashboard/RecentSalesList';
+import TopMembersList from '@/industries/rubber/ui/dashboard/TopMembersList';
+import RecentExpensesList from '@/industries/rubber/ui/dashboard/RecentExpensesList';
+import GamerLoader from '@/shared/ui/GamerLoader';
 
 export default function DashboardPage() {
   const router = useRouter();

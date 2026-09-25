@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/shared/utils';
 import { CHART_SERIES, type ProfitLossRow } from './types';
 
 interface ChartPoint extends ProfitLossRow {

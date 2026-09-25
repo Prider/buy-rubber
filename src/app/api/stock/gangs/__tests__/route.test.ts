@@ -14,7 +14,7 @@ const gangCount = vi.fn();
 const saleFindMany = vi.fn();
 const productTypeFindUnique = vi.fn();
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/platform/prisma', () => ({
   prisma: {
     productType: {
       findUnique: (...args: unknown[]) => productTypeFindUnique(...args),
@@ -25,7 +25,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/prismaStock', () => ({
+vi.mock('@/industries/rubber/domain/prismaStock', () => ({
   stockGang: {
     findMany: (...args: unknown[]) => gangFindMany(...args),
     count: (...args: unknown[]) => gangCount(...args),

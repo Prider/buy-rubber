@@ -1,7 +1,8 @@
 // This is your Prisma schema file
 
 generator client {
-  provider      = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
   binaryTargets = ["native", "windows", "darwin", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 
@@ -19,6 +20,7 @@ model Tenant {
   address   String?
   plan      String   @default("freemium") // freemium | premium
   status    String   @default("active") // active | not_yet_payment | pending_payment | rejected
+  industry  String   @default("rubber")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -131,6 +133,18 @@ model PasswordResetToken {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  tenantId  String
+  key       String
+  value     String
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
 }
 
 model Member {
@@ -293,18 +307,6 @@ model ServiceFee {
   @@index([date])
   @@index([purchaseNo])
   @@index([category])
-}
-
-model Setting {
-  id        String   @id @default(uuid())
-  tenantId  String
-  key       String
-  value     String
-  updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, key])
-  @@index([tenantId])
 }
 
 model Sale {

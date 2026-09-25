@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { requireTenantAuth } from '@/lib/tenant';
-import { bytesToDataUrl } from '@/lib/promptPayQr';
+import { prisma } from '@/platform/prisma';
+import { requireTenantAuth } from '@/platform/tenant';
+import { bytesToDataUrl } from '@/platform/promptPayQr';
 
 export const runtime = 'nodejs';
 

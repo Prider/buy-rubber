@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/platform/prisma';
 import { Prisma } from '@prisma/client';
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 
-import { requireTenantAuth } from '@/lib/tenant';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

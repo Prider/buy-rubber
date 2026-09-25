@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber } from '@/shared/utils';
 import type { GangExportDateRange, GangExportProduct, GangExportRow, GangExportSummary } from './exportExcel';
 import { formatGangDate } from './exportExcel';
 

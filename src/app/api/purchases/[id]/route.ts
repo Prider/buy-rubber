@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
-import { invalidatePurchaseCaches } from '@/lib/cache';
-import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { prisma } from '@/platform/prisma';
+import { logger } from '@/shared/logger';
+import { invalidatePurchaseCaches } from '@/shared/cache';
+import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/shared/utils';
 import {
   applyPurchaseToStock,
   reversePurchaseFromStock,
   StockInsufficientError,
-} from '@/lib/stock/stockService';
-import { requireTenantAuth } from '@/lib/tenant';
+} from '@/industries/rubber/domain/stock/stockService';
+import { requireTenantAuth } from '@/platform/tenant';
 
 export const runtime = 'nodejs';
 

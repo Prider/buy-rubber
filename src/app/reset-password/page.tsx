@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import DarkModeToggle from '@/components/DarkModeToggle';
-import Logo from '@/components/Logo';
+import DarkModeToggle from '@/shared/ui/DarkModeToggle';
+import Logo from '@/shared/ui/Logo';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
