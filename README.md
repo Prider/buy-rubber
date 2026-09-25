@@ -105,43 +105,41 @@ npm run dev
 
 ## โครงสร้างโปรเจค
 
+โค้ดแบ่งเป็น 4 ส่วน `platform`, `shared`, `industries` และ `app` ส่วน `app` ไม่ใช่โมดูลธุรกิจ มันเป็นจุดที่ Next.js ผูก URL เข้ากับอีก 3 ส่วน เพราะหน้าและ API ต้องอยู่ใต้ `src/app` เท่านั้น
+
+| โฟลเดอร์ | หน้าที่ | ใช้ซ้ำกับธุรกิจอื่น |
+|---|---|---|
+| `src/platform` | บัญชีร้าน: login, signup, ผู้ใช้, billing, อีเมล | ได้ ทั้ง motor parts |
+| `src/shared` | โครงหน้า (layout), pagination, alerts, รูปแบบเงินและวันที่, ขนาดกระดาษใบเสร็จ | ได้ |
+| `src/industries/rubber` | POS ยางพารา: รับซื้อ, สมาชิก, ขาย, สต็อก, ราคา, บริษัทปลายทาง, รายงาน, ค่าใช้จ่าย | ไม่ได้ เฉพาะยาง |
+| `src/app` | URL เท่านั้น (`page.tsx`, `route.ts`) แล้วเรียกโค้ดจาก 3 ส่วนด้านบน | เป็นตัวประกอบ ไม่ใช่ของที่ใช้ซ้ำ |
+
+กฎการ import:
+
+- `platform` และ `shared` ไม่ import `industries`
+- `industries/rubber` import `platform` และ `shared` ได้
+- `src/app` เป็นจุดประกอบ จึง import ได้ทุกส่วน เช่น layout ที่ล็อกอินแล้วรับเมนูจาก `rubberNav` แล้วส่งเข้า shell ใน `shared`
+
+ธุรกิจใหม่ เช่น ขายอะไหล่ยนต์ ให้เพิ่ม `src/industries/autoparts` และหน้าใหม่ใต้ `src/app` แล้วใช้ `platform` กับ `shared` เดิม ไม่ import `industries/rubber`
+
 ```
-punsook-innotech/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── api/                # API Routes
-│   │   │   ├── auth/           # Authentication
-│   │   │   ├── members/        # จัดการสมาชิก
-│   │   │   ├── purchases/      # รับซื้อยาง
-│   │   │   ├── prices/         # ตั้งราคา
-│   │   │   ├── product-types/  # ประเภทสินค้า
-│   │   │   ├── expenses/       # ค่าใช้จ่าย
-│   │   │   ├── servicefees/    # ค่าบริการ
-│   │   │   ├── dashboard/      # ข้อมูลแดชบอร์ด
-│   │   │   └── users/          # จัดการผู้ใช้
-│   │   ├── (authenticated)/    # หน้าที่ต้อง Login
-│   │   │   ├── dashboard/      # หน้าแดชบอร์ด
-│   │   │   ├── purchases/      # ระบบรับซื้อ
-│   │   │   ├── purchases-list/ # รายการรับซื้อ
-│   │   │   ├── members/        # จัดการสมาชิก
-│   │   │   ├── expenses/       # ค่าใช้จ่าย
-│   │   │   ├── prices/         # ตั้งราคา
-│   │   │   ├── reports/        # รายงาน
-│   │   │   └── admin/          # ตั้งค่า
-│   │   └── login/              # หน้า Login
-│   ├── components/             # React Components
-│   ├── contexts/               # React Contexts
-│   ├── hooks/                  # Custom Hooks
-│   ├── lib/                    # Utilities
-│   └── types/                  # TypeScript Types
-├── prisma/
-│   ├── schema.prisma           # Database Schema (SQLite)
-│   ├── schema.postgres.prisma  # PostgreSQL Schema
-│   ├── schema.sqlite.prisma    # SQLite Schema
-│   └── seed.ts                 # Seed Data
-├── scripts/                    # Setup Scripts
-└── public/                     # Static Files
+src/
+├── app/                         # URL → เรียก platform / shared / rubber
+│   ├── api/auth, signup, users, platform, billing   # platform
+│   ├── api/purchases, members, expenses, ...        # rubber
+│   ├── login, signup, profile, platform/            # platform
+│   └── (authenticated)/purchases, members, ...      # rubber
+├── platform/                    # auth, tenant, users, mail, billing
+├── shared/                      # layout, ui kit, money/date helpers
+└── industries/
+    └── rubber/                  # nav, seed, domain, ui, hooks
+prisma/
+└── schema/
+    ├── platform.prisma          # Tenant, User, PaymentRequest, Setting
+    └── rubber.prisma            # Member, Purchase, Sale, Stock, Expense
 ```
+
+`Tenant.industry` มีค่าเริ่มต้น `rubber` ตอนสมัครร้าน `provisionTenant` สร้างแค่ร้านและผู้ใช้แอดมิน แล้วเรียก `seedRubberTenant` เพื่อใส่ประเภทสินค้ายางเริ่มต้น
 
 ## การใช้งาน
 
