@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { formatCurrency } from '@/shared/utils';
 import GamerLoader from '@/shared/ui/GamerLoader';
 import { PaginationControls } from '@/industries/rubber/ui/members/history/PaginationControls';
@@ -115,9 +115,11 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const { data } = await axios.get(
-        `/api/members/${member.id}/servicefees?${params}`
-      );
+      const data = await getApiClient().get<{
+        serviceFees?: ServiceFee[];
+        summary?: ServiceFeeSummary | null;
+        pagination?: { totalPages?: number };
+      }>(`/api/members/${member.id}/servicefees?${params}`);
       setServiceFees(data.serviceFees || []);
       setSummary(data.summary);
       setTotalPages(data.pagination?.totalPages || 1);

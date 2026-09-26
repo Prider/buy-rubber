@@ -26,9 +26,6 @@ export default function PurchasesListPage() {
                 ประวัติการรับซื้อทั้งหมด
               </span>
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              ดูและจัดการประวัติการรับซื้อทั้งหมด
-            </p>
           </div>
         </div>
         <button

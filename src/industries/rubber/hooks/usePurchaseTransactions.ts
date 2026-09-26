@@ -1,6 +1,26 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import axios, { CancelTokenSource } from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { PurchaseTransaction, PaginationInfo } from '@/industries/rubber/ui/purchases/types';
+
+type TransactionsResponse =
+  | PurchaseTransaction[]
+  | { transactions?: PurchaseTransaction[]; pagination?: PaginationInfo };
+
+function readErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const apiError = err.response?.data?.error;
+    if (typeof apiError === 'string' && apiError.length > 0) {
+      return apiError;
+    }
+  }
+
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+
+  return 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+}
 
 const ITEMS_PER_PAGE = 20;
 
@@ -64,16 +84,15 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
       setLoading(true);
       setError('');
       const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
-      const response = await axios.get(`/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}${searchParam}`, {
-        cancelToken: cancelToken.token,
-      });
-      
-      // Only update state if request wasn't cancelled
+      const data = await getApiClient().get<TransactionsResponse>(
+        `/api/purchases/transactions?page=${page}&limit=${ITEMS_PER_PAGE}${searchParam}`,
+        { cancelToken: cancelToken.token },
+      );
+
       // Handle both old format (array) and new format (object with transactions and pagination)
-      if (Array.isArray(response.data)) {
-        setTransactions(uniqueByPurchaseNo(response.data));
-        // Calculate pagination from array length
-        const total = response.data.length;
+      if (Array.isArray(data)) {
+        setTransactions(uniqueByPurchaseNo(data));
+        const total = data.length;
         const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
         setPagination({
           page,
@@ -83,19 +102,16 @@ export const usePurchaseTransactions = (initialPage: number = 1): UsePurchaseTra
           hasMore: page < totalPages,
         });
       } else {
-        setTransactions(uniqueByPurchaseNo(response.data.transactions || []));
-        if (response.data.pagination) {
-          setPagination(response.data.pagination);
+        setTransactions(uniqueByPurchaseNo(data.transactions || []));
+        if (data.pagination) {
+          setPagination(data.pagination);
         }
       }
     } catch (err: unknown) {
       if (axios.isCancel(err)) {
         return; // Request was cancelled, don't update state
       }
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-      setError(errorMessage);
+      setError(readErrorMessage(err));
       console.error('Failed to load transactions:', err);
     } finally {
       setLoading(false);

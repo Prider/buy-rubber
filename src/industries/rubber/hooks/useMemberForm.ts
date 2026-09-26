@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { Member, MemberFormData } from '@/industries/rubber/types/member';
 import { generateMemberCode, validateMemberData } from '@/industries/rubber/domain/memberUtils';
 
@@ -20,9 +20,9 @@ export const useMemberForm = (members: Member[]) => {
     let newCode = '';
     
     try {
-      const response = await axios.get('/api/members/next-code');
-      if (response.data?.code) {
-        newCode = response.data.code;
+      const data = await getApiClient().get<{ code?: string }>('/api/members/next-code');
+      if (data?.code) {
+        newCode = data.code;
       } else {
         throw new Error('No code returned from API');
       }

@@ -1,7 +1,12 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { logger } from '@/shared/logger';
 import { Member, MemberFormData, UseMembersReturn, PaginationInfo, DeleteMemberResponse } from '@/industries/rubber/types/member';
+
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+  return typeof apiError === 'string' && apiError.length > 0 ? apiError : fallback;
+}
 
 export const useMembers = (): UseMembersReturn => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -29,11 +34,13 @@ export const useMembers = (): UseMembersReturn => {
         params.append('search', search);
       }
       
-      const response = await axios.get(`/api/members?${params.toString()}`);
-      setMembers(response.data.members);
-      setPagination(response.data.pagination);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลสมาชิก');
+      const data = await getApiClient().get<{ members: Member[]; pagination: PaginationInfo }>(
+        `/api/members?${params.toString()}`,
+      );
+      setMembers(data.members);
+      setPagination(data.pagination);
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, 'เกิดข้อผิดพลาดในการโหลดข้อมูลสมาชิก'));
       logger.error('Failed to load members', err);
     } finally {
       setLoading(false);
@@ -43,10 +50,10 @@ export const useMembers = (): UseMembersReturn => {
   const createMember = useCallback(async (data: MemberFormData) => {
     try {
       setError(null);
-      await axios.post('/api/members', data);
+      await getApiClient().post('/api/members', data);
       await loadMembers(); // Refresh the list
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการสร้างสมาชิก';
+    } catch (err: unknown) {
+      const errorMessage = apiErrorMessage(err, 'เกิดข้อผิดพลาดในการสร้างสมาชิก');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -55,10 +62,10 @@ export const useMembers = (): UseMembersReturn => {
   const updateMember = useCallback(async (id: string, data: MemberFormData) => {
     try {
       setError(null);
-      await axios.put(`/api/members/${id}`, data);
+      await getApiClient().put(`/api/members/${id}`, data);
       await loadMembers(); // Refresh the list
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการอัปเดตสมาชิก';
+    } catch (err: unknown) {
+      const errorMessage = apiErrorMessage(err, 'เกิดข้อผิดพลาดในการอัปเดตสมาชิก');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -67,11 +74,11 @@ export const useMembers = (): UseMembersReturn => {
   const deleteMember = useCallback(async (id: string): Promise<DeleteMemberResponse> => {
     try {
       setError(null);
-      const response = await axios.delete(`/api/members/${id}`);
+      const result = await getApiClient().delete<DeleteMemberResponse>(`/api/members/${id}`);
       await loadMembers(); // Refresh the list
-      return response.data; // Return the response for the caller to handle
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'ไม่สามารถลบสมาชิกได้';
+      return result;
+    } catch (err: unknown) {
+      const errorMessage = apiErrorMessage(err, 'ไม่สามารถลบสมาชิกได้');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -81,11 +88,10 @@ export const useMembers = (): UseMembersReturn => {
     try {
       setError(null);
       // Get the member first to preserve all data when updating
-      const memberResponse = await axios.get(`/api/members/${id}`);
-      const member = memberResponse.data;
-      
+      const member = await getApiClient().get<Member>(`/api/members/${id}`);
+
       // Update member with isActive = true, preserving all other fields
-      await axios.put(`/api/members/${id}`, {
+      await getApiClient().put(`/api/members/${id}`, {
         name: member.name,
         idCard: member.idCard,
         phone: member.phone,
@@ -100,8 +106,8 @@ export const useMembers = (): UseMembersReturn => {
       });
       
       await loadMembers(); // Refresh the list
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'ไม่สามารถเปิดการใช้งานสมาชิกได้';
+    } catch (err: unknown) {
+      const errorMessage = apiErrorMessage(err, 'ไม่สามารถเปิดการใช้งานสมาชิกได้');
       setError(errorMessage);
       throw new Error(errorMessage);
     }

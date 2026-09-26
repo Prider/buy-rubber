@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { logger } from '@/shared/logger';
 import { PurchaseSummary } from '@/industries/rubber/types/memberHistory';
 
@@ -40,17 +40,21 @@ export const useMemberPurchaseHistory = ({
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await axios.get(`/api/members/${memberId}/purchases?${params}`);
-      setPurchases(response.data.purchases || []);
+      const data = await getApiClient().get<{
+        purchases?: unknown[];
+        summary?: PurchaseSummary;
+        pagination?: { totalPages?: number };
+      }>(`/api/members/${memberId}/purchases?${params}`);
+      setPurchases(data.purchases || []);
       setSummary(
-        response.data.summary || {
+        data.summary || {
           totalPurchases: 0,
           totalAmount: 0,
           totalWeight: 0,
           avgPrice: 0,
         }
       );
-      setTotalPages(response.data.pagination?.totalPages || 1);
+      setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
       logger.error('Failed to load purchase history', error);
     } finally {
