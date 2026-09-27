@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { MemberTable } from '@/industries/rubber/ui/members/MemberTable';
@@ -13,6 +13,7 @@ import { useMemberForm } from '@/industries/rubber/hooks/useMemberForm';
 import { useMemberPageState } from '@/industries/rubber/hooks/useMemberPageState';
 import { useMemberModals } from '@/industries/rubber/hooks/useMemberModals';
 import { useMemberActions } from '@/industries/rubber/hooks/useMemberActions';
+import { useMemberGroups } from '@/industries/rubber/hooks/useMemberGroups';
 import { MemberFormData } from '@/industries/rubber/types/member';
 import { useAuth } from '@/platform/AuthContext';
 import GamerLoader from '@/shared/ui/GamerLoader';
@@ -30,6 +31,12 @@ const MemberPurchaseHistoryModal = dynamic(
   { ssr: false, loading: () => null }
 );
 
+const MemberGroupModal = dynamic(
+  () =>
+    import('@/industries/rubber/ui/members/MemberGroupModal').then((mod) => mod.MemberGroupModal),
+  { ssr: false, loading: () => null },
+);
+
 const MemberServiceFeeModal = dynamic(
   () =>
     import('@/industries/rubber/ui/members/MemberServiceFeeModal').then(
@@ -41,6 +48,8 @@ const MemberServiceFeeModal = dynamic(
 export default function MembersPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const { groups, productTypes, loadGroups, saveGroup, deleteGroup } = useMemberGroups();
   
   // Page state management (search, pagination, auto-open)
   const {
@@ -107,7 +116,8 @@ export default function MembersPage() {
       return;
     }
     loadMembers(currentPage, debouncedSearchTerm);
-  }, [user, authLoading, router, currentPage, debouncedSearchTerm, loadMembers]);
+    loadGroups();
+  }, [user, authLoading, router, currentPage, debouncedSearchTerm, loadMembers, loadGroups]);
 
   // Auto-open form modal if needed (from URL query param)
   useEffect(() => {
@@ -138,6 +148,7 @@ export default function MembersPage() {
           <MembersPageHeader
             totalMembers={pagination.total}
             onAddMember={openFormForNew}
+            onManageGroups={() => setIsGroupModalOpen(true)}
           />
 
           {/* Search Bar */}
@@ -188,6 +199,17 @@ export default function MembersPage() {
         onCancel={closeForm}
         onFormDataChange={updateFormData}
         isLoading={membersLoading}
+        groups={groups}
+      />
+
+      <MemberGroupModal
+        isOpen={isGroupModalOpen}
+        groups={groups}
+        productTypes={productTypes}
+        onClose={() => setIsGroupModalOpen(false)}
+        onSave={saveGroup}
+        onDelete={deleteGroup}
+        onChanged={() => loadMembers(currentPage, debouncedSearchTerm)}
       />
 
       {/* Purchase History Modal */}

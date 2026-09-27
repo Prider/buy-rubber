@@ -9,6 +9,7 @@ interface Member {
   name: string;
   ownerPercent: number;
   tapperPercent: number;
+  group?: { id: string; name: string } | null;
 }
 
 interface ProductType {
@@ -436,6 +437,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                             <div>
                               <div className="font-medium text-gray-900 dark:text-gray-100">
                                 {member.code} - {member.name}
+                                {member.group?.name ? (
+                                  <span className="ml-2 inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                                    {member.group.name}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           </div>

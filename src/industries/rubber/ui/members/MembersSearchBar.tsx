@@ -19,7 +19,7 @@ export const MembersSearchBar = ({
   isLoading,
   resultCount,
   totalCount,
-  placeholder = 'ค้นหาสมาชิกตามชื่อ, รหัส, เบอร์โทร, ที่อยู่ หรือชื่อคนตัด...',
+  placeholder = 'ค้นหาสมาชิกตามชื่อ, รหัส, เบอร์โทร, เลขบัตร, ธนาคาร หรือเลขบัญชี...',
 }: MembersSearchBarProps) => {
   return (
     <div className="mb-6">

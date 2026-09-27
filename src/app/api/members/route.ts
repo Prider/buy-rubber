@@ -57,6 +57,9 @@ export async function GET(request: NextRequest) {
         { name: { contains: search } },
         { phone: { contains: search } },
         { address: { contains: search } },
+        { idCard: { contains: search } },
+        { bankName: { contains: search } },
+        { bankAccount: { contains: search } },
         { tapperName: { contains: search } },
       ];
     }
@@ -77,6 +80,9 @@ export async function GET(request: NextRequest) {
         { createdAt: 'desc' },
         { code: 'desc' },
       ],
+      include: {
+        group: { select: { id: true, name: true } },
+      },
     });
 
     // Return members with pagination info
@@ -149,6 +155,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let groupId: string | null = null;
+    if (data.groupId) {
+      const group = await prisma.memberGroup.findFirst({
+        where: { id: String(data.groupId), tenantId, isActive: true },
+        select: { id: true },
+      });
+      if (!group) {
+        return NextResponse.json({ error: 'ไม่พบกลุ่มสมาชิก' }, { status: 400 });
+      }
+      groupId = group.id;
+    }
+
     const member = await prisma.member.create({
       data: {
         tenantId,
@@ -163,6 +181,10 @@ export async function POST(request: NextRequest) {
         tapperPercent: data.tapperPercent || 0,
         tapperId: data.tapperId,
         tapperName: data.tapperName,
+        groupId,
+      },
+      include: {
+        group: { select: { id: true, name: true } },
       },
     });
 

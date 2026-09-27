@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { useAuth } from '@/platform/AuthContext';
 import { usePriceData } from '@/industries/rubber/hooks/usePriceData';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { useAlert } from '@/shared/hooks/useAlert';
 import GamerLoader from '@/shared/ui/GamerLoader';
 import ProductTypeManagement from '@/industries/rubber/ui/prices/ProductTypeManagement';
@@ -156,9 +157,9 @@ export default function PricesPage() {
         await axios.put(`/api/product-types/${editingProductType.id}`, {
           name: productTypeForm.name,
           description: productTypeForm.description,
-        });
+        }, { headers: clientAuthHeaders() });
       } else {
-        await axios.post('/api/product-types', productTypeForm);
+        await axios.post('/api/product-types', productTypeForm, { headers: clientAuthHeaders() });
       }
       
       closeProductTypeForm();
@@ -200,7 +201,8 @@ export default function PricesPage() {
 
     try {
       const res = await axios.delete<{ success?: boolean; deactivated?: boolean }>(
-        `/api/product-types/${productType.id}`
+        `/api/product-types/${productType.id}`,
+        { headers: clientAuthHeaders() },
       );
       loadData();
       if (res.data?.deactivated) {
@@ -230,7 +232,7 @@ export default function PricesPage() {
         name: productType.name,
         description: productType.description || '',
         isActive: true,
-      });
+      }, { headers: clientAuthHeaders() });
       loadData();
       showSuccess('เปิดใช้งานแล้ว', `ประเภทสินค้า "${productType.name}" พร้อมใช้งานอีกครั้ง`, {
         autoClose: true,

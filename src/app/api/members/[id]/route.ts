@@ -16,6 +16,9 @@ export async function GET(
 
     const member = await prisma.member.findUnique({
       where: { id: params.id },
+      include: {
+        group: { select: { id: true, name: true } },
+      },
     });
 
     if (!member || member.tenantId !== tenantId) {
@@ -78,6 +81,22 @@ export async function PUT(
       );
     }
 
+    let groupIdUpdate: { groupId: string | null } = {};
+    if ('groupId' in data) {
+      if (!data.groupId) {
+        groupIdUpdate = { groupId: null };
+      } else {
+        const group = await prisma.memberGroup.findFirst({
+          where: { id: String(data.groupId), tenantId, isActive: true },
+          select: { id: true },
+        });
+        if (!group) {
+          return NextResponse.json({ error: 'ไม่พบกลุ่มสมาชิก' }, { status: 400 });
+        }
+        groupIdUpdate = { groupId: group.id };
+      }
+    }
+
     const member = await prisma.member.update({
       where: { id: params.id },
       data: {
@@ -92,6 +111,10 @@ export async function PUT(
         tapperId: data.tapperId,
         tapperName: data.tapperName,
         isActive: data.isActive,
+        ...groupIdUpdate,
+      },
+      include: {
+        group: { select: { id: true, name: true } },
       },
     });
 

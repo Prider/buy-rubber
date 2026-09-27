@@ -149,6 +149,11 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
           <span className={member.isActive ? 'font-medium' : 'line-through text-gray-500 dark:text-gray-500'}>
             {member.name}
           </span>
+          {member.group?.name ? (
+            <span className="inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+              {member.group.name}
+            </span>
+          ) : null}
         </div>
       </td>
       <td className={member.isActive ? '' : 'text-gray-400 dark:text-gray-600'}>

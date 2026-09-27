@@ -26,19 +26,23 @@ export type PlatformAuthResult =
   | { ok: true; auth: PlatformAuth }
   | { ok: false; response: NextResponse };
 
-const UNAUTH = NextResponse.json(
-  { success: false, message: 'Authentication required' },
-  { status: 401 },
-);
+function unauthenticatedResponse() {
+  return NextResponse.json(
+    { success: false, message: 'Authentication required' },
+    { status: 401 },
+  );
+}
 
-const FORBIDDEN_PENDING = NextResponse.json(
-  {
-    success: false,
-    message: 'บัญชีนี้รอตรวจสอบสลิปชำระเงิน ยังไม่สามารถใช้งานระบบได้',
-    code: 'PENDING_PAYMENT',
-  },
-  { status: 403 },
-);
+function pendingPaymentResponse() {
+  return NextResponse.json(
+    {
+      success: false,
+      message: 'บัญชีนี้รอตรวจสอบสลิปชำระเงิน ยังไม่สามารถใช้งานระบบได้',
+      code: 'PENDING_PAYMENT',
+    },
+    { status: 403 },
+  );
+}
 
 export async function requireTenantAuth(
   request: NextRequest,
@@ -46,12 +50,12 @@ export async function requireTenantAuth(
 ): Promise<TenantAuthResult> {
   const token = getBearerToken(request);
   if (!token) {
-    return { ok: false, response: UNAUTH };
+    return { ok: false, response: unauthenticatedResponse() };
   }
 
   const payload = getVerifiedUserFromToken(token);
   if (!payload || payload.kind === 'platform' || !payload.tenantId) {
-    return { ok: false, response: UNAUTH };
+    return { ok: false, response: unauthenticatedResponse() };
   }
 
   const tenant = await prisma.tenant.findUnique({
@@ -60,12 +64,12 @@ export async function requireTenantAuth(
   });
 
   if (!tenant) {
-    return { ok: false, response: UNAUTH };
+    return { ok: false, response: unauthenticatedResponse() };
   }
 
   const allowPending = options?.allowPending === true;
   if (!allowPending && tenant.status !== 'active') {
-    return { ok: false, response: FORBIDDEN_PENDING };
+    return { ok: false, response: pendingPaymentResponse() };
   }
 
   return {
@@ -85,7 +89,7 @@ export async function requireTenantAuth(
 export async function requirePlatformAuth(request: NextRequest): Promise<PlatformAuthResult> {
   const token = getBearerToken(request);
   if (!token) {
-    return { ok: false, response: UNAUTH };
+    return { ok: false, response: unauthenticatedResponse() };
   }
 
   const payload = getVerifiedUserFromToken(token);
@@ -105,7 +109,7 @@ export async function requirePlatformAuth(request: NextRequest): Promise<Platfor
   });
 
   if (!owner?.isActive) {
-    return { ok: false, response: UNAUTH };
+    return { ok: false, response: unauthenticatedResponse() };
   }
 
   return { ok: true, auth: { userId: owner.id, username: owner.username } };

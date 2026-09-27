@@ -4,6 +4,19 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MemberFormProps, MemberFormData } from '@/industries/rubber/types/member';
 
 const FORM_ID = 'member-form';
+const BANK_LIST_ID = 'member-bank-list';
+
+const THAI_BANKS = [
+  'ธนาคารกรุงเทพ',
+  'ธนาคารกสิกรไทย',
+  'ธนาคารกรุงไทย',
+  'ธนาคารไทยพาณิชย์',
+  'ธนาคารกรุงศรีอยุธยา',
+  'ธนาคารทหารไทยธนชาต',
+  'ธนาคารออมสิน',
+  'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร',
+  'ธนาคารอาคารสงเคราะห์',
+];
 
 const fieldClassName =
   'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-medium text-gray-900 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-600 dark:disabled:text-gray-400';
@@ -16,6 +29,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   onCancel,
   onFormDataChange,
   isLoading = false,
+  groups = [],
 }) => {
   const [localFormData, setLocalFormData] = useState<MemberFormData>(formData);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -23,6 +37,9 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
+  const idCardRef = useRef<HTMLInputElement>(null);
+  const bankNameRef = useRef<HTMLInputElement>(null);
+  const bankAccountRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLocalFormData(formData);
@@ -34,8 +51,12 @@ export const MemberForm: React.FC<MemberFormProps> = ({
       initialEditingDataRef.current = {
         name: editingMember.name,
         code: editingMember.code,
+        groupId: editingMember.groupId || editingMember.group?.id || '',
+        idCard: editingMember.idCard || '',
         phone: editingMember.phone || '',
         address: editingMember.address || '',
+        bankName: editingMember.bankName || '',
+        bankAccount: editingMember.bankAccount || '',
         ownerPercent: editingMember.ownerPercent,
         tapperPercent: editingMember.tapperPercent,
         tapperName: editingMember.tapperName || '',
@@ -69,6 +90,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (localFormData.idCard && localFormData.idCard.length !== 13) {
+      setValidationError('เลขบัตรประชาชนต้องมี 13 หลัก');
+      return;
+    }
     try {
       await onSubmit(localFormData);
     } catch (error: unknown) {
@@ -98,8 +123,12 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     return (
       localFormData.name !== initialData.name ||
       localFormData.code !== initialData.code ||
+      localFormData.groupId !== initialData.groupId ||
+      localFormData.idCard !== initialData.idCard ||
       localFormData.phone !== initialData.phone ||
       localFormData.address !== initialData.address ||
+      localFormData.bankName !== initialData.bankName ||
+      localFormData.bankAccount !== initialData.bankAccount ||
       localFormData.ownerPercent !== initialData.ownerPercent ||
       localFormData.tapperPercent !== initialData.tapperPercent ||
       localFormData.tapperName !== initialData.tapperName
@@ -178,6 +207,23 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">กลุ่ม</label>
+                  <select
+                    value={localFormData.groupId}
+                    onChange={(e) => handleInputChange('groupId', e.target.value)}
+                    className={fieldClassName}
+                    disabled={isLoading}
+                  >
+                    <option value="">ไม่ระบุกลุ่ม</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เบอร์โทรศัพท์</label>
@@ -207,15 +253,79 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          e.currentTarget.form?.requestSubmit();
+                          idCardRef.current?.focus();
                           return;
                         }
-                        handleKeyDown(e, undefined, phoneRef);
+                        handleKeyDown(e, idCardRef, phoneRef);
                       }}
                       className={`${fieldClassName} resize-none`}
                       rows={2}
                       disabled={isLoading}
                       placeholder="กรอกที่อยู่"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เลขบัตรประชาชน</label>
+                  <input
+                    ref={idCardRef}
+                    type="text"
+                    value={localFormData.idCard}
+                    onChange={(e) => handleInputChange('idCard', e.target.value.replace(/\D/g, '').slice(0, 13))}
+                    onKeyDown={(e) => handleKeyDown(e, bankNameRef, addressRef)}
+                    className={fieldClassName}
+                    disabled={isLoading}
+                    placeholder="กรอกเลขบัตรประชาชน 13 หลัก"
+                    inputMode="numeric"
+                    maxLength={13}
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ธนาคาร</label>
+                    <input
+                      ref={bankNameRef}
+                      type="text"
+                      list={BANK_LIST_ID}
+                      value={localFormData.bankName}
+                      onChange={(e) => handleInputChange('bankName', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, bankAccountRef, idCardRef)}
+                      className={fieldClassName}
+                      disabled={isLoading}
+                      placeholder="เลือกหรือกรอกชื่อธนาคาร"
+                      autoComplete="off"
+                    />
+                    <datalist id={BANK_LIST_ID}>
+                      {THAI_BANKS.map((bank) => (
+                        <option key={bank} value={bank} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เลขบัญชี</label>
+                    <input
+                      ref={bankAccountRef}
+                      type="text"
+                      value={localFormData.bankAccount}
+                      onChange={(e) => handleInputChange('bankAccount', e.target.value.replace(/\D/g, '').slice(0, 15))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.currentTarget.form?.requestSubmit();
+                          return;
+                        }
+                        handleKeyDown(e, undefined, bankNameRef);
+                      }}
+                      className={fieldClassName}
+                      disabled={isLoading}
+                      placeholder="กรอกเลขบัญชี"
+                      inputMode="numeric"
+                      maxLength={15}
+                      autoComplete="off"
                     />
                   </div>
                 </div>

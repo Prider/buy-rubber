@@ -10,6 +10,7 @@ import ProductTypeManagement from '@/industries/rubber/ui/prices/ProductTypeMana
 import { ListPagination } from '@/shared/ui/pagination/ListPagination';
 import { useAlert } from '@/shared/hooks/useAlert';
 import { usePriceData } from '@/industries/rubber/hooks/usePriceData';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { formatCurrency, formatNumber } from '@/shared/utils';
 
 const ProductTypeFormModal = dynamic(
@@ -62,7 +63,7 @@ export default function StockPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { showSuccess, showError, showConfirm } = useAlert();
-  const { productTypes, loadData } = usePriceData();
+  const { productTypes, loadData, loading: productTypesLoading } = usePriceData();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -79,8 +80,26 @@ export default function StockPage() {
   });
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort((a, b) => b.quantityKg - a.quantityKg);
-  }, [rows]);
+    const positionByTypeId = new Map(rows.map((row) => [row.productTypeId, row]));
+    return productTypes
+      .filter((productType) => productType.isActive !== false)
+      .map((productType) => {
+        const position = positionByTypeId.get(productType.id);
+        return {
+          productTypeId: productType.id,
+          productType: {
+            id: productType.id,
+            code: productType.code,
+            name: productType.name,
+          },
+          quantityKg: position?.quantityKg ?? 0,
+          avgCostPerKg: position?.avgCostPerKg ?? 0,
+          avgSellingPricePerKg: position?.avgSellingPricePerKg ?? null,
+          soldKg: position?.soldKg ?? null,
+        };
+      })
+      .sort((a, b) => b.quantityKg - a.quantityKg);
+  }, [productTypes, rows]);
 
   const pagination = useMemo(() => {
     const total = sortedRows.length;
@@ -106,7 +125,7 @@ export default function StockPage() {
     try {
       if (!silent) setLoading(true);
       setError('');
-      const res = await fetch('/api/stock/positions');
+      const res = await fetch('/api/stock/positions', { headers: clientAuthHeaders() });
       if (!res.ok) throw new Error('Failed to load stock positions');
       const data = (await res.json()) as StockPositionRow[];
       setRows(data);
@@ -135,9 +154,9 @@ export default function StockPage() {
         await axios.put(`/api/product-types/${editingProductType.id}`, {
           name: productTypeForm.name,
           description: productTypeForm.description,
-        });
+        }, { headers: clientAuthHeaders() });
       } else {
-        await axios.post('/api/product-types', productTypeForm);
+        await axios.post('/api/product-types', productTypeForm, { headers: clientAuthHeaders() });
       }
 
       closeProductTypeForm();
@@ -184,7 +203,8 @@ export default function StockPage() {
 
     try {
       const res = await axios.delete<{ success?: boolean; deactivated?: boolean }>(
-        `/api/product-types/${productType.id}`
+        `/api/product-types/${productType.id}`,
+        { headers: clientAuthHeaders() },
       );
       await loadData();
       await loadStockPositions({ silent: true });
@@ -216,7 +236,7 @@ export default function StockPage() {
         name: productType.name,
         description: productType.description || '',
         isActive: true,
-      });
+      }, { headers: clientAuthHeaders() });
       await loadData();
       await loadStockPositions({ silent: true });
       showSuccess('เปิดใช้งานแล้ว', `ประเภทสินค้า "${productType.name}" พร้อมใช้งานอีกครั้ง`, {
@@ -248,7 +268,7 @@ export default function StockPage() {
     setProductTypeForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (isLoading || loading) {
+  if (isLoading || loading || productTypesLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังโหลด..." />

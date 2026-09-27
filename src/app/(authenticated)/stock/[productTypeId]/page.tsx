@@ -5,6 +5,7 @@ import { useAuth } from '@/platform/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import GamerLoader from '@/shared/ui/GamerLoader';
 import { ListPagination } from '@/shared/ui/pagination/ListPagination';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { formatCurrency, formatNumber } from '@/shared/utils';
 
 type LedgerEntry = {
@@ -70,7 +71,7 @@ export default function StockDetailPage() {
         setLoading(true);
         setError('');
         const url = `/api/stock/ledger?productTypeId=${encodeURIComponent(productTypeId)}&page=${page}&limit=${limit}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: clientAuthHeaders() });
         if (!res.ok) throw new Error('Failed to load ledger');
         const data = (await res.json()) as LedgerResponse;
         setProductType(data.productType);

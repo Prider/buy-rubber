@@ -18,11 +18,14 @@ model Member {
   isActive       Boolean    @default(true)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
-  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  groupId        String?
+  tenant         Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  group          MemberGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   purchases      Purchase[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
+  @@index([groupId])
 }
 
 model DestinationCompany {
@@ -59,6 +62,7 @@ model ProductType {
   stockLedgerEntries StockLedgerEntry[]
   stockGangs         StockGang[]
   reportGroupMembers ReportProductTypeGroupMember[]
+  memberGroupPrices  MemberGroupPrice[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -273,6 +277,38 @@ model StockGang {
   @@index([tenantId])
   @@index([productTypeId, gangNo])
   @@index([productTypeId, startDate])
+}
+
+model MemberGroup {
+  id        String             @id @default(uuid())
+  tenantId  String
+  name      String
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members   Member[]
+  prices    MemberGroupPrice[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model MemberGroupPrice {
+  id            String      @id @default(uuid())
+  tenantId      String
+  groupId       String
+  productTypeId String
+  price         Float
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  group         MemberGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, productTypeId])
+  @@index([tenantId])
+  @@index([groupId])
 }
 
 model ReportProductTypeGroup {

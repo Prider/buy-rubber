@@ -19,7 +19,7 @@ export default function PurchasesPage() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   
   // Data loading hook
-  const { loading: _loading, members, productTypes, dailyPrices, loadData, loadPurchases } = usePurchaseData();
+  const { loading: _loading, members, productTypes, dailyPrices, memberGroups = [], loadData, loadPurchases } = usePurchaseData();
   
   // Cart management hook
   const {
@@ -75,6 +75,7 @@ export default function PurchasesPage() {
     members,
     productTypes,
     dailyPrices,
+    memberGroups,
   });
 
   // Service fee form management hook

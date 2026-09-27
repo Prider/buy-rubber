@@ -8,6 +8,8 @@ interface Member {
   name: string;
   ownerPercent: number;
   tapperPercent: number;
+  groupId?: string | null;
+  group?: { id: string; name: string } | null;
 }
 
 interface ProductType {
@@ -24,6 +26,7 @@ export const usePurchaseData = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [dailyPrices, setDailyPrices] = useState<any[]>([]);
+  const [memberGroups, setMemberGroups] = useState<Array<{ id: string; prices: Array<{ productTypeId: string; price: number }> }>>([]);
   
   // Use refs to store cancel tokens for cleanup
   const cancelTokensRef = useRef<CancelTokenSource[]>([]);
@@ -131,6 +134,26 @@ export const usePurchaseData = () => {
     }
   }, []);
 
+  const loadMemberGroups = useCallback(async () => {
+    const cancelToken = axios.CancelToken.source();
+    cancelTokensRef.current.push(cancelToken);
+
+    try {
+      const response = await axios.get('/api/member-groups', {
+        cancelToken: cancelToken.token,
+      });
+      setMemberGroups(response.data);
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        logger.debug('Member groups load cancelled');
+        return;
+      }
+      logger.error('Failed to load member groups', error);
+    } finally {
+      cancelTokensRef.current = cancelTokensRef.current.filter(t => t !== cancelToken);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     try {
       // Only load essential data, not all purchases
@@ -138,6 +161,7 @@ export const usePurchaseData = () => {
         loadMembers(),
         loadProductTypes(),
         loadDailyPrices(),
+        loadMemberGroups(),
       ]);
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -145,7 +169,7 @@ export const usePurchaseData = () => {
       }
       logger.error('Failed to load data', error);
     }
-  }, [loadMembers, loadProductTypes, loadDailyPrices]);
+  }, [loadMembers, loadProductTypes, loadDailyPrices, loadMemberGroups]);
 
   return {
     loading,
@@ -153,6 +177,7 @@ export const usePurchaseData = () => {
     members,
     productTypes,
     dailyPrices,
+    memberGroups,
     loadData,
     loadPurchases,
   };

@@ -26,6 +26,8 @@ model Tenant {
 
   users                    User[]
   members                  Member[]
+  memberGroups             MemberGroup[]
+  memberGroupPrices        MemberGroupPrice[]
   destinationCompanies     DestinationCompany[]
   productTypes             ProductType[]
   productPrices            ProductPrice[]

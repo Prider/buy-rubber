@@ -1,9 +1,31 @@
+export interface MemberGroupSummary {
+  id: string;
+  name: string;
+}
+
+export interface MemberGroupPriceRecord {
+  productTypeId: string;
+  price: number;
+}
+
+export interface MemberGroupRecord {
+  id: string;
+  name: string;
+  isActive: boolean;
+  prices: MemberGroupPriceRecord[];
+}
+
 export interface Member {
   id: string;
   code: string;
   name: string;
+  groupId?: string | null;
+  group?: MemberGroupSummary | null;
+  idCard?: string;
   phone?: string;
   address?: string;
+  bankAccount?: string;
+  bankName?: string;
   ownerPercent: number;
   tapperPercent: number;
   tapperName?: string;
@@ -16,8 +38,12 @@ export interface Member {
 export interface MemberFormData {
   name: string;
   code: string;
+  groupId: string;
+  idCard: string;
   phone: string;
   address: string;
+  bankName: string;
+  bankAccount: string;
   ownerPercent: number;
   tapperPercent: number;
   tapperName: string;
@@ -31,6 +57,7 @@ export interface MemberFormProps {
   onCancel: () => void;
   onFormDataChange: (data: Partial<MemberFormData>) => void;
   isLoading?: boolean;
+  groups?: MemberGroupRecord[];
 }
 
 export interface MemberTableProps {

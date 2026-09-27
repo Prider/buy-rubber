@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { logger } from '@/shared/logger';
+import { GroupPriceSheet, resolvePurchaseUnitPrice } from '@/industries/rubber/domain/purchaseUnitPrice';
 
 interface Member {
   id: string;
@@ -7,6 +8,8 @@ interface Member {
   name: string;
   ownerPercent: number;
   tapperPercent: number;
+  groupId?: string | null;
+  group?: { id: string; name: string } | null;
 }
 
 interface ProductType {
@@ -31,9 +34,10 @@ interface UsePurchaseFormProps {
   members: Member[];
   productTypes: ProductType[];
   dailyPrices: any[];
+  memberGroups?: GroupPriceSheet[];
 }
 
-export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurchaseFormProps) => {
+export const usePurchaseForm = ({ members, productTypes, dailyPrices, memberGroups = [] }: UsePurchaseFormProps) => {
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -117,10 +121,27 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   }, []);
 
   // Handle member selection
+  const unitPriceFor = useCallback((productTypeId: string, member?: Member | null) => {
+    return resolvePurchaseUnitPrice({
+      dailyPrices,
+      memberGroups,
+      groupId: member?.group?.id || member?.groupId,
+      productTypeId,
+      todayDate,
+    });
+  }, [dailyPrices, memberGroups, todayDate]);
+
+  const memberLabel = (member: Member) =>
+    member.group?.name ? `${member.code} - ${member.name} (${member.group.name})` : `${member.code} - ${member.name}`;
+
   const handleMemberSelect = useCallback((member: Member) => {
     setSelectedMember(member);
-    setMemberSearchTerm(`${member.code} - ${member.name}`);
-    setFormData(prev => ({ ...prev, memberId: member.id }));
+    setMemberSearchTerm(memberLabel(member));
+    setFormData(prev => ({
+      ...prev,
+      memberId: member.id,
+      pricePerUnit: prev.productTypeId ? unitPriceFor(prev.productTypeId, member) : prev.pricePerUnit,
+    }));
     setShowMemberDropdown(false);
 
     // If a product type is already selected, refetch recent purchases for this member + product type
@@ -129,7 +150,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
     } else {
       setRecentPurchases([]);
     }
-  }, [formData.productTypeId, fetchRecentPurchases]);
+  }, [formData.productTypeId, fetchRecentPurchases, unitPriceFor]);
 
   // Handle member search input change
   const handleMemberSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,37 +170,17 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
   const handleProductTypeSelect = useCallback((productType: ProductType) => {
     setSelectedProductType(productType);
     setProductTypeSearchTerm(`${productType.code} - ${productType.name}`);
-    setFormData(prev => ({ ...prev, productTypeId: productType.id }));
     setShowProductTypeDropdown(false);
     
-    // Trigger price fetch and recent purchases fetch
-    const today = todayDate;
-    let priceForProductType = dailyPrices.find(price => {
-      if (!price.date) return false;
-      const priceDate = new Date(price.date).toISOString().split('T')[0];
-      return price.productTypeId === productType.id && priceDate === today;
-    });
-    
-    if (!priceForProductType) {
-      priceForProductType = dailyPrices
-        .filter(price => price.productTypeId === productType.id)
-        .sort((a, b) => {
-          const dateA = a.date ? new Date(a.date).getTime() : 0;
-          const dateB = b.date ? new Date(b.date).getTime() : 0;
-          return dateB - dateA;
-        })[0];
-    }
-    
     fetchRecentPurchases(productType.id, formData.memberId);
-    
-    if (priceForProductType) {
-      setFormData(prev => ({
-        ...prev,
-        productTypeId: productType.id,
-        pricePerUnit: priceForProductType.price.toString(),
-      }));
-    }
-  }, [dailyPrices, fetchRecentPurchases, formData.memberId, todayDate]);
+
+    const member = members.find((item) => item.id === formData.memberId) ?? null;
+    setFormData(prev => ({
+      ...prev,
+      productTypeId: productType.id,
+      pricePerUnit: unitPriceFor(productType.id, member),
+    }));
+  }, [fetchRecentPurchases, formData.memberId, members, unitPriceFor]);
 
   // Handle product type search input change
   const handleProductTypeSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,35 +211,13 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
       setUserSelectedDate(value);
     }
     
-    // If product type is selected, automatically set the price from daily prices
     if (name === 'productTypeId' && value) {
-      const today = todayDate;
-      
-      // Try to find exact date match first (compare date strings, handle timezone)
-      let priceForProductType = dailyPrices.find(price => {
-        if (!price.date) return false;
-        const priceDate = new Date(price.date).toISOString().split('T')[0];
-        return price.productTypeId === value && priceDate === today;
-      });
-      
-      // If no exact match, try to find the most recent price for this product type
-      if (!priceForProductType) {
-        priceForProductType = dailyPrices
-          .filter(price => price.productTypeId === value)
-          .sort((a, b) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b.date ? new Date(b.date).getTime() : 0;
-            return dateB - dateA;
-          })[0];
-      }
-      
-      // Fetch recent purchases for this product type
       fetchRecentPurchases(value, formData.memberId);
-      
+      const member = members.find((item) => item.id === formData.memberId) ?? null;
       setFormData(prev => ({
         ...prev,
         [name]: value,
-        pricePerUnit: priceForProductType ? priceForProductType.price.toString() : '',
+        pricePerUnit: unitPriceFor(value, member),
       }));
     } 
     // Calculate net weight when gross weight or container weight changes
@@ -282,7 +261,7 @@ export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurch
         [name]: value,
       }));
     }
-  }, [dailyPrices, fetchRecentPurchases, formData.memberId, todayDate]);
+  }, [fetchRecentPurchases, formData.memberId, members, todayDate, unitPriceFor]);
 
   // Calculate total amount
   const calculateTotalAmount = useCallback(() => {

@@ -3,13 +3,14 @@ import { useRouter } from 'next/navigation';
 interface MembersPageHeaderProps {
   totalMembers: number;
   onAddMember: () => void;
+  onManageGroups: () => void;
 }
 
 /**
  * Header component for the members page
  * Separated for better testability and reusability
  */
-export const MembersPageHeader = ({ totalMembers, onAddMember }: MembersPageHeaderProps) => {
+export const MembersPageHeader = ({ totalMembers, onAddMember, onManageGroups }: MembersPageHeaderProps) => {
   const router = useRouter();
 
   return (
@@ -34,7 +35,7 @@ export const MembersPageHeader = ({ totalMembers, onAddMember }: MembersPageHead
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <button 
             onClick={() => router.push('/purchases')} 
             className="group relative px-5 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
@@ -45,6 +46,13 @@ export const MembersPageHeader = ({ totalMembers, onAddMember }: MembersPageHead
               </svg>
               <span>กลับไปหน้ารับซื้อ</span>
             </div>
+          </button>
+          <button
+            type="button"
+            onClick={onManageGroups}
+            className="px-5 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-medium shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+          >
+            กลุ่มสมาชิก
           </button>
           <button 
             onClick={onAddMember} 

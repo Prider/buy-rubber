@@ -96,6 +96,19 @@ export function isTokenExpired(token: string): boolean {
   return Date.now() >= payload.exp * 1000;
 }
 
+export function clientAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    return {};
+  }
+
+  return { Authorization: `Bearer ${token}` };
+}
+
 export function clearAuthSession(): void {
   if (typeof window === 'undefined') {
     return;

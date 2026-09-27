@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { logger } from '@/shared/logger';
 
 interface ProductType {
@@ -17,29 +18,39 @@ export function usePriceData() {
   const [priceHistory, setPriceHistory] = useState<any[]>([]);
 
   const loadData = useCallback(async () => {
-    try {
-      const [productTypesRes, pricesRes] = await Promise.all([
-        axios.get('/api/product-types', { params: { includeInactive: '1' } }),
-        axios.get('/api/prices/history?days=11'), // Get today + last 10 days
-      ]);
-      
-      setProductTypes(productTypesRes.data || []);
-      setPriceHistory(pricesRes.data || []);
-      
-      const todayDate = new Date().toISOString().split('T')[0];
-      logger.debug('Price data loaded', { 
-        todayDate, 
-        totalPrices: pricesRes.data?.length, 
-        productTypes: productTypesRes.data?.length 
-      });
+    const headers = clientAuthHeaders();
+    const [productTypesResult, pricesResult] = await Promise.allSettled([
+      axios.get('/api/product-types', { params: { includeInactive: '1' }, headers }),
+      axios.get('/api/prices/history?days=11', { headers }),
+    ]);
 
-      return productTypesRes.data || [];
-    } catch (error) {
-      logger.error('Failed to load price data', error);
-      return [];
-    } finally {
-      setLoading(false);
+    let loadedProductTypes: ProductType[] = [];
+    if (productTypesResult.status === 'fulfilled') {
+      const data = productTypesResult.value.data;
+      loadedProductTypes = Array.isArray(data) ? data : [];
+      setProductTypes(loadedProductTypes);
+    } else {
+      logger.error('Failed to load product types', productTypesResult.reason);
+      setProductTypes([]);
     }
+
+    if (pricesResult.status === 'fulfilled') {
+      const data = pricesResult.value.data;
+      setPriceHistory(Array.isArray(data) ? data : []);
+    } else {
+      logger.error('Failed to load price history', pricesResult.reason);
+      setPriceHistory([]);
+    }
+
+    logger.debug('Price data loaded', {
+      productTypes: loadedProductTypes.length,
+      totalPrices: pricesResult.status === 'fulfilled' && Array.isArray(pricesResult.value.data)
+        ? pricesResult.value.data.length
+        : 0,
+    });
+
+    setLoading(false);
+    return loadedProductTypes;
   }, []);
 
   useEffect(() => {
