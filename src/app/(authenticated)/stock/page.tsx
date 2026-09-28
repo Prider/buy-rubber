@@ -273,7 +273,7 @@ export default function StockPage() {
           <div className="flex flex-wrap items-baseline gap-3">
             <h1 className="text-2xl font-bold">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                จัดการสต็อกสินค้า
+                สต็อกคงเหลือ
               </span>
             </h1>
             <p className="text-xs text-gray-600 dark:text-gray-400">

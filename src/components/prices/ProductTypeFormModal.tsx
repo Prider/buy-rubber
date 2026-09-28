@@ -82,7 +82,7 @@ export default function ProductTypeFormModal({
         <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
           {editingProductType
             ? 'แก้ไขข้อมูลประเภทสินค้า'
-            : 'เพิ่มประเภทสินค้าใหม่สำหรับการตั้งราคา'}
+            : ''}
         </p>
         <form id={FORM_ID} onSubmit={onSubmit} className="w-full space-y-5 px-2">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

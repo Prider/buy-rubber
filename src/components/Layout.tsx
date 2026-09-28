@@ -328,7 +328,7 @@ export default function Layout({ children }: LayoutProps) {
                 <span className="text-amber-500 dark:text-amber-400">o</span>
                 <span className="text-fuchsia-500 dark:text-amber-400">o</span>
                 <span className="text-violet-500 dark:text-violet-400">k</span>
-                <span className="dark:text-white">  Innotech ( สินทวี )</span>
+                <span className="dark:text-white">  Innotech ( {process.env.NEXT_PUBLIC_COMPANY_NAME || 'สินทวี'} )</span>
               </h1>
             </div>
 
