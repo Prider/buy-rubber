@@ -2,6 +2,12 @@
 
 import { Radio } from 'animal-island-ui';
 import {
+  SLIP_FONT_OPTIONS,
+  normalizeSlipFontSize,
+  slipFontLabelFor,
+  type SlipFontSizeId,
+} from '@/lib/slipFont';
+import {
   SLIP_PAPER_OPTIONS,
   normalizeSlipPaperSize,
   slipWidthPxFor,
@@ -11,6 +17,23 @@ import {
 const PREVIEW_IFRAME_HEIGHT = 560;
 const PREVIEW_STAGE_WIDTH = 320;
 const PREVIEW_STAGE_HEIGHT = 480;
+
+const FONT_HINT: Record<SlipFontSizeId, string> = {
+  h4: 'เล็ก',
+  h3: 'มาตรฐาน',
+  h2: 'ใหญ่',
+  h1: 'ใหญ่มาก',
+};
+
+const FONT_SIZE_RADIO_OPTIONS = SLIP_FONT_OPTIONS.map((opt) => ({
+  value: opt.id,
+  label: (
+    <span className="inline-flex flex-col leading-tight">
+      <span>{opt.label}</span>
+      <span className="text-xs font-normal opacity-80">{FONT_HINT[opt.id]}</span>
+    </span>
+  ),
+}));
 
 const PAPER_HINT: Record<SlipPaperSizeId, string> = {
   '58mm': 'เล็ก',
@@ -34,12 +57,16 @@ const fieldClass =
 interface SlipSettingsPanelProps {
   companyName: string;
   companyAddress: string;
+  footerText: string;
+  fontSize: SlipFontSizeId;
   paperSize: SlipPaperSizeId;
   loading: boolean;
   saving: boolean;
   previewHtml: string;
   onCompanyNameChange: (value: string) => void;
   onCompanyAddressChange: (value: string) => void;
+  onFooterTextChange: (value: string) => void;
+  onFontSizeChange: (id: SlipFontSizeId) => void;
   onPaperSizeChange: (id: SlipPaperSizeId) => void;
   onSave: () => void;
 }
@@ -47,12 +74,16 @@ interface SlipSettingsPanelProps {
 export function SlipSettingsPanel({
   companyName,
   companyAddress,
+  footerText,
+  fontSize,
   paperSize,
   loading,
   saving,
   previewHtml,
   onCompanyNameChange,
   onCompanyAddressChange,
+  onFooterTextChange,
+  onFontSizeChange,
   onPaperSizeChange,
   onSave,
 }: SlipSettingsPanelProps) {
@@ -75,9 +106,7 @@ export function SlipSettingsPanel({
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             ตั้งค่าข้อมูลใบรับซื้อ (Slip)
           </h3>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            ชื่อ ที่อยู่ และขนาดกระดาษบนใบพิมพ์
-          </p>
+
         </div>
         {loading && (
           <span className="text-xs text-gray-400 dark:text-gray-500">กำลังโหลด...</span>
@@ -115,6 +144,35 @@ export function SlipSettingsPanel({
           </div>
 
           <div className="space-y-2">
+            <label htmlFor="slip-footer-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              ข้อความท้ายใบ
+            </label>
+            <textarea
+              id="slip-footer-text"
+              value={footerText}
+              onChange={(e) => onFooterTextChange(e.target.value)}
+              disabled={busy}
+              rows={3}
+              className={`${fieldClass} resize-none`}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <p id="slip-font-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              ขนาดตัวอักษร
+            </p>
+            <Radio
+              options={FONT_SIZE_RADIO_OPTIONS}
+              value={fontSize}
+              size="large"
+              direction="horizontal"
+              disabled={busy}
+              className="slip-font-radio py-2"
+              onChange={(value) => onFontSizeChange(normalizeSlipFontSize(value))}
+            />
+          </div>
+
+          <div className="space-y-2">
             <p id="slip-paper-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               ขนาดกระดาษ
             </p>
@@ -144,7 +202,7 @@ export function SlipSettingsPanel({
           <div className="mb-3 flex items-baseline justify-between gap-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {paperSize} · {previewFrameWidth} px
+              {paperSize} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
             </p>
           </div>
           <div className="flex justify-center rounded-xl bg-gray-100 p-4 dark:bg-gray-950/60">

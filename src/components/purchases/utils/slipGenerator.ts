@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { getStoredSlipFontSize, slipFontPx, type SlipFontSizeId } from '@/lib/slipFont';
 import {
   getStoredSlipPaperSize,
   slipPageWidthMm,
@@ -9,9 +10,12 @@ import { PurchaseTransaction, CartItem } from '../types';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
 const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';
+const DEFAULT_FOOTER_TEXT =
+  'กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ';
 
 const SLIP_COMPANY_NAME_KEY = 'slip_companyName';
 const SLIP_COMPANY_ADDRESS_KEY = 'slip_companyAddress';
+const SLIP_FOOTER_TEXT_KEY = 'slip_footerText';
 
 function escapeHtml(input: string): string {
   return input
@@ -42,6 +46,17 @@ function getStoredSlipCompanyAddress(): string {
     // ignore
   }
   return DEFAULT_COMPANY_ADDRESS;
+}
+
+function getStoredSlipText(key: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const v = window.localStorage.getItem(key);
+    if (v && v.trim()) return v;
+  } catch {
+    // ignore
+  }
+  return fallback;
 }
 
 /**
@@ -91,6 +106,9 @@ export function generateSlipHTMLFromItems(
     memberCode?: string;
     companyName?: string;
     companyAddress?: string;
+    footerText?: string;
+    /** When omitted, uses `localStorage` (same as print/PDF). */
+    fontSize?: SlipFontSizeId;
     /** When omitted, uses `localStorage` (same as print/PDF). */
     paperSize?: SlipPaperSizeId;
   }
@@ -117,6 +135,9 @@ export function generateSlipHTMLFromItems(
 
   const companyName = options?.companyName || getStoredSlipCompanyName();
   const companyAddress = options?.companyAddress || getStoredSlipCompanyAddress();
+  const footerText = options?.footerText || getStoredSlipText(SLIP_FOOTER_TEXT_KEY, DEFAULT_FOOTER_TEXT);
+  const fontSizeId = options?.fontSize ?? getStoredSlipFontSize();
+  const px = (basePx: number) => slipFontPx(basePx, fontSizeId);
   const paperSizeId = options?.paperSize ?? getStoredSlipPaperSize();
   const slipWidthPx = slipWidthPxFor(paperSizeId);
   const pageWidthMm = slipPageWidthMm(paperSizeId);
@@ -184,16 +205,16 @@ export function generateSlipHTMLFromItems(
             }
           }
           .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
-          .store h1 { margin: 0; font-size: 20px; letter-spacing: 1px; color: #0f172a; }
-          .store p { margin: 4px 0; font-size: 13px; color: #475569; }
-          .meta { font-size: 12px; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed #cbd5f5; padding-bottom: 6px; }
-          .item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0;}
+          .store h1 { margin: 0; font-size: ${px(20)}px; letter-spacing: 1px; color: #0f172a; }
+          .store p { margin: 4px 0; font-size: ${px(13)}px; color: #475569; }
+          .meta { font-size: ${px(12)}px; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed #cbd5f5; padding-bottom: 6px; }
+          .item { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; font-weight: bold; }
           .item:last-child { border-bottom: none; }
-          .item-name { font-size: 13px; color: #0f172a; font-weight: 600; }
-          .item-meta { font-size: 11px; color: #64748b; }
-          .item-amount { text-align: right; font-size: 13px; color: #0f172a; font-weight: 600; }
-          .item-amount .price { font-size: 11px; color: #475569; font-weight: 400; display: block; }
-          .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
+          .item-name { font-size: ${px(13)}px; color: #0f172a; font-weight: bold; }
+          .item-meta { font-size: 16px; color: #0f172a; font-weight: bold; }
+          .item-amount { text-align: right; font-size: ${px(13)}px; color: #0f172a; font-weight: bold; }
+          .item-amount .price { font-size: ${px(11)}px; color: #475569; font-weight: bold; display: block; }
+          .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: ${px(14)}px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
           .signatures { display: flex; justify-content: space-between; padding-top: 16px; gap: 8px; }
           .signatures--stacked {
             flex-direction: column;
@@ -204,14 +225,14 @@ export function generateSlipHTMLFromItems(
           .signatures--stacked .signature { flex: none; width: 100%; }
           .signatures--stacked .signature-line { width: min(75%, 140px); margin-top: 32px; }
           .signature { flex: 1; text-align: center; }
-          .signature-label { font-size: 12px; color: #475569; margin-bottom: 10px; margin-top: 10px; }
+          .signature-label { font-size: ${px(12)}px; color: #475569; margin-bottom: 10px; margin-top: 10px; }
           .signature-line { border-top: 1px dotted #64748b; margin: 0 auto; width: 120px; margin-top: 40px; }
-          .footer { margin-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
-          .footer-text { margin-top: 10px; width: 80%; margin-left: auto; margin-right: auto; text-align: center; font-size: 11px; color: #94a3b8; }
+          .footer { margin-top: 16px; text-align: center; font-size: ${px(11)}px; color: #94a3b8; }
+          .footer-text { margin-top: 10px; width: 80%; margin-left: auto; margin-right: auto; text-align: center; font-size: ${px(11)}px; color: #94a3b8; }
         </style>
       </head>
       <body>
-        <div class="slip" data-slip-width="${slipWidthPx}">
+        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-font="${fontSizeId}">
           <div class="store">
             <h1>${escapeHtml(companyName)}</h1>
             <p>${escapeHtml(companyAddress)}</p>
@@ -252,19 +273,9 @@ export function generateSlipHTMLFromItems(
             <span>ยอดสุทธิ</span>
             <span>${formatCurrency(total)}</span>
           </div>
-          <div class="signatures${paperSizeId === '58mm' ? ' signatures--stacked' : ''}">
-            <div class="signature">
-              <div class="signature-line"></div>
-              <div class="signature-label">ผู้จัดทำ</div>
-            </div>
-            <div class="signature">
-              <div class="signature-line"></div>
-              <div class="signature-label">ผู้รับเงิน</div>
-            </div>
-          </div>
           <div class="footer">
             <div class="footer-text">
-            กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ
+            ${escapeHtml(footerText)}
             </div>
           </div>
         </div>

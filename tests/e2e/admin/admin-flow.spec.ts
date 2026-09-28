@@ -191,12 +191,14 @@ test.describe('Admin flow', () => {
     const suffix = uniqueSuffix()
     const companyName = `E2E Co ${suffix}`
     const companyAddress = `123 Test Road ${suffix}`
+    const footerText = `ตรวจสอบเงิน ${suffix}`
 
     await openSlipTab(page)
 
     const panel = slipPanel(page)
-    await panel.locator('input[type="text"]').fill(companyName)
-    await panel.locator('textarea').fill(companyAddress)
+    await panel.locator('#slip-company-name').fill(companyName)
+    await panel.locator('#slip-company-address').fill(companyAddress)
+    await panel.locator('#slip-footer-text').fill(footerText)
 
     const saveReq = page.waitForResponse(
       (r) =>
@@ -210,10 +212,12 @@ test.describe('Admin flow', () => {
     const saveBody = await saveRes.json()
     expect(saveBody.companyName).toBe(companyName)
     expect(saveBody.companyAddress).toBe(companyAddress)
+    expect(saveBody.footerText).toBe(footerText)
 
     const saved = await getSlipSettings(request)
     expect(saved.companyName).toBe(companyName)
     expect(saved.companyAddress).toBe(companyAddress)
+    expect(saved.footerText).toBe(footerText)
 
     await page.reload()
     await expect(page.getByRole('heading', { name: 'ตั้งค่าระบบ' })).toBeVisible()
@@ -225,8 +229,9 @@ test.describe('Admin flow', () => {
     await slipReq
 
     const reloadedPanel = slipPanel(page)
-    await expect(reloadedPanel.locator('input[type="text"]')).toHaveValue(companyName)
-    await expect(reloadedPanel.locator('textarea')).toHaveValue(companyAddress)
+    await expect(reloadedPanel.locator('#slip-company-name')).toHaveValue(companyName)
+    await expect(reloadedPanel.locator('#slip-company-address')).toHaveValue(companyAddress)
+    await expect(reloadedPanel.locator('#slip-footer-text')).toHaveValue(footerText)
   })
 
   test('REQ-ADM-04: configures slip paper size with live preview and persistence', async ({

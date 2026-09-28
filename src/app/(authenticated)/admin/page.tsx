@@ -18,6 +18,11 @@ import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
 import type { CartItem } from '@/components/purchases/types';
 import {
+  SLIP_FONT_SIZE_STORAGE_KEY,
+  normalizeSlipFontSize,
+  type SlipFontSizeId,
+} from '@/lib/slipFont';
+import {
   SLIP_PAPER_SIZE_STORAGE_KEY,
   normalizeSlipPaperSize,
   type SlipPaperSizeId,
@@ -73,11 +78,15 @@ export default function AdminSettingsPage() {
     return {
       companyName: 'สินทวี',
       companyAddress: '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ',
+      footerText:
+        'กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ',
     };
   }, []);
 
   const [slipCompanyName, setSlipCompanyName] = useState(slipDefaults.companyName);
   const [slipCompanyAddress, setSlipCompanyAddress] = useState(slipDefaults.companyAddress);
+  const [slipFooterText, setSlipFooterText] = useState(slipDefaults.footerText);
+  const [slipFontSize, setSlipFontSize] = useState<SlipFontSizeId>('h2');
   const [slipPaperSize, setSlipPaperSize] = useState<SlipPaperSizeId>('80mm');
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
@@ -109,22 +118,35 @@ export default function AdminSettingsPage() {
         const data = await apiClient.get<{
           companyName: string;
           companyAddress: string;
+          footerText: string;
+          fontSize?: string;
           paperSize?: string;
         }>('/api/slip/settings');
 
-        setSlipCompanyName(data?.companyName || slipDefaults.companyName);
-        setSlipCompanyAddress(data?.companyAddress || slipDefaults.companyAddress);
+        const companyName = data?.companyName || slipDefaults.companyName;
+        const companyAddress = data?.companyAddress || slipDefaults.companyAddress;
+        const footerText = data?.footerText || slipDefaults.footerText;
+
+        setSlipCompanyName(companyName);
+        setSlipCompanyAddress(companyAddress);
+        setSlipFooterText(footerText);
+        const fontSize = normalizeSlipFontSize(data?.fontSize);
         const paper = normalizeSlipPaperSize(data?.paperSize);
+        setSlipFontSize(fontSize);
         setSlipPaperSize(paper);
 
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem('slip_companyName', data?.companyName || slipDefaults.companyName);
-          window.localStorage.setItem('slip_companyAddress', data?.companyAddress || slipDefaults.companyAddress);
+          window.localStorage.setItem('slip_companyName', companyName);
+          window.localStorage.setItem('slip_companyAddress', companyAddress);
+          window.localStorage.setItem('slip_footerText', footerText);
+          window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, fontSize);
           window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
         }
       } catch (err) {
         setSlipCompanyName(slipDefaults.companyName);
         setSlipCompanyAddress(slipDefaults.companyAddress);
+        setSlipFooterText(slipDefaults.footerText);
+        setSlipFontSize('h2');
         setSlipPaperSize('80mm');
         // Slip preload is non-blocking; defaults apply until the Slip tab is opened.
         console.warn('Failed to load slip settings', err);
@@ -134,7 +156,12 @@ export default function AdminSettingsPage() {
     };
 
     loadSlipSettings();
-  }, [canAccessAdminPage, slipDefaults.companyAddress, slipDefaults.companyName]);
+  }, [
+    canAccessAdminPage,
+    slipDefaults.companyAddress,
+    slipDefaults.companyName,
+    slipDefaults.footerText,
+  ]);
 
   const handleSaveSlipSettings = async () => {
     try {
@@ -144,16 +171,25 @@ export default function AdminSettingsPage() {
       const result = await apiClient.post<{
         companyName: string;
         companyAddress: string;
+        footerText: string;
+        fontSize?: SlipFontSizeId;
         paperSize?: SlipPaperSizeId;
       }>('/api/slip/settings', {
         companyName: slipCompanyName,
         companyAddress: slipCompanyAddress,
+        footerText: slipFooterText,
+        fontSize: slipFontSize,
         paperSize: slipPaperSize,
       });
 
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('slip_companyName', result?.companyName || slipCompanyName);
         window.localStorage.setItem('slip_companyAddress', result?.companyAddress || slipCompanyAddress);
+        window.localStorage.setItem('slip_footerText', result?.footerText || slipFooterText);
+        window.localStorage.setItem(
+          SLIP_FONT_SIZE_STORAGE_KEY,
+          result?.fontSize || slipFontSize,
+        );
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, result?.paperSize || slipPaperSize);
       }
 
@@ -172,9 +208,18 @@ export default function AdminSettingsPage() {
       memberCode: 'M-001',
       companyName: slipCompanyName,
       companyAddress: slipCompanyAddress,
+      footerText: slipFooterText,
+      fontSize: slipFontSize,
       paperSize: slipPaperSize,
     });
-  }, [slipCompanyName, slipCompanyAddress, slipPaperSize]);
+  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize]);
+
+  const handleSlipFontSizeChange = (id: SlipFontSizeId) => {
+    setSlipFontSize(id);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, id);
+    }
+  };
 
   const handleSlipPaperSizeChange = (id: SlipPaperSizeId) => {
     setSlipPaperSize(id);
@@ -217,12 +262,16 @@ export default function AdminSettingsPage() {
                 <SlipSettingsPanel
                   companyName={slipCompanyName}
                   companyAddress={slipCompanyAddress}
+                  footerText={slipFooterText}
+                  fontSize={slipFontSize}
                   paperSize={slipPaperSize}
                   loading={slipLoading}
                   saving={slipSaving}
                   previewHtml={slipPreviewHtml}
                   onCompanyNameChange={setSlipCompanyName}
                   onCompanyAddressChange={setSlipCompanyAddress}
+                  onFooterTextChange={setSlipFooterText}
+                  onFontSizeChange={handleSlipFontSizeChange}
                   onPaperSizeChange={handleSlipPaperSizeChange}
                   onSave={handleSaveSlipSettings}
                 />

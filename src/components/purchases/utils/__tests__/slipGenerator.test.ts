@@ -392,10 +392,43 @@ describe('slipGenerator', () => {
       expect(result).toContain('class="meta"');
       expect(result).toContain('class="item"');
       expect(result).toContain('class="total"');
-      expect(result).toContain('class="signatures"');
       expect(result).toContain('class="footer"');
-      expect(result).toContain('ผู้จัดทำ');
-      expect(result).toContain('ผู้รับเงิน');
+      expect(result).toContain('กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้ง');
+    });
+
+    it('should use the footer override', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const result = generateSlipHTMLFromItems(items, {
+        footerText: 'ขอบคุณ <ค่ะ>',
+      });
+
+      expect(result).toContain('ขอบคุณ &lt;ค่ะ&gt;');
+    });
+
+    it('reads footer text from localStorage when the option is omitted', () => {
+      useLocalStorageBackingStore();
+      localStorage.setItem('slip_footerText', 'ข้อความจากเครื่อง');
+
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const result = generateSlipHTMLFromItems(items);
+
+      expect(result).toContain('ข้อความจากเครื่อง');
     });
 
     it('should include print date', () => {
@@ -429,7 +462,7 @@ describe('slipGenerator', () => {
       expect(result).toContain('data-slip-width="219"');
     });
 
-    it('should stack signature rows for 58mm paper', () => {
+    it('scales slip text with the font size option', () => {
       const items: CartItem[] = [
         {
           id: 'p1',
@@ -439,13 +472,15 @@ describe('slipGenerator', () => {
         },
       ];
 
-      const narrow = generateSlipHTMLFromItems(items, { paperSize: '58mm' });
-      const wide = generateSlipHTMLFromItems(items, { paperSize: '80mm' });
+      const normal = generateSlipHTMLFromItems(items, { fontSize: 'h3' });
+      const large = generateSlipHTMLFromItems(items, { fontSize: 'h2' });
 
-      expect(narrow).toMatch(/<div class="signatures signatures--stacked">/);
-      expect(wide).toMatch(/<div class="signatures">/);
-      expect(wide).not.toMatch(/<div class="signatures signatures--stacked">/);
+      expect(normal).toContain('font-size: 20px');
+      expect(normal).toContain('data-slip-font="h3"');
+      expect(large).toContain('font-size: 24px');
+      expect(large).toContain('data-slip-font="h2"');
     });
+
   });
 
   describe('REQ-PUR-10: Respect slip paper size setting', () => {
@@ -511,7 +546,6 @@ describe('slipGenerator', () => {
 
       expect(result).toContain('width: 219px');
       expect(result).toContain('data-slip-width="219"');
-      expect(result).toMatch(/<div class="signatures signatures--stacked">/);
     });
   });
 

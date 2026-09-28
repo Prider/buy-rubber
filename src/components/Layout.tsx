@@ -9,6 +9,7 @@ import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
+import { normalizeSlipFontSize, SLIP_FONT_SIZE_STORAGE_KEY } from '@/lib/slipFont';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
 
 interface NavigationItem {
@@ -57,6 +58,7 @@ export default function Layout({ children }: LayoutProps) {
     if (typeof window === 'undefined') return;
     const NAME_KEY = 'slip_companyName';
     const ADDRESS_KEY = 'slip_companyAddress';
+    const FOOTER_KEY = 'slip_footerText';
 
     const loadSlipSettings = async () => {
       try {
@@ -64,11 +66,15 @@ export default function Layout({ children }: LayoutProps) {
         const data = await apiClient.get<{
           companyName: string;
           companyAddress: string;
+          footerText?: string;
+          fontSize?: string;
           paperSize?: string;
         }>('/api/slip/settings');
         // Always overwrite with server values so updates done in Electron propagate to Browser.
         if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
         if (data?.companyAddress) window.localStorage.setItem(ADDRESS_KEY, data.companyAddress);
+        if (data?.footerText) window.localStorage.setItem(FOOTER_KEY, data.footerText);
+        window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, normalizeSlipFontSize(data?.fontSize));
         const paper = normalizeSlipPaperSize(data?.paperSize);
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
       } catch {
