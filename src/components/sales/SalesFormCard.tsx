@@ -321,17 +321,12 @@ export default function SalesFormCard({
         isOpen ? 'overflow-visible' : 'overflow-hidden'
       } ${cardBorderClass}`}
     >
-      <button
-        type="button"
-        id="sales-form-card-toggle"
-        aria-expanded={isOpen}
-        aria-controls={PANEL_ID}
-        onClick={() => setIsOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-700/30 ${layout.headerBtnPad} ${
+      <div
+        className={`relative flex w-full items-center justify-between gap-3 ${layout.headerBtnPad} ${
           isOpen ? 'border-b border-gray-100 dark:border-gray-700' : ''
         }`}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 pr-8">
           <h2 className={`min-w-0 truncate ${layout.titleClass}`}>
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
               {titleText}
@@ -351,9 +346,25 @@ export default function SalesFormCard({
             </span>
           ) : null}
         </div>
-        <span className="sr-only">{isOpen ? 'พับฟอร์ม' : 'ขยายฟอร์ม'}</span>
-        <ChevronIcon open={isOpen} className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
-      </button>
+        <button
+          type="button"
+          id="sales-form-card-toggle"
+          aria-expanded={isOpen}
+          aria-controls={PANEL_ID}
+          onClick={() => setIsOpen((v) => !v)}
+          className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+        >
+          <span className="sr-only">{isOpen ? 'พับฟอร์ม' : 'ขยายฟอร์ม'}</span>
+          <ChevronIcon open={isOpen} className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push('/stock')}
+          className="relative z-10 shrink-0 whitespace-nowrap rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50"
+        >
+          บันทึกสินค้ากำลังส่ง
+        </button>
+      </div>
 
       <div
         id={PANEL_ID}
@@ -510,7 +521,7 @@ export default function SalesFormCard({
                   <option value="">เลือกประเภทสินค้า</option>
                   {productTypes.map((pt) => (
                     <option key={pt.id} value={pt.id}>
-                      {pt.code} - {pt.name}
+                      {pt.code} - {pt.name}{pt.isActive === false ? ' (กำลังนำส่ง)' : ''}
                     </option>
                   ))}
                 </select>

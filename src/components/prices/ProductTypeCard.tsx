@@ -12,84 +12,77 @@ interface ProductType {
 
 interface ProductTypeCardProps {
   productType: ProductType;
-  index: number;
   onEdit: (productType: ProductType) => void;
   onDelete: (productType: ProductType) => void;
+  onSuspend: (productType: ProductType) => void;
   onReactivate: (productType: ProductType) => void;
 }
 
+const actionClass =
+  'rounded-md px-2 py-1 text-xs font-medium transition-colors';
+
 export default function ProductTypeCard({
   productType,
-  index,
   onEdit,
   onDelete,
+  onSuspend,
   onReactivate,
 }: ProductTypeCardProps) {
   const isInactive = productType.isActive === false;
+
   return (
-    <div
-      className="group relative"
-      style={{ animationDelay: `${index * 50}ms` }}
+    <li
+      className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 ${
+        isInactive ? 'bg-gray-50/80 dark:bg-gray-900/30' : ''
+      }`}
     >
-      <div
-        className={`relative inline-flex items-center space-x-3 rounded-lg px-4 py-2.5 shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 border ${
-          isInactive
-            ? 'bg-gray-100 dark:bg-gray-900/50 border-dashed border-gray-300 dark:border-gray-600 opacity-90'
-            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-        }`}
-      >
-        {/* Gradient accent */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-blue-500/10 dark:from-primary-500/20 dark:to-blue-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        
-        <div className="relative flex items-center space-x-3">
-          <span className="text-xs font-bold font-mono bg-gradient-to-r from-primary-500 to-blue-600 text-transparent bg-clip-text px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">
-            {productType.code}
-          </span>
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {productType.name}
-          </span>
-          {isInactive ? (
-            <span className="text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">
-              ปิดใช้งาน
-            </span>
-          ) : null}
-        </div>
-        
-        {/* Action buttons */}
-        <div className="relative flex items-center space-x-1 ml-2 pl-3 border-l-2 border-gray-200 dark:border-gray-600">
+      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+        {productType.code}
+      </span>
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        {productType.name}
+      </span>
+      {isInactive ? (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+          กำลังนำส่ง
+        </span>
+      ) : null}
+
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onEdit(productType)}
+          className={`${actionClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
+        >
+          แก้ไข
+        </button>
+        {isInactive ? (
           <button
-            onClick={() => onEdit(productType)}
-            className="w-7 h-7 flex items-center justify-center rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
-            title="แก้ไข"
+            type="button"
+            onClick={() => onReactivate(productType)}
+            className={`${actionClass} text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+            เปิดใช้งาน
           </button>
-          {isInactive ? (
+        ) : (
+          <>
             <button
               type="button"
-              onClick={() => onReactivate(productType)}
-              className="px-2 py-1 text-[11px] font-medium rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
-              title="เปิดใช้งานอีกครั้ง"
+              onClick={() => onSuspend(productType)}
+              className={`${actionClass} text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30`}
             >
-              เปิดใช้งาน
+              กำลังนำส่ง
             </button>
-          ) : (
             <button
               type="button"
               onClick={() => onDelete(productType)}
-              className="w-7 h-7 flex items-center justify-center rounded-md bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-              title="ลบหรือปิดการใช้งาน"
+              className={`${actionClass} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              ลบ
             </button>
-          )}
-        </div>
+          </>
+        )}
       </div>
-    </div>
+    </li>
   );
 }
-

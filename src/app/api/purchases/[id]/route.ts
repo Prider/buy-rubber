@@ -116,6 +116,12 @@ export async function PUT(
     if (!productType) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลประเภทสินค้า' }, { status: 404 });
     }
+    if (productType.isActive === false && existing.productTypeId !== data.productTypeId) {
+      return NextResponse.json(
+        { error: 'ประเภทสินค้านี้กำลังนำส่ง ไม่สามารถรับซื้อเพิ่มได้' },
+        { status: 409 }
+      );
+    }
     if (!user) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลผู้ใช้' }, { status: 404 });
     }

@@ -2,6 +2,7 @@ export interface ProductType {
   id: string;
   code: string;
   name: string;
+  isActive?: boolean;
 }
 
 export interface SaleExpenseLine {

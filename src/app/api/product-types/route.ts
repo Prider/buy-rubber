@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS, CACHE_TTL, invalidateProductTypesCache } from '@/lib/cache';
+import { getMaxProductTypes } from '@/lib/maxProductTypes';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -70,6 +71,16 @@ export async function POST(request: NextRequest) {
       logger.warn('POST /api/product-types - Duplicate code', { code });
       return NextResponse.json(
         { error: 'Product type code already exists' },
+        { status: 409 }
+      );
+    }
+
+    const maxProductTypes = getMaxProductTypes();
+    const total = await prisma.productType.count();
+    if (total >= maxProductTypes) {
+      logger.warn('POST /api/product-types - Limit reached', { total, maxProductTypes });
+      return NextResponse.json(
+        { error: `สามารถเพิ่มประเภทสินค้าได้สูงสุด ${maxProductTypes} รายการ` },
         { status: 409 }
       );
     }

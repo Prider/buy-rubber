@@ -31,7 +31,7 @@ const WEB_NAV_ROUTES: Array<{
     name: 'สต็อกสินค้า',
     href: '/stock',
     verify: async (page) => {
-      await expect(page.getByRole('heading', { name: 'จัดการสต็อกสินค้า' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'สต็อกคงเหลือ' })).toBeVisible()
     },
   },
   {

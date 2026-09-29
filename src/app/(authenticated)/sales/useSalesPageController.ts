@@ -143,8 +143,8 @@ export function useSalesPageController() {
 
   const loadLookups = useCallback(async () => {
     const [stockPositionsRes, productTypesRes, companiesRes] = await Promise.all([
-      fetch('/api/stock/positions'),
-      fetch('/api/product-types'),
+      fetch('/api/stock/positions?includeInactive=1'),
+      fetch('/api/product-types?includeInactive=1'),
       fetch('/api/destination-companies?active=true&limit=1000'),
     ]);
 
@@ -377,7 +377,7 @@ export function useSalesPageController() {
   );
 
   const refreshStock = useCallback(async () => {
-    const stockRes = await fetch('/api/stock/positions');
+    const stockRes = await fetch('/api/stock/positions?includeInactive=1');
     if (stockRes.ok) {
       const rows = (await stockRes.json()) as Array<{
         productTypeId: string;
