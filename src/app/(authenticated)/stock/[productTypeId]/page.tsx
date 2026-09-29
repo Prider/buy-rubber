@@ -28,6 +28,66 @@ type LedgerResponse = {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 };
 
+function isInbound(refType: string) {
+  return refType === 'PURCHASE' || refType === 'SALE_DELETE';
+}
+
+function LedgerCards({ entries }: { entries: LedgerEntry[] }) {
+  if (entries.length === 0) {
+    return <p className="px-4 py-10 text-center text-sm text-gray-500">ยังไม่มี ledger</p>;
+  }
+
+  return (
+    <ul className="flex flex-col gap-3">
+      {entries.map((entry) => {
+        const inbound = isInbound(entry.refType);
+        const qtyUp = entry.qtyChangeKg >= 0;
+        return (
+          <li
+            key={entry.id}
+            className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800 md:p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 md:text-base">
+                  {new Date(entry.date).toLocaleDateString('th-TH')}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                  เลขที่อ้างอิง {entry.refNo ?? '-'}
+                </p>
+              </div>
+              <span className={`shrink-0 text-sm font-semibold ${inbound ? 'text-green-600' : 'text-red-600'}`}>
+                {entry.refType}
+              </span>
+            </div>
+
+            <dl className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-gray-50 px-2 py-2 dark:bg-gray-900/40 md:px-3">
+                <dt className="text-[11px] text-gray-500 dark:text-gray-400">เปลี่ยนสต็อก (kg)</dt>
+                <dd className={`mt-0.5 text-sm font-semibold tabular-nums ${qtyUp ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                  {formatNumber(entry.qtyChangeKg)}
+                </dd>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-2 py-2 dark:bg-gray-900/40 md:px-3">
+                <dt className="text-[11px] text-gray-500 dark:text-gray-400">หน่วยต้นทุน</dt>
+                <dd className="mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100">
+                  {entry.unitCostPerKg != null ? formatCurrency(entry.unitCostPerKg) : '-'}
+                </dd>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-2 py-2 dark:bg-gray-900/40 md:px-3">
+                <dt className="text-[11px] text-gray-500 dark:text-gray-400">คงเหลือ (kg)</dt>
+                <dd className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                  {formatNumber(entry.balanceQtyKg)}
+                </dd>
+              </div>
+            </dl>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function StockDetailPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -98,7 +158,7 @@ export default function StockDetailPage() {
 
   return (
     <div className="min-h-[60vh] bg-gray-50 dark:bg-gray-900 pb-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
@@ -108,7 +168,7 @@ export default function StockDetailPage() {
             {productType ? <p className="text-gray-600 dark:text-gray-400">{productType.name}</p> : null}
           </div>
           {position ? (
-            <div className="flex w-full flex-wrap items-center justify-center gap-3 text-sm md:w-auto md:flex-1">
+            <div className="grid w-full grid-cols-1 gap-2 text-sm sm:grid-cols-3 lg:flex lg:w-auto lg:flex-1 lg:flex-wrap lg:items-center lg:justify-center lg:gap-3">
               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                 คงเหลือปัจจุบัน: <span className="font-semibold">{formatNumber(position.quantityKg)}</span> กก.
               </div>
@@ -128,7 +188,7 @@ export default function StockDetailPage() {
           <button
             type="button"
             onClick={() => router.push('/stock')}
-            className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="min-h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 lg:min-h-0 lg:w-auto"
           >
             กลับไปหน้าสต็อกสินค้า
           </button>
@@ -139,7 +199,11 @@ export default function StockDetailPage() {
           </div>
         ) : null}
 
-        <div className="overflow-auto mb-4">
+        <div className="mb-4 lg:hidden">
+          <LedgerCards entries={entries} />
+        </div>
+
+        <div className="mb-4 hidden overflow-auto lg:block">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
               <tr>
@@ -163,13 +227,7 @@ export default function StockDetailPage() {
                   <tr key={e.id} className="border-t border-gray-100 dark:border-gray-600">
                     <td className="px-4 py-3">{new Date(e.date).toLocaleDateString('th-TH')}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={
-                          e.refType === 'PURCHASE' || e.refType === 'SALE_DELETE'
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }
-                      >
+                      <span className={isInbound(e.refType) ? 'text-green-600' : 'text-red-600'}>
                         {e.refType}
                       </span>
                     </td>
@@ -184,8 +242,8 @@ export default function StockDetailPage() {
               )}
             </tbody>
           </table>
-          <ListPagination pagination={pagination} loading={loading} onPageChange={setPage} />
         </div>
+        <ListPagination pagination={pagination} loading={loading} onPageChange={setPage} />
     </div>
   );
 }
