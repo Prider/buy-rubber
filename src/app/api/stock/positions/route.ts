@@ -25,8 +25,13 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim() ?? '';
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit');
+    const includeInactive = ['1', 'true', 'yes'].includes(
+      String(searchParams.get('includeInactive') ?? '').toLowerCase(),
+    );
 
-    const where: Prisma.ProductTypeWhereInput = { tenantId, isActive: true };
+    const where: Prisma.ProductTypeWhereInput = includeInactive
+      ? { tenantId }
+      : { tenantId, isActive: true };
     if (search) {
       where.OR = [{ code: { contains: search } }, { name: { contains: search } }];
     }
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
     const [productTypes, total] = await Promise.all([
       prisma.productType.findMany({
         where,
-        select: { id: true, code: true, name: true },
+        select: { id: true, code: true, name: true, description: true, isActive: true },
         orderBy: { code: 'asc' },
         skip: paginated ? (page - 1) * limit : 0,
         take: limit,
@@ -95,7 +100,13 @@ export async function GET(request: NextRequest) {
 
       return {
         productTypeId: pt.id,
-        productType: { id: pt.id, code: pt.code, name: pt.name },
+        productType: {
+          id: pt.id,
+          code: pt.code,
+          name: pt.name,
+          description: pt.description,
+          isActive: pt.isActive,
+        },
         quantityKg: pos?.quantityKg ?? 0,
         avgCostPerKg: pos?.avgCostPerKg ?? 0,
         avgSellingPricePerKg,

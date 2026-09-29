@@ -471,7 +471,7 @@ test.describe('Purchase flow', () => {
       (r) => r.url().includes('/api/stock/positions') && r.ok()
     )
     await page.goto('/stock')
-    await expect(page.getByRole('heading', { name: 'จัดการสต็อกสินค้า' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'สต็อกคงเหลือ' })).toBeVisible()
     await stockPageReq
 
     const formattedQty = new Intl.NumberFormat('th-TH', {

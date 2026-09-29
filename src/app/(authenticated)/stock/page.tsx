@@ -6,10 +6,9 @@ import axios from 'axios';
 import { useAuth } from '@/platform/AuthContext';
 import { useRouter } from 'next/navigation';
 import GamerLoader from '@/shared/ui/GamerLoader';
-import ProductTypeManagement from '@/industries/rubber/ui/prices/ProductTypeManagement';
 import { ListPagination } from '@/shared/ui/pagination/ListPagination';
 import { useAlert } from '@/shared/hooks/useAlert';
-import { usePriceData } from '@/industries/rubber/hooks/usePriceData';
+import { getMaxProductTypes } from '@/shared/maxProductTypes';
 import { clientAuthHeaders } from '@/platform/sessionToken';
 import { formatCurrency, formatNumber } from '@/shared/utils';
 
@@ -20,12 +19,22 @@ const ProductTypeFormModal = dynamic(
 
 type StockPositionRow = {
   productTypeId: string;
-  productType: { id: string; code: string; name: string };
+  productType: {
+    id: string;
+    code: string;
+    name: string;
+    description?: string | null;
+    isActive?: boolean;
+  };
   quantityKg: number;
   avgCostPerKg: number;
   avgSellingPricePerKg?: number | null;
   soldKg?: number | null;
 };
+
+const MAX_PRODUCT_TYPES = getMaxProductTypes();
+
+const actionClass = 'rounded-md px-2 py-1 text-xs font-medium transition-colors';
 
 const PNL_EPS = 1e-6;
 
@@ -35,6 +44,16 @@ interface ProductType {
   name: string;
   description?: string;
   isActive?: boolean;
+}
+
+function toProductType(row: StockPositionRow): ProductType {
+  return {
+    id: row.productType.id,
+    code: row.productType.code,
+    name: row.productType.name,
+    description: row.productType.description || '',
+    isActive: row.productType.isActive,
+  };
 }
 
 function ProfitLossCell({ value }: { value: number | null | undefined }) {
@@ -63,7 +82,6 @@ export default function StockPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { showSuccess, showError, showConfirm } = useAlert();
-  const { productTypes, loadData, loading: productTypesLoading } = usePriceData();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,26 +98,8 @@ export default function StockPage() {
   });
 
   const sortedRows = useMemo(() => {
-    const positionByTypeId = new Map(rows.map((row) => [row.productTypeId, row]));
-    return productTypes
-      .filter((productType) => productType.isActive !== false)
-      .map((productType) => {
-        const position = positionByTypeId.get(productType.id);
-        return {
-          productTypeId: productType.id,
-          productType: {
-            id: productType.id,
-            code: productType.code,
-            name: productType.name,
-          },
-          quantityKg: position?.quantityKg ?? 0,
-          avgCostPerKg: position?.avgCostPerKg ?? 0,
-          avgSellingPricePerKg: position?.avgSellingPricePerKg ?? null,
-          soldKg: position?.soldKg ?? null,
-        };
-      })
-      .sort((a, b) => b.quantityKg - a.quantityKg);
-  }, [productTypes, rows]);
+    return [...rows].sort((a, b) => a.productType.code.localeCompare(b.productType.code));
+  }, [rows]);
 
   const pagination = useMemo(() => {
     const total = sortedRows.length;
@@ -125,7 +125,9 @@ export default function StockPage() {
     try {
       if (!silent) setLoading(true);
       setError('');
-      const res = await fetch('/api/stock/positions', { headers: clientAuthHeaders() });
+      const res = await fetch('/api/stock/positions?includeInactive=1', {
+        headers: clientAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to load stock positions');
       const data = (await res.json()) as StockPositionRow[];
       setRows(data);
@@ -160,7 +162,6 @@ export default function StockPage() {
       }
 
       closeProductTypeForm();
-      await loadData();
       await loadStockPositions({ silent: true });
       showSuccess(
         'สำเร็จ',
@@ -206,7 +207,6 @@ export default function StockPage() {
         `/api/product-types/${productType.id}`,
         { headers: clientAuthHeaders() },
       );
-      await loadData();
       await loadStockPositions({ silent: true });
       if (res.data?.deactivated) {
         showSuccess(
@@ -230,6 +230,43 @@ export default function StockPage() {
     }
   };
 
+  const handleSuspendProductType = async (productType: ProductType) => {
+    const confirmed = await showConfirm(
+      'ยืนยันการปิดรับซื้อชั่วคราว',
+      `ประเภทสินค้า "${productType.name}" (${productType.code}) จะไม่สามารถรับซื้อเพิ่มได้จนกว่าจะเปิดใช้งานอีกครั้ง\n\nประวัติรับซื้อเดิมยังอยู่`,
+      {
+        confirmText: 'กำลังนำส่ง',
+        cancelText: 'ยกเลิก',
+        variant: 'warning',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await axios.put(`/api/product-types/${productType.id}`, {
+        name: productType.name,
+        description: productType.description || '',
+        isActive: false,
+      }, { headers: clientAuthHeaders() });
+      await loadStockPositions({ silent: true });
+      showSuccess(
+        'กำลังนำส่ง',
+        `ประเภทสินค้า "${productType.name}" ปิดรับซื้อชั่วคราวแล้ว กดเปิดใช้งานได้เมื่อต้องการรับซื้ออีกครั้ง`,
+        { autoClose: true, autoCloseDelay: 4000 }
+      );
+    } catch (error: unknown) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+            'ไม่สามารถปิดรับซื้อได้';
+      showError('เกิดข้อผิดพลาด', errorMsg);
+    }
+  };
+
   const handleReactivateProductType = async (productType: ProductType) => {
     try {
       await axios.put(`/api/product-types/${productType.id}`, {
@@ -237,7 +274,6 @@ export default function StockPage() {
         description: productType.description || '',
         isActive: true,
       }, { headers: clientAuthHeaders() });
-      await loadData();
       await loadStockPositions({ silent: true });
       showSuccess('เปิดใช้งานแล้ว', `ประเภทสินค้า "${productType.name}" พร้อมใช้งานอีกครั้ง`, {
         autoClose: true,
@@ -268,7 +304,7 @@ export default function StockPage() {
     setProductTypeForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (isLoading || loading || productTypesLoading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังโหลด..." />
@@ -276,100 +312,167 @@ export default function StockPage() {
     );
   }
 
+  const activeCount = sortedRows.filter((row) => row.productType.isActive !== false).length;
+  const inactiveCount = sortedRows.length - activeCount;
+  const isMaxReached = sortedRows.length >= MAX_PRODUCT_TYPES;
+
   return (
     <>
       <div className="min-h-[60vh] bg-gray-50 dark:bg-gray-900 pb-8">
-        <div className="space-y-6 mb-6">
-          <ProductTypeManagement
-            productTypes={productTypes}
-            onAdd={openProductTypeForm}
-            onEdit={handleEditProductType}
-            onDelete={handleDeleteProductType}
-            onReactivate={handleReactivateProductType}
-          />
-        </div>
+        {error ? <p className="mb-4 text-red-600">{error}</p> : null}
 
-        <div className="mb-6">
-          <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-2xl font-bold">
-              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                จัดการสต็อกสินค้า
-              </span>
-            </h1>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {sortedRows.length} รายการ
-            </p>
-          </div>
-          {error ? <p className="text-red-600 mt-2">{error}</p> : null}
-        </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              แสดงจำนวนสต็อก (kg), ราคาเฉลี่ยต้นทุนต่อ kg, ราคาขายเฉลี่ยต่อ kg และกำไร/ขาดทุน
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
+            <div>
+              <h1 className="text-base font-semibold">
+                <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+                  สต็อกคงเหลือ
+                </span>
+              </h1>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                ใช้งาน {activeCount} · กำลังนำส่ง {inactiveCount} · สูงสุด {MAX_PRODUCT_TYPES}
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={openProductTypeForm}
+              disabled={isMaxReached}
+              className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+            >
+              <span aria-hidden="true">+</span>
+              <span>{isMaxReached ? 'ครบจำนวนสูงสุด' : 'เพิ่มประเภท'}</span>
+            </button>
           </div>
-        </div>
 
-        <div className="overflow-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-4 py-3 text-left">รหัสสินค้า</th>
-                <th className="px-4 py-3 text-left">ชื่อสินค้า</th>
-                <th className="px-4 py-3 text-right">สต็อกคงเหลือ (kg)</th>
-                <th className="px-4 py-3 text-right">ราคาเฉลี่ยต้นทุน / kg</th>
-                <th className="px-4 py-3 text-right">ราคาขายเฉลี่ย / kg</th>
-                <th className="px-4 py-3 text-right">กำไร/ขาดทุน</th>
-              </tr>
-            </thead>
+          {isMaxReached && (
+            <p className="border-b border-gray-100 px-5 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              สามารถเพิ่มประเภทสินค้าได้สูงสุด {MAX_PRODUCT_TYPES} รายการ
+            </p>
+          )}
 
-            <tbody>
-              {pagedRows.map((row) => (
-                <tr
-                  key={row.productTypeId}
-                  title="ดูรายละเอียด"
-                  className="group cursor-pointer border-t border-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/40"
-                  onClick={() => router.push(`/stock/${row.productTypeId}`)}
-                >
-                  <td className="px-4 py-3">{row.productType.code}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span>{row.productType.name}</span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatNumber(row.quantityKg)}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(row.avgCostPerKg)}</td>
-                  <td className="px-4 py-3 text-right">
-                    {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <ProfitLossCell
-                      value={
-                          row.avgSellingPricePerKg != null
-                            ? row.soldKg != null && row.soldKg > 0
-                              ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
-                            : null
-                          : null
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {sortedRows.length === 0 ? (
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                    ไม่มีข้อมูลสต็อก
-                  </td>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">รหัสสินค้า</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">ชื่อสินค้า</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">สต็อกคงเหลือ (kg)</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาเฉลี่ยต้นทุน / kg</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาขายเฉลี่ย / kg</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">กำไร/ขาดทุน</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">จัดการ</th>
                 </tr>
-              ) : null}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {pagedRows.map((row) => {
+                  const productType = toProductType(row);
+                  const isInactive = productType.isActive === false;
+                  const struck = isInactive
+                    ? 'line-through decoration-2 decoration-yellow-400 dark:decoration-yellow-300'
+                    : '';
+                  return (
+                    <tr
+                      key={row.productTypeId}
+                      title="ดูรายละเอียด"
+                      className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700/40 ${
+                        isInactive ? 'bg-gray-50/80 dark:bg-gray-900/30' : ''
+                      }`}
+                      onClick={() => router.push(`/stock/${row.productTypeId}`)}
+                    >
+                      <td className={`px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 ${struck}`}>
+                        {row.productType.code}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex flex-wrap items-center gap-2">
+                          <span className={`font-medium text-gray-900 dark:text-gray-100 ${struck}`}>
+                            {row.productType.name}
+                          </span>
+                          {isInactive ? (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                              กำลังนำส่ง
+                            </span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold tabular-nums ${struck}`}>
+                        {formatNumber(row.quantityKg)}
+                      </td>
+                      <td className={`px-4 py-3 text-right tabular-nums ${struck}`}>{formatCurrency(row.avgCostPerKg)}</td>
+                      <td className={`px-4 py-3 text-right tabular-nums ${struck}`}>
+                        {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
+                      </td>
+                      <td className={`px-4 py-3 text-right ${struck}`}>
+                        <ProfitLossCell
+                          value={
+                            row.avgSellingPricePerKg != null
+                              ? row.soldKg != null && row.soldKg > 0
+                                ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
+                                : null
+                              : null
+                          }
+                        />
+                      </td>
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/stock/${row.productTypeId}`)}
+                            className={`${actionClass} text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30`}
+                          >
+                            ประวัติ
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEditProductType(productType)}
+                            className={`${actionClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
+                          >
+                            แก้ไข
+                          </button>
+                          {isInactive ? (
+                            <button
+                              type="button"
+                              onClick={() => handleReactivateProductType(productType)}
+                              className={`${actionClass} text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30`}
+                            >
+                              เปิดใช้งาน
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleSuspendProductType(productType)}
+                                className={`${actionClass} text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30`}
+                              >
+                                กำลังนำส่ง
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteProductType(productType)}
+                                className={`${actionClass} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30`}
+                              >
+                                ลบ
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {sortedRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                      ยังไม่มีประเภทสินค้า
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+          <ListPagination pagination={pagination} loading={loading} onPageChange={setCurrentPage} />
         </div>
-        <ListPagination pagination={pagination} loading={loading} onPageChange={setCurrentPage} />
-      </div>
       </div>
 
       <ProductTypeFormModal

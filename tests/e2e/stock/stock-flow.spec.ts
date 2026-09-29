@@ -86,11 +86,10 @@ test.describe.serial('Stock flow', () => {
 
   async function gotoStockPage(page: Page) {
     const stockReq = page.waitForResponse((r) => r.url().includes('/api/stock/positions') && r.ok())
-    const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types') && r.ok())
 
     await page.goto('/stock')
-    await expect(page.getByRole('heading', { name: 'จัดการสต็อกสินค้า' })).toBeVisible()
-    await Promise.all([stockReq, productTypesReq])
+    await expect(page.getByRole('heading', { name: 'สต็อกคงเหลือ' })).toBeVisible()
+    await stockReq
   }
 
   async function gotoStockDetailPage(page: Page) {

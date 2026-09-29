@@ -9,6 +9,7 @@ vi.mock('@/platform/prisma', () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -180,6 +181,7 @@ describe('POST /api/product-types', () => {
     const loggerModule = await import('@/shared/logger');
     prisma = prismaModule.prisma;
     logger = loggerModule.logger;
+    vi.mocked(prisma.productType.count).mockResolvedValue(0);
   });
 
   describe('Validation errors', () => {
@@ -251,6 +253,26 @@ describe('POST /api/product-types', () => {
         'POST /api/product-types - Duplicate code',
         { code: 'PT001' }
       );
+      expect(vi.mocked(prisma.productType.create)).not.toHaveBeenCalled();
+    });
+
+    it('should return 409 when the product type limit is reached', async () => {
+      vi.mocked(prisma.productType.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.productType.count).mockResolvedValue(50);
+
+      const request = new NextRequest('http://localhost:3000/api/product-types', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: 'PT050',
+          name: 'Test Product',
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(409);
+      expect(data.error).toBe('สามารถเพิ่มประเภทสินค้าได้สูงสุด 50 รายการ');
       expect(vi.mocked(prisma.productType.create)).not.toHaveBeenCalled();
     });
   });
