@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { logger } from '@/shared/logger';
 import {
   buildReportGroupOptions,
@@ -81,7 +82,7 @@ export function useReportData(
   useEffect(() => {
     const loadProductTypes = async () => {
       try {
-        const response = await axios.get('/api/product-types');
+        const response = await axios.get('/api/product-types', { headers: clientAuthHeaders() });
         const activeTypes = response.data.filter((pt: ProductType) => pt.isActive);
         setProductTypes(activeTypes);
       } catch (error) {
@@ -173,6 +174,7 @@ export function useReportData(
     try {
       const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
         params: buildParams(page),
+        headers: clientAuthHeaders(),
       });
       applyResponse(response.data);
     } catch (error) {
@@ -188,6 +190,7 @@ export function useReportData(
     try {
       const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
         params: buildParams(1, true),
+        headers: clientAuthHeaders(),
       });
       return {
         rows: (Array.isArray(response.data.rows) ? response.data.rows : []) as unknown as any[],

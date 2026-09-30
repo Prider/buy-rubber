@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/platform/AuthContext';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import GamerLoader from '@/shared/ui/GamerLoader';
 import { ListPagination } from '@/shared/ui/pagination/ListPagination';
 import { formatCurrency, formatNumber } from '@/shared/utils';
@@ -149,7 +150,9 @@ export default function ProfitLossGangsReportPage() {
       try {
         setLoading(true);
         setError('');
-        const res = await axios.get<ProductType[]>('/api/product-types');
+        const res = await axios.get<ProductType[]>('/api/product-types', {
+          headers: clientAuthHeaders(),
+        });
         const types = res.data || [];
         setProductTypes(types);
 
@@ -187,6 +190,7 @@ export default function ProfitLossGangsReportPage() {
           page,
           limit: PAGE_SIZE,
         },
+        headers: clientAuthHeaders(),
       });
 
       setGangs(res.data.data || []);
@@ -222,6 +226,7 @@ export default function ProfitLossGangsReportPage() {
         page: 1,
         limit: EXPORT_LIMIT,
       },
+      headers: clientAuthHeaders(),
     });
 
     return res.data.data || [];

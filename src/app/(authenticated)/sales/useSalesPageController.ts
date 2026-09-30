@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/platform/AuthContext';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useAlert } from '@/shared/hooks/useAlert';
-import { clearAuthSession } from '@/platform/sessionToken';
+import { clearAuthSession, clientAuthHeaders } from '@/platform/sessionToken';
 import {
   buildSalePayload,
   computePagination,
@@ -44,6 +44,14 @@ type SalesListResponse =
     };
 
 const PAGE_SIZE = 10;
+
+function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const headers = new Headers(init.headers);
+  for (const [key, value] of Object.entries(clientAuthHeaders())) {
+    headers.set(key, value);
+  }
+  return fetch(input, { ...init, headers });
+}
 
 function emptyPagination(page = 1): SalesPagination {
   return {
@@ -143,9 +151,9 @@ export function useSalesPageController() {
 
   const loadLookups = useCallback(async () => {
     const [stockPositionsRes, productTypesRes, companiesRes] = await Promise.all([
-      fetch('/api/stock/positions'),
-      fetch('/api/product-types'),
-      fetch('/api/destination-companies?active=true&limit=1000'),
+      authFetch('/api/stock/positions'),
+      authFetch('/api/product-types'),
+      authFetch('/api/destination-companies?active=true&limit=1000'),
     ]);
 
     if (productTypesRes.ok) {
@@ -183,7 +191,7 @@ export function useSalesPageController() {
         params.set('search', search.trim());
       }
 
-      const salesListRes = await fetch(`/api/sales?${params.toString()}`, {
+      const salesListRes = await authFetch(`/api/sales?${params.toString()}`, {
         signal: controller.signal,
       });
 
@@ -377,7 +385,7 @@ export function useSalesPageController() {
   );
 
   const refreshStock = useCallback(async () => {
-    const stockRes = await fetch('/api/stock/positions');
+    const stockRes = await authFetch('/api/stock/positions');
     if (stockRes.ok) {
       const rows = (await stockRes.json()) as Array<{
         productTypeId: string;
@@ -388,15 +396,15 @@ export function useSalesPageController() {
     }
   }, [applyStockPositions]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     if (!user?.id) {
       setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
-      return;
+      return false;
     }
 
     if (!formData.destinationCompanyId.trim()) {
       setError('กรุณาเลือกบริษัทปลายทาง');
-      return;
+      return false;
     }
 
     if (!isSalesFormSubmitReady(formData)) {
@@ -410,14 +418,14 @@ export function useSalesPageController() {
         !formData.sellingType
       ) {
         setError('กรุณากรอกข้อมูลที่จำเป็น');
-        return;
+        return false;
       }
       setFieldErrors({
         ...(weight == null || weight <= 0 ? { weight: 'invalid' } : {}),
         ...(pricePerUnit == null || pricePerUnit < 0 ? { pricePerUnit: 'invalid' } : {}),
       });
       setError('กรุณากรอกน้ำหนักและราคาให้ถูกต้อง');
-      return;
+      return false;
     }
 
     const weight = parseRequiredNumber(formData.weight)!;
@@ -428,7 +436,7 @@ export function useSalesPageController() {
     if (!isEditing && selectedStockKg != null && weight > selectedStockKg + EPS) {
       setFieldErrors({ weight: 'exceeds-stock' });
       setError('น้ำหนักที่ขายต้องไม่เกินสต็อกคงเหลือ');
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -436,7 +444,7 @@ export function useSalesPageController() {
     setFieldErrors({});
     try {
       const payload = buildSalePayload(formData);
-      const res = await fetch(isEditing ? `/api/sales/${editingSaleId}` : '/api/sales', {
+      const res = await authFetch(isEditing ? `/api/sales/${editingSaleId}` : '/api/sales', {
         method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(isEditing ? payload : { ...payload, userId: user.id }),
@@ -448,17 +456,16 @@ export function useSalesPageController() {
           clearAuthSession();
           setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
           router.push('/login');
-          return;
+          return false;
         }
         setError(
           data.details
             ? `${data.error}: ${data.details}`
             : data.error || (isEditing ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย'),
         );
-        return;
+        return false;
       }
 
-      resetForm();
       if (!isEditing) {
         setCurrentPage(1);
       }
@@ -466,8 +473,10 @@ export function useSalesPageController() {
         loadSales(isEditing ? currentPage : 1, debouncedSearchTerm),
         refreshStock(),
       ]);
+      return true;
     } catch {
       setError(editingSaleId ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย');
+      return false;
     } finally {
       setSaving(false);
     }
@@ -478,7 +487,6 @@ export function useSalesPageController() {
     formData,
     loadSales,
     refreshStock,
-    resetForm,
     router,
     selectedStockInfo?.quantityKg,
     user?.id,
@@ -505,7 +513,7 @@ export function useSalesPageController() {
 
       let expenses = expensesFromSaleRow(row);
       try {
-        const detailRes = await fetch(`/api/sales/${row.id}`);
+        const detailRes = await authFetch(`/api/sales/${row.id}`);
         if (detailRes.ok) {
           const detail = (await detailRes.json()) as SaleRowApi;
           expenses = expensesFromSaleRow(normalizeSaleRow(detail));
@@ -548,7 +556,7 @@ export function useSalesPageController() {
       setError('');
       setDeletingSaleId(saleId);
       try {
-        const res = await fetch(`/api/sales/${saleId}`, { method: 'DELETE' });
+        const res = await authFetch(`/api/sales/${saleId}`, { method: 'DELETE' });
         const data = (await res.json()) as { error?: string };
         if (!res.ok) {
           setError(data.error || 'ไม่สามารถลบรายการขาย');

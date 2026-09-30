@@ -88,16 +88,14 @@ test.describe.serial('Sales flow', () => {
     )
 
     await page.goto('/sales')
-    await expect(page.getByTestId('sales-form-card')).toBeVisible()
+    await expect(page.getByTestId('sales-open-form')).toBeVisible()
     await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
   }
 
   async function expandSalesForm(page: Page) {
-    const toggle = page.locator('#sales-form-card-toggle')
-    if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
-      await toggle.click()
-    }
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await page.getByTestId('sales-open-form').click()
+    await expect(page.getByTestId('sales-form-card')).toBeVisible()
+    await expect(page.getByTestId('sales-company-search')).toBeVisible()
   }
 
   async function selectCompany(page: Page, companyName: string) {

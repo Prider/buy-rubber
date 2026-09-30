@@ -111,16 +111,14 @@ test.describe.serial('Stock flow', () => {
     )
 
     await page.goto('/sales')
-    await expect(page.getByTestId('sales-form-card')).toBeVisible()
+    await expect(page.getByTestId('sales-open-form')).toBeVisible()
     await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
   }
 
   async function expandSalesForm(page: Page) {
-    const formCard = page.getByTestId('sales-form-card')
-    const isExpanded = await formCard.locator('[aria-expanded="true"]').count()
-    if (isExpanded === 0) {
-      await formCard.locator('button[id="sales-form-card-toggle"]').click()
-    }
+    await page.getByTestId('sales-open-form').click()
+    await expect(page.getByTestId('sales-form-card')).toBeVisible()
+    await expect(page.getByTestId('sales-company-search')).toBeVisible()
   }
 
   test('REQ-STK-02: view stock by product type', async ({ page, request }) => {

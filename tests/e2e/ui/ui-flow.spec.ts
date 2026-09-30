@@ -31,7 +31,8 @@ const WEB_NAV_ROUTES: Array<{
     name: 'ขายสินค้า',
     href: '/sales',
     verify: async (page) => {
-      await expect(page.getByTestId('sales-form-card')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'ประวัติการขาย' })).toBeVisible()
+      await expect(page.getByTestId('sales-open-form')).toBeVisible()
     },
   },
   {

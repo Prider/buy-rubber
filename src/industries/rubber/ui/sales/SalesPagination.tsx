@@ -46,20 +46,20 @@ export default function SalesPagination({
 
   const innerClass =
     embedded && compact
-      ? 'px-5 py-3 flex flex-wrap items-center justify-between gap-2.5'
-      : 'px-6 py-4 flex flex-wrap items-center justify-between gap-3';
+      ? 'flex flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2.5 sm:px-5'
+      : 'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6';
 
   const labelClass = 'text-sm text-gray-600 dark:text-gray-400';
 
   const navBtnClass =
     embedded && compact
-      ? 'px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-      : 'px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+      ? 'max-lg:min-h-11 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+      : 'max-lg:min-h-11 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 
   const pageBtnClass =
     embedded && compact
-      ? 'min-w-[34px] px-2 py-1 text-sm font-medium rounded-lg transition-colors'
-      : 'min-w-[40px] px-4 py-2 text-sm font-medium rounded-lg transition-colors';
+      ? 'max-lg:min-h-11 max-lg:min-w-11 min-w-[34px] px-2 py-1 text-sm font-medium rounded-lg transition-colors'
+      : 'max-lg:min-h-11 min-w-[40px] px-4 py-2 text-sm font-medium rounded-lg transition-colors';
 
   return (
     <div className={outerClass}>
@@ -68,7 +68,7 @@ export default function SalesPagination({
           แสดง {from} - {to} จาก {total} รายการ
         </div>
 
-        <div className={`flex items-center ${embedded && compact ? 'gap-1.5' : 'gap-2'}`}>
+        <div className={`flex flex-wrap items-center justify-center sm:justify-end ${embedded && compact ? 'gap-1.5' : 'gap-2'}`}>
           <button
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page === 1 || loading}

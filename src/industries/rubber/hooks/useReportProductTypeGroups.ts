@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import axios from 'axios';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { logger } from '@/shared/logger';
 import {
   ReportProductTypeGroupKind,
@@ -27,7 +28,7 @@ export function useReportProductTypeGroups(kind: ReportProductTypeGroupKind = 'p
       }
       const response = await axios.get<ReportProductTypeGroupRecord[]>(
         '/api/report-product-type-groups',
-        { params },
+        { params, headers: clientAuthHeaders() },
       );
       setGroups(response.data);
       return response.data;
@@ -47,6 +48,7 @@ export function useReportProductTypeGroups(kind: ReportProductTypeGroupKind = 'p
       const response = await axios.post<ReportProductTypeGroupRecord>(
         '/api/report-product-type-groups',
         { ...input, kind },
+        { headers: clientAuthHeaders() },
       );
       setGroups((current) => [...current, response.data]);
       return response.data;
@@ -69,6 +71,7 @@ export function useReportProductTypeGroups(kind: ReportProductTypeGroupKind = 'p
       const response = await axios.put<ReportProductTypeGroupRecord>(
         `/api/report-product-type-groups/${id}`,
         input,
+        { headers: clientAuthHeaders() },
       );
       setGroups((current) =>
         current.map((group) => (group.id === id ? response.data : group)),
@@ -90,7 +93,9 @@ export function useReportProductTypeGroups(kind: ReportProductTypeGroupKind = 'p
     setSaving(true);
     setError(null);
     try {
-      await axios.delete(`/api/report-product-type-groups/${id}`);
+      await axios.delete(`/api/report-product-type-groups/${id}`, {
+        headers: clientAuthHeaders(),
+      });
       setGroups((current) => current.filter((group) => group.id !== id));
     } catch (err) {
       logger.error('Failed to delete report product type group', err);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from '@/platform/AuthContext';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import GamerLoader from '@/shared/ui/GamerLoader';
 import { formatCurrency } from '@/shared/utils';
 import { logger } from '@/shared/logger';
@@ -90,6 +91,7 @@ export default function ProfitLossReportPage() {
     try {
       const response = await axios.get<ProfitLossReportResponse>('/api/reports/profit-loss', {
         params: { startDate, endDate, view: viewMode },
+        headers: clientAuthHeaders(),
       });
       setRows(response.data.periods || []);
       setTotals(response.data.totals || EMPTY_TOTALS);

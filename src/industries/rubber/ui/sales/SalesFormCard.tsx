@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'animal-island-ui';
 import { formatNumber } from '@/shared/utils';
@@ -51,19 +51,22 @@ function Field({
   action,
   children,
   className = '',
+  headerClassName = '',
 }: {
   label?: ReactNode;
   hint?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Hide the label row at a breakpoint, e.g. later expense rows on desktop. */
+  headerClassName?: string;
 }) {
   const showHeader = label != null && label !== '';
   return (
     <div className={`flex min-w-0 flex-col ${className}`}>
       {showHeader ? (
-        <div className="mb-1.5 flex min-h-[1.25rem] items-center justify-between gap-2">
-          <label className="block truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+        <div className={`mb-1.5 flex min-h-[1.25rem] flex-wrap items-center justify-between gap-x-2 gap-y-0.5 lg:flex-nowrap ${headerClassName}`}>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 lg:truncate">
             {label}
           </label>
           {hint || action ? (
@@ -109,8 +112,6 @@ function HintButton({
 export interface SalesFormCardProps {
   /** Tighter spacing for viewport-fit layouts (e.g. sales page). */
   compact?: boolean;
-  /** Initial fold state; form body starts open when true (default). */
-  defaultOpen?: boolean;
   error: string;
   productTypes: ProductType[];
   formData: SaleFormData;
@@ -137,25 +138,8 @@ export interface SalesFormCardProps {
   onCancelEdit?: () => void;
 }
 
-function ChevronIcon({ open, className = 'h-5 w-5' }: { open: boolean; className?: string }) {
-  return (
-    <svg
-      className={`shrink-0 text-gray-400 transition-transform duration-300 dark:text-gray-500 ${open ? 'rotate-180' : 'rotate-0'} ${className}`}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
-
-const PANEL_ID = 'sales-form-card-panel';
-
 export default function SalesFormCard({
   compact = false,
-  defaultOpen = true,
   error,
   productTypes,
   formData,
@@ -182,7 +166,6 @@ export default function SalesFormCard({
   onCancelEdit,
 }: SalesFormCardProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(defaultOpen);
   const hideDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const companySearchRef = useRef<HTMLInputElement>(null);
   const companyDropdownRef = useRef<HTMLDivElement>(null);
@@ -211,7 +194,7 @@ export default function SalesFormCard({
   const companyDisabled = isEditing;
   const isFieldDisabled = (field: SalesFormFieldName) => isEditing && field !== 'pricePerUnit';
   const getInputClass = (field: SalesFormFieldName) =>
-    `${layout.inputClass} ${
+    `${layout.inputClass} max-lg:min-h-11 max-lg:text-base ${
       fieldErrors[field]
         ? 'border-red-500 ring-1 ring-red-400 focus:border-red-500 focus:ring-red-100'
         : isEditing && field === 'pricePerUnit'
@@ -317,22 +300,13 @@ export default function SalesFormCard({
   return (
     <div
       data-testid="sales-form-card"
-      className={`flex w-full flex-col rounded-2xl border bg-white shadow-sm dark:bg-gray-800 ${
-        isOpen ? 'overflow-visible' : 'overflow-hidden'
-      } ${cardBorderClass}`}
+      className={`flex w-full flex-col overflow-visible rounded-2xl border bg-white shadow-sm dark:bg-gray-800 ${cardBorderClass}`}
     >
-      <button
-        type="button"
-        id="sales-form-card-toggle"
-        aria-expanded={isOpen}
-        aria-controls={PANEL_ID}
-        onClick={() => setIsOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-700/30 ${layout.headerBtnPad} ${
-          isOpen ? 'border-b border-gray-100 dark:border-gray-700' : ''
-        }`}
+      <div
+        className={`flex w-full items-center gap-3 border-b border-gray-100 dark:border-gray-700 ${layout.headerBtnPad}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <h2 className={`min-w-0 truncate ${layout.titleClass}`}>
+          <h2 id="sales-form-title" className={`min-w-0 truncate ${layout.titleClass}`}>
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
               {titleText}
             </span>
@@ -342,27 +316,10 @@ export default function SalesFormCard({
               กำลังแก้ไข
             </span>
           ) : null}
-          {!isOpen && error ? (
-            <span
-              className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-200"
-              title={error}
-            >
-              มีข้อผิดพลาด
-            </span>
-          ) : null}
         </div>
-        <span className="sr-only">{isOpen ? 'พับฟอร์ม' : 'ขยายฟอร์ม'}</span>
-        <ChevronIcon open={isOpen} className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
-      </button>
+      </div>
 
-      <div
-        id={PANEL_ID}
-        role="region"
-        aria-labelledby="sales-form-card-toggle"
-        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
-      >
-        <div className={`min-h-0 ${isOpen ? 'overflow-visible' : 'overflow-hidden'}`}>
-          <div className={layout.bodyPad}>
+      <div className={layout.bodyPad}>
             {error ? (
               <div
                 className={`shrink-0 rounded-xl border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 ${
@@ -374,11 +331,11 @@ export default function SalesFormCard({
             ) : null}
 
             <div
-              className={`relative flex w-full min-w-0 flex-nowrap items-end ${layout.rowGap} ${
+              className={`relative grid w-full min-w-0 grid-cols-2 items-end md:grid-cols-12 lg:flex lg:flex-nowrap ${layout.rowGap} ${
                 showCompanyDropdown && !companyDisabled ? 'z-50' : 'z-10'
               }`}
             >
-              <Field label="วันที่" className="w-[9.75rem] shrink-0">
+              <Field label="วันที่" className="order-1 col-span-2 w-full md:col-span-3 lg:order-none lg:w-[9.75rem] lg:shrink-0">
                 <input
                   type="date"
                   name="date"
@@ -396,7 +353,7 @@ export default function SalesFormCard({
                     ชื่อบริษัทปลายทาง <span className="text-red-500">*</span>
                   </>
                 }
-                className="relative z-50 w-[18rem] shrink-0"
+                className="relative z-50 order-4 col-span-2 w-full md:order-2 md:col-span-6 lg:order-none lg:w-[18rem] lg:shrink-0"
               >
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -484,7 +441,7 @@ export default function SalesFormCard({
                   ) : null}
                 </div>
               </Field>
-              <Field label="รูปแบบการขาย" className="w-[8.75rem] shrink-0">
+              <Field label="รูปแบบการขาย" className="order-2 col-span-1 w-full md:order-3 md:col-span-3 lg:order-none lg:w-[8.75rem] lg:shrink-0">
                 <select
                   name="sellingType"
                   value={formData.sellingType}
@@ -499,7 +456,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="ประเภทสินค้า" className="min-w-[9rem] flex-[1.1]">
+              <Field label="ประเภทสินค้า" className="order-5 col-span-2 w-full md:order-4 md:col-span-4 lg:order-none lg:min-w-[9rem] lg:flex-[1.1]">
                 <select
                   name="productTypeId"
                   value={formData.productTypeId}
@@ -515,7 +472,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="%ยาง" className="w-[4.75rem] shrink-0">
+              <Field label="%ยาง" className="order-3 col-span-1 w-full md:order-5 md:col-span-2 lg:order-none lg:w-[4.75rem] lg:shrink-0">
                 <input
                   type="number"
                   step="0.01"
@@ -528,7 +485,7 @@ export default function SalesFormCard({
               </Field>
               <Field
                 label="น้ำหนัก (กก.)"
-                className="min-w-[8.5rem] flex-1"
+                className="order-6 col-span-2 w-full md:order-6 md:col-span-3 lg:order-none lg:min-w-[8.5rem] lg:flex-1"
                 hint={
                   formData.productTypeId ? (
                     <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
@@ -562,7 +519,7 @@ export default function SalesFormCard({
               </Field>
               <Field
                 label="ราคา/กก."
-                className="min-w-[8.5rem] flex-1"
+                className="order-7 col-span-2 w-full md:order-7 md:col-span-3 lg:order-none lg:min-w-[8.5rem] lg:flex-1"
                 hint={
                   formData.productTypeId ? (
                     <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
@@ -603,7 +560,7 @@ export default function SalesFormCard({
             </div>
 
             <div className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 pt-3 dark:border-gray-700`}>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   ค่าใช้จ่าย
                   {formData.expenses.length > 0 ? (
@@ -618,7 +575,7 @@ export default function SalesFormCard({
                   onClick={onAddExpense}
                   disabled={saving || atExpenseLimit}
                   title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 max-lg:min-h-11"
                 >
                   {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
                 </button>
@@ -628,7 +585,7 @@ export default function SalesFormCard({
                   onClick={onClearExpenses}
                   disabled={saving || formData.expenses.length === 0}
                   title="ล้างค่าใช้จ่ายทั้งหมด"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300 max-lg:min-h-11"
                 >
                   ล้างค่าใช้จ่ายทั้งหมด
                 </button>
@@ -644,9 +601,9 @@ export default function SalesFormCard({
                     <div
                       key={line.id}
                       data-testid={`sales-expense-row-${index}`}
-                      className="grid grid-cols-1 items-end gap-2 rounded-xl bg-gray-50 p-2.5 sm:grid-cols-[8.5rem_7.5rem_minmax(0,1fr)_auto] dark:bg-gray-900/40"
+                      className="grid grid-cols-1 items-end gap-3 rounded-xl bg-gray-50 p-3 sm:grid-cols-2 lg:grid-cols-[8.5rem_7.5rem_minmax(0,1fr)_auto] lg:gap-2 lg:p-2.5 dark:bg-gray-900/40"
                     >
-                      <Field label={index === 0 ? 'ชนิดค่าใช้จ่าย' : undefined}>
+                      <Field label="ชนิดค่าใช้จ่าย" headerClassName={index === 0 ? '' : 'lg:hidden'}>
                         <select
                           value={line.type}
                           onChange={(e) => onExpenseChange(line.id, 'type', e.target.value)}
@@ -665,7 +622,7 @@ export default function SalesFormCard({
                           ))}
                         </select>
                       </Field>
-                      <Field label={index === 0 ? 'จำนวนเงิน (บาท)' : undefined}>
+                      <Field label="จำนวนเงิน (บาท)" headerClassName={index === 0 ? '' : 'lg:hidden'}>
                         <input
                           type="number"
                           step="0.01"
@@ -680,7 +637,7 @@ export default function SalesFormCard({
                           }`}
                         />
                       </Field>
-                      <Field label={index === 0 ? 'หมายเหตุ' : undefined}>
+                      <Field label="หมายเหตุ" headerClassName={index === 0 ? '' : 'lg:hidden'} className="sm:col-span-2 lg:col-span-1">
                         <input
                           value={line.note}
                           onChange={(e) => onExpenseChange(line.id, 'note', e.target.value)}
@@ -698,7 +655,7 @@ export default function SalesFormCard({
                         aria-label="ลบค่าใช้จ่าย"
                         onClick={() => onRemoveExpense(line.id)}
                         disabled={saving}
-                        className={`inline-flex items-center justify-center rounded-xl border border-gray-200 font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-300 ${btnClass}`}
+                        className={`inline-flex w-full items-center justify-center rounded-xl border border-gray-200 font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:border-red-800 dark:hover:bg-red-900/20 dark:hover:text-red-300 max-lg:min-h-11 sm:col-span-2 sm:w-auto sm:justify-self-end lg:col-span-1 lg:w-auto ${btnClass}`}
                       >
                         ลบ
                       </button>
@@ -707,12 +664,12 @@ export default function SalesFormCard({
                 </div>
               )}
 
-              <div className={`flex w-full flex-nowrap items-end justify-between ${compact ? 'gap-2' : 'gap-3'}`}>
-                <div className="flex min-w-0 flex-nowrap items-end gap-3 text-sm text-gray-600 dark:text-gray-300">
-                  <span className="flex h-[36px] items-center">ยอดรวม</span>
+              <div className={`flex w-full flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-end lg:justify-between ${compact ? 'lg:gap-2' : 'lg:gap-3'}`}>
+                <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-600 dark:text-gray-300 lg:flex-nowrap lg:items-end">
+                  <span className="flex items-center lg:h-[36px]">ยอดรวม</span>
                   <Wallet value={totalPreview} size="small" style={getSalesWalletStyle(totalPreview)} />
                   {profitPreview != null ? (
-                    <div className="flex h-[36px] min-w-0 items-center">
+                    <div className="flex min-w-0 items-center lg:h-[36px]">
                       <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
                       กำไร/ขาดทุน
                       <span
@@ -730,8 +687,8 @@ export default function SalesFormCard({
                     </div>
                   ) : null}
                 </div>
-                <div className="flex h-[42px] items-center gap-2">
-                  {isEditing && onCancelEdit ? (
+                <div className="flex items-center gap-2 max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 lg:h-[42px]">
+                  {onCancelEdit ? (
                     <button
                       type="button"
                       onClick={onCancelEdit}
@@ -755,8 +712,6 @@ export default function SalesFormCard({
               </div>
             </div>
           </div>
-        </div>
-      </div>
     </div>
   );
 }
