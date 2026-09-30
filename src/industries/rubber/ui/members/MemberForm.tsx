@@ -346,7 +346,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
               type="submit"
               form={FORM_ID}
               disabled={!canSubmit}
-              className="rounded-xl bg-primary-600 px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-6 py-3 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
             >
               {isLoading ? 'กำลังบันทึก...' : editingMember ? 'บันทึกการแก้ไข' : 'เพิ่มสมาชิก'}
             </button>

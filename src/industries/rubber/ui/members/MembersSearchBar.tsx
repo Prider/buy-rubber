@@ -6,12 +6,9 @@ interface MembersSearchBarProps {
   resultCount: number;
   totalCount: number;
   placeholder?: string;
+  embedded?: boolean;
 }
 
-/**
- * Search bar component for the members page
- * Separated for better testability and reusability
- */
 export const MembersSearchBar = ({
   searchTerm,
   onSearchChange,
@@ -20,52 +17,55 @@ export const MembersSearchBar = ({
   resultCount,
   totalCount,
   placeholder = 'ค้นหาสมาชิกตามชื่อ, รหัส, เบอร์โทร, เลขบัตร, ธนาคาร หรือเลขบัญชี...',
+  embedded = false,
 }: MembersSearchBarProps) => {
-  return (
-    <div className="mb-6">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm"
-                  placeholder={placeholder}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={onClearSearch}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {isLoading && <span className="animate-pulse">กำลังค้นหา...</span>}
-                {!isLoading && (
-                  <span>
-                    แสดง <span className="font-semibold text-blue-600 dark:text-blue-400">{resultCount}</span> จาก {totalCount} รายการ
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+  const field = (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="relative min-w-0 flex-1">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-10 text-base text-gray-900 outline-none transition focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-100 dark:focus:bg-gray-900 sm:text-sm"
+          placeholder={placeholder}
+        />
+        {searchTerm ? (
+          <button
+            type="button"
+            onClick={onClearSearch}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            aria-label="ล้างการค้นหา"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        ) : null}
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 sm:shrink-0 sm:text-sm">
+        {isLoading ? (
+          <span className="animate-pulse">กำลังค้นหา...</span>
+        ) : (
+          <span>
+            แสดง <span className="font-medium text-gray-800 dark:text-gray-200">{resultCount}</span> จาก {totalCount}
+          </span>
+        )}
+      </p>
+    </div>
+  );
+
+  if (embedded) {
+    return <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:px-5">{field}</div>;
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-5">
+      {field}
     </div>
   );
 };
-

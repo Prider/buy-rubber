@@ -1,9 +1,18 @@
 'use client';
 
-import React, { memo, useMemo, useCallback } from 'react';
-import { MemberTableProps } from '@/industries/rubber/types/member';
+import React, { memo, useCallback, useMemo } from 'react';
+import { Member, MemberTableProps } from '@/industries/rubber/types/member';
 import { useAuth } from '@/platform/AuthContext';
 import GamerLoader from '@/shared/ui/GamerLoader';
+
+const desktopCols = 'lg:grid-cols-[5.5rem_minmax(0,1fr)_7.5rem_max-content]';
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 1);
+  return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`;
+}
 
 export const MemberTable: React.FC<MemberTableProps> = memo(({
   members,
@@ -15,49 +24,37 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
   isLoading,
 }) => {
   if (isLoading) {
-    return (
-      <div className="card">
-        <GamerLoader className="py-12" message="กำลังโหลดข้อมูลสมาชิก..." />
-      </div>
-    );
+    return <GamerLoader className="py-12" message="กำลังโหลดข้อมูลสมาชิก..." />;
   }
 
   if (members.length === 0) {
-    return (
-      <div className="card">
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">ยังไม่มีสมาชิก</p>
-        </div>
-      </div>
-    );
+    return <p className="px-4 py-14 text-center text-sm text-gray-500 dark:text-gray-400">ยังไม่มีสมาชิก</p>;
   }
 
   return (
-    <div className="card">
-      <div className="overflow-x-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>รหัส</th>
-              <th>ชื่อ-นามสกุล</th>
-              <th>เบอร์โทร</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => (
-              <MemberTableRow
-                key={member.id}
-                member={member}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onReactivate={onReactivate}
-                onViewHistory={onViewHistory}
-                onViewServiceFees={onViewServiceFees}
-              />
-            ))}
-          </tbody>
-        </table>
+    <div role="table" className="w-full text-sm">
+      <div
+        role="row"
+        className={`hidden bg-gray-50 text-xs font-medium text-gray-500 dark:bg-gray-700/50 dark:text-gray-300 lg:grid ${desktopCols}`}
+      >
+        <div role="columnheader" className="px-4 py-3 text-left">รหัส</div>
+        <div role="columnheader" className="px-4 py-3 text-left">ชื่อ-นามสกุล</div>
+        <div role="columnheader" className="px-4 py-3 text-left">เบอร์โทร</div>
+        <div role="columnheader" className="px-4 py-3 text-right">จัดการ</div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 lg:block lg:p-0">
+        {members.map((member) => (
+          <MemberTableRow
+            key={member.id}
+            member={member}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onReactivate={onReactivate}
+            onViewHistory={onViewHistory}
+            onViewServiceFees={onViewServiceFees}
+          />
+        ))}
       </div>
     </div>
   );
@@ -66,12 +63,12 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
 MemberTable.displayName = 'MemberTable';
 
 interface MemberTableRowProps {
-  member: any;
-  onEdit: (member: any) => void;
-  onDelete: (member: any) => void;
-  onReactivate?: (member: any) => void;
-  onViewHistory: (member: any) => void;
-  onViewServiceFees?: (member: any) => void;
+  member: Member;
+  onEdit: (member: Member) => void;
+  onDelete: (member: Member) => void;
+  onReactivate?: (member: Member) => void;
+  onViewHistory: (member: Member) => void;
+  onViewServiceFees?: (member: Member) => void;
 }
 
 const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
@@ -86,139 +83,106 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
   const canEdit = hasAnyRole(['admin', 'user']);
 
-  // Memoize row class
-  const rowClassName = useMemo(
-    () => `relative transition-all duration-300 ${
-      member.isActive 
-        ? 'bg-white dark:bg-gray-800 border-l-4 border-green-500 hover:border-green-600 hover:shadow-sm' 
-        : 'bg-gray-50 dark:bg-gray-900/50 border-l-4 border-gray-400 opacity-75'
-    }`,
-    [member.isActive]
-  );
+  const handleEdit = useCallback(() => onEdit(member), [member, onEdit]);
+  const handleDelete = useCallback(() => onDelete(member), [member, onDelete]);
+  const handleReactivate = useCallback(() => onReactivate?.(member), [member, onReactivate]);
+  const handleViewHistory = useCallback(() => onViewHistory(member), [member, onViewHistory]);
+  const handleViewServiceFees = useCallback(() => onViewServiceFees?.(member), [member, onViewServiceFees]);
 
-  // Memoize callbacks
-  const handleEdit = useCallback(() => {
-    onEdit(member);
-  }, [member, onEdit]);
-
-  const handleDelete = useCallback(() => {
-    onDelete(member);
-  }, [member, onDelete]);
-
-  const handleReactivate = useCallback(() => {
-    if (onReactivate) {
-      onReactivate(member);
-    }
-  }, [member, onReactivate]);
-
-  const handleViewHistory = useCallback(() => {
-    onViewHistory(member);
-  }, [member, onViewHistory]);
-
-  const handleViewServiceFees = useCallback(() => {
-    if (onViewServiceFees) {
-      onViewServiceFees(member);
-    }
-  }, [member, onViewServiceFees]);
-
-  // Memoize display values
-  const phoneDisplay = useMemo(
-    () => member.phone || '-',
-    [member.phone]
-  );
+  const phoneDisplay = useMemo(() => member.phone || '–', [member.phone]);
+  const muted = member.isActive ? '' : 'text-gray-400 line-through decoration-gray-300 dark:text-gray-500 dark:decoration-gray-600';
 
   return (
-    <tr className={rowClassName}>
-      <td className="font-medium">
-        <div className="flex items-center gap-2.5">
-          {member.isActive ? (
-            <span className="relative flex-shrink-0 w-2 h-2 flex items-center justify-center overflow-visible">
-              <span className="absolute w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></span>
-              <span className="relative w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-md shadow-green-500/50"></span>
-            </span>
-          ) : (
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0"></span>
-          )}
-          <span className={member.isActive ? '' : 'line-through text-gray-500 dark:text-gray-500'}>
-            {member.code}
-          </span>
-        </div>
-      </td>
-      <td>
-        <div className="flex items-center space-x-2">
-          <span className={member.isActive ? 'font-medium' : 'line-through text-gray-500 dark:text-gray-500'}>
+    <div
+      role="row"
+      className={`grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 rounded-2xl border border-gray-100 bg-white p-3 dark:border-gray-700 dark:bg-gray-800/80 lg:items-center lg:gap-0 lg:rounded-none lg:border-x-0 lg:border-b-0 lg:border-t lg:bg-transparent lg:p-0 lg:hover:bg-gray-50 lg:dark:bg-transparent lg:dark:hover:bg-gray-700/30 ${desktopCols} ${
+        member.isActive ? '' : 'bg-gray-50/80 dark:bg-gray-900/30'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`row-span-3 flex h-10 w-10 items-center justify-center self-start rounded-full text-sm font-semibold lg:hidden ${
+          member.isActive
+            ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200'
+            : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+        }`}
+      >
+        {initials(member.name)}
+      </span>
+
+      <div role="cell" className="min-w-0 lg:col-start-2 lg:row-start-1 lg:px-4 lg:py-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className={`min-w-0 break-words text-base font-semibold text-gray-900 dark:text-gray-100 lg:text-sm lg:font-medium ${muted}`}>
             {member.name}
           </span>
           {member.group?.name ? (
-            <span className="inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+            <span className="inline-flex rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
               {member.group.name}
             </span>
           ) : null}
+          {!member.isActive ? (
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+              ปิดใช้งาน
+            </span>
+          ) : null}
         </div>
-      </td>
-      <td className={member.isActive ? '' : 'text-gray-400 dark:text-gray-600'}>
+      </div>
+
+      <div role="cell" className={`font-mono text-xs text-gray-500 dark:text-gray-400 lg:col-start-1 lg:row-start-1 lg:px-4 lg:py-3 lg:text-sm ${muted}`}>
+        {member.code}
+      </div>
+
+      <div role="cell" className={`text-sm lg:col-start-3 lg:row-start-1 lg:px-4 lg:py-3 ${member.isActive ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
         {phoneDisplay}
-      </td>
-      <td>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleViewHistory}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
-            title="ดูประวัติการรับซื้อ"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>ประวัติ</span>
-          </button>
-          {onViewServiceFees && (
-            <button
-              onClick={handleViewServiceFees}
-              className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center space-x-1"
-              title="ดูค่าบริการ"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>ค่าบริการ</span>
-            </button>
-          )}
-          {member.isActive && canEdit && (
-            <button
-              onClick={handleEdit}
-              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-            >
-              แก้ไข
-            </button>
-          )}
-          {isAdmin && (
-            <>
-              {!member.isActive && onReactivate && (
-                <button
-                  onClick={handleReactivate}
-                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors flex items-center space-x-1"
-                  title="เปิดการใช้งานสมาชิก"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>เปิดใช้งาน</span>
-                </button>
-              )}
-              {member.isActive && (
-                <button
-                  onClick={handleDelete}
-                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                >
-                  ลบ
-                </button>
-              )}
-            </>
-          )}
+      </div>
+
+      <div role="cell" className="col-span-2 mt-2.5 lg:col-span-1 lg:col-start-4 lg:row-start-1 lg:mt-0 lg:px-3 lg:py-2">
+        <div className="flex flex-wrap gap-1 lg:flex-nowrap lg:justify-end">
+          <ActionButton onClick={handleViewHistory} tone="primary">ประวัติ</ActionButton>
+          {onViewServiceFees ? (
+            <ActionButton onClick={handleViewServiceFees} tone="violet">ค่าบริการ</ActionButton>
+          ) : null}
+          {member.isActive && canEdit ? (
+            <ActionButton onClick={handleEdit} tone="neutral">แก้ไข</ActionButton>
+          ) : null}
+          {isAdmin && !member.isActive && onReactivate ? (
+            <ActionButton onClick={handleReactivate} tone="green">เปิดใช้งาน</ActionButton>
+          ) : null}
+          {isAdmin && member.isActive ? (
+            <ActionButton onClick={handleDelete} tone="danger">ลบ</ActionButton>
+          ) : null}
         </div>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 });
 
 MemberTableRow.displayName = 'MemberTableRow';
+
+function ActionButton({
+  children,
+  onClick,
+  tone,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  tone: 'primary' | 'violet' | 'neutral' | 'green' | 'danger';
+}) {
+  const tones = {
+    primary: 'text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30',
+    violet: 'text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/30',
+    neutral: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
+    green: 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30',
+    danger: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 lg:min-h-8 lg:px-2 lg:text-xs ${tones[tone]}`}
+    >
+      {children}
+    </button>
+  );
+}
