@@ -2,7 +2,6 @@ import type { NavItem } from '@/shared/layout/Layout';
 
 export const rubberNav: NavItem[] = [
   { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
-  { name: 'โปรไฟล์ร้าน', href: '/profile', icon: '👤' },
   { name: 'รับซื้อยาง', href: '/purchases', icon: '🛒' },
   { name: 'ขายสินค้า', href: '/sales', icon: '🚚' },
   { name: 'สต็อกสินค้า', href: '/stock', icon: '📦' },
