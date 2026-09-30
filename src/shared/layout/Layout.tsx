@@ -4,7 +4,7 @@ import { ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AccountMenu from '@/shared/layout/AccountMenu';
-import MobileTabBar from '@/shared/layout/MobileTabBar';
+import MobileTabBar, { currentPageTitle } from '@/shared/layout/MobileTabBar';
 import DarkModeToggle from '@/shared/ui/DarkModeToggle';
 import Logo from '@/shared/ui/Logo';
 import { useAuth } from '@/platform/AuthContext';
@@ -99,6 +99,7 @@ export default function Layout({ children, navItems }: LayoutProps) {
 
   const accountLocked = liveStatus === 'not_yet_payment' || liveStatus === 'pending_payment' || liveStatus === 'rejected';
   const showWaitingScreen = accountLocked && pathname !== '/profile' && pathname !== '/signup/payment';
+  const pageTitle = mobilePageTitle(pathname, navigation);
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -198,11 +199,11 @@ export default function Layout({ children, navItems }: LayoutProps) {
           accountLocked ? '' : sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
         }`}
       >
-        {/* Top bar */}
-        <header className="shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
-          <div className="relative flex items-center justify-between px-3 py-3 sm:px-6">
-            {/* Left side - Menu button */}
-            <div className="flex min-w-0 items-center gap-2">
+        {/* Top bar: app title on phone/tablet, website chrome from lg up */}
+        <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200 bg-white pt-[env(safe-area-inset-top)] dark:border-gray-800 dark:bg-gray-900 lg:border-gray-200/50 lg:bg-white/80 lg:pt-0 lg:shadow-sm lg:backdrop-blur-md lg:dark:border-gray-700/50 lg:dark:bg-gray-800/80">
+          <div className="relative flex h-14 items-center justify-between gap-3 px-4 lg:h-auto lg:px-6 lg:py-3">
+            {/* Left side - page title on small screens, sidebar toggle on desktop */}
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               {!accountLocked && (
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -240,11 +241,9 @@ export default function Layout({ children, navItems }: LayoutProps) {
                 )}
               </button>
               )}
-              {!accountLocked && (
-                <Link href="/dashboard" className="lg:hidden" aria-label="Punsook Innotech">
-                  <Logo className="h-8 w-auto" />
-                </Link>
-              )}
+              <h1 className="min-w-0 truncate text-lg font-semibold text-gray-900 dark:text-white lg:hidden">
+                {pageTitle}
+              </h1>
             </div>
 
             {/* Center - Company name */}
@@ -262,8 +261,10 @@ export default function Layout({ children, navItems }: LayoutProps) {
             </div>
 
             {/* Right side - Account and controls */}
-            <div className="flex items-center gap-2">
-              <DarkModeToggle />
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden lg:block">
+                <DarkModeToggle />
+              </div>
               <AccountMenu
                 username={user?.username}
                 email={shopEmail}
@@ -298,5 +299,15 @@ export default function Layout({ children, navItems }: LayoutProps) {
       {!accountLocked && <MobileTabBar items={navigation} />}
     </div>
   );
+}
+
+function mobilePageTitle(pathname: string, items: NavItem[]) {
+  if (pathname.startsWith('/reports/profit-loss/gangs')) return 'กำไร/ขาดทุนต่อกอง';
+  if (pathname === '/profile' || pathname.startsWith('/profile/')) return 'โปรไฟล์ร้าน';
+  if (pathname.startsWith('/signup/payment')) return 'ชำระเงิน';
+  if (pathname.startsWith('/admin')) return 'ตั้งค่าระบบ';
+  if (pathname.startsWith('/backup')) return 'สำรองข้อมูล';
+  if (pathname.startsWith('/prices')) return 'ตั้งราคา';
+  return currentPageTitle(pathname, items) || 'Punsook';
 }
 

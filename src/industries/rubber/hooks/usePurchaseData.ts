@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import axios, { CancelTokenSource } from 'axios';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { logger } from '@/shared/logger';
 
 interface Member {
@@ -53,6 +54,7 @@ export const usePurchaseData = () => {
     try {
       const response = await axios.get('/api/purchases', {
         cancelToken: cancelToken.token,
+        headers: clientAuthHeaders(),
       });
       setPurchases(response.data);
     } catch (error) {
@@ -75,6 +77,7 @@ export const usePurchaseData = () => {
     try {
       const response = await axios.get('/api/members?active=true&limit=1000', {
         cancelToken: cancelToken.token,
+        headers: clientAuthHeaders(),
       });
       // Handle paginated response - extract members array
       const membersData = response.data.members || response.data;
@@ -98,6 +101,7 @@ export const usePurchaseData = () => {
     try {
       const response = await axios.get('/api/product-types', {
         cancelToken: cancelToken.token,
+        headers: clientAuthHeaders(),
       });
       setProductTypes(response.data);
     } catch (error) {
@@ -119,6 +123,7 @@ export const usePurchaseData = () => {
     try {
       const response = await axios.get('/api/prices/daily', {
         cancelToken: cancelToken.token,
+        headers: clientAuthHeaders(),
       });
       logger.debug('Daily prices API response', { count: response.data.length, sample: response.data[0] });
       setDailyPrices(response.data);
@@ -141,6 +146,7 @@ export const usePurchaseData = () => {
     try {
       const response = await axios.get('/api/member-groups', {
         cancelToken: cancelToken.token,
+        headers: clientAuthHeaders(),
       });
       setMemberGroups(response.data);
     } catch (error) {

@@ -96,7 +96,7 @@ export default function PaymentPage() {
   return (
     <div className="mx-auto w-full max-w-xl pb-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ชำระเงินแพ็คเกจ Premium</h1>
+        <h1 className="hidden text-2xl font-bold text-gray-900 dark:text-white lg:block">ชำระเงินแพ็คเกจ Premium</h1>
         <button
           type="button"
           onClick={() => router.push('/profile')}

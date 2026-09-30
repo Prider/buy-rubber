@@ -406,7 +406,7 @@ export default function StockPage() {
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
           <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-base font-semibold">
+              <h1 className="hidden text-base font-semibold lg:block">
                 <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
                   สต็อกคงเหลือ
                 </span>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDarkMode } from '@/shared/DarkModeContext';
 
 interface AccountMenuProps {
   username?: string;
@@ -17,6 +18,7 @@ function initials(username?: string) {
 
 export default function AccountMenu({ username, email, canManageSettings, onLogout }: AccountMenuProps) {
   const router = useRouter();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const displayName = username || 'ผู้ใช้งาน';
@@ -50,12 +52,13 @@ export default function AccountMenu({ username, email, canManageSettings, onLogo
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex h-9 max-w-[12rem] items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800 lg:h-9 lg:w-auto lg:max-w-[12rem] lg:gap-2 lg:border lg:border-gray-200 lg:bg-white lg:px-2.5 lg:shadow-sm lg:hover:bg-gray-50 dark:lg:border-gray-700 dark:lg:bg-gray-800 dark:lg:hover:bg-gray-700"
+        aria-label={displayName}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-[11px] font-semibold text-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white lg:h-6 lg:w-6 lg:text-[11px]">
           {initials(username)}
         </span>
-        <span className="truncate">{displayName}</span>
+        <span className="hidden truncate lg:inline">{displayName}</span>
       </button>
 
       {open && (
@@ -99,6 +102,17 @@ export default function AccountMenu({ username, email, canManageSettings, onLogo
           <button type="button" role="menuitem" onClick={() => go('/signup/payment')} className={itemClass}>
             <UsersIcon />
             แพ็คเกจร้าน
+          </button>
+
+          <div className="-mx-1 my-1 h-px bg-gray-200 dark:bg-gray-700 lg:hidden" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={toggleDarkMode}
+            className={`${itemClass} lg:hidden`}
+          >
+            {isDarkMode ? <SunIcon /> : <MoonIcon />}
+            {isDarkMode ? 'โหมดสว่าง' : 'โหมดมืด'}
           </button>
 
           <div className="-mx-1 my-1 h-px bg-gray-200 dark:bg-gray-700" />
@@ -170,6 +184,22 @@ function UsersIcon() {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" strokeWidth={2} />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
   );
 }

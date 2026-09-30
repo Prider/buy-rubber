@@ -48,7 +48,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+    <div className="overflow-hidden bg-gray-50 dark:bg-gray-900 lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
       <div className="p-4 space-y-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
@@ -71,10 +71,10 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
             categoryInputRef.current?.focus();
           });
           }}
-          className="space-y-4"
+          className="space-y-5 max-lg:[&_input]:min-h-12 max-lg:[&_input]:rounded-2xl max-lg:[&_input]:text-base max-lg:[&_label]:text-sm max-lg:[&_label]:font-semibold lg:space-y-4"
         >
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
+            <div className="hidden items-center space-x-2 lg:flex">
               <div className="w-5 h-5 bg-orange-100 dark:bg-orange-900 rounded-md flex items-center justify-center">
                 <svg className="w-3 h-3 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -136,12 +136,12 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-600">
+          <div className="flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:fixed max-lg:inset-x-0 max-lg:z-[35] max-lg:bottom-[calc(7.25rem+env(safe-area-inset-bottom))] max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center max-lg:[&_button]:rounded-2xl max-lg:[&_button]:text-sm lg:static lg:inset-auto lg:z-auto lg:justify-end lg:border-gray-100 lg:bg-transparent lg:px-0 lg:py-0 lg:pt-3 dark:lg:border-gray-600 dark:lg:bg-transparent">
             <button
               type="button"
               onClick={resetForm}
               disabled={submitting}
-              className="px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="max-lg:min-h-11 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               รีเซ็ต
             </button>
@@ -149,7 +149,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
               ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid || submitting}
-              className="px-5 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 text-white rounded-md text-xs font-semibold hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-1 focus:ring-orange-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="max-lg:min-h-11 px-5 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 text-white rounded-md text-xs font-semibold hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-1 focus:ring-orange-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center space-x-1.5">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

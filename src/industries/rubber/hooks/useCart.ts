@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { clientAuthHeaders } from '@/platform/sessionToken';
 import { useAlert } from '@/shared/hooks/useAlert';
 import { logger } from '@/shared/logger';
 import { generatePDFFromHTML, printHTML } from '@/industries/rubber/ui/purchases/utils/pdfGenerator';
@@ -217,6 +218,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...clientAuthHeaders(),
           },
           body: JSON.stringify(batchPayload),
         });
@@ -272,6 +274,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...clientAuthHeaders(),
           },
           body: JSON.stringify(serviceFeePayload),
         });

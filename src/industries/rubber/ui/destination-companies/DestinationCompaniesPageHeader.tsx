@@ -11,7 +11,7 @@ export const DestinationCompaniesPageHeader = ({ totalCompanies, onAddCompany }:
   return (
     <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 md:flex-row md:items-center md:justify-between">
       <div className="min-w-0">
-        <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+        <h1 className="hidden text-lg font-semibold tracking-tight sm:text-xl lg:block">
           <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
             บริษัทปลายทาง
           </span>

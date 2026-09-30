@@ -278,7 +278,7 @@ export default function ProfitLossGangsReportPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
               กำไร / ขาดทุนต่อกอง
             </span>
