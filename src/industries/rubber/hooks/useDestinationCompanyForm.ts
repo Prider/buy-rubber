@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { DestinationCompany, DestinationCompanyFormData } from '@/industries/rubber/types/destinationCompany';
 import {
   generateDestinationCompanyCode,
@@ -21,9 +21,9 @@ export const useDestinationCompanyForm = (companies: DestinationCompany[]) => {
   const openFormForNew = useCallback(async () => {
     let newCode = '';
     try {
-      const response = await axios.get('/api/destination-companies/next-code');
-      if (response.data?.code) {
-        newCode = response.data.code;
+      const data = await getApiClient().get<{ code?: string }>('/api/destination-companies/next-code');
+      if (data?.code) {
+        newCode = data.code;
       } else {
         throw new Error('No code returned from API');
       }

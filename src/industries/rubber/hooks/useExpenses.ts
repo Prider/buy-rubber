@@ -48,6 +48,12 @@ const EXPENSE_CATEGORIES = [
 
 const DEFAULT_PAGE_SIZE = 10;
 
+function authHeaders(): Record<string, string> | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
+}
+
 export const useExpenses = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary>({
@@ -117,6 +123,7 @@ export const useExpenses = () => {
       const response = await axios.get('/api/expenses', { 
         params,
         cancelToken: cancelToken.token,
+        headers: authHeaders(),
       });
       
       // Only update state if request wasn't cancelled
@@ -165,7 +172,7 @@ export const useExpenses = () => {
   const createExpense = useCallback(async (expenseData: any) => {
     try {
       setError(null);
-      await axios.post('/api/expenses', expenseData);
+      await axios.post('/api/expenses', expenseData, { headers: authHeaders() });
       await loadExpenses({ page: 1, pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
@@ -174,10 +181,25 @@ export const useExpenses = () => {
     }
   }, [loadExpenses, pageSize]);
 
+  const updateExpense = useCallback(async (
+    id: string,
+    expenseData: { date: string; category: string; amount: number; description?: string },
+  ) => {
+    try {
+      setError(null);
+      await axios.put(`/api/expenses/${id}`, expenseData, { headers: authHeaders() });
+      await loadExpenses({ page: currentPage, pageSize });
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการแก้ไขค่าใช้จ่าย';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, [loadExpenses, currentPage, pageSize]);
+
   const deleteExpense = useCallback(async (id: string) => {
     try {
       setError(null);
-      await axios.delete(`/api/expenses/${id}`);
+      await axios.delete(`/api/expenses/${id}`, { headers: authHeaders() });
       await loadExpenses({ page: currentPage, pageSize });
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบค่าใช้จ่าย';
@@ -202,6 +224,7 @@ export const useExpenses = () => {
     pagination,
     loadExpenses,
     createExpense,
+    updateExpense,
     deleteExpense,
     changePage,
     changePageSize,

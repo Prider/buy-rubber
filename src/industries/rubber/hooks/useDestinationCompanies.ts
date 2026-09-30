@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { getApiClient } from '@/shared/apiClient';
 import { logger } from '@/shared/logger';
 import {
   DestinationCompany,
@@ -34,9 +34,11 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
       });
       if (search) params.append('search', search);
 
-      const response = await axios.get(`/api/destination-companies?${params.toString()}`);
-      setCompanies(response.data.companies);
-      setPagination(response.data.pagination);
+      const data = await getApiClient().get<{ companies: DestinationCompany[]; pagination: PaginationInfo }>(
+        `/api/destination-companies?${params.toString()}`,
+      );
+      setCompanies(data.companies);
+      setPagination(data.pagination);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };
       setError(axiosErr.response?.data?.error || 'เกิดข้อผิดพลาดในการโหลดข้อมูลบริษัทปลายทาง');
@@ -50,7 +52,7 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
     async (data: DestinationCompanyFormData) => {
       try {
         setError(null);
-        await axios.post('/api/destination-companies', data);
+        await getApiClient().post('/api/destination-companies', data);
         await loadCompanies();
       } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -66,7 +68,7 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
     async (id: string, data: DestinationCompanyFormData) => {
       try {
         setError(null);
-        await axios.put(`/api/destination-companies/${id}`, data);
+        await getApiClient().put(`/api/destination-companies/${id}`, data);
         await loadCompanies();
       } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -82,9 +84,11 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
     async (id: string): Promise<DeleteDestinationCompanyResponse> => {
       try {
         setError(null);
-        const response = await axios.delete(`/api/destination-companies/${id}`);
+        const result = await getApiClient().delete<DeleteDestinationCompanyResponse>(
+          `/api/destination-companies/${id}`,
+        );
         await loadCompanies();
-        return response.data;
+        return result;
       } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
         const errorMessage = axiosErr.response?.data?.error || 'ไม่สามารถลบบริษัทปลายทางได้';
@@ -99,10 +103,9 @@ export const useDestinationCompanies = (): UseDestinationCompaniesReturn => {
     async (id: string) => {
       try {
         setError(null);
-        const companyResponse = await axios.get(`/api/destination-companies/${id}`);
-        const company = companyResponse.data as DestinationCompany;
+        const company = await getApiClient().get<DestinationCompany>(`/api/destination-companies/${id}`);
 
-        await axios.put(`/api/destination-companies/${id}`, {
+        await getApiClient().put(`/api/destination-companies/${id}`, {
           name: company.name,
           phone: company.phone || '',
           address: company.address || '',

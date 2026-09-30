@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Button, Modal } from 'animal-island-ui';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { DestinationCompanyFormProps, DestinationCompanyFormData } from '@/industries/rubber/types/destinationCompany';
 
 const FORM_ID = 'destination-company-form';
@@ -59,6 +58,21 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
     }
   };
 
+  const handleCancel = useCallback(() => {
+    setLocalFormData(formData);
+    setValidationError(null);
+    onCancel();
+  }, [formData, onCancel]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleCancel();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, handleCancel]);
+
   const handleKeyDown = (
     e: React.KeyboardEvent,
     nextRef?: React.RefObject<HTMLElement | null>,
@@ -87,98 +101,123 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
 
   const canSubmit = !isLoading && hasChanges && Boolean(localFormData.name.trim());
 
+  if (!isOpen) return null;
+
   return (
-    <Modal
-      open={isOpen}
-      className="app-island-modal"
-      title={
-        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-          {editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'}
-        </span>
-      }
-      width={650}
-      typewriter={false}
-      onClose={onCancel}
-      footer={
-        <div className="mr-8 flex items-center gap-3">
-          <Button htmlType="button" onClick={onCancel} disabled={isLoading}>
-            ยกเลิก
-          </Button>
-          <Button type="primary" htmlType="submit" form={FORM_ID} disabled={!canSubmit}>
-            {isLoading ? 'กำลังบันทึก...' : editingCompany ? 'บันทึกการแก้ไข' : 'เพิ่มบริษัท'}
-          </Button>
+    <div className="fixed inset-0 z-[1100] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50" onClick={handleCancel} aria-hidden="true" />
+      <div className="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="destination-company-form-title"
+          className="relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[720px] sm:rounded-2xl"
+        >
+          <div className="border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:px-6">
+            <h2
+              id="destination-company-form-title"
+              className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-center text-xl font-bold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 sm:text-2xl"
+            >
+              {editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'}
+            </h2>
+          </div>
+
+          <div className="overflow-y-auto p-4 sm:p-6">
+            <form id={FORM_ID} onSubmit={handleSubmit} className="w-full space-y-5 text-base font-normal">
+              {validationError ? (
+                <div className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+                  {validationError}
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    ชื่อบริษัท <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    ref={nameRef}
+                    type="text"
+                    value={localFormData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, phoneRef)}
+                    className={fieldClassName}
+                    placeholder="เช่น บริษัท ยางไทย จำกัด"
+                    required
+                    autoFocus
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">รหัสบริษัท</label>
+                  <input
+                    type="text"
+                    value={localFormData.code}
+                    disabled
+                    className={fieldClassName}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เบอร์โทร</label>
+                <input
+                  ref={phoneRef}
+                  type="text"
+                  value={localFormData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, addressRef, nameRef)}
+                  className={fieldClassName}
+                  placeholder="เช่น 0812345678"
+                  inputMode="tel"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่</label>
+                <textarea
+                  ref={addressRef}
+                  value={localFormData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      e.currentTarget.form?.requestSubmit();
+                      return;
+                    }
+                    handleKeyDown(e, undefined, phoneRef);
+                  }}
+                  rows={3}
+                  className={`${fieldClassName} resize-none`}
+                  placeholder="ที่อยู่บริษัท (ถ้ามี)"
+                  disabled={isLoading}
+                />
+              </div>
+            </form>
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-200 px-4 py-4 dark:border-gray-700 sm:flex-row sm:justify-end sm:px-6">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isLoading}
+              className="min-h-11 w-full rounded-xl bg-gray-100 px-6 py-3 font-medium text-gray-700 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 sm:w-auto"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
+              form={FORM_ID}
+              disabled={!canSubmit}
+              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-6 py-3 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto"
+            >
+              {isLoading ? 'กำลังบันทึก...' : editingCompany ? 'บันทึกการแก้ไข' : 'เพิ่มบริษัท'}
+            </button>
+          </div>
         </div>
-      }
-    >
-      <div className="w-full text-base font-normal">
-        <form id={FORM_ID} onSubmit={handleSubmit} className="w-full space-y-5 px-2">
-          {validationError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 whitespace-pre-line">
-              {validationError}
-            </div>
-          ) : null}
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">รหัสบริษัท</label>
-            <input
-              type="text"
-              value={localFormData.code}
-              disabled
-              className={fieldClassName}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              ชื่อบริษัท <span className="text-red-500">*</span>
-            </label>
-            <input
-              ref={nameRef}
-              type="text"
-              value={localFormData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, phoneRef)}
-              className={fieldClassName}
-              placeholder="เช่น บริษัท ยางไทย จำกัด"
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เบอร์โทร</label>
-            <input
-              ref={phoneRef}
-              type="text"
-              value={localFormData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, addressRef, nameRef)}
-              className={fieldClassName}
-              placeholder="เช่น 0812345678"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่</label>
-            <textarea
-              ref={addressRef}
-              value={localFormData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  e.currentTarget.form?.requestSubmit();
-                  return;
-                }
-                handleKeyDown(e, undefined, phoneRef);
-              }}
-              rows={2}
-              className={`${fieldClassName} resize-none`}
-              placeholder="ที่อยู่บริษัท (ถ้ามี)"
-            />
-          </div>
-        </form>
       </div>
-    </Modal>
+    </div>
   );
 };
