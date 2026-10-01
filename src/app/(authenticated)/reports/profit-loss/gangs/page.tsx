@@ -99,7 +99,7 @@ function summarizeGangs(rows: GangCycle[]) {
   );
 }
 
-export default function ProfitLossGangsReportPage() {
+export default function ProfitLossGangsReportPage({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
@@ -279,15 +279,17 @@ export default function ProfitLossGangsReportPage() {
   }
 
   return (
-    <div className="w-full space-y-8 pb-10">
+    <div className={embedded ? 'w-full space-y-5' : 'w-full space-y-8 pb-10'}>
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          {embedded ? null : (
           <h1 className="hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
               กำไร / ขาดทุนต่อกอง
             </span>
           </h1>
+          )}
 
           <div className="flex w-full items-center gap-2.5 sm:w-auto">
             <label
@@ -311,20 +313,22 @@ export default function ProfitLossGangsReportPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {embedded ? null : (
           <button
             type="button"
-            onClick={() => router.push('/reports/profit-loss')}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500"
+            onClick={() => router.push('/reports?tab=profit_loss')}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto"
           >
             <span aria-hidden>←</span>
             รายงานกำไร / ขาดทุน
           </button>
+          )}
           <button
             type="button"
             onClick={() => void handleExportPdf()}
             disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy }) || rangeInvalid}
-            className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
+            className="w-full rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400 sm:w-auto"
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
@@ -332,7 +336,7 @@ export default function ProfitLossGangsReportPage() {
             type="button"
             onClick={() => void handleExportExcel()}
             disabled={isExportDisabled({ hasRows, loading: gangsLoading, exportBusy }) || rangeInvalid}
-            className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
+            className="w-full rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400 sm:w-auto"
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
@@ -376,7 +380,7 @@ export default function ProfitLossGangsReportPage() {
           />
         </div>
         <div className="relative">
-          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+          <span className="mb-1.5 hidden text-xs font-medium text-transparent select-none sm:block" aria-hidden>
             อัปเดต
           </span>
           <button
@@ -407,7 +411,7 @@ export default function ProfitLossGangsReportPage() {
 
       {/* Summary (current page) */}
       {!error && !gangsError && gangs.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { label: 'ขายได้ (หน้านี้)', value: `${formatNumber(summary.soldKg)} กก.` },
             { label: 'รายได้ (หน้านี้)', value: formatCurrency(summary.revenue) },

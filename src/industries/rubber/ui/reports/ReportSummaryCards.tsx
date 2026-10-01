@@ -41,7 +41,7 @@ export default function ReportSummaryCards({
 
   if (reportType === 'expense_summary') {
     return (
-      <div className="no-print grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label="จำนวนรายการ"
           value={totalCount.toLocaleString('th-TH')}
@@ -76,7 +76,7 @@ export default function ReportSummaryCards({
       : 'สมาชิก';
 
   return (
-    <div className="no-print grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
       <StatCard
         label="จำนวนรายการ"
         value={totalCount.toLocaleString('th-TH')}

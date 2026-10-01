@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/platform/AuthContext';
 import { useReportData } from '@/industries/rubber/hooks/useReportData';
 import { useReportProductTypeGroups } from '@/industries/rubber/hooks/useReportProductTypeGroups';
@@ -34,6 +33,22 @@ const ReportGroupManagementModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
+const embeddedReportLoader = (
+  <div className="flex min-h-[40vh] items-center justify-center">
+    <GamerLoader className="py-12" message="กำลังโหลด..." />
+  </div>
+);
+
+const ProfitLossReportPage = dynamic(() => import('./profit-loss/page'), {
+  ssr: false,
+  loading: () => embeddedReportLoader,
+});
+
+const ProfitLossGangsReportPage = dynamic(() => import('./profit-loss/gangs/page'), {
+  ssr: false,
+  loading: () => embeddedReportLoader,
+});
+
 const PAGE_SIZE = 15;
 
 function tabFromReportType(reportType: string): ReportTabId {
@@ -45,9 +60,12 @@ function tabFromReportType(reportType: string): ReportTabId {
 
 export default function ReportsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const { showWarning } = useAlert();
   const [tablePage, setTablePage] = useState(1);
+  const queryTab = searchParams.get('tab');
+  const embeddedTab = queryTab === 'profit_loss' || queryTab === 'profit_loss_gangs' ? queryTab : null;
   const purchaseGroupManager = useReportProductTypeGroups('purchase');
   const saleGroupManager = useReportProductTypeGroups('sale');
   const {
@@ -93,7 +111,7 @@ export default function ReportsPage() {
     getReportTitle,
   } = useReportData(reportGroupRecords, sellGroupRecords);
 
-  const activeTab = tabFromReportType(reportType);
+  const activeTab: ReportTabId = embeddedTab ?? tabFromReportType(reportType);
 
   useEffect(() => {
     void loadGroups();
@@ -123,10 +141,17 @@ export default function ReportsPage() {
 
   const handleTabChange = useCallback(
     (tab: ReportTabId) => {
+      if (tab === 'profit_loss' || tab === 'profit_loss_gangs') {
+        router.replace(`/reports?tab=${tab}`, { scroll: false });
+        return;
+      }
+      if (searchParams.get('tab')) {
+        router.replace('/reports', { scroll: false });
+      }
       setTablePage(1);
       setReportType(tab);
     },
-    [setReportType],
+    [router, searchParams, setReportType],
   );
 
   const handleGroupsChanged = useCallback(async () => {
@@ -221,31 +246,25 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="w-full space-y-8 pb-10">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
-            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              รายงาน
-            </span>
-          </h1>
+    <div className="w-full pb-6 lg:pb-10">
+      <h1 className="mb-8 hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
+        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+          รายงาน
+        </span>
+      </h1>
+
+      <div className="max-md:-mx-6 max-md:-mt-6">
+        <div className="sticky -top-6 z-30 border-b border-gray-200 bg-gray-50 px-6 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 dark:md:bg-transparent">
+          <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
-        <Link
-          href="/reports/profit-loss"
-          className="inline-flex items-center gap-2 self-start rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:self-auto"
-        >
-          ดูกำไร / ขาดทุน
-          <span aria-hidden className="text-base leading-none">
-            →
-          </span>
-        </Link>
-      </div>
-
-      <div className="space-y-5" id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
-        <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
+        <div className="mt-5 space-y-5 px-6 md:px-0 lg:space-y-8">
+      <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
+        {activeTab === 'profit_loss' ? (
+          <ProfitLossReportPage embedded />
+        ) : activeTab === 'profit_loss_gangs' ? (
+          <ProfitLossGangsReportPage embedded />
+        ) : (
         <ReportFilterCard
           reportType={reportType}
           setReportType={setReportType}
@@ -264,6 +283,7 @@ export default function ReportsPage() {
           }
           selectMode={activeTab}
         />
+        )}
       </div>
 
       <ReportGroupManagementModal
@@ -280,7 +300,7 @@ export default function ReportsPage() {
         onRefresh={handleGroupsChanged}
       />
 
-      {data && (
+      {!embeddedTab && data && (
         <>
           <style jsx global>{`
             @media print {
@@ -372,7 +392,7 @@ export default function ReportsPage() {
         </>
       )}
 
-      {!data && !loading ? (
+      {!embeddedTab && !data && !loading ? (
         <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {activeTab === 'daily_purchase' || activeTab === 'sell_summary'
@@ -381,6 +401,8 @@ export default function ReportsPage() {
           </p>
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 }

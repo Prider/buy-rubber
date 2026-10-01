@@ -59,7 +59,7 @@ function ProfitLossText({ value, className = '' }: { value: number; className?: 
   );
 }
 
-export default function ProfitLossReportPage() {
+export default function ProfitLossReportPage({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
@@ -145,24 +145,26 @@ export default function ProfitLossReportPage() {
   }
 
   return (
-    <div className="w-full space-y-8 pb-10">
+    <div className={embedded ? 'w-full space-y-5' : 'w-full space-y-8 pb-10'}>
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <h1 className="hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
-            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              กำไร / ขาดทุน
-            </span>
-          </h1>
+          {embedded ? null : (
+            <h1 className="hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
+              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+                กำไร / ขาดทุน
+              </span>
+            </h1>
+          )}
           <p className="text-sm text-gray-500 dark:text-gray-400">
             ตามช่วงเวลา · ขาย − รับซื้อ − ค่าใช้จ่าย
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
-            href="/reports/profit-loss/gangs"
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+            href="/reports?tab=profit_loss_gangs"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 sm:w-auto"
           >
             ดูต่อกองตามสินค้า
             <span aria-hidden className="text-base leading-none">→</span>
@@ -171,7 +173,7 @@ export default function ProfitLossReportPage() {
             type="button"
             onClick={() => void handleExportPdf()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
+            className="w-full rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400 sm:w-auto"
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
@@ -179,7 +181,7 @@ export default function ProfitLossReportPage() {
             type="button"
             onClick={() => void handleExportExcel()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
+            className="w-full rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400 sm:w-auto"
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
@@ -229,7 +231,7 @@ export default function ProfitLossReportPage() {
           </select>
         </div>
         <div className="relative">
-          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+          <span className="mb-1.5 hidden text-xs font-medium text-transparent select-none sm:block" aria-hidden>
             อัปเดต
           </span>
           <button
@@ -260,7 +262,7 @@ export default function ProfitLossReportPage() {
 
       {/* Summary */}
       {!error ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { label: 'ยอดขาย', value: formatCurrency(totals.sales) },
             { label: 'ยอดรับซื้อ', value: formatCurrency(totals.purchases) },

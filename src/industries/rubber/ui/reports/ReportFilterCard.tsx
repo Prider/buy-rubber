@@ -70,7 +70,10 @@ export default function ReportFilterCard({
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                     />
                   </svg>
-                  จัดการกลุ่มรายงาน{selectMode === 'sell_summary' ? 'การขายยาง' : 'การรับซื้อยาง'}
+                  <span className="lg:hidden">จัดการกลุ่ม</span>
+                  <span className="hidden lg:inline">
+                    จัดการกลุ่มรายงาน{selectMode === 'sell_summary' ? 'การขายยาง' : 'การรับซื้อยาง'}
+                  </span>
                 </button>
               ) : null}
             </div>
@@ -142,8 +145,8 @@ export default function ReportFilterCard({
           />
         </div>
 
-        <div className="relative">
-          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+        <div className="relative sm:col-span-2 lg:col-span-1">
+          <span className="mb-1.5 hidden text-xs font-medium text-transparent select-none lg:block" aria-hidden>
             สร้าง
           </span>
           <button

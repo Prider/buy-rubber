@@ -128,11 +128,9 @@ export default function Layout({ children, navItems }: LayoutProps) {
           <nav className="flex-1 px-2 py-2 overflow-y-auto">
             <div className="space-y-1">
               {navigation.map((item, index) => {
-                // Keep "กำไร/ขาดทุน" highlighted on nested routes like /reports/profit-loss/gangs
                 const isActive =
                   pathname === item.href ||
-                  (item.href === '/reports/profit-loss' &&
-                    pathname.startsWith('/reports/profit-loss/'));
+                  (item.href === '/reports' && pathname.startsWith('/reports/'));
                 return (
                   <Link
                     key={item.href}

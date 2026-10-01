@@ -15,11 +15,8 @@ const TAB_LABELS: Record<(typeof TAB_HREFS)[number], string> = {
 };
 
 export function isNavItemActive(pathname: string, href: string) {
-  if (href === '/reports/profit-loss') {
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
   if (href === '/reports') {
-    return pathname === '/reports';
+    return pathname === '/reports' || pathname.startsWith('/reports/');
   }
   if (href === '/purchases') {
     return pathname === '/purchases' || (pathname.startsWith('/purchases/') && !pathname.startsWith('/purchases-list'));

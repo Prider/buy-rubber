@@ -10,5 +10,4 @@ export const rubberNav: NavItem[] = [
   { name: 'บริษัทปลายทาง', href: '/destination-companies', icon: '🏢' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈' },
-  { name: 'กำไร/ขาดทุน', href: '/reports/profit-loss', icon: '📉' },
 ];
