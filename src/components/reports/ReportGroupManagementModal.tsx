@@ -185,7 +185,7 @@ export default function ReportGroupManagementModal({
   return (
     <Modal
       open={isOpen}
-      className="app-island-modal"
+      className="app-island-modal report-group-modal"
       title={
         <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
           {modalTitle}
@@ -195,7 +195,7 @@ export default function ReportGroupManagementModal({
       typewriter={false}
       onClose={onClose}
       footer={
-        <div className="mr-8 flex items-center gap-3">
+        <div className="report-group-modal-footer flex w-full flex-col gap-2 md:mr-8 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end">
           <Button htmlType="button" onClick={onClose}>
             ปิด
           </Button>
@@ -215,13 +215,13 @@ export default function ReportGroupManagementModal({
         </div>
       }
     >
-      <div className="w-full text-base font-normal px-2">
-        <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
+      <div className="w-full px-0 text-base font-normal sm:px-2">
+        <p className="mb-4 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300 md:mb-6">
           {modalDescription}
         </p>
 
         <div className="grid w-full gap-6 md:grid-cols-2">
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                 ชื่อกลุ่ม (ไม่บังคับ)
@@ -239,16 +239,16 @@ export default function ReportGroupManagementModal({
             </div>
 
             <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   เลือกประเภทสินค้าในกลุ่ม
                 </label>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={selectAllProductTypes}
                     disabled={productTypes.length === 0}
-                    className="rounded-md border border-primary-200 px-2 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
+                    className="whitespace-nowrap rounded-md border border-primary-200 px-2 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
                   >
                     เลือกทั้งหมด
                   </button>
@@ -256,7 +256,7 @@ export default function ReportGroupManagementModal({
                     type="button"
                     onClick={clearProductTypeSelection}
                     disabled={selectedProductTypeIds.length === 0}
-                    className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/40"
+                    className="whitespace-nowrap rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/40"
                   >
                     ล้างค่า
                   </button>
@@ -293,7 +293,7 @@ export default function ReportGroupManagementModal({
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">กลุ่มที่มีอยู่</h3>
               <span className="text-xs text-gray-500 dark:text-gray-400">{groups.length} กลุ่ม</span>

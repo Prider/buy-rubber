@@ -132,50 +132,43 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div>
-          {/* Page Header */}
+      <div className="min-h-[60vh] pb-2">
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <MembersPageHeader
             totalMembers={pagination.total}
             onAddMember={openFormForNew}
           />
 
-          {/* Search Bar */}
           <MembersSearchBar
+            embedded
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onClearSearch={clearSearch}
             isLoading={membersLoading}
             resultCount={members.length}
             totalCount={pagination.total}
+            placeholder="ค้นหาชื่อ รหัส หรือเบอร์โทร"
           />
 
-          {/* Main Content */}
-          <div className="space-y-2">
-            {/* Error Display */}
-            <MembersErrorDisplay error={error || ''} />
+          <MembersErrorDisplay error={error || ''} />
 
-            {/* Members Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <MemberTable
-                members={members}
-                onEdit={openFormForEdit}
-                onDelete={handleDelete}
-                onReactivate={handleReactivate}
-                onViewHistory={historyModal.open}
-                onViewServiceFees={serviceFeeModal.open}
-                isLoading={membersLoading}
-              />
-            </div>
+          <MemberTable
+            members={members}
+            onEdit={openFormForEdit}
+            onDelete={handleDelete}
+            onReactivate={handleReactivate}
+            onViewHistory={historyModal.open}
+            onViewServiceFees={serviceFeeModal.open}
+            isLoading={membersLoading}
+          />
 
-            {/* Pagination Controls */}
-            <MembersPagination
-              pagination={pagination}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-              isLoading={membersLoading}
-            />
-          </div>
+          <MembersPagination
+            embedded
+            pagination={pagination}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            isLoading={membersLoading}
+          />
         </div>
       </div>
 

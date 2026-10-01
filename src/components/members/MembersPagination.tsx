@@ -5,45 +5,55 @@ interface MembersPaginationProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
+  embedded?: boolean;
 }
 
-/**
- * Pagination component for the members page
- * Separated for better testability and reusability
- */
 export const MembersPagination = ({
   pagination,
   currentPage,
   onPageChange,
   isLoading,
+  embedded = false,
 }: MembersPaginationProps) => {
   if (pagination.totalPages <= 1) {
     return null;
   }
 
-  const startItem = ((pagination.page - 1) * pagination.limit) + 1;
+  const startItem = (pagination.page - 1) * pagination.limit + 1;
   const endItem = Math.min(pagination.page * pagination.limit, pagination.total);
 
+  const pageButton =
+    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 sm:min-h-9 sm:min-w-9 sm:rounded-lg';
+
   return (
-    <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 flex items-center justify-between">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          แสดง {startItem} - {endItem} จาก {pagination.total} รายการ
-        </div>
-        <div className="flex items-center gap-2">
+    <div
+      className={
+        embedded
+          ? 'border-t border-gray-100 dark:border-gray-700'
+          : 'mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800'
+      }
+    >
+      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <p className="text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
+          แสดง {startItem}–{endItem} จาก {pagination.total}
+        </p>
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
           <button
+            type="button"
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
             disabled={pagination.page === 1 || isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={pageButton}
           >
             ก่อนหน้า
           </button>
-          
-          {/* Page numbers */}
-          <div className="flex items-center gap-1">
+
+          <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 sm:hidden">
+            {pagination.page}/{pagination.totalPages}
+          </span>
+
+          <div className="hidden items-center gap-1 sm:flex">
             {[...Array(pagination.totalPages)].map((_, i) => {
               const pageNum = i + 1;
-              // Show first page, last page, current page, and pages around current
               if (
                 pageNum === 1 ||
                 pageNum === pagination.totalPages ||
@@ -52,31 +62,35 @@ export const MembersPagination = ({
                 return (
                   <button
                     key={pageNum}
+                    type="button"
                     onClick={() => onPageChange(pageNum)}
                     disabled={isLoading}
-                    className={`min-w-[40px] px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                       pagination.page === pageNum
                         ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+                    }`}
                   >
                     {pageNum}
                   </button>
                 );
-              } else if (
-                pageNum === pagination.page - 2 ||
-                pageNum === pagination.page + 2
-              ) {
-                return <span key={pageNum} className="px-2 text-gray-500">...</span>;
+              }
+              if (pageNum === pagination.page - 2 || pageNum === pagination.page + 2) {
+                return (
+                  <span key={pageNum} className="px-1 text-gray-400">
+                    …
+                  </span>
+                );
               }
               return null;
             })}
           </div>
 
           <button
+            type="button"
             onClick={() => onPageChange(Math.min(pagination.totalPages, currentPage + 1))}
             disabled={pagination.page === pagination.totalPages || isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={pageButton}
           >
             ถัดไป
           </button>
@@ -85,4 +99,3 @@ export const MembersPagination = ({
     </div>
   );
 };
-

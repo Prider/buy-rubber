@@ -152,12 +152,12 @@ export default function ProfitLossReport() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={() => void handleExportPdf()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400"
+            className="w-full rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400 sm:w-auto"
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
@@ -165,7 +165,7 @@ export default function ProfitLossReport() {
             type="button"
             onClick={() => void handleExportExcel()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400"
+            className="w-full rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400 sm:w-auto"
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
@@ -215,7 +215,7 @@ export default function ProfitLossReport() {
           </select>
         </div>
         <div className="relative">
-          <span className="mb-1.5 block text-xs font-medium text-transparent select-none" aria-hidden>
+          <span className="mb-1.5 hidden text-xs font-medium text-transparent select-none sm:block" aria-hidden>
             อัปเดต
           </span>
           <button
@@ -246,7 +246,7 @@ export default function ProfitLossReport() {
 
       {/* Summary */}
       {!error ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { label: 'ยอดขาย', value: formatCurrency(totals.sales) },
             { label: 'ยอดรับซื้อ', value: formatCurrency(totals.purchases) },

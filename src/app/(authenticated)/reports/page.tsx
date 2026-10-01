@@ -254,19 +254,20 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="w-full space-y-8 pb-10">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-            รายงาน
-          </span>
-        </h1>
-      </div>
+    <div className="w-full pb-6 lg:pb-10">
+      <h1 className="mb-8 hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
+        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+          รายงาน
+        </span>
+      </h1>
 
-      <div className="space-y-5" id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
-        <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className="max-md:-mx-4 max-md:-mt-4">
+        <div className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 dark:md:bg-transparent">
+          <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
 
+        <div className="mt-5 space-y-5 px-4 md:px-0 lg:space-y-8">
+      <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
         {activeTab === 'profit_loss' ? <ProfitLossReport /> : null}
         {activeTab === 'profit_loss_gangs' ? <ProfitLossGangsReport /> : null}
 
@@ -407,6 +408,8 @@ export default function ReportsPage() {
           </p>
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 }

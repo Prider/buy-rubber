@@ -38,19 +38,87 @@ interface LayoutProps {
   children: ReactNode;
 }
 
+type SidebarViewport = 'mobile' | 'tablet' | 'desktop';
+
 export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Desktop: collapsed icon rail vs full labels. Mobile/tablet overlay starts closed.
+  const [collapsed, setCollapsed] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [viewport, setViewport] = useState<SidebarViewport>('desktop');
   const [isElectron, setIsElectron] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
+
+  const labelsVisible =
+    viewport === 'mobile' || (viewport === 'tablet' ? overlayOpen : !collapsed);
+  const sidebarExpanded = viewport === 'desktop' ? !collapsed : overlayOpen;
 
   // Check if running in Electron
   useEffect(() => {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
   }, []);
+
+  // Mobile (<768): off-canvas drawer.
+  // Tablet (768–1023): icon rail, menu expands an overlay.
+  // Desktop (≥1024): persistent sidebar that can collapse to icons.
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const desktopQuery = window.matchMedia('(min-width: 1024px)');
+
+    const update = () => {
+      const next: SidebarViewport = mobileQuery.matches
+        ? 'mobile'
+        : desktopQuery.matches
+          ? 'desktop'
+          : 'tablet';
+      setViewport(next);
+      if (next === 'desktop') {
+        setOverlayOpen(false);
+      }
+    };
+
+    update();
+    mobileQuery.addEventListener('change', update);
+    desktopQuery.addEventListener('change', update);
+    return () => {
+      mobileQuery.removeEventListener('change', update);
+      desktopQuery.removeEventListener('change', update);
+    };
+  }, []);
+
+  useEffect(() => {
+    setOverlayOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!overlayOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOverlayOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [overlayOpen]);
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    if (viewport === 'mobile' && !overlayOpen) {
+      sidebar.setAttribute('inert', '');
+    } else {
+      sidebar.removeAttribute('inert');
+    }
+  }, [viewport, overlayOpen]);
+
+  const toggleSidebar = () => {
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setCollapsed((value) => !value);
+      return;
+    }
+    setOverlayOpen((value) => !value);
+  };
 
   // Preload slip settings into localStorage so slipGenerator can render correctly
   useEffect(() => {
@@ -110,46 +178,49 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
+      {/* Sidebar — drawer on phones, icon rail on tablets, persistent column on desktop */}
       <aside
+        id="app-sidebar"
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-200 ease-in-out ${
-          sidebarOpen 
-            ? 'w-44 translate-x-0' 
-            : 'lg:w-16 lg:translate-x-0 -translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden border-r border-gray-200 bg-white transition-[width,transform] duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-800 ${
+          overlayOpen
+            ? 'w-[min(12rem,calc(100vw-3rem))] translate-x-0 shadow-2xl md:w-48 md:shadow-2xl'
+            : 'w-[min(12rem,calc(100vw-3rem))] -translate-x-full md:w-16 md:translate-x-0 md:shadow-none'
+        } ${collapsed ? 'lg:w-16 lg:translate-x-0 lg:shadow-none' : 'lg:w-48 lg:translate-x-0 lg:shadow-none'}`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className={`flex items-center justify-center relative border-b border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
-            sidebarOpen ? 'px-4 py-4' : 'px-2 py-4'
+          <div className={`relative flex items-center justify-center border-b border-gray-200/50 transition-all duration-200 dark:border-gray-700/50 ${
+            labelsVisible ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
-            <Link href="/dashboard" className="flex flex-col items-center justify-center space-y-2 group">
+            <Link href="/dashboard" className="group flex flex-col items-center justify-center" onClick={() => setOverlayOpen(false)}>
               <Logo
                 className={`transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
-                  sidebarOpen ? 'h-10 w-auto' : 'h-8 w-auto'
+                  labelsVisible ? 'h-10 w-auto' : 'h-8 w-8'
                 }`}
               />
             </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden absolute right-5 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors duration-150"
-              aria-label="Close sidebar"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {overlayOpen && (
+              <button
+                onClick={() => setOverlayOpen(false)}
+                className="absolute right-3 rounded-md p-1.5 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700/50 dark:hover:text-gray-300 lg:hidden"
+                aria-label="Close sidebar"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -164,8 +235,9 @@ export default function Layout({ children }: LayoutProps) {
                     key={item.href}
                     href={item.href}
                     data-nav-link={item.href}
-                    className={`group relative flex items-center rounded-lg transition-all duration-300 ease-out opacity-0 animate-fadeInUp ${
-                      sidebarOpen ? 'px-2 py-2.5' : 'px-2 py-2.5 justify-center'
+                    onClick={() => setOverlayOpen(false)}
+                    className={`group relative flex min-h-11 items-center rounded-lg px-2 py-2.5 opacity-0 transition-all duration-300 ease-out animate-fadeInUp ${
+                      labelsVisible ? '' : 'justify-center'
                     } ${
                       isActive
                         ? 'text-blue-700 dark:text-blue-300'
@@ -174,7 +246,7 @@ export default function Layout({ children }: LayoutProps) {
                     style={{
                       animationDelay: `${index * 40}ms`,
                     }}
-                    title={!sidebarOpen ? item.name : undefined}
+                    title={labelsVisible ? undefined : item.name}
                   >
                     {/* Active indicator - animated right border */}
                     {isActive && (
@@ -200,8 +272,8 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
 
                     {/* Label */}
-                    <span className={`relative z-10 text-sm font-medium transition-all duration-300 overflow-hidden whitespace-nowrap ${
-                      sidebarOpen ? 'ml-2 opacity-100' : 'ml-0 w-0 opacity-0'
+                    <span className={`relative z-10 overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 ${
+                      labelsVisible ? 'ml-2 w-auto opacity-100' : 'ml-0 w-0 opacity-0'
                     } ${
                       isActive ? 'font-semibold' : 'font-normal'
                     }`}>
@@ -217,50 +289,51 @@ export default function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* User info */}
-          <div className={`border-t border-gray-200/50 dark:border-gray-700/50 transition-all duration-200 ${
-            sidebarOpen ? 'px-3 py-4' : 'px-0 py-4'
+          <div className={`border-t border-gray-200/50 pb-[max(1rem,env(safe-area-inset-bottom))] transition-all duration-200 dark:border-gray-700/50 ${
+            labelsVisible ? 'px-3 pt-4' : 'px-1 pt-3'
           }`}>
-            <div className={`flex items-center transition-all duration-200 ${
-              sidebarOpen ? 'space-x-3' : 'justify-center'
+            <div className={`flex transition-all duration-200 ${
+              labelsVisible ? 'items-center gap-3' : 'flex-col items-center gap-2'
             }`}>
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-sm">
+                <div className={`flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 font-semibold text-white shadow-sm ${
+                  labelsVisible ? 'h-10 w-10 rounded-xl text-base' : 'h-8 w-8 rounded-lg text-sm'
+                }`}>
                   {user?.username?.charAt(0) || 'A'}
                 </div>
               </div>
-              {sidebarOpen && (
-                <div className="flex-1 min-w-0 transition-all duration-200 overflow-hidden">
-                  <p className="text-sm font-semibold truncate">
-                    <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+              {labelsVisible && (
+                <div className="min-w-0 flex-1 overflow-hidden transition-all duration-200">
+                  <p className="truncate text-sm font-semibold">
+                    <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
                       {user?.username || 'ผู้ใช้งาน'}
                     </span>
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
+                  <p className="truncate text-xs capitalize text-gray-500 dark:text-gray-400">
                     {user?.role || 'User'}
                   </p>
                 </div>
               )}
-              {sidebarOpen && (
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group flex-shrink-0"
-                  title="ออกจากระบบ"
+              <button
+                onClick={handleLogout}
+                className="group flex-shrink-0 rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                title="ออกจากระบบ"
+                aria-label="ออกจากระบบ"
+              >
+                <svg
+                  className="h-4 w-4 transition-transform group-hover:scale-110"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-4 h-4 group-hover:scale-110 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                </button>
-              )}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -268,21 +341,21 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <div
-        className={`flex h-full min-h-0 min-w-0 flex-col transition-all duration-200 ${
-          sidebarOpen ? 'lg:pl-44' : 'lg:pl-16'
+        className={`flex h-full min-h-0 min-w-0 flex-col transition-[padding] duration-200 md:pl-16 ${
+          collapsed ? 'lg:pl-16' : 'lg:pl-48'
         }`}
       >
         {/* Top bar */}
-        <header className="shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 shadow-sm">
-          <div className="relative flex items-center justify-between px-6 py-3">
-            {/* Left side - Menu button */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group"
-                aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+        <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80">
+          <div className="relative flex items-center justify-between gap-2 px-3 py-3 sm:px-4 lg:px-6">
+            <button
+                onClick={toggleSidebar}
+                className="group relative z-10 shrink-0 rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                aria-controls="app-sidebar"
+                aria-expanded={sidebarExpanded}
+                aria-label={sidebarExpanded ? "Close sidebar" : "Open sidebar"}
               >
-                {sidebarOpen ? (
+                {sidebarExpanded ? (
                   <svg
                     className="w-5 h-5 group-hover:scale-110 transition-transform"
                     fill="none"
@@ -312,12 +385,8 @@ export default function Layout({ children }: LayoutProps) {
                   </svg>
                 )}
               </button>
-              
-            </div>
 
-            {/* Center - Company name */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:text-white bg-clip-text text-transparent"> 
+            <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:text-base lg:text-lg">
                 <span className="text-fuchsia-500 dark:text-fuchsia-400">P</span>
                 <span className="text-violet-500 dark:text-violet-400">u</span>
                 <span className="text-violet-500 dark:text-sky-400">n</span>
@@ -325,12 +394,12 @@ export default function Layout({ children }: LayoutProps) {
                 <span className="text-amber-500 dark:text-amber-400">o</span>
                 <span className="text-fuchsia-500 dark:text-amber-400">o</span>
                 <span className="text-violet-500 dark:text-violet-400">k</span>
-                <span className="dark:text-white">  Innotech ( {process.env.NEXT_PUBLIC_COMPANY_NAME || 'สินทวี'} )</span>
-              </h1>
-            </div>
+                <span className="hidden dark:text-white sm:inline"> Innotech</span>
+                <span className="hidden dark:text-white md:inline"> ( {process.env.NEXT_PUBLIC_COMPANY_NAME || 'สินทวี'} )</span>
+            </h1>
 
             {/* Right side - Controls */}
-            <div className="flex items-center space-x-3">
+            <div className="relative z-10 flex shrink-0 items-center gap-2 sm:gap-3">
               {/* Mode Switcher - Only show in Electron */}
               {isElectron && (
                 <div className="hidden md:block">
@@ -349,18 +418,17 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Page content — flex-1 + min-h-0 so pages (e.g. sales table) can fill remaining viewport height */}
         <main
-          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-6"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 lg:p-6"
           ref={mainContentRef}
         >
           {children}
         </main>
       </div>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
+      {overlayOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setOverlayOpen(false)}
         />
       )}
     </div>

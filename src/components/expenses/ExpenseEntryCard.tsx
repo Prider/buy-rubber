@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAlert } from '@/hooks/useAlert';
 
+const FORM_ID = 'expense-form';
+
 interface ExpenseFormData {
   date: string;
   category: string;
@@ -12,10 +14,12 @@ interface ExpenseFormData {
 }
 
 interface ExpenseEntryCardProps {
+  isOpen: boolean;
+  onClose: () => void;
   onSubmit: (data: ExpenseFormData) => Promise<void>;
 }
 
-export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) => {
+export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onClose, onSubmit }) => {
   const { categories, expenses } = useExpenses();
   const { showWarning, showError } = useAlert();
   // Helper function to get current datetime in local time format
@@ -116,6 +120,24 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const resetForm = () => {
+    setExpenseData({
+      date: getCurrentDateTimeLocal(),
+      category: '',
+      amount: '',
+      description: '',
+    });
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -130,16 +152,8 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
         ...expenseData,
         amount: parseFloat(expenseData.amount),
       });
-      
-      // Reset form
-      setExpenseData({
-        date: getCurrentDateTimeLocal(),
-        category: '',
-        amount: '',
-        description: '',
-      });
-      setSuggestions([]);
-      setShowSuggestions(false);
+      resetForm();
+      onClose();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
       showError('เกิดข้อผิดพลาด', errorMessage);
@@ -148,27 +162,39 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
     }
   };
 
-  return (
-    <div
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
-      tabIndex={0}
-      role="region"
-      aria-label="แบบฟอร์มบันทึกค่าใช้จ่าย"
-    >
-      {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-2">
-          <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            บันทึกค่าใช้จ่าย
-          </h2>
-        </div>
-      </div>
+  const handleCancel = () => {
+    if (submitting) return;
+    resetForm();
+    onClose();
+  };
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1100] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50" onClick={handleCancel} aria-hidden="true" />
+      <div className="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="expense-form-title"
+          className="relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl"
+        >
+          <div className="border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:px-6">
+            <h2
+              id="expense-form-title"
+              className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-center text-xl font-bold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 sm:text-2xl"
+            >
+              บันทึกค่าใช้จ่าย
+            </h2>
+          </div>
+
+          <div
+            className="overflow-y-auto p-4 sm:p-6"
+            role="region"
+            aria-label="แบบฟอร์มบันทึกค่าใช้จ่าย"
+          >
+        <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4">
         {/* Date and Time */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -178,7 +204,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
             type="datetime-local"
             value={expenseData.date}
             onChange={(e) => setExpenseData({ ...expenseData, date: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="h-11 w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
             required
           />
         </div>
@@ -197,7 +223,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
             onFocus={() => {
               handleCategoryChange(expenseData.category);
             }}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="h-11 w-full min-w-0 rounded-xl border border-gray-300 px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
             placeholder="ระบุประเภท (เช่น ค่าน้ำมัน, ค่าซ่อมรถ)"
             required
           />
@@ -213,7 +239,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
                   key={index}
                   type="button"
                   onClick={() => selectSuggestion(suggestion)}
-                  className={`w-full px-4 py-3 text-left transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl ${
+                  className={`min-h-11 w-full px-4 py-3 text-left text-sm transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl ${
                     selectedIndex === index
                       ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -247,7 +273,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
                 inputRef.current?.focus();
               }
             }}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="h-11 w-full min-w-0 rounded-xl border border-gray-300 px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
             placeholder="0.00"
             required
           />
@@ -271,36 +297,35 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ onSubmit }) 
                 amountInput?.focus();
               }
             }}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="w-full min-w-0 rounded-xl border border-gray-300 px-3 py-2.5 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
             rows={3}
             placeholder="เพิ่มรายละเอียด..."
           />
         </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {submitting ? (
-            <span className="flex items-center justify-center space-x-2">
-              <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              <span>กำลังบันทึก...</span>
-            </span>
-          ) : (
-            <span className="flex items-center justify-center space-x-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>บันทึกค่าใช้จ่าย</span>
-            </span>
-          )}
-        </button>
       </form>
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-200 px-4 py-4 dark:border-gray-700 sm:flex-row sm:justify-end sm:px-6">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={submitting}
+              className="min-h-11 w-full rounded-xl bg-gray-100 px-6 py-3 font-medium text-gray-700 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 sm:w-auto"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="submit"
+              form={FORM_ID}
+              disabled={submitting}
+              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-6 py-3 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto"
+            >
+              {submitting ? 'กำลังบันทึก...' : 'บันทึกค่าใช้จ่าย'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

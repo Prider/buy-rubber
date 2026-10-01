@@ -17,14 +17,23 @@ async function gotoExpensesPage(page: Page) {
   const expensesReq = page.waitForResponse((r) => r.url().includes('/api/expenses') && r.ok())
   await page.goto('/expenses')
   await expect(page.getByRole('heading', { name: 'บันทึกค่าใช้จ่าย', level: 1 })).toBeVisible()
-  await expect(expenseForm(page)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'บันทึกค่าใช้จ่าย' })).toBeVisible()
   await expect(page.getByRole('group', { name: 'ค่าใช้จ่ายวันนี้' })).toBeVisible()
   await expect(page.getByRole('group', { name: 'ค่าใช้จ่ายเดือนนี้' })).toBeVisible()
   await expensesReq
 }
 
+function expenseModal(page: Page) {
+  return page.getByRole('dialog', { name: 'บันทึกค่าใช้จ่าย' })
+}
+
 function expenseForm(page: Page) {
   return page.getByRole('region', { name: 'แบบฟอร์มบันทึกค่าใช้จ่าย' })
+}
+
+async function openExpenseForm(page: Page) {
+  await page.getByRole('button', { name: 'บันทึกค่าใช้จ่าย' }).click()
+  await expect(expenseForm(page)).toBeVisible()
 }
 
 async function getTodaySummary(page: Page): Promise<{ total: number; count: number }> {
@@ -41,6 +50,7 @@ async function submitExpense(
   page: Page,
   data: { category: string; amount: string; description?: string }
 ): Promise<string | null> {
+  await openExpenseForm(page)
   const form = expenseForm(page)
   await form.getByPlaceholder(/ระบุประเภท/i).fill(data.category)
   await form.getByPlaceholder('0.00').fill(data.amount)
@@ -54,7 +64,7 @@ async function submitExpense(
   const reloadReq = page.waitForResponse(
     (r) => r.url().includes('/api/expenses') && r.request().method() === 'GET'
   )
-  await form.getByRole('button', { name: 'บันทึกค่าใช้จ่าย' }).click()
+  await expenseModal(page).getByRole('button', { name: 'บันทึกค่าใช้จ่าย' }).click()
   const saveRes = await saveReq
   expect(saveRes.status()).toBe(200)
   await reloadReq
@@ -155,6 +165,7 @@ test.describe('Expense flow', () => {
 
   test('REQ-EXP-04: expense categories available', async ({ page }) => {
     await gotoExpensesPage(page)
+    await openExpenseForm(page)
 
     const categoryInput = expenseForm(page).getByPlaceholder(/ระบุประเภท/i)
     await categoryInput.focus()

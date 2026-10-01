@@ -85,4 +85,40 @@
   border-color: #4b5563;
 }
 
+/* Report group modal: phone and tablet stay inside the island shape. */
+@media (max-width: 1023px) {
+  .report-group-modal {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .report-group-modal.app-island-modal .animal-title-s6pv3 {
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  .report-group-modal .animal-header-udOSi {
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-width: 767px) {
+  .report-group-modal .animal-modalClipped-7IuAw {
+    padding: 64px 48px 24px;
+  }
+
+  .report-group-modal.app-island-modal .animal-title-s6pv3 {
+    width: auto;
+    max-width: 15rem;
+    margin-right: auto;
+    margin-left: auto;
+    font-size: 17px;
+    line-height: 1.35;
+  }
+
+  .report-group-modal .report-group-modal-footer .animal-btn-QoKe1 {
+    width: 100%;
+  }
+}
+
 
