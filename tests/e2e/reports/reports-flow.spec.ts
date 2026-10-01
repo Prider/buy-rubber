@@ -286,8 +286,8 @@ test.describe.serial('Reports flow', () => {
     const plReq = page.waitForResponse(
       (r) => r.url().includes('/api/reports/profit-loss') && r.ok()
     )
-    await page.goto('/reports/profit-loss')
-    await expect(page.getByRole('heading', { name: /รายงานกำไร/ })).toBeVisible()
+    await page.goto('/reports?tab=profit_loss')
+    await expect(page.getByRole('heading', { name: 'กำไร / ขาดทุน' })).toBeVisible()
     await plReq
 
     await page.locator('select').selectOption('daily')

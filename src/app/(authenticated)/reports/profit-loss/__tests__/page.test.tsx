@@ -33,9 +33,9 @@ vi.mock('../exportExcel', () => ({
 import { useAuth } from '@/contexts/AuthContext';
 import { downloadProfitLossExcel } from '../exportExcel';
 import { downloadProfitLossPdf } from '../exportPdf';
-import ProfitLossReportPage from '../page';
+import ProfitLossReport from '../ProfitLossReport';
 
-describe('ProfitLossReportPage', () => {
+describe('ProfitLossReport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuth).mockReturnValue({
@@ -76,12 +76,12 @@ describe('ProfitLossReportPage', () => {
       isLoading: true,
     } as ReturnType<typeof useAuth>);
 
-    render(<ProfitLossReportPage />);
+    render(<ProfitLossReport />);
     expect(screen.getByText('กำลังโหลด...')).toBeInTheDocument();
   });
 
   it('loads report data and renders summary + table', async () => {
-    render(<ProfitLossReportPage />);
+    render(<ProfitLossReport />);
 
     await waitFor(() => {
       expect(axios.get).toHaveBeenCalledWith('/api/reports/profit-loss', expect.any(Object));
@@ -96,7 +96,7 @@ describe('ProfitLossReportPage', () => {
 
   it('calls downloadProfitLossPdf when Export PDF is clicked', async () => {
     const user = userEvent.setup();
-    render(<ProfitLossReportPage />);
+    render(<ProfitLossReport />);
 
     const pdfButton = await screen.findByRole('button', { name: 'Export PDF' });
     await waitFor(() => expect(pdfButton).toBeEnabled());
@@ -110,7 +110,7 @@ describe('ProfitLossReportPage', () => {
 
   it('calls downloadProfitLossExcel when Export Excel is clicked', async () => {
     const user = userEvent.setup();
-    render(<ProfitLossReportPage />);
+    render(<ProfitLossReport />);
 
     const excelButton = await screen.findByRole('button', { name: 'Export Excel' });
     await waitFor(() => expect(excelButton).toBeEnabled());
@@ -125,7 +125,7 @@ describe('ProfitLossReportPage', () => {
   it('shows an error message when the report request fails', async () => {
     vi.mocked(axios.get).mockRejectedValueOnce(new Error('network'));
 
-    render(<ProfitLossReportPage />);
+    render(<ProfitLossReport />);
 
     expect(await screen.findByText('ไม่สามารถโหลดรายงานกำไร/ขาดทุนได้')).toBeInTheDocument();
   });

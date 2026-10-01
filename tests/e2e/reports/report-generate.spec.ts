@@ -36,9 +36,11 @@ test.describe('Report generation', () => {
     ).toBeVisible()
   })
 
-  test('profit-loss report page loads', async ({ page }) => {
-    await page.goto('/reports/profit-loss')
-    await expect(page.getByRole('heading', { name: /กำไร|ขาดทุน|Profit/i })).toBeVisible()
+  test('profit-loss report tab loads', async ({ page }) => {
+    await page.goto('/reports?tab=profit_loss')
+    await expect(page.getByRole('heading', { name: 'รายงาน', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'กำไร/ขาดทุน' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('heading', { name: 'กำไร / ขาดทุน' })).toBeVisible()
   })
 
   test('PDF export button is present', async ({ page }) => {

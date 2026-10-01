@@ -63,13 +63,6 @@ const WEB_NAV_ROUTES: Array<{
     },
   },
   {
-    name: 'กำไร/ขาดทุน',
-    href: '/reports/profit-loss',
-    verify: async (page) => {
-      await expect(page.getByRole('heading', { name: /รายงานกำไร/ })).toBeVisible()
-    },
-  },
-  {
     name: 'ตั้งค่า',
     href: '/admin',
     verify: async (page) => {

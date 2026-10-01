@@ -49,7 +49,7 @@ vi.mock('../exportExcel', () => ({
   downloadGangsExcel: vi.fn(),
 }));
 
-import ProfitLossGangsReportPage from '../page';
+import ProfitLossGangsReport from '../ProfitLossGangsReport';
 
 function toPageRow(gang: (typeof DATE_FILTER_GANG_FIXTURES)[number]) {
   const revenue = Object.values(gang.saleAmounts).reduce((sum, amount) => sum + amount, 0);
@@ -72,7 +72,7 @@ function gangsForRange(startDate: string, endDate: string) {
 }
 
 async function renderLoadedPage() {
-  render(<ProfitLossGangsReportPage />);
+  render(<ProfitLossGangsReport />);
   expect(await screen.findByRole('heading', { name: 'กำไร / ขาดทุนต่อกอง' })).toBeInTheDocument();
   expect(await screen.findByRole('button', { name: 'อัปเดตรายงาน' })).toBeEnabled();
 }

@@ -1,5 +1,5 @@
 /**
- * Seed closed stock "gangs" (กอง) for load-testing /reports/profit-loss/gangs.
+ * Seed closed stock "gangs" (กอง) for load-testing /reports?tab=profit_loss_gangs.
  *
  * The gangs API scans StockLedgerEntry for a product type and splits cycles whenever
  * balance goes 0 → >0 → 0. Matching Sale rows are needed for revenue.
@@ -9,7 +9,7 @@
  *   npm run db:seed:gangs:for:test
  *
  * Defaults create ~100,000 ledger rows (50,000 closed gangs × 1 purchase + 1 sale),
- * spread across the last 18 months so /reports/profit-loss/gangs date filters have
+ * spread across the last 18 months so the per-gang profit-loss tab date filters have
  * gangs in different months (including the current month and one open gang).
  *
  * Optional env:
@@ -338,13 +338,13 @@ async function main() {
   console.log(`   - ledger entries: ${createdLedger.toLocaleString()}`);
   console.log(`   - final stock balance: ${state.qtyKg} kg`);
   console.log('');
-  console.log('ทดสอบตัวกรองวันที่ที่ /reports/profit-loss/gangs :');
+  console.log('ทดสอบตัวกรองวันที่ที่ /reports?tab=profit_loss_gangs :');
   console.log('   - ค่าเริ่มต้นของหน้า = วันที่ 1 ของเดือนนี้ → วันนี้ (ควรเห็นกองช่วงท้าย + กองที่ยังเปิด)');
   console.log(`   - ทั้งช่วง ${SPAN_MONTHS} เดือน = ${spanStart.toISOString().slice(0, 10)} → วันนี้`);
   console.log('   - เดือนก่อนหน้า = ควรเห็นกองน้อยลงกว่าทั้งช่วง');
   console.log('');
   console.log(
-    `เปิด /reports/profit-loss/gangs?productTypeId=${productType.id} เพื่อทดสอบโหลด`,
+    `เปิด /reports?tab=profit_loss_gangs&productTypeId=${productType.id} เพื่อทดสอบโหลด`,
   );
 }
 
