@@ -5,9 +5,12 @@ import GamerLoader from '@/components/GamerLoader';
 import SalesFormCard from '@/components/sales/SalesFormCard';
 import SalesTable from '@/components/sales/SalesTable';
 import StockPositionsPanel from '@/components/stock/StockPositionsPanel';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSalesPageController } from './useSalesPageController';
 
 export default function SalesPage() {
+  const { hasAnyRole } = useAuth();
+  const canManageSales = hasAnyRole(['admin']);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const {
@@ -120,8 +123,8 @@ export default function SalesPage() {
             deletingSaleId={deletingSaleId}
             onSearchChange={handleSearchChange}
             onClearSearch={handleClearSearch}
-            onEdit={handleEditSale}
-            onDelete={handleDelete}
+            onEdit={canManageSales ? handleEditSale : undefined}
+            onDelete={canManageSales ? handleDelete : undefined}
             onAddSale={openNewSale}
             onRecordDelivery={() => setIsDeliveryOpen(true)}
             onPageChange={setCurrentPage}

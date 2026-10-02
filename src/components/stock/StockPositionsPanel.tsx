@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import GamerLoader from '@/components/GamerLoader';
 import { ListPagination } from '@/components/pagination/ListPagination';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { getMaxProductTypes } from '@/lib/maxProductTypes';
 import { formatCurrency, formatNumber } from '@/lib/utils';
@@ -88,6 +89,7 @@ function StockRowActions({
   layout,
   isInactive,
   showAdminActions,
+  canManageProductTypes,
   onHistory,
   onEdit,
   onSuspend,
@@ -97,6 +99,7 @@ function StockRowActions({
   layout: 'table' | 'card';
   isInactive: boolean;
   showAdminActions: boolean;
+  canManageProductTypes: boolean;
   onHistory: () => void;
   onEdit: () => void;
   onSuspend: () => void;
@@ -127,13 +130,15 @@ function StockRowActions({
           >
             ประวัติ
           </button>
-          <button
-            type="button"
-            onClick={onEdit}
-            className={`${buttonClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
-          >
-            แก้ไข
-          </button>
+          {canManageProductTypes ? (
+            <button
+              type="button"
+              onClick={onEdit}
+              className={`${buttonClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
+            >
+              แก้ไข
+            </button>
+          ) : null}
         </>
       ) : null}
       {isInactive ? (
@@ -153,7 +158,7 @@ function StockRowActions({
           >
             กำลังนำส่ง
           </button>
-          {showAdminActions ? (
+          {canManageProductTypes ? (
             <button
               type="button"
               onClick={onDelete}
@@ -182,7 +187,11 @@ export default function StockPositionsPanel({
   headerAction?: React.ReactNode;
 }) {
   const router = useRouter();
+  const { hasAnyRole } = useAuth();
   const { showSuccess, showError, showConfirm } = useAlert();
+  const isAdmin = hasAnyRole(['admin']);
+  const canManageProductTypes = showAdminActions && isAdmin;
+  const canAddProductType = showAddButton && isAdmin;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -424,12 +433,12 @@ export default function StockPositionsPanel({
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 {loading
                   ? 'กำลังโหลด...'
-                  : `ใช้งาน ${activeCount} · กำลังนำส่ง ${inactiveCount}${showAddButton ? ` · สูงสุด ${MAX_PRODUCT_TYPES}` : ''}`}
+                  : `ใช้งาน ${activeCount} · กำลังนำส่ง ${inactiveCount}${canAddProductType ? ` · สูงสุด ${MAX_PRODUCT_TYPES}` : ''}`}
               </p>
             </div>
-            {showAddButton || headerAction ? (
+            {canAddProductType || headerAction ? (
               <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
-                {showAddButton ? (
+                {canAddProductType ? (
                   <button
                     type="button"
                     onClick={openProductTypeForm}
@@ -453,7 +462,7 @@ export default function StockPositionsPanel({
 
           {!loading ? (
           <>
-          {showAddButton && isMaxReached ? (
+          {canAddProductType && isMaxReached ? (
             <p className="border-b border-gray-100 px-5 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
               สามารถเพิ่มประเภทสินค้าได้สูงสุด {MAX_PRODUCT_TYPES} รายการ
             </p>
@@ -537,6 +546,7 @@ export default function StockPositionsPanel({
                           layout="card"
                           isInactive={isInactive}
                           showAdminActions={showAdminActions}
+                          canManageProductTypes={canManageProductTypes}
                           onHistory={() => router.push(`/stock/${row.productTypeId}`)}
                           onEdit={() => handleEditProductType(productType)}
                           onSuspend={() => handleSuspendProductType(productType)}
@@ -617,6 +627,7 @@ export default function StockPositionsPanel({
                           layout="table"
                           isInactive={isInactive}
                           showAdminActions={showAdminActions}
+                          canManageProductTypes={canManageProductTypes}
                           onHistory={() => router.push(`/stock/${row.productTypeId}`)}
                           onEdit={() => handleEditProductType(productType)}
                           onSuspend={() => handleSuspendProductType(productType)}
