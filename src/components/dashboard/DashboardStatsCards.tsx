@@ -50,7 +50,7 @@ const StatCard = memo<StatCardProps>(({
 
   // Memoize all class names to prevent recalculation
   const containerClassName = useMemo(
-    () => `relative overflow-hidden bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-200 border ${borderColor}`,
+    () => `relative min-w-0 overflow-hidden bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-2xl p-3.5 shadow-sm hover:shadow-lg transition-shadow duration-200 border md:p-5 lg:p-6 ${borderColor}`,
     [gradientFrom, gradientTo, borderColor]
   );
 
@@ -62,22 +62,22 @@ const StatCard = memo<StatCardProps>(({
   return (
     <div className={containerClassName}>
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl shadow-sm">
+        <div className="mb-2 flex items-center justify-between gap-2 lg:mb-4 lg:items-start">
+          <div className="rounded-lg bg-white/80 p-2 shadow-sm dark:bg-gray-900/40 lg:rounded-xl lg:p-3">
             {icon}
           </div>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badgeBg} text-white`}>
+          <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white lg:px-3 lg:py-1 lg:text-xs ${badgeBg}`}>
             {label}
           </span>
         </div>
-        <div className="space-y-2">
-          <p className={`text-sm font-semibold ${textColor} uppercase tracking-wider`}>
+        <div className="space-y-1 lg:space-y-2">
+          <p className={`text-xs font-semibold leading-snug ${textColor} lg:text-sm`}>
             {title}
           </p>
-          <p className="text-4xl font-bold text-gray-900 dark:text-white">
+          <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white md:text-3xl lg:text-4xl">
             {value || 0}
           </p>
-          <p className={`text-base font-semibold ${textColor}`}>
+          <p className={`break-words text-sm font-semibold tabular-nums ${textColor} lg:text-base`}>
             {formattedAmount}
           </p>
         </div>
@@ -99,29 +99,47 @@ interface MembersCardProps {
 
 const MembersCard = memo<MembersCardProps>(({ activeMembers, totalMembers, icon }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-blue-200/50 dark:border-blue-800/30 lg:col-span-1">
-      {/* Animated gradient background overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-indigo-400/20 to-purple-400/20 dark:from-blue-500/10 dark:via-indigo-500/10 dark:to-purple-500/10 animate-gradient opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-      
+    <div className="relative h-full overflow-hidden rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 shadow-sm transition-all duration-300 hover:shadow-lg dark:border-blue-800/30 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 md:p-5 lg:p-6">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-indigo-400/20 to-purple-400/20 opacity-0 transition-opacity duration-300 hover:opacity-100 dark:from-blue-500/10 dark:via-indigo-500/10 dark:to-purple-500/10"></div>
+
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+        <div className="flex items-center gap-3 lg:hidden">
+          <div className="shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shadow-lg">
             {icon}
           </div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-500 dark:via-indigo-500 dark:to-purple-500 text-white shadow-md">
-            สมาชิกที่มีการซื้อยาง
-          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-blue-700 dark:text-blue-300">
+              สมาชิกที่ active
+            </p>
+            <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+              จากทั้งหมด <span className="font-semibold text-blue-700 dark:text-blue-300">{totalMembers}</span> ราย
+            </p>
+          </div>
+          <p className="shrink-0 text-3xl font-bold tabular-nums text-blue-700 dark:text-blue-300 md:text-4xl">
+            {activeMembers}
+          </p>
         </div>
-        <div className="space-y-2 text-center">
-          <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
-            สมาชิกที่ active
-          </p>
-          <p className="text-5xl font-bold bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent animate-gradient">
-           {activeMembers}
-          </p>
-          <p className="text-xl font-medium text-gray-600 dark:text-gray-400">
-            จากทั้งหมด <span className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">{totalMembers}</span> ราย
-          </p>
+
+        <div className="hidden lg:block">
+          <div className="mb-4 flex items-start justify-between gap-2">
+            <div className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-lg">
+              {icon}
+            </div>
+            <span className="inline-flex max-w-[11rem] items-center rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-3 py-1 text-center text-xs font-medium leading-snug text-white shadow-md dark:from-blue-500 dark:via-indigo-500 dark:to-purple-500">
+              สมาชิกที่มีการซื้อยาง
+            </span>
+          </div>
+          <div className="space-y-2 text-center">
+            <p className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-lg font-semibold text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
+              สมาชิกที่ active
+            </p>
+            <p className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-5xl font-bold tabular-nums text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
+              {activeMembers}
+            </p>
+            <p className="text-xl font-medium text-gray-600 dark:text-gray-400">
+              จากทั้งหมด <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text font-semibold text-transparent dark:from-blue-400 dark:to-indigo-400">{totalMembers}</span> ราย
+            </p>
+          </div>
         </div>
       </div>
       {/* Animated decorative gradient circles */}
@@ -195,9 +213,8 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-4 md:space-y-5 lg:space-y-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 lg:gap-6">
         
         {/* Today Purchases Card */}
         <StatCard
@@ -313,16 +330,14 @@ function DashboardStatsCardsComponent({ stats }: DashboardStatsCardsProps) {
       </div>
 
       {/* Members Card and Today Purchases by Product Type - Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Bigger */}
-        <div className="lg:col-span-2">
-          <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 md:gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="order-2 min-w-0 lg:order-1 lg:col-span-2">
+          <div className="space-y-4 md:space-y-5 lg:space-y-6">
             <TodayPurchasesCardByProductType stats={stats} />
             <TodayWeightsCardByProductType stats={stats} />
           </div>
         </div>
-        {/* Right Column - Smaller */}
-        <div className="lg:col-span-1">
+        <div className="order-1 min-w-0 lg:order-2">
           <MembersCard
             activeMembers={stats.activeMembers || 0}
             totalMembers={stats.totalMembers || 0}
