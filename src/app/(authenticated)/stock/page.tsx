@@ -55,6 +55,14 @@ function toProductType(row: StockPositionRow): ProductType {
   };
 }
 
+function profitLossValue(row: StockPositionRow): number | null {
+  if (row.avgSellingPricePerKg == null) return null;
+  if (row.soldKg != null && row.soldKg > 0) {
+    return (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg;
+  }
+  return null;
+}
+
 function ProfitLossCell({ value }: { value: number | null | undefined }) {
   if (value == null || !Number.isFinite(value)) {
     return <span className="text-gray-400 dark:text-gray-500">–</span>;
@@ -74,6 +82,80 @@ function ProfitLossCell({ value }: { value: number | null | undefined }) {
       {prefix}
       {formatCurrency(value)}
     </span>
+  );
+}
+
+function StockRowActions({
+  layout,
+  isInactive,
+  onHistory,
+  onEdit,
+  onSuspend,
+  onReactivate,
+  onDelete,
+}: {
+  layout: 'table' | 'card';
+  isInactive: boolean;
+  onHistory: () => void;
+  onEdit: () => void;
+  onSuspend: () => void;
+  onReactivate: () => void;
+  onDelete: () => void;
+}) {
+  const buttonClass =
+    layout === 'card'
+      ? 'min-h-11 rounded-xl px-3 py-2 text-sm font-medium transition-colors'
+      : actionClass;
+
+  return (
+    <div
+      className={
+        layout === 'card'
+          ? 'grid grid-cols-2 gap-2'
+          : 'flex items-center justify-end gap-1 whitespace-nowrap'
+      }
+    >
+      <button
+        type="button"
+        onClick={onHistory}
+        className={`${buttonClass} text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30`}
+      >
+        ประวัติ
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        className={`${buttonClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
+      >
+        แก้ไข
+      </button>
+      {isInactive ? (
+        <button
+          type="button"
+          onClick={onReactivate}
+          className={`${buttonClass} text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30`}
+        >
+          เปิดใช้งาน
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={onSuspend}
+            className={`${buttonClass} text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30`}
+          >
+            กำลังนำส่ง
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className={`${buttonClass} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30`}
+          >
+            ลบ
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -318,7 +400,7 @@ export default function StockPage() {
         {error ? <p className="mb-4 text-red-600">{error}</p> : null}
 
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
+          <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
             <div>
               <h1 className="text-base font-semibold">
                 <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
@@ -333,7 +415,7 @@ export default function StockPage() {
               type="button"
               onClick={openProductTypeForm}
               disabled={isMaxReached}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400 lg:min-h-0 lg:w-auto lg:justify-start"
             >
               <span aria-hidden="true">+</span>
               <span>{isMaxReached ? 'ครบจำนวนสูงสุด' : 'เพิ่มประเภท'}</span>
@@ -346,7 +428,92 @@ export default function StockPage() {
             </p>
           )}
 
-          <div className="overflow-auto">
+          <div className="lg:hidden">
+            {sortedRows.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-500">ยังไม่มีประเภทสินค้า</p>
+            ) : (
+              <ul className="flex flex-col gap-3 p-3 md:grid md:grid-cols-2 md:p-4">
+                {pagedRows.map((row) => {
+                  const productType = toProductType(row);
+                  const isInactive = productType.isActive === false;
+                  const struck = isInactive
+                    ? 'line-through decoration-2 decoration-yellow-400 dark:decoration-yellow-300'
+                    : '';
+                  return (
+                    <li
+                      key={row.productTypeId}
+                      className={`rounded-xl border p-3 ${
+                        isInactive
+                          ? 'border-amber-200/80 bg-amber-50/50 dark:border-amber-900/40 dark:bg-gray-900/40'
+                          : 'border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/30'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/stock/${row.productTypeId}`)}
+                        className="flex w-full items-start justify-between gap-3 text-left"
+                      >
+                        <span className="min-w-0">
+                          <span className={`block font-mono text-xs text-gray-500 dark:text-gray-400 ${struck}`}>
+                            {row.productType.code}
+                          </span>
+                          <span className={`mt-0.5 block text-base font-semibold text-gray-900 dark:text-gray-100 ${struck}`}>
+                            {row.productType.name}
+                          </span>
+                        </span>
+                        {isInactive ? (
+                          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                            กำลังนำส่ง
+                          </span>
+                        ) : null}
+                      </button>
+
+                      <dl className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">สต็อกคงเหลือ (kg)</dt>
+                          <dd className={`mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
+                            {formatNumber(row.quantityKg)}
+                          </dd>
+                        </div>
+                        <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ต้นทุน / kg</dt>
+                          <dd className={`mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
+                            {formatCurrency(row.avgCostPerKg)}
+                          </dd>
+                        </div>
+                        <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ราคาขาย / kg</dt>
+                          <dd className={`mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
+                            {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
+                          </dd>
+                        </div>
+                        <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</dt>
+                          <dd className={`mt-0.5 text-sm ${struck}`}>
+                            <ProfitLossCell value={profitLossValue(row)} />
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <div className="mt-3">
+                        <StockRowActions
+                          layout="card"
+                          isInactive={isInactive}
+                          onHistory={() => router.push(`/stock/${row.productTypeId}`)}
+                          onEdit={() => handleEditProductType(productType)}
+                          onSuspend={() => handleSuspendProductType(productType)}
+                          onReactivate={() => handleReactivateProductType(productType)}
+                          onDelete={() => handleDeleteProductType(productType)}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className="hidden overflow-auto lg:block">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -399,59 +566,18 @@ export default function StockPage() {
                         {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
                       </td>
                       <td className={`px-4 py-3 text-right ${struck}`}>
-                        <ProfitLossCell
-                          value={
-                            row.avgSellingPricePerKg != null
-                              ? row.soldKg != null && row.soldKg > 0
-                                ? (row.avgSellingPricePerKg - row.avgCostPerKg) * row.soldKg
-                                : null
-                              : null
-                          }
-                        />
+                        <ProfitLossCell value={profitLossValue(row)} />
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => router.push(`/stock/${row.productTypeId}`)}
-                            className={`${actionClass} text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30`}
-                          >
-                            ประวัติ
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditProductType(productType)}
-                            className={`${actionClass} text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700`}
-                          >
-                            แก้ไข
-                          </button>
-                          {isInactive ? (
-                            <button
-                              type="button"
-                              onClick={() => handleReactivateProductType(productType)}
-                              className={`${actionClass} text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30`}
-                            >
-                              เปิดใช้งาน
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleSuspendProductType(productType)}
-                                className={`${actionClass} text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30`}
-                              >
-                                กำลังนำส่ง
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteProductType(productType)}
-                                className={`${actionClass} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30`}
-                              >
-                                ลบ
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        <StockRowActions
+                          layout="table"
+                          isInactive={isInactive}
+                          onHistory={() => router.push(`/stock/${row.productTypeId}`)}
+                          onEdit={() => handleEditProductType(productType)}
+                          onSuspend={() => handleSuspendProductType(productType)}
+                          onReactivate={() => handleReactivateProductType(productType)}
+                          onDelete={() => handleDeleteProductType(productType)}
+                        />
                       </td>
                     </tr>
                   );

@@ -24,7 +24,7 @@ export function ModeSelectionCards({
   onCopyToClipboard,
 }: ModeSelectionCardsProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+    <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800">
       {/* Server Mode Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
@@ -85,7 +85,7 @@ export function ModeSelectionCards({
               </button>
             )}
           </div>
-          <div className="text-xs font-mono text-blue-900 dark:text-blue-100 bg-blue-100 dark:bg-blue-800 px-2 py-1.5 rounded">
+          <div className="break-all rounded bg-blue-100 px-2 py-1.5 font-mono text-xs text-blue-900 dark:bg-blue-800 dark:text-blue-100">
             {ipLoading ? 'กำลังโหลด...' : `http://${localIP}:3000`}
           </div>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5">

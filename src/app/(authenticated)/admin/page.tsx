@@ -246,7 +246,7 @@ export default function AdminSettingsPage() {
 
   return (
     <ProtectedRoute requiredRole="admin">
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-5 sm:space-y-6 lg:space-y-8">
           {/* Header */}
           <AdminHeader 
             title="ตั้งค่าระบบ"
@@ -286,7 +286,7 @@ export default function AdminSettingsPage() {
                   <ProtectedRoute
                     requiredPermission="user.read"
                     fallback={
-                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center text-sm text-gray-600 dark:text-gray-400">
+                      <div className="rounded-2xl border border-gray-200 bg-white p-5 text-center text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 sm:p-8">
                         คุณไม่มีสิทธิ์จัดการผู้ใช้งานในส่วนนี้
                       </div>
                     }

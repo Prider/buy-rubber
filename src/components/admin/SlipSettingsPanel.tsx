@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Radio } from 'animal-island-ui';
 import {
   SLIP_FONT_OPTIONS,
@@ -88,10 +89,33 @@ export function SlipSettingsPanel({
   onSave,
 }: SlipSettingsPanelProps) {
   const previewFrameWidth = slipWidthPxFor(paperSize);
-  const previewScale = Math.min(
-    PREVIEW_STAGE_WIDTH / previewFrameWidth,
-    PREVIEW_STAGE_HEIGHT / PREVIEW_IFRAME_HEIGHT,
-  );
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageWidth, setStageWidth] = useState(0);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const measure = (width: number) => {
+      const next = Math.min(PREVIEW_STAGE_WIDTH, Math.max(0, Math.floor(width)));
+      setStageWidth((current) => (current === next ? current : next));
+    };
+
+    measure(stage.clientWidth);
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      measure(entry.contentRect.width);
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  const stageHeight = stageWidth * (PREVIEW_STAGE_HEIGHT / PREVIEW_STAGE_WIDTH);
+  const previewScale =
+    stageWidth > 0
+      ? Math.min(stageWidth / previewFrameWidth, stageHeight / PREVIEW_IFRAME_HEIGHT)
+      : 1;
   const busy = loading || saving;
 
   return (
@@ -101,20 +125,16 @@ export function SlipSettingsPanel({
       aria-labelledby="admin-tab-slip"
       className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            ตั้งค่าข้อมูลใบรับซื้อ (Slip)
-          </h3>
-
-        </div>
-        {loading && (
-          <span className="text-xs text-gray-400 dark:text-gray-500">กำลังโหลด...</span>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex w-full max-w-md flex-col gap-2 p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]">
+        <div className="order-2 flex w-full min-w-0 flex-col gap-4 border-t border-gray-100 p-4 dark:border-gray-700 sm:p-6 md:order-1 md:border-t-0 lg:p-8">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+              ตั้งค่าข้อมูลใบรับซื้อ (Slip)
+            </h3>
+            {loading && (
+              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">กำลังโหลด...</span>
+            )}
+          </div>
           <div className="space-y-1.5">
             <label htmlFor="slip-company-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               ชื่อบริษัท
@@ -185,58 +205,59 @@ export function SlipSettingsPanel({
               className="slip-paper-radio py-2"
               onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
             />
-            <div className="mt-10 flex justify-end">
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={busy}
-                className="mt-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
-              </button>
-            </div>
+          </div>
+
+          <div className="flex pt-1 sm:justify-end">
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={busy}
+              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
+            >
+              {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+            </button>
           </div>
         </div>
 
-        <div className="border-t border-gray-100 bg-gray-50/80 p-5 dark:border-gray-700 dark:bg-gray-900/40 lg:border-l lg:border-t-0">
-          <div className="mb-3 flex items-baseline justify-between gap-2">
+        <div className="order-1 min-w-0 bg-gray-50/80 p-4 dark:bg-gray-900/40 sm:p-5 md:order-2 md:border-t md:border-gray-100 md:dark:border-gray-700 lg:border-l lg:border-t-0">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {paperSize} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
             </p>
           </div>
-          <div className="flex justify-center rounded-xl bg-gray-100 p-4 dark:bg-gray-950/60">
+          <div className="rounded-xl bg-gray-100 p-3 dark:bg-gray-950/60 sm:p-4">
             <div
-              className="relative shrink-0 overflow-hidden"
-              style={{
-                width: PREVIEW_STAGE_WIDTH,
-                height: PREVIEW_STAGE_HEIGHT,
-              }}
+              ref={stageRef}
+              className="relative mx-auto w-full max-w-[320px] overflow-hidden"
+              style={{ aspectRatio: `${PREVIEW_STAGE_WIDTH} / ${PREVIEW_STAGE_HEIGHT}` }}
             >
-              <div
-                className="absolute left-1/2 top-0 overflow-hidden rounded-md bg-white shadow-md"
-                style={{
-                  width: previewFrameWidth * previewScale,
-                  height: PREVIEW_IFRAME_HEIGHT * previewScale,
-                  transform: 'translateX(-50%)',
-                }}
-              >
-                <iframe
-                  title="ตัวอย่างใบรับซื้อ"
-                  srcDoc={previewHtml}
-                  className="bg-white"
+              {stageWidth > 0 && (
+                <div
+                  className="absolute left-1/2 top-0 overflow-hidden rounded-md bg-white shadow-md"
                   style={{
-                    width: previewFrameWidth,
-                    height: PREVIEW_IFRAME_HEIGHT,
-                    border: 'none',
-                    transform: `scale(${previewScale})`,
-                    transformOrigin: 'top left',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
+                    width: previewFrameWidth * previewScale,
+                    height: PREVIEW_IFRAME_HEIGHT * previewScale,
+                    transform: 'translateX(-50%)',
                   }}
-                />
-              </div>
+                >
+                  <iframe
+                    title="ตัวอย่างใบรับซื้อ"
+                    srcDoc={previewHtml}
+                    className="bg-white"
+                    style={{
+                      width: previewFrameWidth,
+                      height: PREVIEW_IFRAME_HEIGHT,
+                      border: 'none',
+                      transform: `scale(${previewScale})`,
+                      transformOrigin: 'top left',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

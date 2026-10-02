@@ -251,14 +251,14 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">จัดการผู้ใช้งาน</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">จัดการบัญชีผู้ใช้งานและสิทธิ์การเข้าถึงระบบ</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 sm:text-xl lg:text-2xl">จัดการผู้ใช้งาน</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 sm:text-base">จัดการบัญชีผู้ใช้งานและสิทธิ์การเข้าถึงระบบ</p>
         </div>
         <button
           onClick={handleOpenCreateModal}
-          className="group relative flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+          className="group relative flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 font-medium text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:focus:ring-offset-gray-800 sm:w-auto sm:min-h-10"
           disabled={isAtUserLimit}
           title={isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
         >
@@ -269,7 +269,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       <MessageBanner variant="error" message={error} />
       <MessageBanner variant="success" message={success} />
 
-      <div className="card">
+      <div className="card overflow-hidden p-0">
         <UsersTable
           users={users}
           currentUserId={currentUser?.id}

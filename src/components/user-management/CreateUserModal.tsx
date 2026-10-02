@@ -54,7 +54,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   return (
     <Modal
       open={visible}
-      className="app-island-modal"
+      className="app-island-modal admin-user-modal"
       title={
         <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
           สร้างผู้ใช้งานใหม่

@@ -100,43 +100,41 @@ export default function DestinationCompaniesPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div>
+      <div className="min-h-[60vh] pb-2">
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <DestinationCompaniesPageHeader
             totalCompanies={pagination.total}
             onAddCompany={openFormForNew}
           />
 
           <MembersSearchBar
+            embedded
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onClearSearch={clearSearch}
             isLoading={companiesLoading}
             resultCount={companies.length}
             totalCount={pagination.total}
-            placeholder="ค้นหาบริษัทตามชื่อ, รหัส, เบอร์โทร หรือที่อยู่..."
+            placeholder="ค้นหาชื่อ รหัส เบอร์ หรือที่อยู่"
           />
 
-          <div className="space-y-2">
-            <MembersErrorDisplay error={error || ''} />
+          <MembersErrorDisplay error={error || ''} />
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <DestinationCompanyTable
-                companies={companies}
-                onEdit={openFormForEdit}
-                onDelete={handleDelete}
-                onReactivate={handleReactivate}
-                isLoading={companiesLoading}
-              />
-            </div>
+          <DestinationCompanyTable
+            companies={companies}
+            onEdit={openFormForEdit}
+            onDelete={handleDelete}
+            onReactivate={handleReactivate}
+            isLoading={companiesLoading}
+          />
 
-            <MembersPagination
-              pagination={pagination}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-              isLoading={companiesLoading}
-            />
-          </div>
+          <MembersPagination
+            embedded
+            pagination={pagination}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            isLoading={companiesLoading}
+          />
         </div>
       </div>
 

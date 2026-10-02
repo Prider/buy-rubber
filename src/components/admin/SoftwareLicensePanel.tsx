@@ -103,9 +103,9 @@ export function SoftwareLicensePanel() {
       aria-labelledby="admin-tab-license"
       className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-700">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+      <div className="flex flex-col items-start gap-2 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
             ใบอนุญาตซอฟต์แวร์
           </h3>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
@@ -113,13 +113,13 @@ export function SoftwareLicensePanel() {
           </p>
         </div>
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(status)}`}
+          className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(status)}`}
         >
           {isLoading ? 'กำลังตรวจสอบ' : STATUS_LABEL[status]}
         </span>
       </div>
 
-      <div className="space-y-5 px-5 py-5">
+      <div className="space-y-5 px-4 py-4 sm:px-5 sm:py-5">
         <div>
           <p className="mb-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
             License Key ปัจจุบัน
@@ -200,11 +200,11 @@ export function SoftwareLicensePanel() {
               className="w-full rounded-xl border-0 bg-gray-50 px-3.5 py-2.5 font-mono text-sm tracking-wide text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 transition-shadow focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900/50 dark:text-gray-100 dark:ring-gray-700 dark:focus:bg-gray-900"
             />
           </div>
-          <div className="flex justify-end">
+          <div className="flex sm:justify-end">
             <button
               type="submit"
               disabled={busy || !newLicenseKey.trim()}
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
             >
               {saving ? 'กำลังอัปเดต...' : 'อัปเดต'}
             </button>
