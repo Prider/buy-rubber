@@ -70,15 +70,14 @@ async function gotoSalesPage(page: Page) {
 
   await page.goto('/sales')
   await Promise.all([salesReq, stockReq, productTypesReq, companiesReq])
-  await expect(page.getByTestId('sales-form-card')).toBeVisible()
+  await expect(page.getByTestId('sales-open-form')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'ประวัติการขาย' })).toBeVisible()
 }
 
 async function expandSalesForm(page: Page) {
-  const toggle = page.locator('#sales-form-card-toggle')
-  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
-    await toggle.click()
-  }
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await page.getByTestId('sales-open-form').click()
+  await expect(page.getByTestId('sales-form-card')).toBeVisible()
+  await expect(page.getByTestId('sales-company-search')).toBeVisible()
 }
 
 async function selectCompany(page: Page, companyName: string) {
@@ -106,7 +105,8 @@ test.describe('Sales CRUD', () => {
 
   test('page loads with sales form and table', async ({ page }) => {
     await gotoSalesPage(page)
-    await expect(page.getByTestId('sales-form-card')).toBeVisible()
+    await expect(page.getByTestId('sales-form-card')).toHaveCount(0)
+    await expandSalesForm(page)
   })
 
   test('create a sale', async ({ page, request }) => {

@@ -9,6 +9,7 @@ interface Member {
   name: string;
   ownerPercent: number;
   tapperPercent: number;
+  group?: { id: string; name: string } | null;
 }
 
 interface ProductType {
@@ -89,6 +90,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   serviceFeeCard,
 }) => {
   const router = useRouter();
+  const [entryTab, setEntryTab] = React.useState<'purchase' | 'fee'>('purchase');
 
   // Refs for input fields to enable Enter key navigation
   const dateInputRef = React.useRef<HTMLInputElement>(null);
@@ -314,28 +316,59 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
+    <div className="flex flex-col overflow-visible bg-gray-50 dark:bg-gray-900 lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 border-b border-gray-100 dark:border-gray-600">
+      <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-3 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-6 lg:py-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <div>
-            <h2 className="text-xl font-bold">
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold lg:text-xl">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                 บันทึกการรับซื้อ
               </span>
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">กรอกข้อมูลการรับซื้อน้ำยางและเพิ่มลงตะกร้า</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 sm:text-sm">กรอกข้อมูลการรับซื้อน้ำยางและเพิ่มลงตะกร้า</p>
           </div>
         </div>
       </div>
 
+      {serviceFeeCard && (
+        <div className="grid grid-cols-2 gap-1 border-b border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-900 lg:hidden" role="tablist" aria-label="แบบฟอร์ม">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={entryTab === 'purchase'}
+            onClick={() => setEntryTab('purchase')}
+            className={`min-h-11 rounded-xl text-sm font-semibold transition ${
+              entryTab === 'purchase'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
+            รับซื้อ
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={entryTab === 'fee'}
+            onClick={() => setEntryTab('fee')}
+            className={`min-h-11 rounded-xl text-sm font-semibold transition ${
+              entryTab === 'fee'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
+            ค่าบริการ
+          </button>
+        </div>
+      )}
+
       {/* Content */}
-      <div className="p-4 flex-1 min-h-0 overflow-y-auto">
+      <div className={`px-3 py-3 max-lg:pb-32 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:p-4 ${entryTab === 'fee' ? 'max-lg:hidden' : ''}`}>
         {error && (
           <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center space-x-1.5">
@@ -355,11 +388,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           requestAnimationFrame(() => {
             productTypeRef.current?.focus();
           });
-        }} className="space-y-4">
+        }} className="space-y-2 max-lg:[&_input]:min-h-11 max-lg:[&_input]:rounded-xl max-lg:[&_input]:text-base max-lg:[&_label]:whitespace-nowrap max-lg:[&_label]:text-[11px] max-lg:[&_label]:font-semibold max-lg:[&_label]:leading-4 lg:space-y-4 lg:[&_input]:min-h-0 lg:[&_input]:rounded-lg lg:[&_input]:text-sm lg:[&_label]:whitespace-normal lg:[&_label]:text-xs lg:[&_label]:font-medium">
           {/* Basic Information */}
           <div className="space-y-3">
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-3">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   วันที่รับซื้อ <span className="text-red-500">*</span>
@@ -436,6 +469,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                             <div>
                               <div className="font-medium text-gray-900 dark:text-gray-100">
                                 {member.code} - {member.name}
+                                {member.group?.name ? (
+                                  <span className="ml-2 inline-flex rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                                    {member.group.name}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           </div>
@@ -477,7 +515,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 
           {/* Weight Information */}
           <div className="space-y-3 pt-0.5">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:gap-3">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   ประเภทสินค้า <span className="text-red-500">*</span>
@@ -604,6 +642,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   </div>
                 </div>
               </div>
+              <div className="col-span-2 grid grid-cols-2 gap-2 lg:gap-3">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   น้ำหนักภาชนะ
@@ -649,6 +688,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   คำนวณอัตโนมัติ: น้ำหนักรวมภาชนะ - น้ำหนักภาชนะ
                 </p> */}
               </div>
+              </div>
             </div>
           </div>
 
@@ -691,7 +731,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:gap-3">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   ราคาต่อหน่วย <span className="text-red-500">*</span>
@@ -750,12 +790,12 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-2 pt-3 border-t border-gray-100 dark:border-gray-600">
+          <div className="flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:fixed max-lg:inset-x-0 max-lg:z-[35] max-lg:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center max-lg:[&_button]:rounded-2xl max-lg:[&_button]:text-sm md:left-16 lg:static lg:inset-auto lg:z-auto lg:justify-end lg:border-gray-100 lg:bg-transparent lg:px-0 lg:py-0 lg:pt-3 dark:lg:border-gray-600 dark:lg:bg-transparent">
             <button
               type="button"
               onClick={resetForm}
               disabled={submitting}
-              className="px-4 py-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              className="max-lg:min-h-11 px-4 py-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               รีเซ็ต
             </button>
@@ -763,7 +803,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid || submitting}
-              className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-xs shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="max-lg:min-h-11 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-xs shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               <div className="flex items-center space-x-1.5">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -776,7 +816,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
         </form>
       </div>
       {serviceFeeCard && (
-        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+        <div className={`shrink-0 max-lg:bg-transparent lg:block lg:border-t lg:border-gray-200 lg:bg-white dark:lg:border-gray-600 dark:lg:bg-gray-800 ${entryTab === 'fee' ? '' : 'max-lg:hidden'}`}>
           {serviceFeeCard}
         </div>
       )}

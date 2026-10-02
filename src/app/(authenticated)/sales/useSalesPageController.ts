@@ -388,15 +388,15 @@ export function useSalesPageController() {
     }
   }, [applyStockPositions]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     if (!user?.id) {
       setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
-      return;
+      return false;
     }
 
     if (!formData.destinationCompanyId.trim()) {
       setError('กรุณาเลือกบริษัทปลายทาง');
-      return;
+      return false;
     }
 
     if (!isSalesFormSubmitReady(formData)) {
@@ -410,14 +410,14 @@ export function useSalesPageController() {
         !formData.sellingType
       ) {
         setError('กรุณากรอกข้อมูลที่จำเป็น');
-        return;
+        return false;
       }
       setFieldErrors({
         ...(weight == null || weight <= 0 ? { weight: 'invalid' } : {}),
         ...(pricePerUnit == null || pricePerUnit < 0 ? { pricePerUnit: 'invalid' } : {}),
       });
       setError('กรุณากรอกน้ำหนักและราคาให้ถูกต้อง');
-      return;
+      return false;
     }
 
     const weight = parseRequiredNumber(formData.weight)!;
@@ -428,7 +428,7 @@ export function useSalesPageController() {
     if (!isEditing && selectedStockKg != null && weight > selectedStockKg + EPS) {
       setFieldErrors({ weight: 'exceeds-stock' });
       setError('น้ำหนักที่ขายต้องไม่เกินสต็อกคงเหลือ');
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -448,17 +448,16 @@ export function useSalesPageController() {
           clearAuthSession();
           setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
           router.push('/login');
-          return;
+          return false;
         }
         setError(
           data.details
             ? `${data.error}: ${data.details}`
             : data.error || (isEditing ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย'),
         );
-        return;
+        return false;
       }
 
-      resetForm();
       if (!isEditing) {
         setCurrentPage(1);
       }
@@ -466,8 +465,10 @@ export function useSalesPageController() {
         loadSales(isEditing ? currentPage : 1, debouncedSearchTerm),
         refreshStock(),
       ]);
+      return true;
     } catch {
       setError(editingSaleId ? 'ไม่สามารถแก้ไขรายการขาย' : 'ไม่สามารถบันทึกรายการขาย');
+      return false;
     } finally {
       setSaving(false);
     }
@@ -478,7 +479,6 @@ export function useSalesPageController() {
     formData,
     loadSales,
     refreshStock,
-    resetForm,
     router,
     selectedStockInfo?.quantityKg,
     user?.id,
