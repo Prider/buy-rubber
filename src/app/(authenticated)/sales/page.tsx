@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import GamerLoader from '@/components/GamerLoader';
 import SalesFormCard from '@/components/sales/SalesFormCard';
 import SalesTable from '@/components/sales/SalesTable';
+import StockPositionsPanel from '@/components/stock/StockPositionsPanel';
 import { useSalesPageController } from './useSalesPageController';
 
 export default function SalesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const {
     isLoading,
     loading,
@@ -57,6 +59,10 @@ export default function SalesPage() {
     setIsFormOpen(true);
   };
 
+  const closeDelivery = () => {
+    setIsDeliveryOpen(false);
+  };
+
   const handleEditSale: typeof handleEdit = async (row) => {
     const closing = editingSaleId === row.id;
     await handleEdit(row);
@@ -80,6 +86,17 @@ export default function SalesPage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isFormOpen, resetForm, saving, showCompanyDropdown]);
+
+  useEffect(() => {
+    if (!isDeliveryOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (document.querySelector('[role="alertdialog"], .animal-mask-hAWeP')) return;
+      setIsDeliveryOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isDeliveryOpen]);
 
   if (isLoading || loading) {
     return (
@@ -106,6 +123,7 @@ export default function SalesPage() {
             onEdit={handleEditSale}
             onDelete={handleDelete}
             onAddSale={openNewSale}
+            onRecordDelivery={() => setIsDeliveryOpen(true)}
             onPageChange={setCurrentPage}
           />
         </div>
@@ -147,6 +165,36 @@ export default function SalesPage() {
                 onInputChange={handleInputChange}
                 onSave={handleSaveAndClose}
                 onCancelEdit={closeForm}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isDeliveryOpen ? (
+        <div className="fixed inset-0 z-[900] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50" onClick={closeDelivery} aria-hidden="true" />
+          <div className="flex min-h-full items-center justify-center p-4 lg:p-6">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delivery-stock-title"
+              className="relative w-full lg:w-[min(96vw,1400px)]"
+            >
+              <StockPositionsPanel
+                embedded
+                showAddButton={false}
+                showAdminActions={false}
+                titleId="delivery-stock-title"
+                headerAction={
+                  <button
+                    type="button"
+                    onClick={closeDelivery}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 lg:min-h-0 lg:w-auto"
+                  >
+                    ปิด
+                  </button>
+                }
               />
             </div>
           </div>

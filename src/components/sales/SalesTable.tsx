@@ -120,6 +120,7 @@ interface SalesTableProps {
   onEdit?: (row: SaleRow) => void | Promise<void>;
   onDelete?: (saleId: string) => void;
   onAddSale?: () => void;
+  onRecordDelivery?: () => void;
 }
 
 export default function SalesTable({
@@ -136,6 +137,7 @@ export default function SalesTable({
   onEdit,
   onDelete,
   onAddSale,
+  onRecordDelivery,
 }: SalesTableProps) {
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
   const titleClass = compact
@@ -217,16 +219,30 @@ export default function SalesTable({
           </>
         )}
 
-        {onAddSale ? (
-          <button
-            type="button"
-            data-testid="sales-open-form"
-            onClick={onAddSale}
-            className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto md:min-h-10"
-          >
-            <span aria-hidden="true">+</span>
-            บันทึกการขาย
-          </button>
+        {onRecordDelivery || onAddSale ? (
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+            {onRecordDelivery ? (
+              <button
+                type="button"
+                data-testid="sales-open-delivery"
+                onClick={onRecordDelivery}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-3 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50 sm:w-auto md:min-h-10"
+              >
+                บันทึกการนำส่ง
+              </button>
+            ) : null}
+            {onAddSale ? (
+              <button
+                type="button"
+                data-testid="sales-open-form"
+                onClick={onAddSale}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto md:min-h-10"
+              >
+                <span aria-hidden="true">+</span>
+                บันทึกการขาย
+              </button>
+            ) : null}
+          </div>
         ) : null}
         </div>
       </div>
