@@ -3,6 +3,14 @@ import { NextRequest } from 'next/server';
 import { GET, PUT, DELETE } from '../route';
 import { generateToken } from '@/lib/auth';
 
+vi.mock('@/lib/activityLog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/activityLog')>();
+  return {
+    ...actual,
+    recordActivity: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 // Mock userStore
 vi.mock('@/lib/userStore', () => ({
   userStore: {
@@ -152,6 +160,7 @@ describe('PUT /api/users/[id]', () => {
     
     const userStoreModule = await import('@/lib/userStore');
     userStore = userStoreModule.userStore;
+    vi.mocked(userStore.getUserById).mockResolvedValue(null);
   });
 
   describe('Authorization', () => {
@@ -404,6 +413,7 @@ describe('DELETE /api/users/[id]', () => {
     
     const userStoreModule = await import('@/lib/userStore');
     userStore = userStoreModule.userStore;
+    vi.mocked(userStore.getUserById).mockResolvedValue(null);
   });
 
   describe('Authorization', () => {

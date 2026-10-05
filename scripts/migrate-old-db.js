@@ -58,6 +58,7 @@ const REQUIRED_TABLES = [
   'ProductPrice',
   'ReportProductTypeGroup',
   'ReportProductTypeGroupMember',
+  'ActivityLog',
 ];
 
 /** Columns that may be missing on older DBs (added with safe defaults). */

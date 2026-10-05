@@ -5,6 +5,7 @@ import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
 import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;
@@ -332,6 +333,21 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+    });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'sale',
+      entityId: sale.id,
+      entityLabel: sale.saleNo,
+      summary: `สร้างรายการขาย ${sale.saleNo}`,
+      changes: {
+        saleNo: sale.saleNo,
+        companyName: sale.companyName,
+        weight: sale.weight,
+        totalAmount: sale.totalAmount,
+      },
     });
 
     return NextResponse.json(sale, { status: 201 });

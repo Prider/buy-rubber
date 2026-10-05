@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
+
+const MEMBER_DIFF_KEYS = [
+  'name',
+  'idCard',
+  'phone',
+  'address',
+  'bankAccount',
+  'bankName',
+  'ownerPercent',
+  'tapperPercent',
+  'tapperId',
+  'tapperName',
+  'isActive',
+];
+
+async function logMemberDelete(
+  request: NextRequest,
+  member: { id: string; code: string; name: string } | null,
+  soft: boolean,
+) {
+  if (!member) {
+    return;
+  }
+
+  await recordActivity(prisma, {
+    actor: getActivityActor(request),
+    action: 'delete',
+    entityType: 'member',
+    entityId: member.id,
+    entityLabel: `${member.name} (${member.code})`,
+    summary: soft ? `ปิดการใช้งานสมาชิก ${member.name}` : `ลบสมาชิก ${member.name}`,
+    changes: { code: member.code, name: member.name, soft },
+  });
+}
 
 // GET /api/members/[id]
 export async function GET(
@@ -57,6 +93,10 @@ export async function PUT(
       );
     }
 
+    const before = await prisma.member.findUnique({
+      where: { id: params.id },
+    });
+
     const member = await prisma.member.update({
       where: { id: params.id },
       data: {
@@ -78,6 +118,18 @@ export async function PUT(
     cache.deletePattern('^members:');
     cache.delete(CACHE_KEYS.DASHBOARD);
 
+    if (before) {
+      await recordActivity(prisma, {
+        actor: getActivityActor(request),
+        action: 'update',
+        entityType: 'member',
+        entityId: member.id,
+        entityLabel: `${member.name} (${member.code})`,
+        summary: `แก้สมาชิก ${member.name}`,
+        changes: diffFields(before, member, MEMBER_DIFF_KEYS),
+      });
+    }
+
     return NextResponse.json(member);
   } catch (error) {
     console.error('Update member error:', error);
@@ -94,6 +146,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const memberRecord = await prisma.member.findUnique({
+      where: { id: params.id },
+      select: { id: true, code: true, name: true },
+    });
+
     // Check if member has any related records (purchases, payments, etc.)
     const [purchaseCount] = await Promise.all([
       prisma.purchase.count({
@@ -119,6 +176,7 @@ export async function DELETE(
       // Invalidate members cache and dashboard cache when a member is soft deleted
       cache.deletePattern('^members:');
       cache.delete(CACHE_KEYS.DASHBOARD);
+      await logMemberDelete(request, memberRecord, true);
 
       const notes = [];
       if (purchaseCount > 0) {
@@ -142,6 +200,7 @@ export async function DELETE(
       // Invalidate members cache and dashboard cache when a member is deleted
       cache.deletePattern('^members:');
       cache.delete(CACHE_KEYS.DASHBOARD);
+      await logMemberDelete(request, memberRecord, false);
 
       logger.info('Hard deleted member', { memberId: params.id });
       return NextResponse.json({
@@ -164,6 +223,7 @@ export async function DELETE(
         // Invalidate members cache and dashboard cache when a member is soft deleted
         cache.deletePattern('^members:');
         cache.delete(CACHE_KEYS.DASHBOARD);
+        await logMemberDelete(request, memberRecord, true);
 
         return NextResponse.json({ 
           message: 'ปิดการใช้งานสมาชิกเรียบร้อยแล้ว',

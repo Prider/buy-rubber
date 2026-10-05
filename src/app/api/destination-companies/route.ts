@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 export const runtime = 'nodejs';
 
@@ -134,6 +135,16 @@ export async function POST(request: NextRequest) {
     });
 
     cache.deletePattern('^destination-companies:');
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'destinationCompany',
+      entityId: company.id,
+      entityLabel: `${company.name} (${company.code})`,
+      summary: `สร้างบริษัทปลายทาง ${company.name}`,
+      changes: { code: company.code, name: company.name, phone: company.phone },
+    });
 
     return NextResponse.json(company, { status: 201 });
   } catch (error) {

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { invalidatePurchaseCaches } from '@/lib/cache';
 import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
 import {
   applyPurchaseToStock,
   reversePurchaseFromStock,
@@ -196,6 +198,75 @@ export async function PUT(
       return row;
     });
 
+    const purchaseChanges = diffFields(
+      {
+        date: existing.date,
+        memberId: existing.memberId,
+        productTypeId: existing.productTypeId,
+        grossWeight: existing.grossWeight,
+        containerWeight: existing.containerWeight,
+        netWeight: existing.netWeight,
+        rubberPercent: existing.rubberPercent,
+        dryWeight: existing.dryWeight,
+        basePrice: existing.basePrice,
+        adjustedPrice: existing.adjustedPrice,
+        bonusPrice: existing.bonusPrice,
+        finalPrice: existing.finalPrice,
+        totalAmount: existing.totalAmount,
+        ownerAmount: existing.ownerAmount,
+        tapperAmount: existing.tapperAmount,
+        notes: existing.notes,
+        ...(typeof data.isPaid === 'boolean' ? { isPaid: existing.isPaid } : {}),
+      },
+      {
+        date: purchaseDate,
+        memberId: data.memberId,
+        productTypeId: data.productTypeId,
+        grossWeight: data.grossWeight,
+        containerWeight: data.containerWeight || 0,
+        netWeight,
+        rubberPercent: data.rubberPercent ?? null,
+        dryWeight,
+        basePrice,
+        adjustedPrice,
+        bonusPrice: data.bonusPrice || 0,
+        finalPrice,
+        totalAmount,
+        ownerAmount,
+        tapperAmount,
+        notes: data.notes ?? null,
+        ...(typeof data.isPaid === 'boolean' ? { isPaid: data.isPaid } : {}),
+      },
+      [
+        'date',
+        'memberId',
+        'productTypeId',
+        'grossWeight',
+        'containerWeight',
+        'netWeight',
+        'rubberPercent',
+        'dryWeight',
+        'basePrice',
+        'adjustedPrice',
+        'bonusPrice',
+        'finalPrice',
+        'totalAmount',
+        'ownerAmount',
+        'tapperAmount',
+        'notes',
+        ...(typeof data.isPaid === 'boolean' ? ['isPaid'] : []),
+      ],
+    );
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'update',
+      entityType: 'purchase',
+      entityId: existing.id,
+      entityLabel: existing.purchaseNo,
+      summary: `แก้รับซื้อ ${existing.purchaseNo}`,
+      changes: purchaseChanges,
+    });
+
     invalidatePurchaseCaches();
     logger.info('PUT /api/purchases/[id] - Success', { id: params.id });
     return NextResponse.json(updated);
@@ -251,6 +322,22 @@ export async function DELETE(
       await tx.purchase.delete({
         where: { id: params.id },
       });
+    });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'delete',
+      entityType: 'purchase',
+      entityId: purchase.id,
+      entityLabel: purchase.purchaseNo,
+      summary: `ลบรับซื้อ ${purchase.purchaseNo}`,
+      changes: {
+        purchaseNo: purchase.purchaseNo,
+        netWeight: purchase.netWeight,
+        totalAmount: purchase.totalAmount,
+        finalPrice: purchase.finalPrice,
+        soft: false,
+      },
     });
 
     invalidatePurchaseCaches();

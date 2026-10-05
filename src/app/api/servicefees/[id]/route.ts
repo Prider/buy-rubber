@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -24,6 +25,22 @@ export async function DELETE(
 
     await prisma.serviceFee.delete({
       where: { id: params.id },
+    });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'delete',
+      entityType: 'serviceFee',
+      entityId: serviceFee.id,
+      entityLabel: serviceFee.serviceFeeNo,
+      summary: `ลบค่าบริการ ${serviceFee.serviceFeeNo}`,
+      changes: {
+        serviceFeeNo: serviceFee.serviceFeeNo,
+        purchaseNo: serviceFee.purchaseNo,
+        category: serviceFee.category,
+        amount: serviceFee.amount,
+        soft: false,
+      },
     });
 
     logger.info('DELETE /api/servicefees/[id] - Success', { id: params.id });

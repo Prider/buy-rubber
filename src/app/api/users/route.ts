@@ -3,6 +3,8 @@ import { userStore } from '@/lib/userStore';
 import { CreateUserRequest } from '@/types/user';
 import { logger } from '@/lib/logger';
 import { verifyAdminRole } from '@/lib/sessionToken';
+import { prisma } from '@/lib/prisma';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
@@ -64,7 +66,17 @@ export async function POST(request: NextRequest) {
 
     const user = await userStore.createUser(body);
     logger.info('POST /api/users - Success', { userId: user.id, username: user.username });
-    
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'user',
+      entityId: user.id,
+      entityLabel: user.username,
+      summary: `สร้างผู้ใช้งาน ${user.username}`,
+      changes: { username: user.username, role: user.role },
+    });
+
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({

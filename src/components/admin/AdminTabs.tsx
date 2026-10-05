@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 export const ADMIN_TABS = [
   { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
   { id: 'users', label: 'ผู้ใช้งาน' },
+  { id: 'activity', label: 'ประวัติการใช้งาน' },
   { id: 'connection', label: 'การเชื่อมต่อ' },
   { id: 'license', label: 'ใบอนุญาตซอฟต์แวร์' },
 ] as const;

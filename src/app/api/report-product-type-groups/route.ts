@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 export const runtime = 'nodejs';
 
@@ -118,6 +119,17 @@ export async function POST(request: NextRequest) {
     });
 
     logger.info('POST /api/report-product-type-groups - Success', { id: group.id });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'reportGroup',
+      entityId: group.id,
+      entityLabel: group.name || group.id,
+      summary: `สร้างกลุ่มรายงาน ${group.name || group.id}`,
+      changes: { name: group.name, kind: group.kind },
+    });
+
     return NextResponse.json(serializeGroup(group), { status: 201 });
   } catch (error) {
     logger.error('POST /api/report-product-type-groups - Failed', error);

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { parseReportProductTypeGroupKind } from '@/lib/reportProductTypeGroups';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
 
 export const runtime = 'nodejs';
 
@@ -72,6 +74,7 @@ export async function PUT(
     const data = await request.json();
     const existing = await prisma.reportProductTypeGroup.findUnique({
       where: { id: params.id },
+      include: { productTypes: { select: { productTypeId: true } } },
     });
 
     if (!existing) {
@@ -110,6 +113,32 @@ export async function PUT(
       });
     });
 
+    const previousIds = existing.productTypes.map((member) => member.productTypeId).sort().join(',');
+    const nextIds = [...validation.productTypeIds].sort().join(',');
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'update',
+      entityType: 'reportGroup',
+      entityId: group.id,
+      entityLabel: group.name || group.id,
+      summary: `แก้กลุ่มรายงาน ${group.name || group.id}`,
+      changes: diffFields(
+        {
+          name: existing.name,
+          sortOrder: existing.sortOrder,
+          isActive: existing.isActive,
+          productTypeIds: previousIds,
+        },
+        {
+          name: group.name,
+          sortOrder: group.sortOrder,
+          isActive: group.isActive,
+          productTypeIds: nextIds,
+        },
+        ['name', 'sortOrder', 'isActive', 'productTypeIds'],
+      ),
+    });
+
     logger.info('PUT /api/report-product-type-groups/[id] - Success', { id: params.id });
     return NextResponse.json(serializeGroup(group));
   } catch (error) {
@@ -122,7 +151,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -136,6 +165,16 @@ export async function DELETE(
 
     await prisma.reportProductTypeGroup.delete({
       where: { id: params.id },
+    });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'delete',
+      entityType: 'reportGroup',
+      entityId: existing.id,
+      entityLabel: existing.name || existing.id,
+      summary: `ลบกลุ่มรายงาน ${existing.name || existing.id}`,
+      changes: { name: existing.name, kind: existing.kind, soft: false },
     });
 
     logger.info('DELETE /api/report-product-type-groups/[id] - Success', { id: params.id });

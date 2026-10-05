@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
 import { invalidateProductTypesCache } from '@/lib/cache';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
 
 type SaleCountDelegate = {
   count(args?: unknown): Promise<number>;
@@ -44,12 +46,29 @@ export async function PUT(
       data.isActive = isActive;
     }
 
+    const before = await prisma.productType.findUnique({
+      where: { id: params.id },
+    });
+
     const productType = await prisma.productType.update({
       where: { id: params.id },
       data,
     });
 
     invalidateProductTypesCache();
+
+    if (before) {
+      const keys = ['name', 'description', ...(typeof isActive === 'boolean' ? ['isActive'] : [])];
+      await recordActivity(prisma, {
+        actor: getActivityActor(request),
+        action: 'update',
+        entityType: 'productType',
+        entityId: productType.id,
+        entityLabel: `${productType.name} (${productType.code})`,
+        summary: `แก้ประเภทสินค้า ${productType.name}`,
+        changes: diffFields(before, productType, keys),
+      });
+    }
 
     return NextResponse.json(productType);
   } catch (error) {
@@ -69,7 +88,7 @@ export async function DELETE(
   try {
     const existing = await prisma.productType.findUnique({
       where: { id: params.id },
-      select: { id: true },
+      select: { id: true, code: true, name: true },
     });
     if (!existing) {
       return NextResponse.json({ error: 'Product type not found' }, { status: 404 });
@@ -98,6 +117,15 @@ export async function DELETE(
         data: { isActive: false },
       });
       invalidateProductTypesCache();
+      await recordActivity(prisma, {
+        actor: getActivityActor(request),
+        action: 'delete',
+        entityType: 'productType',
+        entityId: existing.id,
+        entityLabel: existing.name ? `${existing.name} (${existing.code})` : existing.id,
+        summary: `ปิดการใช้งานประเภทสินค้า ${existing.name || existing.id}`,
+        changes: { code: existing.code ?? null, name: existing.name ?? null, soft: true },
+      });
       return NextResponse.json({
         success: true,
         deactivated: true,
@@ -110,6 +138,15 @@ export async function DELETE(
     });
 
     invalidateProductTypesCache();
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'delete',
+      entityType: 'productType',
+      entityId: existing.id,
+      entityLabel: existing.name ? `${existing.name} (${existing.code})` : existing.id,
+      summary: `ลบประเภทสินค้า ${existing.name || existing.id}`,
+      changes: { code: existing.code ?? null, name: existing.name ?? null, soft: false },
+    });
 
     return NextResponse.json({ success: true, deactivated: false });
   } catch (error) {

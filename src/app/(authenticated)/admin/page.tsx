@@ -13,6 +13,7 @@ import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import { SoftwareLicensePanel } from '@/components/admin/SoftwareLicensePanel';
+import { ActivityLogPanel } from '@/components/admin/ActivityLogPanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -250,7 +251,7 @@ export default function AdminSettingsPage() {
           {/* Header */}
           <AdminHeader 
             title="ตั้งค่าระบบ"
-            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ ผู้ใช้งาน หรือใบอนุญาตซอฟต์แวร์"
+            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ ผู้ใช้งาน ประวัติการใช้งาน หรือใบอนุญาตซอฟต์แวร์"
           />
 
           <div className="w-full mx-auto">
@@ -295,6 +296,8 @@ export default function AdminSettingsPage() {
                   </ProtectedRoute>
                 </div>
               )}
+              {activeTab === 'activity' && <ActivityLogPanel />}
+
               {activeTab === 'license' && <SoftwareLicensePanel />}
 
               {activeTab === 'connection' && (

@@ -11,6 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipFontSize, SLIP_FONT_SIZE_STORAGE_KEY } from '@/lib/slipFont';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
+import { attachAuthToAxios } from '@/lib/attachAuthToAxios';
+
+attachAuthToAxios();
 
 interface NavigationItem {
   name: string;

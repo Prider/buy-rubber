@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache } from '@/lib/cache';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
+
+const COMPANY_DIFF_KEYS = ['name', 'phone', 'address', 'isActive'];
+
+async function logCompanyDelete(
+  request: NextRequest,
+  company: { id: string; code: string; name: string } | null,
+  soft: boolean,
+) {
+  if (!company) {
+    return;
+  }
+
+  await recordActivity(prisma, {
+    actor: getActivityActor(request),
+    action: 'delete',
+    entityType: 'destinationCompany',
+    entityId: company.id,
+    entityLabel: `${company.name} (${company.code})`,
+    summary: soft ? `ปิดการใช้งานบริษัท ${company.name}` : `ลบบริษัทปลายทาง ${company.name}`,
+    changes: { code: company.code, name: company.name, soft },
+  });
+}
 
 export const runtime = 'nodejs';
 
@@ -57,6 +81,10 @@ export async function PUT(
       );
     }
 
+    const before = await prisma.destinationCompany.findUnique({
+      where: { id: params.id },
+    });
+
     const company = await prisma.destinationCompany.update({
       where: { id: params.id },
       data: {
@@ -75,6 +103,18 @@ export async function PUT(
 
     cache.deletePattern('^destination-companies:');
 
+    if (before) {
+      await recordActivity(prisma, {
+        actor: getActivityActor(request),
+        action: 'update',
+        entityType: 'destinationCompany',
+        entityId: company.id,
+        entityLabel: `${company.name} (${company.code})`,
+        summary: `แก้บริษัทปลายทาง ${company.name}`,
+        changes: diffFields(before, company, COMPANY_DIFF_KEYS),
+      });
+    }
+
     return NextResponse.json(company);
   } catch (error) {
     logger.error('PUT /api/destination-companies/[id] failed', error);
@@ -86,10 +126,15 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
+    const companyRecord = await prisma.destinationCompany.findUnique({
+      where: { id: params.id },
+      select: { id: true, code: true, name: true },
+    });
+
     const saleCount = await prisma.sale.count({
       where: { destinationCompanyId: params.id },
     });
@@ -100,6 +145,7 @@ export async function DELETE(
         data: { isActive: false },
       });
       cache.deletePattern('^destination-companies:');
+      await logCompanyDelete(request, companyRecord, true);
 
       return NextResponse.json({
         message: 'ปิดการใช้งานบริษัทปลายทางเรียบร้อยแล้ว',
@@ -113,6 +159,7 @@ export async function DELETE(
         where: { id: params.id },
       });
       cache.deletePattern('^destination-companies:');
+      await logCompanyDelete(request, companyRecord, false);
 
       return NextResponse.json({
         message: 'ลบบริษัทปลายทางเรียบร้อยแล้ว',
@@ -126,6 +173,7 @@ export async function DELETE(
           data: { isActive: false },
         });
         cache.deletePattern('^destination-companies:');
+        await logCompanyDelete(request, companyRecord, true);
 
         return NextResponse.json({
           message: 'ปิดการใช้งานบริษัทปลายทางเรียบร้อยแล้ว',

@@ -3,6 +3,14 @@ import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
 import { generateToken } from '@/lib/auth';
 
+vi.mock('@/lib/activityLog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/activityLog')>();
+  return {
+    ...actual,
+    recordActivity: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 // Mock userStore
 vi.mock('@/lib/userStore', () => ({
   userStore: {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS, CACHE_TTL, invalidateProductTypesCache } from '@/lib/cache';
 import { getMaxProductTypes } from '@/lib/maxProductTypes';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -97,6 +98,17 @@ export async function POST(request: NextRequest) {
     logger.info('POST /api/product-types - Cache invalidated');
 
     logger.info('POST /api/product-types - Success', { id: productType.id, code });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'productType',
+      entityId: productType.id,
+      entityLabel: `${productType.name} (${productType.code})`,
+      summary: `สร้างประเภทสินค้า ${productType.name}`,
+      changes: { code: productType.code, name: productType.name },
+    });
+
     return NextResponse.json(productType, { status: 201 });
   } catch (error) {
     logger.error('POST /api/product-types - Failed', error);

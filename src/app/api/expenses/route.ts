@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
 import { getUserFromToken } from '@/lib/utils';
 import { Prisma } from '@prisma/client';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -488,6 +489,21 @@ export async function POST(request: NextRequest) {
     cache.delete(CACHE_KEYS.DASHBOARD);
 
     logger.debug('Expense created successfully', { id: expense!.id, expenseNo });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'expense',
+      entityId: expense!.id,
+      entityLabel: expenseNo,
+      summary: `สร้างค่าใช้จ่าย ${expenseNo}`,
+      changes: {
+        expenseNo,
+        category: expense!.category,
+        amount: expense!.amount,
+      },
+    });
+
     return NextResponse.json(expense);
   } catch (error) {
     logger.error('Failed to create expense', error);

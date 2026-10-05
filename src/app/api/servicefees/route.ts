@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateDocumentNumber } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     // Check if this is a batch request (array of service fees)
     if (Array.isArray(data.items) && data.items.length > 0) {
-      return handleBatchServiceFee(data);
+      return handleBatchServiceFee(data, request);
     }
 
     // Single service fee (if needed in the future)
@@ -136,6 +137,22 @@ export async function POST(request: NextRequest) {
     });
 
     logger.debug('Service fee created successfully', { id: serviceFee.id });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'serviceFee',
+      entityId: serviceFee.id,
+      entityLabel: serviceFee.serviceFeeNo,
+      summary: `สร้างค่าบริการ ${serviceFee.serviceFeeNo}`,
+      changes: {
+        serviceFeeNo: serviceFee.serviceFeeNo,
+        category: serviceFee.category,
+        amount: serviceFee.amount,
+        purchaseNo: serviceFee.purchaseNo,
+      },
+    });
+
     return NextResponse.json(serviceFee, { status: 201 });
   } catch (error: any) {
     logger.error('Failed to create service fee', error);
@@ -154,7 +171,10 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle batch service fee creation
-async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; date?: string }) {
+async function handleBatchServiceFee(
+  data: { items: any[]; purchaseNo?: string; date?: string },
+  request: NextRequest,
+) {
   try {
     const { items, purchaseNo, date } = data;
 
@@ -226,6 +246,21 @@ async function handleBatchServiceFee(data: { items: any[]; purchaseNo?: string; 
     }
 
     logger.debug('Batch service fee - Successfully created', serviceFees.length);
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'serviceFee',
+      entityId: serviceFees[0]?.id ?? purchaseNo ?? 'batch',
+      entityLabel: purchaseNo || serviceFees[0]?.serviceFeeNo || null,
+      summary: `สร้างค่าบริการ ${serviceFees.length} รายการ${purchaseNo ? ` (${purchaseNo})` : ''}`,
+      changes: {
+        purchaseNo: purchaseNo ?? null,
+        count: serviceFees.length,
+        amount: serviceFees.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      },
+    });
+
     return NextResponse.json({ serviceFees, purchaseNo }, { status: 201 });
   } catch (error: any) {
     logger.error('Batch service fee error', error);

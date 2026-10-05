@@ -11,6 +11,7 @@ import {
   getUserFromToken
 } from '@/lib/utils';
 import { applyPurchaseToStock } from '@/lib/stock/stockService';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -313,6 +314,21 @@ export async function POST(request: NextRequest) {
 
     invalidatePurchaseCaches();
 
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'purchase',
+      entityId: purchase.id,
+      entityLabel: purchase.purchaseNo,
+      summary: `สร้างรับซื้อ ${purchase.purchaseNo}`,
+      changes: {
+        purchaseNo: purchase.purchaseNo,
+        netWeight: purchase.netWeight,
+        totalAmount: purchase.totalAmount,
+        memberName: purchase.member?.name ?? null,
+      },
+    });
+
     logger.info('POST /api/purchases - Success', { 
       purchaseId: purchase.id, 
       purchaseNo: purchase.purchaseNo 
@@ -561,6 +577,20 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     });
 
     invalidatePurchaseCaches();
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'purchase',
+      entityId: purchases[0]?.id ?? batchPurchaseNo,
+      entityLabel: batchPurchaseNo,
+      summary: `สร้างรับซื้อ ${batchPurchaseNo} (${purchases.length} รายการ)`,
+      changes: {
+        purchaseNo: batchPurchaseNo,
+        count: purchases.length,
+        totalAmount: purchases.reduce((sum, row) => sum + Number(row.totalAmount || 0), 0),
+      },
+    });
 
     logger.info('Batch purchase - Success', { 
       count: purchases.length, 

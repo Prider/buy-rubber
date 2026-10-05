@@ -4,6 +4,8 @@ import { logger } from '@/lib/logger';
 import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { reverseSaleFromStock } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { diffFields } from '@/lib/activityLogShared';
 
 export const runtime = 'nodejs';
 
@@ -14,7 +16,23 @@ type SaleRecord = {
   productTypeId: string;
   weight: number;
   unitCostPerKg: number | null;
+  companyName?: string;
+  destinationCompanyId?: string | null;
+  rubberPercent?: number | null;
+  pricePerUnit?: number;
+  sellingType?: string;
+  totalAmount?: number;
+  notes?: string | null;
+  expenseCost?: number | null;
+  expenses?: Array<{ type: string; amount: number }>;
 };
+
+function expenseSignature(expenses: Array<{ type?: string; amount?: number }> | undefined): string {
+  if (!expenses?.length) {
+    return '';
+  }
+  return expenses.map((expense) => `${expense.type ?? ''}:${expense.amount ?? 0}`).join(', ');
+}
 
 type SaleDelegate = {
   findUnique(args: unknown): Promise<SaleRecord | null>;
@@ -87,7 +105,23 @@ export async function PUT(
     }
     const sale = await asSale.sale.findUnique({
       where: { id: params.id },
-      select: { id: true, saleNo: true, date: true, productTypeId: true, weight: true, unitCostPerKg: true },
+      select: {
+        id: true,
+        saleNo: true,
+        date: true,
+        productTypeId: true,
+        weight: true,
+        unitCostPerKg: true,
+        companyName: true,
+        destinationCompanyId: true,
+        rubberPercent: true,
+        pricePerUnit: true,
+        sellingType: true,
+        totalAmount: true,
+        notes: true,
+        expenseCost: true,
+        expenses: { select: { type: true, amount: true }, orderBy: { sortOrder: 'asc' } },
+      },
     });
 
     if (!sale) {
@@ -179,6 +213,63 @@ export async function PUT(
       });
     });
 
+    const saleChanges = diffFields(
+      {
+        date: sale.date,
+        companyName: sale.companyName,
+        destinationCompanyId: sale.destinationCompanyId,
+        productTypeId: sale.productTypeId,
+        weight: sale.weight,
+        rubberPercent: sale.rubberPercent,
+        pricePerUnit: sale.pricePerUnit,
+        expenseCost: sale.expenseCost,
+        expenseSummary: expenseSignature(sale.expenses),
+        sellingType: sale.sellingType,
+        totalAmount: sale.totalAmount,
+        notes: sale.notes,
+      },
+      {
+        date: data.date ? resolveBusinessDate(data.date, sale.date) : sale.date,
+        companyName: destinationCompany.name,
+        destinationCompanyId: destinationCompany.id,
+        productTypeId: data.productTypeId,
+        weight,
+        rubberPercent:
+          data.rubberPercent !== '' && data.rubberPercent !== null && data.rubberPercent !== undefined
+            ? Number(data.rubberPercent)
+            : null,
+        pricePerUnit,
+        expenseCost,
+        expenseSummary: expenseSignature(expenses),
+        sellingType: String(data.sellingType),
+        totalAmount,
+        notes,
+      },
+      [
+        'date',
+        'companyName',
+        'destinationCompanyId',
+        'productTypeId',
+        'weight',
+        'rubberPercent',
+        'pricePerUnit',
+        'expenseCost',
+        'expenseSummary',
+        'sellingType',
+        'totalAmount',
+        'notes',
+      ],
+    );
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'update',
+      entityType: 'sale',
+      entityId: sale.id,
+      entityLabel: sale.saleNo,
+      summary: `แก้รายการขาย ${sale.saleNo}`,
+      changes: saleChanges,
+    });
+
     return NextResponse.json(updated);
   } catch (error) {
     logger.error('PUT /api/sales/[id] failed', error);
@@ -196,7 +287,14 @@ export async function DELETE(
     }
     const sale = await asSale.sale.findUnique({
       where: { id: params.id },
-      select: { id: true, saleNo: true, productTypeId: true, weight: true },
+      select: {
+        id: true,
+        saleNo: true,
+        productTypeId: true,
+        weight: true,
+        companyName: true,
+        totalAmount: true,
+      },
     });
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
@@ -216,6 +314,22 @@ export async function DELETE(
       });
       // SaleExpense rows cascade on delete via schema
       await txSale.delete({ where: { id: params.id } });
+    });
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'delete',
+      entityType: 'sale',
+      entityId: sale.id,
+      entityLabel: sale.saleNo,
+      summary: `ลบรายการขาย ${sale.saleNo}`,
+      changes: {
+        saleNo: sale.saleNo,
+        companyName: sale.companyName ?? null,
+        weight: sale.weight,
+        totalAmount: sale.totalAmount ?? null,
+        soft: false,
+      },
     });
 
     return NextResponse.json({ message: 'ลบรายการขายเรียบร้อยแล้ว' });

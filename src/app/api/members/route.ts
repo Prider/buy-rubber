@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
+import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -158,6 +159,16 @@ export async function POST(request: NextRequest) {
     // Invalidate members cache when a new member is created
     cache.deletePattern('^members:');
     logger.info('POST /api/members - Cache invalidated');
+
+    await recordActivity(prisma, {
+      actor: getActivityActor(request),
+      action: 'create',
+      entityType: 'member',
+      entityId: member.id,
+      entityLabel: `${member.name} (${member.code})`,
+      summary: `สร้างสมาชิก ${member.name}`,
+      changes: { code: member.code, name: member.name, phone: member.phone },
+    });
 
     logger.info('POST /api/members - Success', { memberId: member.id, code: member.code });
     return NextResponse.json(member, { status: 201 });
