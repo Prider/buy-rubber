@@ -33,13 +33,17 @@ import ProfitLossGangsReport from './profit-loss/gangs/ProfitLossGangsReport';
 const EMBEDDED_TABS = ['profit_loss', 'profit_loss_gangs'] as const;
 type EmbeddedTab = (typeof EMBEDDED_TABS)[number];
 
+function isEmbeddedTabId(value: string): value is EmbeddedTab {
+  return (EMBEDDED_TABS as readonly string[]).includes(value);
+}
+
 function embeddedTabFromSearch(value: string | null): EmbeddedTab | null {
-  if (value === 'profit_loss' || value === 'profit_loss_gangs') return value;
+  if (value && isEmbeddedTabId(value)) return value;
   return null;
 }
 
 function isEmbeddedTab(tab: ReportTabId): tab is EmbeddedTab {
-  return tab === 'profit_loss' || tab === 'profit_loss_gangs';
+  return isEmbeddedTabId(tab);
 }
 
 const ReportGroupManagementModal = dynamic(
