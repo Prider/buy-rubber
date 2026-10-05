@@ -10,7 +10,8 @@ import { useSalesPageController } from './useSalesPageController';
 
 export default function SalesPage() {
   const { hasAnyRole } = useAuth();
-  const canManageSales = hasAnyRole(['admin']);
+  const canEditSales = hasAnyRole(['admin', 'user']);
+  const canDeleteSales = hasAnyRole(['admin']);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const {
@@ -123,8 +124,8 @@ export default function SalesPage() {
             deletingSaleId={deletingSaleId}
             onSearchChange={handleSearchChange}
             onClearSearch={handleClearSearch}
-            onEdit={canManageSales ? handleEditSale : undefined}
-            onDelete={canManageSales ? handleDelete : undefined}
+            onEdit={canEditSales ? handleEditSale : undefined}
+            onDelete={canDeleteSales ? handleDelete : undefined}
             onAddSale={openNewSale}
             onRecordDelivery={() => setIsDeliveryOpen(true)}
             onPageChange={setCurrentPage}

@@ -89,7 +89,8 @@ function StockRowActions({
   layout,
   isInactive,
   showAdminActions,
-  canManageProductTypes,
+  canEditProductType,
+  canDeleteProductType,
   onHistory,
   onEdit,
   onSuspend,
@@ -99,7 +100,8 @@ function StockRowActions({
   layout: 'table' | 'card';
   isInactive: boolean;
   showAdminActions: boolean;
-  canManageProductTypes: boolean;
+  canEditProductType: boolean;
+  canDeleteProductType: boolean;
   onHistory: () => void;
   onEdit: () => void;
   onSuspend: () => void;
@@ -130,7 +132,7 @@ function StockRowActions({
           >
             ประวัติ
           </button>
-          {canManageProductTypes ? (
+          {canEditProductType ? (
             <button
               type="button"
               onClick={onEdit}
@@ -158,7 +160,7 @@ function StockRowActions({
           >
             กำลังนำส่ง
           </button>
-          {canManageProductTypes ? (
+          {canDeleteProductType ? (
             <button
               type="button"
               onClick={onDelete}
@@ -190,7 +192,8 @@ export default function StockPositionsPanel({
   const { hasAnyRole } = useAuth();
   const { showSuccess, showError, showConfirm } = useAlert();
   const isAdmin = hasAnyRole(['admin']);
-  const canManageProductTypes = showAdminActions && isAdmin;
+  const canEditProductType = showAdminActions && hasAnyRole(['admin', 'user']);
+  const canDeleteProductType = showAdminActions && isAdmin;
   const canAddProductType = showAddButton && isAdmin;
 
   const [loading, setLoading] = useState(true);
@@ -546,7 +549,8 @@ export default function StockPositionsPanel({
                           layout="card"
                           isInactive={isInactive}
                           showAdminActions={showAdminActions}
-                          canManageProductTypes={canManageProductTypes}
+                          canEditProductType={canEditProductType}
+                          canDeleteProductType={canDeleteProductType}
                           onHistory={() => router.push(`/stock/${row.productTypeId}`)}
                           onEdit={() => handleEditProductType(productType)}
                           onSuspend={() => handleSuspendProductType(productType)}
@@ -627,7 +631,8 @@ export default function StockPositionsPanel({
                           layout="table"
                           isInactive={isInactive}
                           showAdminActions={showAdminActions}
-                          canManageProductTypes={canManageProductTypes}
+                          canEditProductType={canEditProductType}
+                          canDeleteProductType={canDeleteProductType}
                           onHistory={() => router.push(`/stock/${row.productTypeId}`)}
                           onEdit={() => handleEditProductType(productType)}
                           onSuspend={() => handleSuspendProductType(productType)}
