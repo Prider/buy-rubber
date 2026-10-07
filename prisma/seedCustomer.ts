@@ -24,7 +24,6 @@ async function main() {
   await prisma.purchase.deleteMany({});
   await prisma.productPrice.deleteMany({});
   await prisma.expense.deleteMany({});
-  await prisma.stockGang.deleteMany({});
   await prisma.stockLedgerEntry.deleteMany({});
   await prisma.stockPosition.deleteMany({});
   await prisma.sale.deleteMany({});

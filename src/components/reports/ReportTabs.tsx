@@ -8,7 +8,6 @@ export const REPORT_TABS = [
   { id: 'member_summary', label: 'สรุปรายสมาชิก' },
   { id: 'expense_summary', label: 'ค่าใช้จ่าย' },
   { id: 'profit_loss', label: 'กำไร/ขาดทุน' },
-  { id: 'profit_loss_gangs', label: 'กำไร/ขาดทุนต่อกอง' },
 ] as const;
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];

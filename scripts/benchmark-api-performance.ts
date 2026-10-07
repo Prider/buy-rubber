@@ -5,11 +5,10 @@
  *   npm run perf:api
  *   npm run perf:api -- --iterations 10
  *   npm run perf:api -- --base-url http://localhost:3000
- *   npm run perf:api -- --handler-only --only gangs
+ *   npm run perf:api -- --handler-only --only reports
  *
  * Seed large purchase data first (optional):
  *   npm run db:seed:purchases:for:test
- *   npm run db:seed:gangs:for:test
  */
 import { performance } from 'node:perf_hooks';
 import { PrismaClient } from '@prisma/client';
@@ -204,35 +203,16 @@ async function main() {
   const prisma = new PrismaClient();
   const { startDate, endDate } = getReportDateRange();
 
-  const [purchaseCount, memberCount, saleCount, expenseCount, stockGangCount, purchaseGroupCount, saleGroupCount] =
+  const [purchaseCount, memberCount, saleCount, expenseCount, purchaseGroupCount, saleGroupCount] =
     await Promise.all([
       prisma.purchase.count(),
       prisma.member.count(),
       prisma.sale.count(),
       prisma.expense.count(),
-      prisma.stockGang.count(),
       prisma.reportProductTypeGroup.count({ where: { kind: 'purchase' } }),
       prisma.reportProductTypeGroup.count({ where: { kind: 'sale' } }),
     ]);
 
-  const gangGroups = await prisma.stockGang.groupBy({
-    by: ['productTypeId'],
-    _count: { _all: true },
-    orderBy: { _count: { productTypeId: 'desc' } },
-    take: 1,
-  });
-  const topGangProductId = gangGroups[0]?.productTypeId ?? '';
-  const topGangProduct = topGangProductId
-    ? await prisma.productType.findUnique({
-        where: { id: topGangProductId },
-        select: { id: true, code: true, name: true },
-      })
-    : null;
-  const topGangCount = gangGroups[0]?._count._all ?? 0;
-
-  const monthStart = formatDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const today = formatDate(new Date());
-  const runGangs = !args.only || args.only === 'gangs';
   const runReports = args.only === 'reports';
   const runGeneral = !args.only;
 
@@ -241,14 +221,8 @@ async function main() {
   console.log(`  members:   ${memberCount.toLocaleString()}`);
   console.log(`  sales:     ${saleCount.toLocaleString()}`);
   console.log(`  expenses:  ${expenseCount.toLocaleString()}`);
-  console.log(`  stock gangs: ${stockGangCount.toLocaleString()}`);
   console.log(`  purchase groups: ${purchaseGroupCount.toLocaleString()}`);
   console.log(`  sale groups:     ${saleGroupCount.toLocaleString()}`);
-  if (topGangProduct) {
-    console.log(
-      `  heaviest product: ${topGangProduct.code} (${topGangProduct.name}) · ${topGangCount.toLocaleString()} gangs · id=${topGangProduct.id}`,
-    );
-  }
   console.log(`  report range: ${startDate} → ${endDate}`);
   console.log(`  iterations: ${args.iterations} (+1 warmup)`);
 
@@ -293,49 +267,6 @@ async function main() {
           args.iterations,
         ),
       );
-    }
-
-    if (runGangs) {
-      if (!topGangProduct) {
-        console.warn('\nSkipping gangs handler benchmarks: no StockGang rows in the database.');
-        console.warn('  npm run db:seed:gangs:for:test');
-      } else {
-        const { GET: getGangs } = await import('../src/app/api/stock/gangs/route');
-        const lastPage = Math.max(1, Math.ceil(topGangCount / 15));
-        const pid = topGangProduct.id;
-        results.push(
-          await measureHandler(
-            'GET /api/stock/gangs (page 15)',
-            getGangs,
-            `http://localhost/api/stock/gangs?productTypeId=${pid}&page=1&limit=15`,
-            args.iterations,
-          ),
-          await measureHandler(
-            'GET /api/stock/gangs (this month)',
-            getGangs,
-            `http://localhost/api/stock/gangs?productTypeId=${pid}&startDate=${monthStart}&endDate=${today}&page=1&limit=15`,
-            args.iterations,
-          ),
-          await measureHandler(
-            'GET /api/stock/gangs (year range)',
-            getGangs,
-            `http://localhost/api/stock/gangs?productTypeId=${pid}&startDate=${startDate}&endDate=${endDate}&page=1&limit=15`,
-            args.iterations,
-          ),
-          await measureHandler(
-            'GET /api/stock/gangs (export 200)',
-            getGangs,
-            `http://localhost/api/stock/gangs?productTypeId=${pid}&startDate=${startDate}&endDate=${endDate}&page=1&limit=200`,
-            args.iterations,
-          ),
-          await measureHandler(
-            `GET /api/stock/gangs (last page ${lastPage})`,
-            getGangs,
-            `http://localhost/api/stock/gangs?productTypeId=${pid}&page=${lastPage}&limit=15`,
-            args.iterations,
-          ),
-        );
-      }
     }
 
     if (runReports) {
@@ -435,24 +366,6 @@ async function main() {
           ),
         );
       }
-
-      if (runGangs && topGangProduct) {
-        const pid = topGangProduct.id;
-        results.push(
-          await measureHttp(
-            'HTTP GET /api/stock/gangs (page 15)',
-            `${args.baseUrl}/api/stock/gangs?productTypeId=${pid}&page=1&limit=15`,
-            token,
-            args.iterations,
-          ),
-          await measureHttp(
-            'HTTP GET /api/stock/gangs (this month)',
-            `${args.baseUrl}/api/stock/gangs?productTypeId=${pid}&startDate=${monthStart}&endDate=${today}&page=1&limit=15`,
-            token,
-            args.iterations,
-          ),
-        );
-      }
     }
   }
 
@@ -471,10 +384,6 @@ async function main() {
   if (purchaseCount < 10_000) {
     console.log('\nTip: seed more purchase data for heavier load testing:');
     console.log('  npm run db:seed:purchases:for:test');
-  }
-  if (stockGangCount < 1_000) {
-    console.log('\nTip: seed more gang data for heavier /api/stock/gangs testing:');
-    console.log('  GANGS=10000 npm run db:seed:gangs:for:test');
   }
 
   await prisma.$disconnect();

@@ -209,14 +209,10 @@ async function main() {
     });
   }
 
-  const { rebuildStockGangs } = await import('../src/lib/stock/stockGangs');
-  const gangsResult = await rebuildStockGangs(prisma);
-
   console.log(
     '✅ rebuildStock: done',
     `positions=${positionsData.length}`,
     `ledgerEntries=${ledgerEntries.length}`,
-    `gangs=${gangsResult.gangs}`,
   );
 }
 

@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {
-  applySaleToOpenStockGang,
-  openStockGangIfNeeded,
-  rebuildStockGangs,
-} from '@/lib/stock/stockGangs';
-
 const EPS = 1e-6;
 
 export class StockInsufficientError extends Error {
@@ -82,13 +76,6 @@ export async function applyPurchaseToStock(
       notes: notes ?? undefined,
     },
   });
-
-  await openStockGangIfNeeded(tx, {
-    productTypeId,
-    prevQtyKg: oldQty,
-    nextQtyKg: newQty,
-    date,
-  });
 }
 
 export async function applySaleToStock(
@@ -143,15 +130,6 @@ export async function applySaleToStock(
       date,
       notes: notes ?? undefined,
     },
-  });
-
-  await applySaleToOpenStockGang(tx, {
-    productTypeId,
-    nextQtyKg: newQty,
-    date,
-    saleNo: refNo,
-    soldKg: qtyKg,
-    cogs,
   });
 
   return { unitCostPerKg: avgCostPerKg, costOfGoods: cogs };
@@ -222,9 +200,6 @@ export async function reverseSaleFromStock(
       notes: notes ?? undefined,
     },
   });
-
-  // Deletes can reopen / reshuffle cycles — rebuild from ledger for correctness.
-  await rebuildStockGangs(tx, productTypeId);
 }
 
 /**
@@ -339,6 +314,4 @@ export async function reversePurchaseFromStock(
       notes: notes ?? undefined,
     },
   });
-
-  await rebuildStockGangs(tx, productTypeId);
 }

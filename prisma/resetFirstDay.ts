@@ -7,7 +7,7 @@
  *   yarn db:reset:first-day
  *
  * Deletes:
- *   ServiceFee, Purchase, StockGang, StockLedgerEntry, StockPosition,
+ *   ServiceFee, Purchase, StockLedgerEntry, StockPosition,
  *   SaleExpense, Sale
  */
 import { PrismaClient } from '@prisma/client';
@@ -15,18 +15,17 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function countRows() {
-  const [purchases, serviceFees, ledger, positions, gangs, sales, saleExpenses] =
+  const [purchases, serviceFees, ledger, positions, sales, saleExpenses] =
     await Promise.all([
       prisma.purchase.count(),
       prisma.serviceFee.count(),
       prisma.stockLedgerEntry.count(),
       prisma.stockPosition.count(),
-      prisma.stockGang.count(),
       prisma.sale.count(),
       prisma.saleExpense.count(),
     ]);
 
-  return { purchases, serviceFees, ledger, positions, gangs, sales, saleExpenses };
+  return { purchases, serviceFees, ledger, positions, sales, saleExpenses };
 }
 
 async function main() {
@@ -38,7 +37,6 @@ async function main() {
   const deleted = await prisma.$transaction(async (tx) => {
     const serviceFees = await tx.serviceFee.deleteMany({});
     const purchases = await tx.purchase.deleteMany({});
-    const gangs = await tx.stockGang.deleteMany({});
     const ledger = await tx.stockLedgerEntry.deleteMany({});
     const positions = await tx.stockPosition.deleteMany({});
     const saleExpenses = await tx.saleExpense.deleteMany({});
@@ -47,7 +45,6 @@ async function main() {
     return {
       serviceFees: serviceFees.count,
       purchases: purchases.count,
-      gangs: gangs.count,
       ledger: ledger.count,
       positions: positions.count,
       saleExpenses: saleExpenses.count,

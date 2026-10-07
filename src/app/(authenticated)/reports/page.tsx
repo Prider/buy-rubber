@@ -28,9 +28,8 @@ import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
 import ProfitLossReport from './profit-loss/ProfitLossReport';
-import ProfitLossGangsReport from './profit-loss/gangs/ProfitLossGangsReport';
 
-const EMBEDDED_TABS = ['profit_loss', 'profit_loss_gangs'] as const;
+const EMBEDDED_TABS = ['profit_loss'] as const;
 type EmbeddedTab = (typeof EMBEDDED_TABS)[number];
 
 function isEmbeddedTabId(value: string): value is EmbeddedTab {
@@ -151,7 +150,7 @@ export default function ReportsPage() {
         setEmbeddedTab(tab);
         const params = new URLSearchParams(searchParams.toString());
         params.set('tab', tab);
-        if (tab !== 'profit_loss_gangs') params.delete('productTypeId');
+        params.delete('productTypeId');
         router.replace(`/reports?${params.toString()}`, { scroll: false });
         return;
       }
@@ -273,7 +272,6 @@ export default function ReportsPage() {
         <div className="mt-5 space-y-5 px-4 md:px-0 lg:space-y-8">
       <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
         {activeTab === 'profit_loss' ? <ProfitLossReport /> : null}
-        {activeTab === 'profit_loss_gangs' ? <ProfitLossGangsReport /> : null}
 
         {!isEmbeddedTab(activeTab) ? (
         <ReportFilterCard

@@ -19,9 +19,9 @@
  *   npm run db:migrate:old -- --source /path/to/old/dev.db --install
  *
  * Aligns old DBs with the current schema:
- *   - additive tables (DestinationCompany, SaleExpense, StockGang, report groups)
+ *   - additive tables (DestinationCompany, SaleExpense, report groups)
  *   - Sale.destinationCompanyId / unitCostPerKg / costOfGoods
- *   - backfill companies, sale expense lines, stock ledger/gangs, sale COGS
+ *   - backfill companies, sale expense lines, stock ledger, sale COGS
  *
  * Options:
  *   --source <path>   Required. Old prisma/dev.db (or backup file)
@@ -54,7 +54,6 @@ const REQUIRED_TABLES = [
   'SaleExpense',
   'StockPosition',
   'StockLedgerEntry',
-  'StockGang',
   'ProductPrice',
   'ReportProductTypeGroup',
   'ReportProductTypeGroupMember',
@@ -358,7 +357,6 @@ async function reportCounts(prisma, label) {
     'serviceFee',
     'stockPosition',
     'stockLedgerEntry',
-    'stockGang',
     'reportProductTypeGroup',
   ];
   log(`\n[COUNTS] ${label}:`);
@@ -636,11 +634,11 @@ async function main() {
     await prisma.$disconnect().catch(() => {});
   }
 
-  log('\nStep 8: Rebuild stock ledger, positions, and gangs...');
+  log('\nStep 8: Rebuild stock ledger and positions...');
   const { rebuildStock } = require(path.join(projectRoot, 'electron', 'rebuild-stock.js'));
   const stockResult = await rebuildStock(dbUrl);
   log(
-    `[OK] Stock rebuilt: positions=${stockResult.positions}, ledger=${stockResult.ledgerEntries}, gangs=${stockResult.gangs ?? 0}, purchases=${stockResult.purchases}, sales=${stockResult.sales}`,
+    `[OK] Stock rebuilt: positions=${stockResult.positions}, ledger=${stockResult.ledgerEntries}, purchases=${stockResult.purchases}, sales=${stockResult.sales}`,
   );
 
   prisma = await createPrisma(dbUrl);
