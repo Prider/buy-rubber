@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 interface AdminHeaderProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }
 
 function TypewriterText({ text, className }: { text: string; className?: string }) {
@@ -55,10 +55,12 @@ export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
             {title}
           </span>
         </h1>
-        <TypewriterText
-          text={subtitle}
-          className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 sm:text-sm"
-        />
+        {subtitle ? (
+          <TypewriterText
+            text={subtitle}
+            className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 sm:text-sm"
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -14,18 +14,22 @@ vi.mock('../slipGenerator', () => ({
   }),
 }));
 
-// Mock jsPDF
-vi.mock('jspdf', () => {
-  const mockDoc = {
+const jsPdfMock = vi.hoisted(() => {
+  const options: unknown[] = [];
+  const doc = {
     setFillColor: vi.fn().mockReturnThis(),
     rect: vi.fn().mockReturnThis(),
     addImage: vi.fn().mockReturnThis(),
     save: vi.fn().mockReturnThis(),
   };
+  return { options, doc };
+});
 
-  // Create a proper constructor function
-  function MockjsPDF(_?: any) {
-    return mockDoc;
+// Mock jsPDF
+vi.mock('jspdf', () => {
+  function MockjsPDF(options?: unknown) {
+    jsPdfMock.options.push(options);
+    return jsPdfMock.doc;
   }
 
   return {
@@ -141,6 +145,20 @@ describe('pdfGenerator', () => {
         expect.any(HTMLElement),
         expect.objectContaining({ width: 219, windowWidth: 219 })
       );
+    });
+
+    it('should place an A4 slip on an A4 page', async () => {
+      const html =
+        '<html><body><div class="slip" data-slip-width="794" data-slip-paper="a4">A4 slip</div></body></html>';
+
+      await generatePDFFromHTML(html, 'a4.pdf');
+
+      expect(jsPdfMock.options.at(-1)).toEqual(
+        expect.objectContaining({ format: 'a4', unit: 'mm', orientation: 'p' })
+      );
+      const imageCall = jsPdfMock.doc.addImage.mock.calls.at(-1);
+      expect(imageCall?.[5]).toBe(297);
+      expect(imageCall?.[4]).toBeLessThanOrEqual(210);
     });
   });
 

@@ -2,7 +2,7 @@ import { formatCurrency, formatNumber } from '@/lib/utils';
 import { getStoredSlipFontSize, slipFontPx, type SlipFontSizeId } from '@/lib/slipFont';
 import {
   getStoredSlipPaperSize,
-  slipPageWidthMm,
+  slipPageSizeCss,
   slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
@@ -15,6 +15,7 @@ const DEFAULT_FOOTER_TEXT =
 
 const SLIP_COMPANY_NAME_KEY = 'slip_companyName';
 const SLIP_COMPANY_ADDRESS_KEY = 'slip_companyAddress';
+const SLIP_TAX_ID_KEY = 'slip_taxId';
 const SLIP_FOOTER_TEXT_KEY = 'slip_footerText';
 
 function escapeHtml(input: string): string {
@@ -106,6 +107,7 @@ export function generateSlipHTMLFromItems(
     memberCode?: string;
     companyName?: string;
     companyAddress?: string;
+    taxId?: string;
     footerText?: string;
     /** When omitted, uses `localStorage` (same as print/PDF). */
     fontSize?: SlipFontSizeId;
@@ -135,12 +137,13 @@ export function generateSlipHTMLFromItems(
 
   const companyName = options?.companyName || getStoredSlipCompanyName();
   const companyAddress = options?.companyAddress || getStoredSlipCompanyAddress();
+  const taxId = (options?.taxId ?? getStoredSlipText(SLIP_TAX_ID_KEY, '')).trim();
   const footerText = options?.footerText || getStoredSlipText(SLIP_FOOTER_TEXT_KEY, DEFAULT_FOOTER_TEXT);
   const fontSizeId = options?.fontSize ?? getStoredSlipFontSize();
   const px = (basePx: number) => slipFontPx(basePx, fontSizeId);
   const paperSizeId = options?.paperSize ?? getStoredSlipPaperSize();
   const slipWidthPx = slipWidthPxFor(paperSizeId);
-  const pageWidthMm = slipPageWidthMm(paperSizeId);
+  const pageSizeCss = slipPageSizeCss(paperSizeId);
 
   return `
     <html>
@@ -200,7 +203,7 @@ export function generateSlipHTMLFromItems(
               padding: 12px 14px !important;
             }
             @page {
-              size: ${pageWidthMm}mm auto;
+              size: ${pageSizeCss};
               margin: 0;
             }
           }
@@ -232,10 +235,11 @@ export function generateSlipHTMLFromItems(
         </style>
       </head>
       <body>
-        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-font="${fontSizeId}">
+        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="${paperSizeId}" data-slip-font="${fontSizeId}">
           <div class="store">
             <h1>${escapeHtml(companyName)}</h1>
             <p>${escapeHtml(companyAddress)}</p>
+            ${taxId ? `<p>หมายเลขผู้เสียภาษี ${escapeHtml(taxId)}</p>` : ''}
           </div>
           <div class="meta">
             เลขที่: ${purchaseNo}<br/>

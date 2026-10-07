@@ -14,6 +14,7 @@ import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import { SoftwareLicensePanel } from '@/components/admin/SoftwareLicensePanel';
 import { ActivityLogPanel } from '@/components/admin/ActivityLogPanel';
+import { DisplaySettingsPanel } from '@/components/admin/DisplaySettingsPanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -86,6 +87,7 @@ export default function AdminSettingsPage() {
 
   const [slipCompanyName, setSlipCompanyName] = useState(slipDefaults.companyName);
   const [slipCompanyAddress, setSlipCompanyAddress] = useState(slipDefaults.companyAddress);
+  const [slipTaxId, setSlipTaxId] = useState('');
   const [slipFooterText, setSlipFooterText] = useState(slipDefaults.footerText);
   const [slipFontSize, setSlipFontSize] = useState<SlipFontSizeId>('h2');
   const [slipPaperSize, setSlipPaperSize] = useState<SlipPaperSizeId>('80mm');
@@ -119,6 +121,7 @@ export default function AdminSettingsPage() {
         const data = await apiClient.get<{
           companyName: string;
           companyAddress: string;
+          taxId?: string;
           footerText: string;
           fontSize?: string;
           paperSize?: string;
@@ -126,10 +129,12 @@ export default function AdminSettingsPage() {
 
         const companyName = data?.companyName || slipDefaults.companyName;
         const companyAddress = data?.companyAddress || slipDefaults.companyAddress;
+        const taxId = data?.taxId?.trim() || '';
         const footerText = data?.footerText || slipDefaults.footerText;
 
         setSlipCompanyName(companyName);
         setSlipCompanyAddress(companyAddress);
+        setSlipTaxId(taxId);
         setSlipFooterText(footerText);
         const fontSize = normalizeSlipFontSize(data?.fontSize);
         const paper = normalizeSlipPaperSize(data?.paperSize);
@@ -139,6 +144,7 @@ export default function AdminSettingsPage() {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('slip_companyName', companyName);
           window.localStorage.setItem('slip_companyAddress', companyAddress);
+          window.localStorage.setItem('slip_taxId', taxId);
           window.localStorage.setItem('slip_footerText', footerText);
           window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, fontSize);
           window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
@@ -146,6 +152,7 @@ export default function AdminSettingsPage() {
       } catch (err) {
         setSlipCompanyName(slipDefaults.companyName);
         setSlipCompanyAddress(slipDefaults.companyAddress);
+        setSlipTaxId('');
         setSlipFooterText(slipDefaults.footerText);
         setSlipFontSize('h2');
         setSlipPaperSize('80mm');
@@ -172,12 +179,14 @@ export default function AdminSettingsPage() {
       const result = await apiClient.post<{
         companyName: string;
         companyAddress: string;
+        taxId?: string;
         footerText: string;
         fontSize?: SlipFontSizeId;
         paperSize?: SlipPaperSizeId;
       }>('/api/slip/settings', {
         companyName: slipCompanyName,
         companyAddress: slipCompanyAddress,
+        taxId: slipTaxId,
         footerText: slipFooterText,
         fontSize: slipFontSize,
         paperSize: slipPaperSize,
@@ -186,6 +195,7 @@ export default function AdminSettingsPage() {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('slip_companyName', result?.companyName || slipCompanyName);
         window.localStorage.setItem('slip_companyAddress', result?.companyAddress || slipCompanyAddress);
+        window.localStorage.setItem('slip_taxId', result?.taxId ?? slipTaxId);
         window.localStorage.setItem('slip_footerText', result?.footerText || slipFooterText);
         window.localStorage.setItem(
           SLIP_FONT_SIZE_STORAGE_KEY,
@@ -209,11 +219,12 @@ export default function AdminSettingsPage() {
       memberCode: 'M-001',
       companyName: slipCompanyName,
       companyAddress: slipCompanyAddress,
+      taxId: slipTaxId,
       footerText: slipFooterText,
       fontSize: slipFontSize,
       paperSize: slipPaperSize,
     });
-  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize]);
+  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize, slipTaxId]);
 
   const handleSlipFontSizeChange = (id: SlipFontSizeId) => {
     setSlipFontSize(id);
@@ -249,10 +260,7 @@ export default function AdminSettingsPage() {
     <ProtectedRoute requiredRole="admin">
       <div className="min-w-0 space-y-5 sm:space-y-6 lg:space-y-8">
           {/* Header */}
-          <AdminHeader 
-            title="ตั้งค่าระบบ"
-            subtitle="เลือกแท็บเพื่อจัดการการเชื่อมต่อ ใบรับซื้อ ผู้ใช้งาน ประวัติการใช้งาน หรือใบอนุญาตซอฟต์แวร์"
-          />
+          <AdminHeader title="ตั้งค่าระบบ" />
 
           <div className="w-full mx-auto">
             <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -263,6 +271,7 @@ export default function AdminSettingsPage() {
                 <SlipSettingsPanel
                   companyName={slipCompanyName}
                   companyAddress={slipCompanyAddress}
+                  taxId={slipTaxId}
                   footerText={slipFooterText}
                   fontSize={slipFontSize}
                   paperSize={slipPaperSize}
@@ -271,12 +280,15 @@ export default function AdminSettingsPage() {
                   previewHtml={slipPreviewHtml}
                   onCompanyNameChange={setSlipCompanyName}
                   onCompanyAddressChange={setSlipCompanyAddress}
+                  onTaxIdChange={setSlipTaxId}
                   onFooterTextChange={setSlipFooterText}
                   onFontSizeChange={handleSlipFontSizeChange}
                   onPaperSizeChange={handleSlipPaperSizeChange}
                   onSave={handleSaveSlipSettings}
                 />
               )}
+
+              {activeTab === 'display' && <DisplaySettingsPanel />}
 
               {activeTab === 'users' && (
                 <div

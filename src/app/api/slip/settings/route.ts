@@ -11,6 +11,7 @@ const DEFAULT_FOOTER_TEXT =
 
 const KEY_COMPANY_NAME = 'slip_companyName';
 const KEY_COMPANY_ADDRESS = 'slip_companyAddress';
+const KEY_TAX_ID = 'slip_taxId';
 const KEY_PAPER_SIZE = 'slip_paperSize';
 const KEY_FOOTER_TEXT = 'slip_footerText';
 const KEY_FONT_SIZE = 'slip_fontSize';
@@ -18,6 +19,7 @@ const KEY_FONT_SIZE = 'slip_fontSize';
 const TEMPLATE_KEYS = [
   KEY_COMPANY_NAME,
   KEY_COMPANY_ADDRESS,
+  KEY_TAX_ID,
   KEY_PAPER_SIZE,
   KEY_FOOTER_TEXT,
   KEY_FONT_SIZE,
@@ -31,6 +33,17 @@ function getString(val: unknown): string | null {
 function storedOrDefault(value: string | null | undefined, fallback: string): string {
   const trimmed = value?.trim();
   return trimmed || fallback;
+}
+
+function storedTrimmed(value: string | null | undefined): string {
+  return value?.trim() ?? '';
+}
+
+/** Optional text: a provided string is saved as-is (including blank); otherwise keep the stored value. */
+async function resolveOptionalText(incoming: unknown, key: string): Promise<string> {
+  if (typeof incoming === 'string') return incoming.trim();
+  const existing = await prisma.setting.findUnique({ where: { key } });
+  return storedTrimmed(existing?.value);
 }
 
 /** Use the request value when present; otherwise keep the stored setting. */
@@ -63,6 +76,7 @@ export async function GET() {
     return NextResponse.json({
       companyName: storedOrDefault(map.get(KEY_COMPANY_NAME), DEFAULT_COMPANY_NAME),
       companyAddress: storedOrDefault(map.get(KEY_COMPANY_ADDRESS), DEFAULT_COMPANY_ADDRESS),
+      taxId: storedTrimmed(map.get(KEY_TAX_ID)),
       paperSize,
       footerText: storedOrDefault(map.get(KEY_FOOTER_TEXT), DEFAULT_FOOTER_TEXT),
       fontSize,
@@ -82,6 +96,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const companyName = getString(data?.companyName)?.trim() || DEFAULT_COMPANY_NAME;
     const companyAddress = getString(data?.companyAddress)?.trim() || DEFAULT_COMPANY_ADDRESS;
+    const taxId = await resolveOptionalText(data?.taxId, KEY_TAX_ID);
 
     let paperSize: SlipPaperSizeId;
     if (typeof data?.paperSize === 'string') {
@@ -113,6 +128,11 @@ export async function POST(request: NextRequest) {
         create: { key: KEY_COMPANY_ADDRESS, value: companyAddress },
       }),
       prisma.setting.upsert({
+        where: { key: KEY_TAX_ID },
+        update: { value: taxId },
+        create: { key: KEY_TAX_ID, value: taxId },
+      }),
+      prisma.setting.upsert({
         where: { key: KEY_PAPER_SIZE },
         update: { value: paperSize },
         create: { key: KEY_PAPER_SIZE, value: paperSize },
@@ -134,6 +154,7 @@ export async function POST(request: NextRequest) {
       message: 'บันทึกการตั้งค่าสลิปเรียบร้อยแล้ว',
       companyName,
       companyAddress,
+      taxId,
       paperSize,
       footerText,
       fontSize,

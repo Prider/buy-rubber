@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { APP_FONT_SIZE_PX, APP_FONT_SIZE_STORAGE_KEY } from '@/lib/appFontSize';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -32,10 +33,14 @@ export default function RootLayout({
                 try {
                   const theme = localStorage.getItem('theme');
                   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  
+
                   if (theme === 'dark' || (!theme && prefersDark)) {
                     document.documentElement.classList.add('dark');
                   }
+
+                  const fontSizes = ${JSON.stringify(APP_FONT_SIZE_PX)};
+                  const storedFont = localStorage.getItem(${JSON.stringify(APP_FONT_SIZE_STORAGE_KEY)});
+                  document.documentElement.style.fontSize = fontSizes[storedFont] || ${JSON.stringify(APP_FONT_SIZE_PX.md)};
                 } catch (e) {}
               })();
             `,

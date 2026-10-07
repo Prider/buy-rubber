@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { A4_HEIGHT_MM, A4_WIDTH_MM } from '@/lib/slipPaper';
 import { PurchaseTransaction } from '../types';
 import { generateSlipHTML } from './slipGenerator';
 
@@ -88,11 +89,35 @@ export async function generatePDFFromHTML(html: string, fileName: string): Promi
 
   document.body.removeChild(container);
 
-  // 96px ≈ 1in → mm
-  const pdfWidthMm = slipWidthPx * (25.4 / 96);
-  const pdfHeightMm = (canvas.height / canvas.width) * pdfWidthMm;
+  const imgData = canvas.toDataURL('image/png');
+  const isA4 = slipElement?.getAttribute('data-slip-paper') === 'a4';
 
-  // Create PDF with exact slip dimensions
+  if (isA4) {
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, 'F');
+
+    let drawW = A4_WIDTH_MM;
+    let drawH = canvas.width > 0 ? (canvas.height / canvas.width) * A4_WIDTH_MM : A4_HEIGHT_MM;
+    if (drawH > A4_HEIGHT_MM) {
+      const scale = A4_HEIGHT_MM / drawH;
+      drawH = A4_HEIGHT_MM;
+      drawW = A4_WIDTH_MM * scale;
+    }
+    doc.addImage(imgData, 'PNG', 0, 0, drawW, drawH);
+    doc.save(fileName);
+    return;
+  }
+
+  // 96px ≈ 1in → mm. Thermal rolls match the receipt height.
+  const pdfWidthMm = slipWidthPx * (25.4 / 96);
+  const pdfHeightMm = canvas.width > 0 ? (canvas.height / canvas.width) * pdfWidthMm : pdfWidthMm;
+
   const doc = new jsPDF({
     orientation: 'p',
     unit: 'mm',
@@ -100,11 +125,8 @@ export async function generatePDFFromHTML(html: string, fileName: string): Promi
     compress: true,
   });
 
-  // Ensure PDF background is white
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pdfWidthMm, pdfHeightMm, 'F');
-
-  const imgData = canvas.toDataURL('image/png');
   doc.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, pdfHeightMm);
 
   doc.save(fileName);

@@ -10,7 +10,10 @@ import {
 } from '@/lib/slipFont';
 import {
   SLIP_PAPER_OPTIONS,
+  cssPxFromMm,
   normalizeSlipPaperSize,
+  slipPaperShortLabel,
+  slipSheetHeightMm,
   slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
@@ -40,13 +43,14 @@ const PAPER_HINT: Record<SlipPaperSizeId, string> = {
   '58mm': 'เล็ก',
   '80mm': 'มาตรฐาน',
   '104mm': 'กว้าง',
+  a4: 'เลเซอร์',
 };
 
 const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.map((opt) => ({
   value: opt.id,
   label: (
     <span className="inline-flex flex-col leading-tight">
-      <span>{opt.id}</span>
+      <span>{slipPaperShortLabel(opt.id)}</span>
       <span className="text-xs font-normal opacity-80">{PAPER_HINT[opt.id]}</span>
     </span>
   ),
@@ -58,6 +62,7 @@ const fieldClass =
 interface SlipSettingsPanelProps {
   companyName: string;
   companyAddress: string;
+  taxId: string;
   footerText: string;
   fontSize: SlipFontSizeId;
   paperSize: SlipPaperSizeId;
@@ -66,6 +71,7 @@ interface SlipSettingsPanelProps {
   previewHtml: string;
   onCompanyNameChange: (value: string) => void;
   onCompanyAddressChange: (value: string) => void;
+  onTaxIdChange: (value: string) => void;
   onFooterTextChange: (value: string) => void;
   onFontSizeChange: (id: SlipFontSizeId) => void;
   onPaperSizeChange: (id: SlipPaperSizeId) => void;
@@ -75,6 +81,7 @@ interface SlipSettingsPanelProps {
 export function SlipSettingsPanel({
   companyName,
   companyAddress,
+  taxId,
   footerText,
   fontSize,
   paperSize,
@@ -83,12 +90,15 @@ export function SlipSettingsPanel({
   previewHtml,
   onCompanyNameChange,
   onCompanyAddressChange,
+  onTaxIdChange,
   onFooterTextChange,
   onFontSizeChange,
   onPaperSizeChange,
   onSave,
 }: SlipSettingsPanelProps) {
   const previewFrameWidth = slipWidthPxFor(paperSize);
+  const sheetHeightMm = slipSheetHeightMm(paperSize);
+  const previewFrameHeight = sheetHeightMm ? cssPxFromMm(sheetHeightMm) : PREVIEW_IFRAME_HEIGHT;
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageWidth, setStageWidth] = useState(0);
 
@@ -114,7 +124,7 @@ export function SlipSettingsPanel({
   const stageHeight = stageWidth * (PREVIEW_STAGE_HEIGHT / PREVIEW_STAGE_WIDTH);
   const previewScale =
     stageWidth > 0
-      ? Math.min(stageWidth / previewFrameWidth, stageHeight / PREVIEW_IFRAME_HEIGHT)
+      ? Math.min(stageWidth / previewFrameWidth, stageHeight / previewFrameHeight)
       : 1;
   const busy = loading || saving;
 
@@ -160,6 +170,21 @@ export function SlipSettingsPanel({
               disabled={busy}
               rows={3}
               className={`${fieldClass} resize-none`}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="slip-tax-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              หมายเลขผู้เสียภาษี
+            </label>
+            <input
+              id="slip-tax-id"
+              type="text"
+              inputMode="numeric"
+              value={taxId}
+              onChange={(e) => onTaxIdChange(e.target.value)}
+              disabled={busy}
+              className={fieldClass}
             />
           </div>
 
@@ -223,7 +248,7 @@ export function SlipSettingsPanel({
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {paperSize} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
+              {slipPaperShortLabel(paperSize)} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
             </p>
           </div>
           <div className="rounded-xl bg-gray-100 p-3 dark:bg-gray-950/60 sm:p-4">
@@ -237,7 +262,7 @@ export function SlipSettingsPanel({
                   className="absolute left-1/2 top-0 overflow-hidden rounded-md bg-white shadow-md"
                   style={{
                     width: previewFrameWidth * previewScale,
-                    height: PREVIEW_IFRAME_HEIGHT * previewScale,
+                    height: previewFrameHeight * previewScale,
                     transform: 'translateX(-50%)',
                   }}
                 >
@@ -247,7 +272,7 @@ export function SlipSettingsPanel({
                     className="bg-white"
                     style={{
                       width: previewFrameWidth,
-                      height: PREVIEW_IFRAME_HEIGHT,
+                      height: previewFrameHeight,
                       border: 'none',
                       transform: `scale(${previewScale})`,
                       transformOrigin: 'top left',

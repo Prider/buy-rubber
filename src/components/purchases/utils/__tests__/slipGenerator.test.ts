@@ -207,11 +207,33 @@ describe('slipGenerator', () => {
       expect(result).toContain('<html>');
       expect(result).toContain('สินทวี');
       expect(result).toContain('171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ');
+      expect(result).not.toContain('หมายเลขผู้เสียภาษี');
       expect(result).toContain('น้ำยางสด');
       expect(result).toContain('100');
       expect(result).toContain('50');
       expect(result).toContain('5,000');
       expect(result).toContain('ยอดสุทธิ');
+    });
+
+    it('prints the tax id after the company address', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const result = generateSlipHTMLFromItems(items, {
+        companyAddress: '171/5 ม.8',
+        taxId: '0105560000000',
+      });
+
+      const addressAt = result.indexOf('171/5 ม.8');
+      const taxAt = result.indexOf('หมายเลขผู้เสียภาษี 0105560000000');
+      expect(addressAt).toBeGreaterThan(-1);
+      expect(taxAt).toBeGreaterThan(addressAt);
     });
 
     it('should use provided purchase number', () => {
@@ -498,15 +520,17 @@ describe('slipGenerator', () => {
     });
 
     it.each([
-      ['58mm', 219, 58],
-      ['80mm', 302, 80],
-      ['104mm', 393, 104],
-    ] as const)('applies %s width (%d px) in slip HTML', (paperSize, widthPx, pageMm) => {
+      ['58mm', 219, '58mm auto'],
+      ['80mm', 302, '80mm auto'],
+      ['104mm', 393, '104mm auto'],
+      ['a4', 794, 'A4'],
+    ] as const)('applies %s width (%d px) in slip HTML', (paperSize, widthPx, pageSize) => {
       const result = generateSlipHTMLFromItems(sampleItems, { paperSize });
 
       expect(result).toContain(`width: ${widthPx}px`);
       expect(result).toContain(`data-slip-width="${widthPx}"`);
-      expect(result).toContain(`size: ${pageMm}mm auto;`);
+      expect(result).toContain(`data-slip-paper="${paperSize}"`);
+      expect(result).toContain(`size: ${pageSize};`);
     });
 
     it('reads paper size from localStorage when option is omitted', () => {

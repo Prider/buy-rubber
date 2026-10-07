@@ -48,6 +48,18 @@ describe('/api/slip/settings', () => {
       expect(data.paperSize).toBe('80mm');
       expect(data.footerText).toContain('กรุณาตรวจสอบนับเงิน');
       expect(data.fontSize).toBe('h2');
+      expect(data.taxId).toBe('');
+    });
+
+    it('returns a stored tax id', async () => {
+      vi.mocked(prisma.setting.findMany).mockResolvedValue([
+        { key: 'slip_taxId', value: ' 0105560000000 ' },
+      ]);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.taxId).toBe('0105560000000');
     });
 
     it('returns a stored font size percent', async () => {
@@ -94,9 +106,20 @@ describe('/api/slip/settings', () => {
       expect(data.paperSize).toBe('58mm');
     });
 
-    it('normalizes invalid stored paper size to 80mm', async () => {
+    it('returns stored A4 paper size', async () => {
       vi.mocked(prisma.setting.findMany).mockResolvedValue([
         { key: 'slip_paperSize', value: 'a4' },
+      ]);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.paperSize).toBe('a4');
+    });
+
+    it('normalizes invalid stored paper size to 80mm', async () => {
+      vi.mocked(prisma.setting.findMany).mockResolvedValue([
+        { key: 'slip_paperSize', value: 'letter' },
       ]);
 
       const response = await GET();
@@ -156,6 +179,52 @@ describe('/api/slip/settings', () => {
       const data = await response.json();
 
       expect(data.paperSize).toBe('58mm');
+    });
+
+    it('persists a tax id and allows clearing it', async () => {
+      const saveRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ taxId: ' 0105560000000 ' }),
+      });
+
+      const saveResponse = await POST(saveRequest);
+      const saved = await saveResponse.json();
+
+      expect(saveResponse.status).toBe(200);
+      expect(saved.taxId).toBe('0105560000000');
+      expect(prisma.setting.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { key: 'slip_taxId' },
+          update: { value: '0105560000000' },
+          create: { key: 'slip_taxId', value: '0105560000000' },
+        })
+      );
+
+      const clearRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ taxId: '   ' }),
+      });
+      const cleared = await (await POST(clearRequest)).json();
+      expect(cleared.taxId).toBe('');
+    });
+
+    it('keeps the stored tax id when omitted from the request body', async () => {
+      vi.mocked(prisma.setting.findUnique).mockImplementation(async (args: { where: { key: string } }) => {
+        if (args.where.key === 'slip_taxId') {
+          return { key: 'slip_taxId', value: '0105560000000' };
+        }
+        return null;
+      });
+
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyName: 'Test Co' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.taxId).toBe('0105560000000');
     });
 
     it('persists footer text', async () => {

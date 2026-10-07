@@ -662,12 +662,13 @@ export function uniqueSuffix(): string {
   return Date.now().toString().slice(-6)
 }
 
-export type SlipPaperSize = '58mm' | '80mm' | '104mm'
+export type SlipPaperSize = '58mm' | '80mm' | '104mm' | 'a4'
 export type SlipFontSize = 'h4' | 'h3' | 'h2' | 'h1'
 
 export type SlipSettings = {
   companyName: string
   companyAddress: string
+  taxId: string
   footerText: string
   fontSize: SlipFontSize
   paperSize: SlipPaperSize
@@ -692,6 +693,7 @@ export async function setSlipSettings(
     data: {
       companyName: settings.companyName ?? current.companyName,
       companyAddress: settings.companyAddress ?? current.companyAddress,
+      taxId: settings.taxId ?? current.taxId,
       footerText: settings.footerText ?? current.footerText,
       fontSize: settings.fontSize ?? current.fontSize,
       paperSize: settings.paperSize ?? current.paperSize,
@@ -704,6 +706,7 @@ export async function setSlipSettings(
   return {
     companyName: body.companyName ?? settings.companyName ?? current.companyName,
     companyAddress: body.companyAddress ?? settings.companyAddress ?? current.companyAddress,
+    taxId: body.taxId ?? settings.taxId ?? current.taxId,
     footerText: body.footerText ?? settings.footerText ?? current.footerText,
     fontSize: (body.fontSize ?? settings.fontSize ?? current.fontSize) as SlipFontSize,
     paperSize: (body.paperSize ?? settings.paperSize ?? current.paperSize) as SlipPaperSize,

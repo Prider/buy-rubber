@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 export const ADMIN_TABS = [
   { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
+  { id: 'display', label: 'การแสดงผล' },
   { id: 'users', label: 'ผู้ใช้งาน' },
   { id: 'activity', label: 'ประวัติการใช้งาน' },
   { id: 'connection', label: 'การเชื่อมต่อ' },
