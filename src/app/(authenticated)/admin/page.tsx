@@ -29,6 +29,12 @@ import {
   normalizeSlipPaperSize,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
+import {
+  SLIP_TEMPLATE_STORAGE_KEY,
+  paperSizeForTemplate,
+  resolveStoredSlipTemplate,
+  type SlipTemplateId,
+} from '@/lib/slipTemplate';
 
 const SLIP_PREVIEW_ITEMS: CartItem[] = [
   {
@@ -91,6 +97,7 @@ export default function AdminSettingsPage() {
   const [slipFooterText, setSlipFooterText] = useState(slipDefaults.footerText);
   const [slipFontSize, setSlipFontSize] = useState<SlipFontSizeId>('h2');
   const [slipPaperSize, setSlipPaperSize] = useState<SlipPaperSizeId>('80mm');
+  const [slipTemplate, setSlipTemplate] = useState<SlipTemplateId>('slip');
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminSettingsTab>('slip');
@@ -125,6 +132,7 @@ export default function AdminSettingsPage() {
           footerText: string;
           fontSize?: string;
           paperSize?: string;
+          template?: string;
         }>('/api/slip/settings');
 
         const companyName = data?.companyName || slipDefaults.companyName;
@@ -137,8 +145,11 @@ export default function AdminSettingsPage() {
         setSlipTaxId(taxId);
         setSlipFooterText(footerText);
         const fontSize = normalizeSlipFontSize(data?.fontSize);
-        const paper = normalizeSlipPaperSize(data?.paperSize);
+        const storedPaper = normalizeSlipPaperSize(data?.paperSize);
+        const template = resolveStoredSlipTemplate(data?.template, storedPaper);
+        const paper = paperSizeForTemplate(template, storedPaper);
         setSlipFontSize(fontSize);
+        setSlipTemplate(template);
         setSlipPaperSize(paper);
 
         if (typeof window !== 'undefined') {
@@ -147,6 +158,7 @@ export default function AdminSettingsPage() {
           window.localStorage.setItem('slip_taxId', taxId);
           window.localStorage.setItem('slip_footerText', footerText);
           window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, fontSize);
+          window.localStorage.setItem(SLIP_TEMPLATE_STORAGE_KEY, template);
           window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
         }
       } catch (err) {
@@ -155,6 +167,7 @@ export default function AdminSettingsPage() {
         setSlipTaxId('');
         setSlipFooterText(slipDefaults.footerText);
         setSlipFontSize('h2');
+        setSlipTemplate('slip');
         setSlipPaperSize('80mm');
         // Slip preload is non-blocking; defaults apply until the Slip tab is opened.
         console.warn('Failed to load slip settings', err);
@@ -183,6 +196,7 @@ export default function AdminSettingsPage() {
         footerText: string;
         fontSize?: SlipFontSizeId;
         paperSize?: SlipPaperSizeId;
+        template?: SlipTemplateId;
       }>('/api/slip/settings', {
         companyName: slipCompanyName,
         companyAddress: slipCompanyAddress,
@@ -190,6 +204,7 @@ export default function AdminSettingsPage() {
         footerText: slipFooterText,
         fontSize: slipFontSize,
         paperSize: slipPaperSize,
+        template: slipTemplate,
       });
 
       if (typeof window !== 'undefined') {
@@ -201,6 +216,7 @@ export default function AdminSettingsPage() {
           SLIP_FONT_SIZE_STORAGE_KEY,
           result?.fontSize || slipFontSize,
         );
+        window.localStorage.setItem(SLIP_TEMPLATE_STORAGE_KEY, result?.template || slipTemplate);
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, result?.paperSize || slipPaperSize);
       }
 
@@ -223,8 +239,9 @@ export default function AdminSettingsPage() {
       footerText: slipFooterText,
       fontSize: slipFontSize,
       paperSize: slipPaperSize,
+      template: slipTemplate,
     });
-  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize, slipTaxId]);
+  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize, slipTaxId, slipTemplate]);
 
   const handleSlipFontSizeChange = (id: SlipFontSizeId) => {
     setSlipFontSize(id);
@@ -237,6 +254,16 @@ export default function AdminSettingsPage() {
     setSlipPaperSize(id);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, id);
+    }
+  };
+
+  const handleSlipTemplateChange = (id: SlipTemplateId) => {
+    const nextPaper = paperSizeForTemplate(id, slipPaperSize);
+    setSlipTemplate(id);
+    setSlipPaperSize(nextPaper);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SLIP_TEMPLATE_STORAGE_KEY, id);
+      window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, nextPaper);
     }
   };
 
@@ -275,6 +302,7 @@ export default function AdminSettingsPage() {
                   footerText={slipFooterText}
                   fontSize={slipFontSize}
                   paperSize={slipPaperSize}
+                  template={slipTemplate}
                   loading={slipLoading}
                   saving={slipSaving}
                   previewHtml={slipPreviewHtml}
@@ -284,6 +312,7 @@ export default function AdminSettingsPage() {
                   onFooterTextChange={setSlipFooterText}
                   onFontSizeChange={handleSlipFontSizeChange}
                   onPaperSizeChange={handleSlipPaperSizeChange}
+                  onTemplateChange={handleSlipTemplateChange}
                   onSave={handleSaveSlipSettings}
                 />
               )}

@@ -3,6 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { normalizeSlipFontSize, type SlipFontSizeId } from '@/lib/slipFont';
 import { normalizeSlipPaperSize, type SlipPaperSizeId } from '@/lib/slipPaper';
+import {
+  paperSizeForTemplate,
+  resolveStoredSlipTemplate,
+  type SlipTemplateId,
+} from '@/lib/slipTemplate';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
 const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';
@@ -15,6 +20,7 @@ const KEY_TAX_ID = 'slip_taxId';
 const KEY_PAPER_SIZE = 'slip_paperSize';
 const KEY_FOOTER_TEXT = 'slip_footerText';
 const KEY_FONT_SIZE = 'slip_fontSize';
+const KEY_TEMPLATE = 'slip_template';
 
 const TEMPLATE_KEYS = [
   KEY_COMPANY_NAME,
@@ -23,6 +29,7 @@ const TEMPLATE_KEYS = [
   KEY_PAPER_SIZE,
   KEY_FOOTER_TEXT,
   KEY_FONT_SIZE,
+  KEY_TEMPLATE,
 ];
 
 function getString(val: unknown): string | null {
@@ -71,12 +78,15 @@ export async function GET() {
     });
 
     const map = new Map(settings.map(s => [s.key, s.value]));
-    const paperSize: SlipPaperSizeId = normalizeSlipPaperSize(map.get(KEY_PAPER_SIZE));
+    const storedPaper: SlipPaperSizeId = normalizeSlipPaperSize(map.get(KEY_PAPER_SIZE));
+    const template: SlipTemplateId = resolveStoredSlipTemplate(map.get(KEY_TEMPLATE), storedPaper);
+    const paperSize = paperSizeForTemplate(template, storedPaper);
     const fontSize: SlipFontSizeId = normalizeSlipFontSize(map.get(KEY_FONT_SIZE));
     return NextResponse.json({
       companyName: storedOrDefault(map.get(KEY_COMPANY_NAME), DEFAULT_COMPANY_NAME),
       companyAddress: storedOrDefault(map.get(KEY_COMPANY_ADDRESS), DEFAULT_COMPANY_ADDRESS),
       taxId: storedTrimmed(map.get(KEY_TAX_ID)),
+      template,
       paperSize,
       footerText: storedOrDefault(map.get(KEY_FOOTER_TEXT), DEFAULT_FOOTER_TEXT),
       fontSize,
@@ -105,6 +115,15 @@ export async function POST(request: NextRequest) {
       const existing = await prisma.setting.findUnique({ where: { key: KEY_PAPER_SIZE } });
       paperSize = normalizeSlipPaperSize(existing?.value);
     }
+
+    let template: SlipTemplateId;
+    if (typeof data?.template === 'string') {
+      template = resolveStoredSlipTemplate(data.template, paperSize);
+    } else {
+      const existingTemplate = await prisma.setting.findUnique({ where: { key: KEY_TEMPLATE } });
+      template = resolveStoredSlipTemplate(existingTemplate?.value, paperSize);
+    }
+    paperSize = paperSizeForTemplate(template, paperSize);
 
     const footerText = await resolveTemplateText(data?.footerText, KEY_FOOTER_TEXT, DEFAULT_FOOTER_TEXT);
 
@@ -147,6 +166,11 @@ export async function POST(request: NextRequest) {
         update: { value: fontSize },
         create: { key: KEY_FONT_SIZE, value: fontSize },
       }),
+      prisma.setting.upsert({
+        where: { key: KEY_TEMPLATE },
+        update: { value: template },
+        create: { key: KEY_TEMPLATE, value: template },
+      }),
     ]);
 
     return NextResponse.json({
@@ -155,6 +179,7 @@ export async function POST(request: NextRequest) {
       companyName,
       companyAddress,
       taxId,
+      template,
       paperSize,
       footerText,
       fontSize,

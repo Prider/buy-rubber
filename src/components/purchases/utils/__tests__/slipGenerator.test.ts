@@ -231,7 +231,7 @@ describe('slipGenerator', () => {
       });
 
       const addressAt = result.indexOf('171/5 ม.8');
-      const taxAt = result.indexOf('หมายเลขผู้เสียภาษี 0105560000000');
+      const taxAt = result.indexOf('หมายเลขผู้เสียภาษี : 0105560000000');
       expect(addressAt).toBeGreaterThan(-1);
       expect(taxAt).toBeGreaterThan(addressAt);
     });
@@ -531,6 +531,44 @@ describe('slipGenerator', () => {
       expect(result).toContain(`data-slip-width="${widthPx}"`);
       expect(result).toContain(`data-slip-paper="${paperSize}"`);
       expect(result).toContain(`size: ${pageSize};`);
+    });
+
+    it('adds a ผู้รับเงิน signature on the signature template', () => {
+      const result = generateSlipHTMLFromItems(sampleItems, {
+        template: 'signature',
+        paperSize: '80mm',
+      });
+
+      expect(result).toContain('ผู้รับเงิน');
+      expect(result).toContain('ผู้จ่ายเงิน');
+      expect(result).toContain('data-slip-template="signature"');
+      expect(result).toContain('width: 302px');
+      expect(result).not.toContain('<table');
+    });
+
+    it('keeps the current slip without a signature line', () => {
+      const result = generateSlipHTMLFromItems(sampleItems, { template: 'slip', paperSize: '80mm' });
+
+      expect(result).not.toContain('ผู้รับเงิน');
+      expect(result).not.toContain('ผู้จ่ายเงิน');
+      expect(result).toContain('data-slip-template="slip"');
+    });
+
+    it('renders the A4 template as a full sheet', () => {
+      const result = generateSlipHTMLFromItems(sampleItems, {
+        template: 'a4',
+        paperSize: '58mm',
+      });
+
+      expect(result).toContain('data-slip-template="a4"');
+      expect(result).toContain('data-slip-paper="a4"');
+      expect(result).toContain('width: 794px');
+      expect(result).toContain('size: A4;');
+      expect(result).toContain('<table');
+      expect(result).toContain('ใบรับซื้อ');
+      expect(result).toContain('ผู้รับเงิน');
+      expect(result).toContain('ผู้จ่ายเงิน');
+      expect(result).toContain('น้ำหนักสุทธิ');
     });
 
     it('reads paper size from localStorage when option is omitted', () => {

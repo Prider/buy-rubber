@@ -664,6 +664,7 @@ export function uniqueSuffix(): string {
 
 export type SlipPaperSize = '58mm' | '80mm' | '104mm' | 'a4'
 export type SlipFontSize = 'h4' | 'h3' | 'h2' | 'h1'
+export type SlipTemplate = 'signature' | 'slip' | 'a4'
 
 export type SlipSettings = {
   companyName: string
@@ -672,6 +673,7 @@ export type SlipSettings = {
   footerText: string
   fontSize: SlipFontSize
   paperSize: SlipPaperSize
+  template: SlipTemplate
 }
 
 /** Fetches slip print settings from the API. */
@@ -689,6 +691,13 @@ export async function setSlipSettings(
   settings: Partial<SlipSettings> & { paperSize?: SlipPaperSize }
 ): Promise<SlipSettings> {
   const current = await getSlipSettings(request)
+  const paperSize = settings.paperSize ?? current.paperSize
+  // A paper-size-only update on the A4 template would be forced back to A4.
+  const template =
+    settings.template ??
+    (settings.paperSize && settings.paperSize !== 'a4' && current.template === 'a4'
+      ? 'slip'
+      : current.template)
   const res = await request.post(`${BASE}/api/slip/settings`, {
     data: {
       companyName: settings.companyName ?? current.companyName,
@@ -696,7 +705,8 @@ export async function setSlipSettings(
       taxId: settings.taxId ?? current.taxId,
       footerText: settings.footerText ?? current.footerText,
       fontSize: settings.fontSize ?? current.fontSize,
-      paperSize: settings.paperSize ?? current.paperSize,
+      paperSize,
+      template,
     },
   })
   if (!res.ok()) {
@@ -710,6 +720,7 @@ export async function setSlipSettings(
     footerText: body.footerText ?? settings.footerText ?? current.footerText,
     fontSize: (body.fontSize ?? settings.fontSize ?? current.fontSize) as SlipFontSize,
     paperSize: (body.paperSize ?? settings.paperSize ?? current.paperSize) as SlipPaperSize,
+    template: (body.template ?? settings.template ?? current.template) as SlipTemplate,
   }
 }
 

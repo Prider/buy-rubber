@@ -17,6 +17,11 @@ import {
   slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
+import {
+  SLIP_TEMPLATE_OPTIONS,
+  normalizeSlipTemplate,
+  type SlipTemplateId,
+} from '@/lib/slipTemplate';
 
 const PREVIEW_IFRAME_HEIGHT = 560;
 const PREVIEW_STAGE_WIDTH = 320;
@@ -46,12 +51,22 @@ const PAPER_HINT: Record<SlipPaperSizeId, string> = {
   a4: 'เลเซอร์',
 };
 
-const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.map((opt) => ({
+const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.filter((opt) => opt.id !== 'a4').map((opt) => ({
   value: opt.id,
   label: (
     <span className="inline-flex flex-col leading-tight">
       <span>{slipPaperShortLabel(opt.id)}</span>
       <span className="text-xs font-normal opacity-80">{PAPER_HINT[opt.id]}</span>
+    </span>
+  ),
+}));
+
+const TEMPLATE_RADIO_OPTIONS = SLIP_TEMPLATE_OPTIONS.map((opt) => ({
+  value: opt.id,
+  label: (
+    <span className="inline-flex flex-col leading-tight">
+      <span>{opt.label}</span>
+      <span className="text-xs font-normal opacity-80">{opt.hint}</span>
     </span>
   ),
 }));
@@ -66,6 +81,7 @@ interface SlipSettingsPanelProps {
   footerText: string;
   fontSize: SlipFontSizeId;
   paperSize: SlipPaperSizeId;
+  template: SlipTemplateId;
   loading: boolean;
   saving: boolean;
   previewHtml: string;
@@ -75,6 +91,7 @@ interface SlipSettingsPanelProps {
   onFooterTextChange: (value: string) => void;
   onFontSizeChange: (id: SlipFontSizeId) => void;
   onPaperSizeChange: (id: SlipPaperSizeId) => void;
+  onTemplateChange: (id: SlipTemplateId) => void;
   onSave: () => void;
 }
 
@@ -85,6 +102,7 @@ export function SlipSettingsPanel({
   footerText,
   fontSize,
   paperSize,
+  template,
   loading,
   saving,
   previewHtml,
@@ -94,6 +112,7 @@ export function SlipSettingsPanel({
   onFooterTextChange,
   onFontSizeChange,
   onPaperSizeChange,
+  onTemplateChange,
   onSave,
 }: SlipSettingsPanelProps) {
   const previewFrameWidth = slipWidthPxFor(paperSize);
@@ -218,19 +237,36 @@ export function SlipSettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <p id="slip-paper-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              ขนาดกระดาษ
+            <p id="slip-template-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              รูปแบบใบ
             </p>
             <Radio
-              options={PAPER_SIZE_RADIO_OPTIONS}
-              value={paperSize}
+              options={TEMPLATE_RADIO_OPTIONS}
+              value={template}
               size="large"
               direction="horizontal"
               disabled={busy}
-              className="slip-paper-radio py-2"
-              onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
+              className="slip-template-radio py-2"
+              onChange={(value) => onTemplateChange(normalizeSlipTemplate(value))}
             />
           </div>
+
+          {template !== 'a4' && (
+            <div className="space-y-2">
+              <p id="slip-paper-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                ขนาดกระดาษ
+              </p>
+              <Radio
+                options={PAPER_SIZE_RADIO_OPTIONS}
+                value={paperSize}
+                size="large"
+                direction="horizontal"
+                disabled={busy}
+                className="slip-paper-radio py-2"
+                onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
+              />
+            </div>
+          )}
 
           <div className="flex pt-1 sm:justify-end">
             <button

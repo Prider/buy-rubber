@@ -11,34 +11,53 @@
 
 @media (max-width: 639px) {
   .slip-font-radio,
-  .slip-paper-radio {
+  .slip-paper-radio,
+  .slip-template-radio {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px 12px;
   }
 }
 
-.slip-paper-radio .animal-cbx-4s--B input:checked {
+.slip-font-radio .animal-cbx-4s--B input:checked,
+.slip-paper-radio .animal-cbx-4s--B input:checked,
+.slip-template-radio .animal-cbx-4s--B input:checked,
+.app-font-radio .animal-cbx-4s--B input:checked {
   border-color: #6d28d9;
 }
 
-.slip-paper-radio .animal-checked-t-CwE .animal-cbx-4s--B input {
+.slip-font-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.slip-paper-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.slip-template-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.app-font-radio .animal-checked-t-CwE .animal-cbx-4s--B input {
   background: #7c3aed;
 }
 
-.slip-paper-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H {
+.slip-font-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.slip-paper-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.slip-template-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.app-font-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H {
   animation: slip-paper-radio-splash 0.6s ease forwards;
 }
 
-.dark .slip-paper-radio .animal-cbx-4s--B input:checked {
+.dark .slip-font-radio .animal-cbx-4s--B input:checked,
+.dark .slip-paper-radio .animal-cbx-4s--B input:checked,
+.dark .slip-template-radio .animal-cbx-4s--B input:checked,
+.dark .app-font-radio .animal-cbx-4s--B input:checked {
   border-color: #8b5cf6;
 }
 
-.dark .slip-paper-radio .animal-checked-t-CwE .animal-cbx-4s--B input {
+.dark .slip-font-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.dark .slip-paper-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.dark .slip-template-radio .animal-checked-t-CwE .animal-cbx-4s--B input,
+.dark .app-font-radio .animal-checked-t-CwE .animal-cbx-4s--B input {
   background: #8b5cf6;
 }
 
-.dark .slip-paper-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H {
+.dark .slip-font-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.dark .slip-paper-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.dark .slip-template-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H,
+.dark .app-font-radio .animal-cbx-4s--B input:checked ~ .animal-splash-gCU-H {
   animation-name: slip-paper-radio-splash-dark;
 }
 

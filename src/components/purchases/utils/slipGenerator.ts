@@ -6,6 +6,11 @@ import {
   slipWidthPxFor,
   type SlipPaperSizeId,
 } from '@/lib/slipPaper';
+import {
+  getStoredSlipTemplate,
+  normalizeSlipTemplate,
+  type SlipTemplateId,
+} from '@/lib/slipTemplate';
 import { PurchaseTransaction, CartItem } from '../types';
 
 const DEFAULT_COMPANY_NAME = 'สินทวี';
@@ -113,6 +118,8 @@ export function generateSlipHTMLFromItems(
     fontSize?: SlipFontSizeId;
     /** When omitted, uses `localStorage` (same as print/PDF). */
     paperSize?: SlipPaperSizeId;
+    /** When omitted, uses `localStorage` (same as print/PDF). */
+    template?: SlipTemplateId;
   }
 ): string {
   if (items.length === 0) {
@@ -141,9 +148,44 @@ export function generateSlipHTMLFromItems(
   const footerText = options?.footerText || getStoredSlipText(SLIP_FOOTER_TEXT_KEY, DEFAULT_FOOTER_TEXT);
   const fontSizeId = options?.fontSize ?? getStoredSlipFontSize();
   const px = (basePx: number) => slipFontPx(basePx, fontSizeId);
-  const paperSizeId = options?.paperSize ?? getStoredSlipPaperSize();
+  const templateId =
+    options?.template !== undefined ? normalizeSlipTemplate(options.template) : getStoredSlipTemplate();
+  const requestedPaper = options?.paperSize ?? getStoredSlipPaperSize();
+  const paperSizeId: SlipPaperSizeId = templateId === 'a4' ? 'a4' : requestedPaper;
   const slipWidthPx = slipWidthPxFor(paperSizeId);
   const pageSizeCss = slipPageSizeCss(paperSizeId);
+
+  if (templateId === 'a4') {
+    return buildA4SlipHtml({
+      items,
+      total,
+      printDate,
+      purchaseNo,
+      memberName,
+      memberCode,
+      companyName,
+      companyAddress,
+      taxId,
+      footerText,
+      fontSizeId,
+      px,
+      slipWidthPx,
+    });
+  }
+
+  const signatureHtml =
+    templateId === 'signature'
+      ? `<div class="signatures${paperSizeId === '58mm' ? ' signatures--stacked' : ''}">
+          <div class="signature">
+            <div class="signature-line"></div>
+            <div class="signature-label">ผู้รับเงิน</div>
+          </div>
+          <div class="signature">
+            <div class="signature-line"></div>
+            <div class="signature-label">ผู้จ่ายเงิน</div>
+          </div>
+        </div>`
+      : '';
 
   return `
     <html>
@@ -235,11 +277,11 @@ export function generateSlipHTMLFromItems(
         </style>
       </head>
       <body>
-        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="${paperSizeId}" data-slip-font="${fontSizeId}">
+        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="${paperSizeId}" data-slip-template="${templateId}" data-slip-font="${fontSizeId}">
           <div class="store">
             <h1>${escapeHtml(companyName)}</h1>
             <p>${escapeHtml(companyAddress)}</p>
-            ${taxId ? `<p>หมายเลขผู้เสียภาษี ${escapeHtml(taxId)}</p>` : ''}
+            ${taxId ? `<p>หมายเลขผู้เสียภาษี : ${escapeHtml(taxId)}</p>` : ''}
           </div>
           <div class="meta">
             เลขที่: ${purchaseNo}<br/>
@@ -277,9 +319,183 @@ export function generateSlipHTMLFromItems(
             <span>ยอดสุทธิ</span>
             <span>${formatCurrency(total)}</span>
           </div>
+          ${signatureHtml}
           <div class="footer">
             <div class="footer-text">
             ${escapeHtml(footerText)}
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+function buildA4SlipHtml(args: {
+  items: CartItem[];
+  total: number;
+  printDate: string;
+  purchaseNo: string;
+  memberName: string;
+  memberCode: string;
+  companyName: string;
+  companyAddress: string;
+  taxId: string;
+  footerText: string;
+  fontSizeId: SlipFontSizeId;
+  px: (basePx: number) => number;
+  slipWidthPx: number;
+}): string {
+  const {
+    items,
+    total,
+    printDate,
+    purchaseNo,
+    memberName,
+    memberCode,
+    companyName,
+    companyAddress,
+    taxId,
+    footerText,
+    fontSizeId,
+    px,
+    slipWidthPx,
+  } = args;
+
+  const rows = items
+    .map((item) => {
+      const name = escapeHtml(item.productTypeName || item.category || 'ค่าใช้จ่าย');
+      const weight = item.type === 'purchase' ? `${formatNumber(item.netWeight || 0)} กก.` : '—';
+      const price = item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '—';
+      return `<tr>
+        <td>${name}</td>
+        <td class="num">${weight}</td>
+        <td class="num">${price}</td>
+        <td class="num">${formatCurrency(item.totalAmount)}</td>
+      </tr>`;
+    })
+    .join('');
+
+  return `
+    <html>
+      <head>
+        <title>ใบรับซื้อ</title>
+        <meta charset="UTF-8" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff !important;
+            color: #0f172a;
+            font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif;
+          }
+          body { width: ${slipWidthPx}px; max-width: 100%; }
+          .slip {
+            width: 100%;
+            min-height: 1123px;
+            padding: 36px 40px 48px;
+            background: #ffffff !important;
+          }
+          @media print {
+            html, body { width: auto !important; background: #ffffff !important; }
+            .slip { min-height: 0; padding: 0; }
+            @page { size: A4; margin: 14mm; }
+          }
+          .store { text-align: center; line-height: 1.45; }
+          .store h1 { margin: 0; font-size: ${px(26)}px; letter-spacing: 0.5px; }
+          .store p { margin: 4px 0; font-size: ${px(14)}px; color: #334155; }
+          .doc-title {
+            margin: 18px 0 14px;
+            text-align: center;
+            font-size: ${px(22)}px;
+            font-weight: 600;
+            letter-spacing: 1px;
+          }
+          .meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+            font-size: ${px(14)}px;
+            color: #334155;
+          }
+          table { width: 100%; border-collapse: collapse; }
+          th, td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: ${px(14)}px;
+            text-align: left;
+            vertical-align: top;
+          }
+          th {
+            border-bottom: 2px solid #0f172a;
+            font-weight: 600;
+          }
+          .num { text-align: right; white-space: nowrap; }
+          .total {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 32px;
+            font-size: ${px(16)}px;
+            font-weight: 600;
+          }
+          .footer-text {
+            margin-top: 28px;
+            text-align: center;
+            font-size: ${px(12)}px;
+            color: #64748b;
+          }
+          .signatures { display: flex; justify-content: space-between; margin-top: 36px; gap: 24px; }
+          .signature { width: 180px; text-align: center; }
+          .signature-line { border-top: 1px dotted #64748b; margin-top: 56px; }
+          .signature-label { margin-top: 8px; font-size: ${px(14)}px; color: #334155; }
+        </style>
+      </head>
+      <body>
+        <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="a4" data-slip-template="a4" data-slip-font="${fontSizeId}">
+          <div class="store">
+            <h1>${escapeHtml(companyName)}</h1>
+            <p>${escapeHtml(companyAddress)}</p>
+            ${taxId ? `<p>หมายเลขผู้เสียภาษี : ${escapeHtml(taxId)}</p>` : ''}
+          </div>
+          <div class="doc-title">ใบรับซื้อ</div>
+          <div class="meta">
+            <div>
+              เลขที่: ${escapeHtml(purchaseNo)}<br/>
+              ${memberName ? `สมาชิก: ${escapeHtml(memberName)}<br/>` : ''}
+              ${memberCode ? `รหัสสมาชิก: ${escapeHtml(memberCode)}` : ''}
+            </div>
+            <div>วันที่พิมพ์: ${escapeHtml(printDate)}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>รายการ</th>
+                <th class="num">น้ำหนักสุทธิ</th>
+                <th class="num">ราคา/กก.</th>
+                <th class="num">จำนวนเงิน</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="total">
+            <span>ยอดสุทธิ</span>
+            <span>${formatCurrency(total)}</span>
+          </div>
+          <div class="footer-text">${escapeHtml(footerText)}</div>
+          <div class="signatures">
+            <div class="signature">
+              <div class="signature-line"></div>
+              <div class="signature-label">ผู้รับเงิน</div>
+            </div>
+            <div class="signature">
+              <div class="signature-line"></div>
+              <div class="signature-label">ผู้จ่ายเงิน</div>
             </div>
           </div>
         </div>

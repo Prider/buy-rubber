@@ -49,6 +49,7 @@ describe('/api/slip/settings', () => {
       expect(data.footerText).toContain('กรุณาตรวจสอบนับเงิน');
       expect(data.fontSize).toBe('h2');
       expect(data.taxId).toBe('');
+      expect(data.template).toBe('slip');
     });
 
     it('returns a stored tax id', async () => {
@@ -115,6 +116,7 @@ describe('/api/slip/settings', () => {
       const data = await response.json();
 
       expect(data.paperSize).toBe('a4');
+      expect(data.template).toBe('a4');
     });
 
     it('normalizes invalid stored paper size to 80mm', async () => {
@@ -225,6 +227,59 @@ describe('/api/slip/settings', () => {
       const data = await response.json();
 
       expect(data.taxId).toBe('0105560000000');
+    });
+
+    it('persists the signature template without changing thermal paper', async () => {
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ template: 'signature', paperSize: '104mm' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.template).toBe('signature');
+      expect(data.paperSize).toBe('104mm');
+      expect(prisma.setting.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { key: 'slip_template' },
+          update: { value: 'signature' },
+          create: { key: 'slip_template', value: 'signature' },
+        })
+      );
+    });
+
+    it('forces A4 paper when the A4 template is saved', async () => {
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ template: 'a4', paperSize: '58mm' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.template).toBe('a4');
+      expect(data.paperSize).toBe('a4');
+    });
+
+    it('keeps the stored template when omitted from the request body', async () => {
+      vi.mocked(prisma.setting.findUnique).mockImplementation(async (args: { where: { key: string } }) => {
+        if (args.where.key === 'slip_template') {
+          return { key: 'slip_template', value: 'signature' };
+        }
+        return null;
+      });
+
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyName: 'Test Co' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.template).toBe('signature');
     });
 
     it('persists footer text', async () => {

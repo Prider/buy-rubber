@@ -11,6 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipFontSize, SLIP_FONT_SIZE_STORAGE_KEY } from '@/lib/slipFont';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
+import {
+  SLIP_TEMPLATE_STORAGE_KEY,
+  paperSizeForTemplate,
+  resolveStoredSlipTemplate,
+} from '@/lib/slipTemplate';
 import { attachAuthToAxios } from '@/lib/attachAuthToAxios';
 
 attachAuthToAxios();
@@ -141,6 +146,7 @@ export default function Layout({ children }: LayoutProps) {
           footerText?: string;
           fontSize?: string;
           paperSize?: string;
+          template?: string;
         }>('/api/slip/settings');
         // Always overwrite with server values so updates done in Electron propagate to Browser.
         if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
@@ -148,7 +154,10 @@ export default function Layout({ children }: LayoutProps) {
         if (typeof data?.taxId === 'string') window.localStorage.setItem(TAX_ID_KEY, data.taxId);
         if (data?.footerText) window.localStorage.setItem(FOOTER_KEY, data.footerText);
         window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, normalizeSlipFontSize(data?.fontSize));
-        const paper = normalizeSlipPaperSize(data?.paperSize);
+        const storedPaper = normalizeSlipPaperSize(data?.paperSize);
+        const template = resolveStoredSlipTemplate(data?.template, storedPaper);
+        const paper = paperSizeForTemplate(template, storedPaper);
+        window.localStorage.setItem(SLIP_TEMPLATE_STORAGE_KEY, template);
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, paper);
       } catch {
         // If it fails, slipGenerator will fall back to its defaults.
