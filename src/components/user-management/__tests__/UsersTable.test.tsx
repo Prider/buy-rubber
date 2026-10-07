@@ -32,7 +32,7 @@ describe('UsersTable', () => {
     );
 
     expect(screen.getByText('root')).toBeInTheDocument();
-    expect(screen.getByText('Root')).toBeInTheDocument();
+    expect(screen.getByText('ผู้ดูแล')).toBeInTheDocument();
     expect(screen.getByText('ไม่สามารถแก้ไขได้')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'แก้ไข' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'ลบ' })).not.toBeInTheDocument();

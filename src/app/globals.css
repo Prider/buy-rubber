@@ -22,6 +22,8 @@
     --animal-bg-color: #ffffff;
     --animal-bg-color-secondary: #f3f4f6;
     --animal-mask-bg: rgba(0, 0, 0, 0.6);
+    --app-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    --app-control-font-family: Nunito, 'Noto Sans SC', -apple-system, sans-serif;
     --animal-font-family: Nunito, 'Noto Sans SC', -apple-system, sans-serif;
     --animal-font-size-sm: 12px;
     --animal-font-size-base: 14px;
@@ -51,9 +53,7 @@
   
   body {
     @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: var(--app-font-family);
   }
 }
 
@@ -141,5 +141,16 @@
       opacity: 1;
     }
   }
+}
+
+/* Unlayered so these beat Animal Island's hardcoded faces. */
+.animal-radioGroup-J1a5S {
+  font-family: var(--app-control-font-family, Nunito, 'Noto Sans SC', -apple-system, sans-serif) !important;
+}
+
+.animal-modalClipped-7IuAw,
+.animal-footer-btn-zlWAg,
+.animal-value-kLdma {
+  font-family: var(--app-control-font-family, Nunito, 'Noto Sans SC', sans-serif);
 }
 

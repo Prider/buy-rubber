@@ -441,7 +441,7 @@ function LandingPage() {
               500+
             </div>
             <div className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-              ผู้ใช้งาน
+              ผู้ใช้และสิทธิ์
             </div>
           </div>
           <div className="text-center">

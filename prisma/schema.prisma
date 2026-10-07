@@ -15,7 +15,8 @@ model User {
   id        String     @id @default(uuid())
   username  String     @unique
   password  String
-  role      String     @default("user") // root, admin, user, viewer
+  role      String     @default("user") // root, admin, user, viewer, accountant
+  other     String?
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

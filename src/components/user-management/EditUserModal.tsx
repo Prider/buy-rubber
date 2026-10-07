@@ -27,6 +27,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 }) => {
   const usernameRef = React.useRef<HTMLInputElement>(null);
   const passwordRef = React.useRef<HTMLInputElement>(null);
+  const otherRef = React.useRef<HTMLInputElement>(null);
   const roleRef = React.useRef<HTMLSelectElement>(null);
   const statusRef = React.useRef<HTMLButtonElement>(null);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -101,7 +102,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 type={showPassword ? 'text' : 'password'}
                 value={form.password ?? ''}
                 onChange={(e) => onChange('password', e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, roleRef, usernameRef)}
+                onKeyDown={(e) => handleKeyDown(e, otherRef, usernameRef)}
                 className={`${fieldClassName} pr-12`}
                 placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"
                 autoComplete="new-password"
@@ -143,6 +144,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
               เว้นว่างไว้หากต้องการใช้รหัสผ่านเดิม
             </p>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">อื่นๆ</label>
+            <input
+              ref={otherRef}
+              type="text"
+              value={form.other ?? ''}
+              onChange={(e) => onChange('other', e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, roleRef, passwordRef)}
+              className={fieldClassName}
+              placeholder="กรอกข้อมูลอื่นๆ"
+            />
           </div>
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">สิทธิ์</label>

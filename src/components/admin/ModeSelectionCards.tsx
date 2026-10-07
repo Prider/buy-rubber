@@ -45,23 +45,7 @@ export function ModeSelectionCards({
       </div>
       
       {/* Server Mode Content */}
-      <div className="p-4 space-y-3">
-        {/* Port Input */}
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-            พอร์ตเซิร์ฟเวอร์
-          </label>
-          <input
-            type="number"
-            value={serverPort}
-            onChange={(e) => onServerPortChange(parseInt(e.target.value) || 3001)}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            placeholder="3001"
-            min="1024"
-            max="65535"
-          />
-        </div>
-        
+      <div className="p-4 space-y-3">      
         {/* Network Info */}
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">

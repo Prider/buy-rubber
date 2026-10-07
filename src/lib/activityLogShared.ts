@@ -82,6 +82,7 @@ export const ACTIVITY_FIELD_LABELS: Record<string, string> = {
   saleNo: 'เลขที่ขาย',
   username: 'ชื่อผู้ใช้',
   role: 'สิทธิ์',
+  other: 'อื่นๆ',
   password: 'รหัสผ่าน',
   sortOrder: 'ลำดับ',
   prices: 'ราคา',

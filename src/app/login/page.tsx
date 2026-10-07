@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { homePathForRole } from '@/types/user';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
 import useArrowFocusNavigation from '@/hooks/useArrowFocusNavigation';
@@ -43,8 +44,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         if (onLogin) {
           onLogin();
         } else {
-          // ไปหน้าแดชบอร์ด
-          router.push('/dashboard');
+          let role: string | null = null;
+          try {
+            role = JSON.parse(localStorage.getItem('auth_user') || 'null')?.role ?? null;
+          } catch {
+            role = null;
+          }
+          router.push(homePathForRole(role));
         }
       } else {
         setError('Invalid username or password');

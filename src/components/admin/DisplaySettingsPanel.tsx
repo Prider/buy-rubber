@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { Radio } from 'animal-island-ui';
 import {
+  APP_FONT_FAMILIES,
+  applyAppFontFamily,
+  appFontFamilyStackFor,
+  getStoredAppFontFamily,
+  normalizeAppFontFamily,
+  type AppFontFamilyId,
+} from '@/lib/appFontFamily';
+import {
   APP_FONT_SIZES,
   applyAppFontSize,
   getStoredAppFontSize,
@@ -20,11 +28,25 @@ const FONT_SIZE_RADIO_OPTIONS = APP_FONT_SIZES.map((option) => ({
   ),
 }));
 
+const FONT_FAMILY_RADIO_OPTIONS = APP_FONT_FAMILIES.map((option) => ({
+  value: option.id,
+  label: (
+    <span className="leading-tight" style={{ fontFamily: option.stack }}>
+      {option.label}
+    </span>
+  ),
+}));
+
 export function DisplaySettingsPanel() {
   const [fontSize, setFontSize] = useState<AppFontSizeId>(() => getStoredAppFontSize());
+  const [fontFamily, setFontFamily] = useState<AppFontFamilyId>(() => getStoredAppFontFamily());
 
   const handleFontSizeChange = (value: string | number) => {
     setFontSize(applyAppFontSize(normalizeAppFontSize(value)));
+  };
+
+  const handleFontFamilyChange = (value: string | number) => {
+    setFontFamily(applyAppFontFamily(normalizeAppFontFamily(value)));
   };
 
   return (
@@ -39,7 +61,7 @@ export function DisplaySettingsPanel() {
           ขนาดตัวอักษรในระบบ
         </h3>
         <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-          ปรับขนาดตัวอักษรทั้งโปรแกรมบนเครื่องนี้ การเปลี่ยนแปลงมีผลทันที
+          ปรับขนาดและรูปแบบตัวอักษรทั้งโปรแกรมบนเครื่องนี้ การเปลี่ยนแปลงมีผลทันที
         </p>
       </div>
 
@@ -58,9 +80,26 @@ export function DisplaySettingsPanel() {
           />
         </div>
 
+        <div className="space-y-2">
+          <p id="app-font-family-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            รูปแบบตัวอักษร
+          </p>
+          <Radio
+            options={FONT_FAMILY_RADIO_OPTIONS}
+            value={fontFamily}
+            size="large"
+            direction="horizontal"
+            className="app-font-radio py-2"
+            onChange={handleFontFamilyChange}
+          />
+        </div>
+
         <div className="rounded-xl bg-gray-50 px-4 py-4 ring-1 ring-inset ring-gray-200 dark:bg-gray-900/50 dark:ring-gray-700">
           <p className="text-sm font-medium text-gray-900 dark:text-white">ตัวอย่างข้อความ</p>
-          <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+          <p
+            className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300"
+            style={{ fontFamily: appFontFamilyStackFor(fontFamily) }}
+          >
             นายตัวอย่าง ทดสอบ — น้ำยางสด 125.50 กก. ราคา 52.00 บาท รวม 6,526.00 บาท
           </p>
         </div>

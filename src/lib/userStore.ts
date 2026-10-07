@@ -49,6 +49,7 @@ class UserStore {
         username: userData.username,
         password: hashedPassword,
         role: userData.role,
+        other: userData.other?.trim() || null,
         isActive: true
       }
     });
@@ -140,6 +141,10 @@ class UserStore {
 
     if (updates.role !== undefined) {
       updateData.role = updates.role;
+    }
+
+    if (updates.other !== undefined) {
+      updateData.other = updates.other.trim() || null;
     }
 
     if (updates.isActive !== undefined) {

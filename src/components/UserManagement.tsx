@@ -206,6 +206,7 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
       username: user.username,
       password: '',
       role: user.role,
+      other: user.other ?? '',
       isActive: user.isActive,
     });
   };
@@ -250,26 +251,22 @@ export default function UserManagement({ className = '' }: UserManagementProps) 
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 sm:text-xl lg:text-2xl">จัดการผู้ใช้งาน</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 sm:text-base">จัดการบัญชีผู้ใช้งานและสิทธิ์การเข้าถึงระบบ</p>
-        </div>
-        <button
-          onClick={handleOpenCreateModal}
-          className="group relative flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 font-medium text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:focus:ring-offset-gray-800 sm:w-auto sm:min-h-10"
-          disabled={isAtUserLimit}
-          title={isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
-        >
-          เพิ่มผู้ใช้งาน
-        </button>
-      </div>
-
+    <div className={`space-y-4 ${className}`}>
       <MessageBanner variant="error" message={error} />
       <MessageBanner variant="success" message={success} />
 
       <div className="card overflow-hidden p-0">
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 sm:text-xl">ผู้ใช้และสิทธิ์</h2>
+          <button
+            onClick={handleOpenCreateModal}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2.5 font-medium text-white shadow-md transition-colors duration-200 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:focus:ring-offset-gray-800 sm:w-auto sm:min-h-10"
+            disabled={isAtUserLimit}
+            title={isAtUserLimit ? `จำกัดผู้ใช้งานสูงสุด ${MAX_USERS} คน` : undefined}
+          >
+            เพิ่มผู้ใช้งาน
+          </button>
+        </div>
         <UsersTable
           users={users}
           currentUserId={currentUser?.id}

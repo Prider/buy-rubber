@@ -77,14 +77,16 @@ export async function PUT(
       {
         username: before?.username ?? null,
         role: before?.role ?? null,
+        other: before?.other ?? null,
         isActive: before?.isActive ?? null,
       },
       {
         username: user.username,
         role: user.role,
+        other: user.other ?? null,
         isActive: user.isActive,
       },
-      ['username', 'role', 'isActive'],
+      ['username', 'role', 'other', 'isActive'],
     ) ?? {};
     if (body.password) {
       userChanges.password = { from: '(ซ่อน)', to: '(เปลี่ยนแล้ว)' };

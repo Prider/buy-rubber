@@ -8,6 +8,8 @@ import HeaderTime from './HeaderTime';
 import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
+import { canAccessAppPath, homePathForRole, isAccountantRole } from '@/types/user';
+import { getRoleLabel } from '@/components/user-management/utils';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipFontSize, SLIP_FONT_SIZE_STORAGE_KEY } from '@/lib/slipFont';
 import { normalizeSlipPaperSize, SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
@@ -26,6 +28,8 @@ interface NavigationItem {
   icon: string;
   adminOnly?: boolean;
   electronOnly?: boolean;
+  /** Shown for the report-only accountant role. */
+  accountantVisible?: boolean;
 }
 
 const NAV_ITEMS: NavigationItem[] = [
@@ -37,7 +41,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'สมาชิก', href: '/members', icon: '👥' },
   { name: 'บริษัทปลายทาง', href: '/destination-companies', icon: '🏢' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
-  { name: 'รายงาน', href: '/reports', icon: '📈' },
+  { name: 'รายงาน', href: '/reports', icon: '📈', accountantVisible: true },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
   { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];
@@ -179,7 +183,19 @@ export default function Layout({ children }: LayoutProps) {
     await logout();
   };
 
+  const reportsOnly = isAccountantRole(user?.role);
+  const homeHref = homePathForRole(user?.role);
+
+  useEffect(() => {
+    if (!isLoading && user && !canAccessAppPath(user.role, pathname)) {
+      router.replace('/reports');
+    }
+  }, [isLoading, pathname, router, user]);
+
   const navigation = NAV_ITEMS.filter((item) => {
+    if (reportsOnly) {
+      return item.accountantVisible === true;
+    }
     // Check if item is Electron-only and we're not in Electron
     if (item.electronOnly && !isElectron) {
       return false;
@@ -208,7 +224,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className={`relative flex items-center justify-center border-b border-gray-200/50 transition-all duration-200 dark:border-gray-700/50 ${
             labelsVisible ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
-            <Link href="/dashboard" className="group flex flex-col items-center justify-center" onClick={() => setOverlayOpen(false)}>
+            <Link href={homeHref} className="group flex flex-col items-center justify-center" onClick={() => setOverlayOpen(false)}>
               <Logo
                 className={`transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
                   labelsVisible ? 'h-10 w-auto' : 'h-8 w-8'
@@ -324,8 +340,8 @@ export default function Layout({ children }: LayoutProps) {
                       {user?.username || 'ผู้ใช้งาน'}
                     </span>
                   </p>
-                  <p className="truncate text-xs capitalize text-gray-500 dark:text-gray-400">
-                    {user?.role || 'User'}
+                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                    {user?.role ? getRoleLabel(user.role) : 'User'}
                   </p>
                 </div>
               )}
@@ -410,7 +426,6 @@ export default function Layout({ children }: LayoutProps) {
                 <span className="text-fuchsia-500 dark:text-amber-400">o</span>
                 <span className="text-violet-500 dark:text-violet-400">k</span>
                 <span className="hidden dark:text-white sm:inline"> Innotech</span>
-                <span className="hidden dark:text-white md:inline"> ( {process.env.NEXT_PUBLIC_COMPANY_NAME || 'สินทวี'} )</span>
             </h1>
 
             {/* Right side - Controls */}
@@ -436,7 +451,7 @@ export default function Layout({ children }: LayoutProps) {
           className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 lg:p-6"
           ref={mainContentRef}
         >
-          {children}
+          {user && !canAccessAppPath(user.role, pathname) ? null : children}
         </main>
       </div>
 

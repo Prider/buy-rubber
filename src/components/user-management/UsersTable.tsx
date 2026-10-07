@@ -10,7 +10,7 @@ interface UsersTableProps {
   onDelete: (userId: string) => void;
 }
 
-const desktopCols = 'lg:grid-cols-[minmax(0,1.4fr)_7.5rem_7.5rem_8.5rem_8.5rem]';
+const desktopCols = 'lg:grid-cols-[minmax(0,1.2fr)_7.5rem_minmax(0,1fr)_7.5rem_8.5rem_8.5rem]';
 
 export const UsersTable: React.FC<UsersTableProps> = ({ users, currentUserId, onEdit, onDelete }) => (
   <div role="table" className="w-full min-w-0 text-sm">
@@ -20,6 +20,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, currentUserId, on
     >
       <div role="columnheader" className="px-4 py-2 text-left">ชื่อผู้ใช้</div>
       <div role="columnheader" className="px-4 py-2 text-left">สิทธิ์</div>
+      <div role="columnheader" className="px-4 py-2 text-left">อื่นๆ</div>
       <div role="columnheader" className="px-4 py-2 text-left">สถานะ</div>
       <div role="columnheader" className="px-4 py-2 text-left">วันที่สร้าง</div>
       <div role="columnheader" className="px-4 py-2 text-right">การจัดการ</div>
@@ -48,6 +49,12 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, currentUserId, on
                 <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                   {getRoleLabel(user.role)}
                 </span>
+              </div>
+
+              <div role="cell" className="min-w-0 lg:px-4 lg:py-2">
+                <p className="truncate text-sm text-gray-700 dark:text-gray-300">
+                  {user.other?.trim() || '—'}
+                </p>
               </div>
 
               <div role="cell" className="lg:px-4 lg:py-2">

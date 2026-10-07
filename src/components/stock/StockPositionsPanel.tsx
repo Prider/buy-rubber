@@ -446,10 +446,10 @@ export default function StockPositionsPanel({
                     type="button"
                     onClick={openProductTypeForm}
                     disabled={isMaxReached}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400 lg:min-h-0 lg:w-auto lg:justify-start"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:from-gray-200 disabled:via-gray-200 disabled:to-gray-200 disabled:text-gray-500 disabled:shadow-none disabled:animate-none animate-gradient dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 dark:disabled:from-gray-700 dark:disabled:via-gray-700 dark:disabled:to-gray-700 dark:disabled:text-gray-400 lg:min-h-0 lg:w-auto lg:justify-start"
                   >
                     <span aria-hidden="true">+</span>
-                    <span>{isMaxReached ? 'ครบจำนวนสูงสุด' : 'เพิ่มประเภท'}</span>
+                    <span>{isMaxReached ? 'ครบจำนวนสูงสุด' : 'เพิ่มประเภทสินค้า'}</span>
                   </button>
                 ) : null}
                 {headerAction}

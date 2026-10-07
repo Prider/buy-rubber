@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       entityId: user.id,
       entityLabel: user.username,
       summary: `สร้างผู้ใช้งาน ${user.username}`,
-      changes: { username: user.username, role: user.role },
+      changes: { username: user.username, role: user.role, other: user.other ?? null },
     });
 
     const { password: _, ...userWithoutPassword } = user;

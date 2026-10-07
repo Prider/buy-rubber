@@ -3,20 +3,21 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { homePathForRole } from '@/types/user';
 import AppWrapper from '@/components/AppWrapper';
 import GamerLoader from '@/components/GamerLoader';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.push('/dashboard');
+        router.push(homePathForRole(user?.role));
       }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, user?.role]);
 
   return (
     <AppWrapper>

@@ -8,12 +8,14 @@ export const INITIAL_CREATE_FORM: CreateUserRequest = {
   username: '',
   password: '',
   role: 'user',
+  other: '',
 };
 
 export const INITIAL_EDIT_FORM: UpdateUserRequest = {
   username: '',
   password: '',
   role: 'user',
+  other: '',
   isActive: true,
 };
 

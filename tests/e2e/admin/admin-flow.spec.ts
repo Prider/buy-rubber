@@ -164,7 +164,7 @@ test.describe('Admin flow', () => {
     createdUserIds.push(userId)
 
     const row = page.getByRole('row').filter({ hasText: username })
-    await expect(row.getByText('ผู้ชม')).toBeVisible()
+    await expect(row.getByText('พนักงาน')).toBeVisible()
 
     await row.getByRole('button', { name: 'แก้ไข' }).click()
     const editModal = editUserModal(page)
@@ -177,8 +177,8 @@ test.describe('Admin flow', () => {
     await updateReq
 
     const updatedRow = page.getByRole('row').filter({ hasText: username })
-    await expect(updatedRow.getByText('ผู้ใช้งาน')).toBeVisible()
-    await expect(updatedRow.getByText('ผู้ชม')).not.toBeVisible()
+    await expect(updatedRow.getByText('ผู้จัดการ')).toBeVisible()
+    await expect(updatedRow.getByText('พนักงาน')).not.toBeVisible()
 
     const getRes = await request.get(`/api/users/${userId}`, {
       headers: { Authorization: `Bearer ${adminToken}` },

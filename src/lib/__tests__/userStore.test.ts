@@ -57,6 +57,7 @@ describe('userStore', () => {
           username: 'testuser',
           password: expect.any(String),
           role: 'admin',
+          other: null,
           isActive: true,
         },
       });
