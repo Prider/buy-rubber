@@ -66,8 +66,8 @@ function Field({
   return (
     <div className={`flex min-w-0 flex-col ${className}`}>
       {showHeader ? (
-        <div className={`mb-1.5 flex min-h-[1.25rem] flex-wrap items-center justify-between gap-x-2 gap-y-0.5 lg:flex-nowrap ${headerClassName}`}>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 lg:truncate">
+        <div className={`mb-1.5 flex min-h-[1.25rem] min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5 ${headerClassName}`}>
+          <label className="block min-w-0 text-xs font-medium text-gray-500 dark:text-gray-400">
             {label}
           </label>
           {hint || action ? (
@@ -83,18 +83,20 @@ function Field({
   );
 }
 
-function HintButton({
-  children,
-  disabled,
-  onClick,
+function FillFieldButton({
+  label,
+  actionLabel,
   testId,
   title,
+  disabled,
+  onClick,
 }: {
-  children: ReactNode;
-  disabled?: boolean;
-  onClick: () => void;
+  label: string;
+  actionLabel: string;
   testId: string;
   title: string;
+  disabled?: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -103,9 +105,14 @@ function HintButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className="shrink-0 text-[11px] font-medium text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+      className="mb-1.5 flex w-full min-w-0 cursor-pointer flex-col items-stretch gap-1 rounded-lg border border-blue-300 bg-blue-50 px-2 py-1.5 text-left shadow-sm transition hover:border-blue-500 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:border-blue-300 dark:hover:bg-blue-900/70"
     >
-      {children}
+      <span className="text-[11px] font-semibold leading-tight text-blue-800 dark:text-blue-100">
+        {label}
+      </span>
+      <span className="rounded-md bg-blue-600 px-1.5 py-1 text-center text-[11px] font-bold leading-none text-white dark:bg-blue-500">
+        {actionLabel}
+      </span>
     </button>
   );
 }
@@ -193,6 +200,7 @@ export default function SalesFormCard({
   const titleText = getSalesFormCardTitle(isEditing, editingSaleNo);
   const saveButtonText = getSalesFormSaveButtonText(saving, isEditing);
   const companyDisabled = isEditing;
+  const hasRemainingStock = selectedStockKg != null && selectedStockKg > 0;
   const isFieldDisabled = (field: SalesFormFieldName) => isEditing && field !== 'pricePerUnit';
   const getInputClass = (field: SalesFormFieldName) =>
     `${layout.inputClass} max-lg:min-h-11 max-lg:text-base ${
@@ -332,11 +340,11 @@ export default function SalesFormCard({
             ) : null}
 
             <div
-              className={`relative grid w-full min-w-0 grid-cols-2 items-end md:grid-cols-12 lg:flex lg:flex-nowrap ${layout.rowGap} ${
+              className={`relative grid w-full min-w-0 grid-cols-2 items-end md:grid-cols-12 ${layout.rowGap} ${
                 showCompanyDropdown && !companyDisabled ? 'z-50' : 'z-10'
               }`}
             >
-              <Field label="วันที่" className="order-1 col-span-2 w-full md:col-span-3 lg:order-none lg:w-[9.75rem] lg:shrink-0">
+              <Field label="วันที่" className="order-1 col-span-2 w-full min-w-0 md:col-span-3">
                 <input
                   type="date"
                   name="date"
@@ -354,7 +362,7 @@ export default function SalesFormCard({
                     ชื่อบริษัทปลายทาง <span className="text-red-500">*</span>
                   </>
                 }
-                className="relative z-50 order-4 col-span-2 w-full md:order-2 md:col-span-6 lg:order-none lg:w-[18rem] lg:shrink-0"
+                className="relative z-50 order-4 col-span-2 w-full min-w-0 md:order-2 md:col-span-6"
               >
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -442,7 +450,7 @@ export default function SalesFormCard({
                   ) : null}
                 </div>
               </Field>
-              <Field label="รูปแบบการขาย" className="order-2 col-span-1 w-full md:order-3 md:col-span-3 lg:order-none lg:w-[8.75rem] lg:shrink-0">
+              <Field label="รูปแบบการขาย" className="order-2 col-span-1 w-full min-w-0 md:order-3 md:col-span-3">
                 <select
                   name="sellingType"
                   value={formData.sellingType}
@@ -457,7 +465,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="ประเภทสินค้า" className="order-5 col-span-2 w-full md:order-4 md:col-span-4 lg:order-none lg:min-w-[9rem] lg:flex-[1.1]">
+              <Field label="ประเภทสินค้า" className="order-5 col-span-2 w-full min-w-0 md:order-4 md:col-span-4">
                 <select
                   name="productTypeId"
                   value={formData.productTypeId}
@@ -473,7 +481,7 @@ export default function SalesFormCard({
                   ))}
                 </select>
               </Field>
-              <Field label="%ยาง" className="order-3 col-span-1 w-full md:order-5 md:col-span-2 lg:order-none lg:w-[4.75rem] lg:shrink-0">
+              <Field label="%ยาง" className="order-3 col-span-1 w-full min-w-0 md:order-5 md:col-span-2">
                 <input
                   type="number"
                   step="0.01"
@@ -486,27 +494,25 @@ export default function SalesFormCard({
               </Field>
               <Field
                 label="น้ำหนัก (กก.)"
-                className="order-6 col-span-2 w-full md:order-6 md:col-span-3 lg:order-none lg:min-w-[8.5rem] lg:flex-1"
+                className="order-6 col-span-2 w-full min-w-0 md:order-6 md:col-span-3"
                 hint={
-                  formData.productTypeId ? (
+                  formData.productTypeId && (selectedStockKg == null || isFieldDisabled('weight')) ? (
                     <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
                       คงเหลือ {selectedStockKg != null ? Number(selectedStockKg).toLocaleString('th-TH') : '-'} กก.
                     </span>
                   ) : undefined
                 }
-                action={
-                  formData.productTypeId && selectedStockKg != null && !isFieldDisabled('weight') ? (
-                    <HintButton
-                      testId="sales-fill-weight-stock"
-                      title="เติมน้ำหนักคงเหลือทั้งหมด"
-                      disabled={saving}
-                      onClick={() => fillField('weight', selectedStockKg)}
-                    >
-                      ทั้งหมด
-                    </HintButton>
-                  ) : undefined
-                }
               >
+                {formData.productTypeId && hasRemainingStock && !isFieldDisabled('weight') ? (
+                  <FillFieldButton
+                    label={`คงเหลือ ${Number(selectedStockKg).toLocaleString('th-TH')} กก.`}
+                    actionLabel="ทั้งหมด"
+                    testId="sales-fill-weight-stock"
+                    title="เติมน้ำหนักคงเหลือทั้งหมด"
+                    disabled={saving}
+                    onClick={() => fillField('weight', selectedStockKg)}
+                  />
+                ) : null}
                 <input
                   type="number"
                   step="0.01"
@@ -520,9 +526,10 @@ export default function SalesFormCard({
               </Field>
               <Field
                 label="ราคา/กก."
-                className="order-7 col-span-2 w-full md:order-7 md:col-span-3 lg:order-none lg:min-w-[8.5rem] lg:flex-1"
+                className="order-7 col-span-2 w-full min-w-0 md:order-7 md:col-span-3"
                 hint={
-                  formData.productTypeId ? (
+                  formData.productTypeId &&
+                  (selectedAvgCostPerKg == null || isFieldDisabled('pricePerUnit')) ? (
                     <span className="truncate text-[11px] text-gray-400 dark:text-gray-500">
                       ต้นทุน{' '}
                       {selectedAvgCostPerKg != null
@@ -531,21 +538,20 @@ export default function SalesFormCard({
                     </span>
                   ) : undefined
                 }
-                action={
-                  formData.productTypeId &&
-                  selectedAvgCostPerKg != null &&
-                  !isFieldDisabled('pricePerUnit') ? (
-                    <HintButton
-                      testId="sales-fill-price-avg-cost"
-                      title="เติมราคาด้วยต้นทุนเฉลี่ย"
-                      disabled={saving}
-                      onClick={() => fillField('pricePerUnit', selectedAvgCostPerKg)}
-                    >
-                      ใช้ต้นทุน
-                    </HintButton>
-                  ) : undefined
-                }
               >
+                {formData.productTypeId &&
+                hasRemainingStock &&
+                selectedAvgCostPerKg != null &&
+                !isFieldDisabled('pricePerUnit') ? (
+                  <FillFieldButton
+                    label={`ต้นทุน ฿${formatNumber(Number(selectedAvgCostPerKg.toFixed(2)))}`}
+                    actionLabel="ใช้ต้นทุน"
+                    testId="sales-fill-price-avg-cost"
+                    title="เติมราคาด้วยต้นทุนเฉลี่ย"
+                    disabled={saving}
+                    onClick={() => fillField('pricePerUnit', selectedAvgCostPerKg)}
+                  />
+                ) : null}
                 <input
                   type="number"
                   step="0.01"
