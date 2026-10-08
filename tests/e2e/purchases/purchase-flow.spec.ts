@@ -334,7 +334,7 @@ test.describe('Purchase flow', () => {
 
     await expect(page.getByText('รายการรับซื้อที่รอการบันทึก (2 รายการ)')).toBeVisible()
     await expect(page.getByText(feeCategory)).toBeVisible()
-    await expect(page.getByRole('table').getByText('ค่าใช้จ่าย', { exact: true })).toBeVisible()
+    await expect(page.getByRole('table').getByText('ค่าบริการ', { exact: true })).toBeVisible()
 
     const purchaseReq = page.waitForResponse(
       (r) => r.url().includes('/api/purchases') && r.request().method() === 'POST'

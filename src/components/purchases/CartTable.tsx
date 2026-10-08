@@ -222,7 +222,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 whitespace-nowrap">
-                        ค่าใช้จ่าย
+                        ค่าบริการ
                       </span>
                     )}
                   </CartCell>
@@ -285,7 +285,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                     </div>
                     <div className="text-gray-500 dark:text-gray-400">
                       <p className="text-base font-medium">ตะกร้าว่าง</p>
-                      <p className="text-xs">เพิ่มรายการรับซื้อหรือค่าใช้จ่ายเพื่อเริ่มต้น</p>
+                      <p className="text-xs">เพิ่มรายการรับซื้อหรือค่าบริการเพื่อเริ่มต้น</p>
                     </div>
                   </div>
                 </td>
