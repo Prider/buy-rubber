@@ -23,7 +23,6 @@ export const usePurchaseData = () => {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
-  const [dailyPrices, setDailyPrices] = useState<any[]>([]);
   
   // Use refs to store cancel tokens for cleanup
   const cancelTokensRef = useRef<CancelTokenSource[]>([]);
@@ -109,35 +108,12 @@ export const usePurchaseData = () => {
     }
   }, []);
 
-  const loadDailyPrices = useCallback(async () => {
-    const cancelToken = axios.CancelToken.source();
-    cancelTokensRef.current.push(cancelToken);
-    
-    try {
-      const response = await axios.get('/api/prices/daily', {
-        cancelToken: cancelToken.token,
-      });
-      logger.debug('Daily prices API response', { count: response.data.length, sample: response.data[0] });
-      setDailyPrices(response.data);
-    } catch (error) {
-      if (axios.isCancel(error)) {
-        logger.debug('Daily prices load cancelled');
-        return;
-      }
-      logger.error('Failed to load daily prices', error);
-    } finally {
-      // Remove this token from the array
-      cancelTokensRef.current = cancelTokensRef.current.filter(t => t !== cancelToken);
-    }
-  }, []);
-
   const loadData = useCallback(async () => {
     try {
       // Only load essential data, not all purchases
       await Promise.all([
         loadMembers(),
         loadProductTypes(),
-        loadDailyPrices(),
       ]);
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -145,14 +121,13 @@ export const usePurchaseData = () => {
       }
       logger.error('Failed to load data', error);
     }
-  }, [loadMembers, loadProductTypes, loadDailyPrices]);
+  }, [loadMembers, loadProductTypes]);
 
   return {
     loading,
     purchases,
     members,
     productTypes,
-    dailyPrices,
     loadData,
     loadPurchases,
   };

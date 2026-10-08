@@ -147,8 +147,8 @@ export default function SalesTable({
     ? 'px-1.5 py-2 align-top leading-snug xl:px-2'
     : 'px-2 py-2.5 align-top leading-snug';
   const textCell = `${cellPad} whitespace-normal break-words`;
-  const numCell = `${cellPad} whitespace-nowrap text-right text-[11px] tabular-nums`;
-  const tableText = compact ? 'text-[11px] xl:text-xs' : 'text-xs';
+  const numCell = `${cellPad} whitespace-nowrap text-right text-[0.6875rem] tabular-nums`;
+  const tableText = compact ? 'text-[0.6875rem] xl:text-xs' : 'text-xs';
 
   const inputPadY = compact ? 'py-2.5' : 'py-3';
   const inputText = compact ? 'text-sm' : 'text-base';
@@ -285,19 +285,19 @@ export default function SalesTable({
 
                     <dl className="mt-3 grid grid-cols-3 gap-2">
                       <div className="rounded-lg bg-white px-2.5 py-2 dark:bg-gray-800">
-                        <dt className="text-[11px] text-gray-500 dark:text-gray-400">น้ำหนัก</dt>
+                        <dt className="text-[0.6875rem] text-gray-500 dark:text-gray-400">น้ำหนัก</dt>
                         <dd className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
                           {formatNumber(row.weight)}
                         </dd>
                       </div>
                       <div className="rounded-lg bg-white px-2.5 py-2 dark:bg-gray-800">
-                        <dt className="text-[11px] text-gray-500 dark:text-gray-400">%ยาง</dt>
+                        <dt className="text-[0.6875rem] text-gray-500 dark:text-gray-400">%ยาง</dt>
                         <dd className="mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100">
                           {row.rubberPercent != null ? formatNumber(row.rubberPercent) : '-'}
                         </dd>
                       </div>
                       <div className="rounded-lg bg-white px-2.5 py-2 dark:bg-gray-800">
-                        <dt className="text-[11px] text-gray-500 dark:text-gray-400">ราคา/กก.</dt>
+                        <dt className="text-[0.6875rem] text-gray-500 dark:text-gray-400">ราคา/กก.</dt>
                         <dd className="mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100">
                           {formatNumber(row.pricePerUnit)}
                         </dd>
@@ -322,13 +322,13 @@ export default function SalesTable({
 
                     <div className="mt-3 flex items-end justify-between gap-3 border-t border-gray-200/80 pt-3 dark:border-gray-700">
                       <div>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">ยอดรวม</p>
+                        <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">ยอดรวม</p>
                         <p className="text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
                           {formatCurrency(row.totalAmount)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</p>
+                        <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</p>
                         <SaleProfitLossCell value={profitLoss} />
                       </div>
                     </div>

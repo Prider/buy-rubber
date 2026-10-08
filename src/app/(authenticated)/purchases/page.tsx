@@ -349,7 +349,7 @@ export default function PurchasesPage() {
               <div className="flex flex-col sm:flex-row items-stretch gap-3">
                 <button
                   onClick={handleDownloadPDF}
-                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-[box-shadow,transform] duration-150 ease-out font-medium shadow-lg hover:shadow-xl motion-safe:hover:-translate-y-0.5 text-sm"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,7 +360,7 @@ export default function PurchasesPage() {
                 </button>
                 <button
                   onClick={handlePreview}
-                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-[box-shadow,transform] duration-150 ease-out font-medium shadow-lg hover:shadow-xl motion-safe:hover:-translate-y-0.5 text-sm"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,7 +375,7 @@ export default function PurchasesPage() {
                     printCart();
                     setShowPrintModal(false);
                   }}
-                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+                  className="flex-1 min-w-0 px-4 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-[box-shadow,transform] duration-150 ease-out font-medium shadow-lg hover:shadow-xl motion-safe:hover:-translate-y-0.5 text-sm"
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

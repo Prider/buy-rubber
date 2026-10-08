@@ -149,7 +149,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
               ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid || submitting}
-              className="max-lg:min-h-11 px-5 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 text-white rounded-md text-xs font-semibold hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-1 focus:ring-orange-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="max-lg:min-h-11 px-5 py-1.5 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 text-white rounded-md text-xs font-semibold hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-1 focus:ring-orange-400 transition-colors duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center space-x-1.5">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

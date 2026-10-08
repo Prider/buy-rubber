@@ -196,7 +196,7 @@ export const CartTable: React.FC<CartTableProps> = ({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div
           ref={scrollContainerRef}
-          className="min-h-0 flex-1 overflow-x-auto overflow-y-auto max-lg:p-2"
+          className="min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain max-lg:p-2"
         >
           <table className="w-full max-lg:block">
             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 max-lg:hidden">
@@ -267,7 +267,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                   <CartCell label="จัดการ" wide className="px-4 py-2 text-center max-lg:text-left">
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-all duration-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:px-2.5 max-lg:py-1"
+                      className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors duration-150 ease-out hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:px-2.5 max-lg:py-1"
                     >
                       ลบ
                     </button>
@@ -339,7 +339,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                   <button
                     onClick={handleSaveAndAskPrint}
                     disabled={submitting || cart.length === 0}
-                    className="px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-xs shadow-md hover:shadow-lg disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none"
+                    className="px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-150 ease-out font-medium text-xs shadow-md hover:shadow-lg disabled:shadow-none motion-safe:hover:-translate-y-0.5 disabled:transform-none"
                   >
                     {submitting ? (
                       <span>กำลังบันทึก...</span>

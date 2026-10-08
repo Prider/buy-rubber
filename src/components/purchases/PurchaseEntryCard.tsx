@@ -343,7 +343,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             role="tab"
             aria-selected={entryTab === 'purchase'}
             onClick={() => setEntryTab('purchase')}
-            className={`min-h-11 rounded-xl text-sm font-semibold transition ${
+            className={`min-h-11 rounded-xl text-sm font-semibold transition-colors duration-150 ease-out ${
               entryTab === 'purchase'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400'
@@ -356,7 +356,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             role="tab"
             aria-selected={entryTab === 'fee'}
             onClick={() => setEntryTab('fee')}
-            className={`min-h-11 rounded-xl text-sm font-semibold transition ${
+            className={`min-h-11 rounded-xl text-sm font-semibold transition-colors duration-150 ease-out ${
               entryTab === 'fee'
                 ? 'bg-orange-600 text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400'
@@ -406,7 +406,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   onKeyDown={(e) => handleKeyDown(e, memberSearchRef)}
                   required
                   disabled={submitting}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div className="space-y-1">
@@ -428,7 +428,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onBlur={scheduleDropdownHide}
                     onKeyDown={handleMemberSearchKeyDown}
                     placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส"
-                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                     disabled={submitting}
                   />
@@ -449,7 +449,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   {showMemberDropdown && filteredMembers.length > 0 && (
                     <div
                       ref={memberDropdownRef}
-                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto overscroll-contain"
                       onMouseEnter={clearDropdownHideTimeout}
                       onMouseLeave={scheduleDropdownHide}
                     >
@@ -498,7 +498,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                         type="button"
                         onClick={() => router.push('/members?showAddModal=true')}
                         disabled={submitting}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -535,7 +535,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onBlur={scheduleProductTypeDropdownHide}
                     onKeyDown={handleProductTypeSearchKeyDown}
                     placeholder="ค้นหาตามชื่อหรือรหัส..."
-                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                     disabled={submitting}
                   />
@@ -556,7 +556,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   {showProductTypeDropdown && filteredProductTypes.length > 0 && (
                     <div
                       ref={productTypeDropdownRef}
-                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                      className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto overscroll-contain"
                       onMouseEnter={clearProductTypeDropdownHideTimeout}
                       onMouseLeave={scheduleProductTypeDropdownHide}
                     >
@@ -607,7 +607,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                           type="button"
                           onClick={() => router.push('/prices?showAddModal=true')}
                           disabled={submitting}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -634,7 +634,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onKeyDown={(e) => handleKeyDown(e, containerWeightRef, productTypeRef)}
                     required
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -658,7 +658,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef, grossWeightRef)}
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -677,7 +677,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="netWeight"
                     value={formData.netWeight}
                     readOnly
-                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 shadow-sm cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold transition-[border-color,box-shadow] duration-150 ease-out shadow-sm cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -712,7 +712,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                         type="button"
                         onClick={() => applySuggestedPrice(purchase.basePrice)}
                         disabled={submitting}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-md transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-md transition-colors duration-150 ease-out group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
                           {new Date(purchase.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
@@ -756,7 +756,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     }}
                     required
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder={formData.pricePerUnit}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -775,7 +775,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="totalAmount"
                     value={calculateTotalAmount()}
                     readOnly
-                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-gray-900 dark:text-gray-100 font-bold transition-all duration-200 shadow-sm cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-gray-900 dark:text-gray-100 font-bold transition-[border-color,box-shadow] duration-150 ease-out shadow-sm cursor-not-allowed"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -795,7 +795,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               type="button"
               onClick={resetForm}
               disabled={submitting}
-              className="max-lg:min-h-11 px-4 py-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              className="max-lg:min-h-11 px-4 py-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-150 ease-out font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               รีเซ็ต
             </button>
@@ -803,7 +803,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid || submitting}
-              className="max-lg:min-h-11 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium text-xs shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="max-lg:min-h-11 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-[box-shadow,transform] duration-150 ease-out font-medium text-xs shadow-lg hover:shadow-xl motion-safe:hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               <div className="flex items-center space-x-1.5">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

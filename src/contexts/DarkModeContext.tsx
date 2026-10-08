@@ -27,9 +27,15 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleDarkMode = useCallback(() => {
+    const style = document.createElement('style');
+    style.appendChild(
+      document.createTextNode('*,*::before,*::after{transition:none !important}')
+    );
+    document.head.appendChild(style);
+
     setIsDarkMode((prevMode) => {
       const newMode = !prevMode;
-      
+
       if (newMode) {
         document.documentElement.classList.add('dark');
         localStorage.setItem('theme', 'dark');
@@ -37,8 +43,14 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.classList.remove('dark');
         localStorage.setItem('theme', 'light');
       }
-      
+
       return newMode;
+    });
+
+    void document.body.offsetHeight;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => style.remove());
     });
   }, []);
 
