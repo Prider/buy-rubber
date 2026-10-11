@@ -1,8 +1,8 @@
 @echo off
-REM Punsook Innotech - Electron Development Runner for Windows
+REM Yang Dee - Electron Development Runner for Windows
 REM This script helps you run the Electron desktop application in development mode
 
-echo 🚀 Starting Punsook Innotech Desktop Application...
+echo 🚀 Starting Yang Dee Desktop Application...
 echo.
 
 REM Check if node_modules exists

@@ -8,14 +8,14 @@ describe('GamerLoader', () => {
     const { container } = render(<GamerLoader />)
     // Check if the component renders and contains the default message
     expect(container.textContent).toContain('กำลังโหลด...')
-    expect(container.textContent).toContain('Punsook')
+    expect(container.textContent).toContain('Yang')
   })
 
   it('renders with custom message', () => {
     const { container } = render(<GamerLoader message="Loading data..." />)
     // Check if the component renders with custom message
     expect(container.textContent).toContain('Loading data...')
-    expect(container.textContent).toContain('Punsook')
+    expect(container.textContent).toContain('Yang')
   })
 
   it('applies custom className', () => {
@@ -32,9 +32,9 @@ describe('GamerLoader', () => {
 
   it('renders company branding', () => {
     const { container } = render(<GamerLoader />)
-    // Check for Punsook Innotech branding
-    expect(container.textContent).toContain('Punsook')
-    expect(container.textContent).toContain('Innotech')
+    // Check for Yang Dee branding
+    expect(container.textContent).toContain('Yang')
+    expect(container.textContent).toContain('Dee')
   })
 })
 

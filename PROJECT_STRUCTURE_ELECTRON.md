@@ -1,4 +1,4 @@
-# Punsook Innotech - Electron Project Structure
+# Yang Dee - Electron Project Structure
 
 ## 📂 Project Structure Overview
 
@@ -56,8 +56,8 @@ punsook-innotech/
 │
 └── 📦 Build Output (after building)
     └── dist/                      # Built installers
-        ├── Punsook Innotech Setup X.X.X.exe  (Windows)
-        ├── Punsook Innotech-X.X.X.dmg        (macOS)
+        ├── Yang Dee Setup X.X.X.exe  (Windows)
+        ├── Yang Dee-X.X.X.dmg        (macOS)
         └── ...
 ```
 
@@ -101,7 +101,7 @@ punsook-innotech/
   },
   "build": {                            // ← electron-builder config
     "appId": "com.punsook.innotech",
-    "productName": "Punsook Innotech",
+    "productName": "Yang Dee",
     // ... platform-specific settings
   }
 }
@@ -148,8 +148,8 @@ punsook-innotech/
               │
               └──► Output to dist/
                    │
-                   └──► Punsook Innotech Setup.exe (Windows)
-                        Punsook Innotech.dmg (macOS)
+                   └──► Yang Dee Setup.exe (Windows)
+                        Yang Dee.dmg (macOS)
 ```
 
 ## 🔐 Security Architecture
@@ -202,7 +202,7 @@ Project Root/
 
 ### Production (Windows)
 ```
-C:\Users\[Username]\AppData\Roaming\Punsook Innotech\
+C:\Users\[Username]\AppData\Roaming\pos.punsook.innotech\
 ├── prisma\
 │   └── dev.db          ← Database here
 └── logs\               ← (if logging enabled)
@@ -210,7 +210,7 @@ C:\Users\[Username]\AppData\Roaming\Punsook Innotech\
 
 ### Production (macOS)
 ```
-~/Library/Application Support/Punsook Innotech/
+~/Library/Application Support/pos.punsook.innotech/
 ├── prisma/
 │   └── dev.db          ← Database here
 └── logs/               ← (if logging enabled)

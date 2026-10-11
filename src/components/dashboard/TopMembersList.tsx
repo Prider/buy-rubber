@@ -9,34 +9,34 @@ interface TopMembersListProps {
 export default function TopMembersList({ topMembers }: TopMembersListProps) {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow duration-300">
-      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-3 py-3 dark:border-gray-700 dark:from-gray-800 dark:to-gray-800 sm:px-4">
+      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-2.5 py-2 dark:border-gray-700 dark:from-gray-800 dark:to-gray-800 sm:px-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-gray-900 dark:text-white sm:text-base">
+          <h2 className="flex min-w-0 items-center gap-2 text-base font-bold text-gray-950 dark:text-white">
             <span className="shrink-0 rounded-lg bg-green-100 p-1.5 dark:bg-green-900/30">
-              <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              <svg className="h-6 w-6 text-green-800 dark:text-green-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </span>
             <span className="truncate">สมาชิกที่รับซื้อมากที่สุด</span>
           </h2>
           {topMembers.length > 0 && (
-            <span className="shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">
+            <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">
               เดือนนี้
             </span>
           )}
         </div>
       </div>
-      <div className="min-h-0 flex-1 p-3 sm:p-4">
+      <div className="min-h-0 flex-1 p-2 sm:p-2.5">
         {topMembers.length > 0 ? (
-          <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+          <div className="max-h-[360px] space-y-1.5 overflow-y-auto pr-1">
             {topMembers.map((item: any, index: number) => (
               <div
                 key={item.member?.id}
-                className="group flex items-center justify-between gap-2 rounded-lg border border-transparent p-2.5 transition-colors duration-200 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-600 dark:hover:bg-gray-700/50 sm:gap-3 sm:p-3"
+                className="group flex items-center justify-between gap-2 rounded-lg border border-transparent p-1.5 transition-colors duration-200 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-600 dark:hover:bg-gray-700/50 sm:p-2"
               >
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${
                       index === 0
                         ? 'bg-gradient-to-br from-yellow-400 to-yellow-600'
                         : index === 1
@@ -49,16 +49,16 @@ export default function TopMembersList({ topMembers }: TopMembersListProps) {
                     {index + 1}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                    <p className="truncate text-sm font-bold text-gray-950 dark:text-white">
                       {item.member?.name}
                     </p>
-                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                      น้ำหนัก: <span className="font-semibold">{formatNumber(item.totalWeight)}</span> กก.
+                    <p className="mt-0.5 truncate text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      น้ำหนัก: <span className="font-bold">{formatNumber(item.totalWeight)}</span> กก.
                     </p>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-sm font-bold tabular-nums text-green-600 dark:text-green-400 sm:text-base">
+                  <p className="text-base font-extrabold tabular-nums tracking-tight text-green-900 dark:text-green-100">
                     {formatCurrency(item.totalAmount)}
                   </p>
                 </div>

@@ -110,7 +110,7 @@
   },
   "build": {
     "appId": "com.punsook.innotech",
-    "productName": "pos.punsook.innotech",
+    "productName": "Yang Dee",
     "asar": false,
     "directories": {
       "output": "dist"
@@ -166,7 +166,7 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "pos.punsook.innotech",
+      "shortcutName": "Yang Dee",
       "runAfterFinish": false,
       "include": "build/installer.nsh"
     },

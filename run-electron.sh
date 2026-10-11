@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Punsook Innotech - Electron Development Runner
+# Yang Dee - Electron Development Runner
 # This script helps you run the Electron desktop application in development mode
 
-echo "🚀 Starting Punsook Innotech Desktop Application..."
+echo "🚀 Starting Yang Dee Desktop Application..."
 echo ""
 
 # Check if node_modules exists

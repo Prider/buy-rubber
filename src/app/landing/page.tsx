@@ -78,6 +78,21 @@ const features = [
     },
 ];
 
+/** Scroll order. Header, mobile menu, and footer share this list. */
+const LANDING_NAV = [
+  { id: 'gallery', label: 'ภาพรวมระบบ' },
+  { id: 'benefits', label: 'ประโยชน์' },
+  { id: 'features', label: 'คุณสมบัติ' },
+  { id: 'platforms', label: 'แพลตฟอร์ม' },
+  { id: 'reviews', label: 'รีวิว' },
+  { id: 'faq', label: 'FAQ', stackedLabel: 'คำถามที่พบบ่อย' },
+  { id: 'contact', label: 'ติดต่อเรา' },
+] as const;
+
+function scrollToLandingSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -94,14 +109,14 @@ function LandingPage() {
   // Memoize Features Section JSX with empty deps - created once, never changes
   // This prevents rerenders even when parent component rerenders during scroll
   const featuresSectionJSX = useMemo(() => (
-    <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-      <div className="text-center mb-16">
+    <section id="features" className="scroll-mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <div className="text-center mb-10">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
           คุณสมบัติหลัก
         </h2>
-        <div className="w-24 h-1 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-400 dark:to-green-300 mx-auto rounded-full"></div>
+        <div className="w-16 h-1 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-400 dark:to-green-300 mx-auto rounded-full"></div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((feature, index) => (
           <div
             key={index}
@@ -116,7 +131,7 @@ function LandingPage() {
                 {feature.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-start text-sm text-gray-600 dark:text-gray-300 group/item">
                     <span className="text-green-500 mr-3 mt-1 flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-xs font-bold group-hover/item:scale-110 transition-transform duration-300">✓</span>
-                    <span className="group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors duration-300">{item}</span>
+                    <span className="min-w-0 group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors duration-300">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -142,99 +157,39 @@ function LandingPage() {
   }), []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 dark:from-green-900 dark:via-gray-900 dark:to-green-950">
+    <div className="landing-page min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 dark:from-green-900 dark:via-gray-900 dark:to-green-950">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <Logo className="h-10 w-auto" />
-              <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Punsook Innotech</h1>
-              </div>
+            <div className="flex min-w-0 items-center gap-3">
+              <Logo className="h-10 w-auto shrink-0" />
+              <p className="truncate text-lg font-bold text-gray-900 dark:text-white">Yang Dee</p>
             </div>
             
-            {/* Navigation Menu - Desktop */}
-            <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-              <a 
-                href="#features" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                คุณสมบัติ
-              </a>
-              <a 
-                href="#benefits" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                ประโยชน์
-              </a>
-              <a 
-                href="#gallery" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                ภาพรวมระบบ
-              </a>
-              <a 
-                href="#platforms" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                แพลตฟอร์ม
-              </a>
-              <a 
-                href="#reviews" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                รีวิว
-              </a>
-              <a 
-                href="#faq" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                FAQ
-              </a>
-              <a 
-                href="#contact" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-              >
-                ติดต่อเรา
-              </a>
+            <nav className="hidden min-w-0 items-center gap-1 xl:flex" aria-label="ส่วนของหน้า">
+              {LANDING_NAV.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToLandingSection(item.id);
+                  }}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap rounded-lg px-2 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-600 dark:text-gray-300 dark:hover:bg-green-900/20 dark:hover:text-green-400 2xl:px-3"
+                >
+                  {item.label}
+                </a>
+              ))}
             </nav>
 
-            <div className="flex items-center space-x-2 md:space-x-4">
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
               <DarkModeToggle />
-              {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                aria-label="Toggle menu"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center text-gray-700 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400 xl:hidden"
+                aria-expanded={mobileMenuOpen}
+                aria-label={mobileMenuOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
               >
                 {mobileMenuOpen ? (
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,94 +203,30 @@ function LandingPage() {
               </button>
               <Link
                 href="/login"
-                className="px-3 md:px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-medium text-xs md:text-sm shadow-md hover:shadow-lg"
+                className="inline-flex min-h-11 items-center rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-3 text-xs font-medium text-white shadow-md transition-all duration-200 hover:from-green-700 hover:to-green-600 hover:shadow-lg dark:from-green-500 dark:to-green-400 dark:hover:from-green-600 dark:hover:to-green-500 md:px-4 md:text-sm"
               >
                 ทดลองใช้ฟรี
               </Link>
             </div>
           </div>
           
-          {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200/50 dark:border-gray-700/50 py-4">
-              <nav className="flex flex-col space-y-2">
-                <a 
-                  href="#features" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  คุณสมบัติ
-                </a>
-                <a 
-                  href="#benefits" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  ประโยชน์
-                </a>
-                <a 
-                  href="#gallery" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  ภาพรวมระบบ
-                </a>
-                <a 
-                  href="#platforms" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  แพลตฟอร์ม
-                </a>
-                <a 
-                  href="#reviews" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  รีวิว
-                </a>
-                <a 
-                  href="#faq" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  FAQ
-                </a>
-                <a 
-                  href="#contact" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors rounded-lg"
-                >
-                  ติดต่อเรา
-                </a>
+            <div className="border-t border-gray-200/50 py-2 dark:border-gray-700/50 xl:hidden">
+              <nav className="flex flex-col" aria-label="ส่วนของหน้า">
+                {LANDING_NAV.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMobileMenuOpen(false);
+                      window.setTimeout(() => scrollToLandingSection(item.id), 0);
+                    }}
+                    className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-600 dark:text-gray-300 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+                  >
+                    {'stackedLabel' in item ? item.stackedLabel : item.label}
+                  </a>
+                ))}
               </nav>
             </div>
           )}
@@ -343,8 +234,8 @@ function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section id="hero" className="mx-auto max-w-7xl px-4 pb-6 pt-12 sm:px-6 md:pb-8 md:pt-16 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Left Side - Text Content */}
           <div className="text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
@@ -380,7 +271,7 @@ function LandingPage() {
               pagination={swiperPagination}
               autoplay={swiperAutoplayFast}
               loop
-              className="h-[300px] md:h-[350px] rounded-2xl"
+              className="h-80 rounded-2xl md:h-96"
             >
               <SwiperSlide>
                 <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
@@ -434,8 +325,8 @@ function LandingPage() {
 
 
       {/* Stats Section */}
-      <section id="stats" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section id="stats" className="mx-auto max-w-7xl px-4 pb-12 pt-2 sm:px-6 md:pb-16 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="text-center">
             <div className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
               500+
@@ -463,11 +354,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section - Memoized to prevent rerenders on scroll */}
-      {featuresSectionJSX}
-      
-      {/* Gallery Section with Toggle */}
-      <section id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="gallery" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-8 pt-16 sm:px-6 md:pb-10 md:pt-20 lg:px-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
             ภาพรวมระบบ
@@ -686,8 +573,8 @@ function LandingPage() {
       </section>
 
       {/* Slip Example Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section id="slip" className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 md:pb-20 md:pt-10 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div className="w-full flex justify-center lg:justify-start">
             <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 flex items-center justify-center p-4 md:p-6">
               <Image
@@ -726,19 +613,19 @@ function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
+      <section id="benefits" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             ประโยชน์
           </h2>
           <h3 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-green-600 via-green-500 to-green-600 dark:from-green-400 dark:via-green-300 dark:to-green-400 bg-clip-text text-transparent mb-2">
-            ทำไมต้องเลือก Punsook Innotech?
+            ทำไมต้องเลือก Yang Dee?
           </h3>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             ระบบที่ออกแบบมาเพื่อธุรกิจรับซื้อยางพาราโดยเฉพาะ
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Benefit 1 */}
           <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -837,9 +724,10 @@ function LandingPage() {
         </div>
       </section>
 
+      {featuresSectionJSX}
 
       {/* Platforms Section */}
-      <section id="platforms" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="platforms" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-6 pt-16 sm:px-6 md:pb-8 md:pt-20 lg:px-8">
         <div className="bg-gradient-to-r from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/30 rounded-2xl p-8 md:p-12 border border-green-200/50 dark:border-green-800/50">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -849,7 +737,7 @@ function LandingPage() {
               โปรเจกต์นี้รองรับการทำงานเป็น
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Desktop Application */}
             <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -899,30 +787,18 @@ function LandingPage() {
               </p>
             </div>
 
-            {/* Mobile App - Coming Soon */}
-            <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center relative opacity-75">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                Coming Soon
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Mobile App
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                iOS & Android
-              </p>
-            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-dashed border-amber-300/80 px-4 py-3 text-sm text-gray-600 dark:border-amber-700/80 dark:text-gray-300">
+            <span className="font-medium text-gray-900 dark:text-white">Mobile App</span>
+            <span>iOS & Android</span>
+            <span className="rounded-full bg-amber-500 px-2 py-1 text-xs font-semibold text-white">Coming Soon</span>
           </div>
         </div>
       </section>
 
       {/* Deployment Modes Section */}
-      <section id="deployment" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-12">
+      <section id="deployment" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 md:pb-20 md:pt-8 lg:px-8">
+        <div className="mb-10 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             โหมดการใช้งาน
           </h2>
@@ -933,13 +809,13 @@ function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Standalone Mode */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
                 <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <h3 className="min-w-0 text-2xl font-semibold text-gray-900 dark:text-white">
                 ใช้งานแบบเครื่องเดียว
               </h3>
             </div>
@@ -948,29 +824,29 @@ function LandingPage() {
             </p>
             <ul className="space-y-3 text-gray-600 dark:text-gray-300">
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ฐานข้อมูลเก็บอยู่ในเครื่องของท่าน โดยไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ต</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">ฐานข้อมูลเก็บอยู่ในเครื่องของท่าน โดยไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ต</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เหมาะกับกิจการรับซื้อน้ำยางพาราส่วนตัวขนาดเล็ก</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">เหมาะกับกิจการรับซื้อน้ำยางพาราส่วนตัวขนาดเล็ก</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>สามารถเพิ่มการใช้งานร่วมกันหลายเครื่องแบบเครือข่าย LAN ได้ตามต้องการ</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">สามารถเพิ่มการใช้งานร่วมกันหลายเครื่องแบบเครือข่าย LAN ได้ตามต้องการ</span>
               </li>
             </ul>
           </div>
 
           {/* LAN Network Mode */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-green-200/50 dark:border-green-800/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
                 <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <h3 className="min-w-0 text-2xl font-semibold text-gray-900 dark:text-white">
                 ใช้ร่วมกันหลายเครื่องในเครือข่าย
               </h3>
             </div>
@@ -979,20 +855,20 @@ function LandingPage() {
             </p>
             <ul className="space-y-3 text-gray-600 dark:text-gray-300">
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ฐานข้อมูลเก็บอยู่ในเครื่องที่กำหนดเป็นเครื่อง Server (ควรเป็นเครื่องที่มีประสิทธิภาพสูงสุด)</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">ฐานข้อมูลเก็บอยู่ในเครื่องที่กำหนดเป็นเครื่อง Server (ควรเป็นเครื่องที่มีประสิทธิภาพสูงสุด)</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>ไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ตก็สามารถใช้งานได้</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">ไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ตก็สามารถใช้งานได้</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เหมาะกับกิจการรับซื้อน้ำยางที่ต้องการใช้งานมากกว่า 1 เครื่อง</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">เหมาะกับกิจการรับซื้อน้ำยางที่ต้องการใช้งานมากกว่า 1 เครื่อง</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2 mt-1">✓</span>
-                <span>เมื่อบันทึกข้อมูลที่เครื่องใดก็ตาม ข้อมูลจะอัปเดตอัตโนมัติทุกเครื่องที่อยู่ในวง LAN ทันที</span>
+                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
+                <span className="min-w-0">เมื่อบันทึกข้อมูลที่เครื่องใดก็ตาม ข้อมูลจะอัปเดตอัตโนมัติทุกเครื่องที่อยู่ในวง LAN ทันที</span>
               </li>
             </ul>
           </div>
@@ -1000,8 +876,8 @@ function LandingPage() {
       </section>
 
       {/* Reviews Section */}
-      <section id="reviews" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-12">
+      <section id="reviews" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+        <div className="mb-10 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             รีวิวจากลูกค้า
           </h2>
@@ -1009,7 +885,7 @@ function LandingPage() {
             ความคิดเห็นจากผู้ใช้งานจริง
           </p>
           <p className="text-base text-gray-500 dark:text-gray-400">
-            เสียงจากเจ้าของธุรกิจรับซื้อน้ำยางที่เชื่อใจและใช้งาน Punsook Innotech
+            เสียงจากเจ้าของธุรกิจรับซื้อน้ำยางที่เชื่อใจและใช้งาน Yang Dee
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1112,7 +988,7 @@ function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="faq" className="scroll-mt-20 mx-auto max-w-4xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             คำถามที่พบบ่อย
@@ -1188,7 +1064,7 @@ function LandingPage() {
       </section>
 
       {/* Final CTA Section */}
-      <section id="contact" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="contact" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
         <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/80 rounded-3xl p-8 md:p-12 border border-green-200/50 dark:border-green-800/50">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -1242,7 +1118,7 @@ function LandingPage() {
                     <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span>support@punsookinnotech.co</span>
+                    <span className="min-w-0 break-all">support@punsookinnotech.co</span>
                   </div>
                   <div className="flex items-center text-gray-700 dark:text-gray-300">
                     <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -1275,7 +1151,7 @@ function LandingPage() {
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <Logo className="h-10 w-auto" />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Punsook Innotech</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Yang Dee</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 ระบบบริหารจัดการรับซื้อน้ำยางที่ทันสมัยและมีประสิทธิภาพ
@@ -1287,92 +1163,22 @@ function LandingPage() {
 
             {/* Menu */}
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">เมนู</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a 
-                    href="#features" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    คุณสมบัติ
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#benefits" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    ประโยชน์
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#gallery" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    ภาพรวมระบบ
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#platforms" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    แพลตฟอร์ม
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#reviews" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    รีวิว
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#faq" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    คำถามที่พบบ่อย
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="#contact" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors cursor-pointer"
-                  >
-                    ติดต่อเรา
-                  </a>
-                </li>
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">เมนู</h4>
+              <ul className="flex flex-col">
+                {LANDING_NAV.map((item) => (
+                  <li key={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        scrollToLandingSection(item.id);
+                      }}
+                      className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400"
+                    >
+                      {'stackedLabel' in item ? item.stackedLabel : item.label}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -1390,7 +1196,7 @@ function LandingPage() {
                   <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>support@punsookinnotech.co</span>
+                  <span className="min-w-0 break-all">support@punsookinnotech.co</span>
                 </li>
                 <li className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -1403,15 +1209,15 @@ function LandingPage() {
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">ลิงก์ด่วน</h4>
-              <ul className="space-y-2">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">ลิงก์ด่วน</h4>
+              <ul className="flex flex-col">
                 <li>
-                  <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/login" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
                     ทดลองใช้งาน
                   </Link>
                 </li>
                 <li>
-                  <Link href="/landing#reviews" className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/landing#reviews" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
                     อ่านรีวิว
                   </Link>
                 </li>
@@ -1422,7 +1228,7 @@ function LandingPage() {
           {/* Copyright */}
           <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-8">
             <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-              <p>© 2025 Punsook Innotech. All rights reserved.</p>
+              <p>© 2025 Yang Dee. All rights reserved.</p>
             </div>
           </div>
         </div>

@@ -418,14 +418,11 @@ export default function Layout({ children }: LayoutProps) {
               </button>
 
             <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:text-base lg:text-lg">
-                <span className="text-fuchsia-500 dark:text-fuchsia-400">P</span>
-                <span className="text-violet-500 dark:text-violet-400">u</span>
+                <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
+                <span className="text-violet-500 dark:text-violet-400">a</span>
                 <span className="text-violet-500 dark:text-sky-400">n</span>
-                <span className="text-emerald-500 dark:text-emerald-400">s</span>
-                <span className="text-amber-500 dark:text-amber-400">o</span>
-                <span className="text-fuchsia-500 dark:text-amber-400">o</span>
-                <span className="text-violet-500 dark:text-violet-400">k</span>
-                <span className="hidden dark:text-white sm:inline"> Innotech</span>
+                <span className="text-emerald-500 dark:text-emerald-400">g</span>
+                <span className="hidden dark:text-white sm:inline"> Dee</span>
             </h1>
 
             {/* Right side - Controls */}

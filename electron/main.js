@@ -45,7 +45,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
     },
     icon: path.join(__dirname, 'icon.png'),
-    title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อน้ำยาง',
+    title: 'Yang Dee - ระบบบริหารจัดการรับซื้อน้ำยาง',
   });
 
   // Load the Next.js app

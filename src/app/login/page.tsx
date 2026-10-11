@@ -73,7 +73,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <div className="flex items-center space-x-3">
                 <Logo className="h-12 w-auto" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Punsook Innotech</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Yang Dee</h1>
                   <p className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent drop-shadow-sm">ระบบบริหารจัดการรับซื้อยาง</p>
                 </div>
               </div>
@@ -186,7 +186,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Footer */}
           <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-              © 2025 Punsook Innotech. All rights reserved.
+              © 2025 Yang Dee. All rights reserved.
             </p>
           </div>
         </div>

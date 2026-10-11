@@ -69,25 +69,10 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4 pb-2 md:gap-5 lg:gap-6 lg:pb-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg lg:h-12 lg:w-12">
-          <svg className="h-5 w-5 text-white lg:h-6 lg:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
-        <div className="min-w-0 space-y-0.5 lg:space-y-1">
-          <h1 className="text-xl font-bold tracking-tight lg:text-2xl">
-            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              แดชบอร์ด
-            </span>
-          </h1>
-          <p className="truncate text-xs text-gray-600 dark:text-gray-400 sm:text-sm">ภาพรวมกิจการรับซื้อยาง</p>
-        </div>
-      </div>
       <div className="min-w-0">
         <DashboardStatsCards stats={stats} />
       </div>
-      <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+      <div className="grid min-w-0 grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-3">
         <RecentPurchasesList purchases={recentPurchases} />
         <RecentSalesList sales={recentSales} />
         <RecentExpensesList expenses={recentExpenses} />

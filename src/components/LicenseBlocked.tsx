@@ -50,7 +50,7 @@ export default function LicenseBlocked({
               กรุณาติดต่อผู้ดูแลระบบเพื่อต่ออายุใบอนุญาต
             </p>
             <p className="mt-2 text-sm text-center text-amber-800 dark:text-amber-300 font-medium">
-              Punsook Innotech Admin
+              Yang Dee Admin
             </p>
           </div>
 

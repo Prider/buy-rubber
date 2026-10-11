@@ -80,7 +80,7 @@ export default function ActivateLicenseForm({
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                     {showSuccess
                       ? 'ใบอนุญาตถูกต้อง พร้อมเข้าสู่ระบบ'
-                      : 'กรอก License Key เพื่อใช้งาน Punsook Innotech'}
+                      : 'กรอก License Key เพื่อใช้งาน Yang Dee'}
                   </p>
                 </div>
               </div>

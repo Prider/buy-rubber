@@ -46,7 +46,7 @@ const kanit = Kanit({
 const appFontClassName = `${sarabun.variable} ${notoSansThai.variable} ${prompt.variable} ${kanit.variable}`;
 
 export const metadata: Metadata = {
-  title: 'Punsook Innotech - ระบบบริหารจัดการรับซื้อยาง',
+  title: 'Yang Dee - ระบบบริหารจัดการรับซื้อยาง',
   description: 'โปรแกรมบริหารกิจการรับซื้อยาง พัฒนาด้วย Next.js และ AI',
   icons: {
     icon: '/icon.png',

@@ -156,3 +156,23 @@
   font-family: var(--app-control-font-family, Nunito, 'Noto Sans SC', sans-serif);
 }
 
+/* Landing carousels: keep the visible mark small, grow the hit area to 44px. */
+.landing-page .swiper-button-next,
+.landing-page .swiper-button-prev {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.landing-page .swiper-pagination-bullet {
+  position: relative;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-inline: 0.75rem !important;
+}
+
+.landing-page .swiper-pagination-bullet::after {
+  content: '';
+  position: absolute;
+  inset: -1.25rem;
+}
+

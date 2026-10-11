@@ -1,8 +1,8 @@
-# Desktop Release Test Plan — Punsook Innotech
+# Desktop Release Test Plan — Yang Dee
 
 | Field | Value |
 |-------|-------|
-| **Product** | Punsook Innotech — Rubber Purchasing Management System |
+| **Product** | Yang Dee — Rubber Purchasing Management System |
 | **Release type** | Electron desktop (Windows NSIS + macOS DMG/ZIP) |
 | **Version** | 1.4.7 |
 | **Database** | SQLite (offline, local) |
@@ -98,8 +98,8 @@ npm run electron:build:mac   # → dist/*.dmg, *.zip
 
 | OS | Database path |
 |----|---------------|
-| Windows | `%AppData%\Punsook Innotech\prisma\dev.db` |
-| macOS | `~/Library/Application Support/Punsook Innotech/prisma/dev.db` |
+| Windows | `%AppData%\pos.punsook.innotech\prisma\dev.db` |
+| macOS | `~/Library/Application Support/pos.punsook.innotech/prisma/dev.db` |
 
 ### Test Data Sets
 

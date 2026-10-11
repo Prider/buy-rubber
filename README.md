@@ -1,4 +1,4 @@
-# Punsook Innotech - ระบบบริหารจัดการรับซื้อน้ำยาง
+# Yang Dee - ระบบบริหารจัดการรับซื้อน้ำยาง
 
 โปรแกรมบริหารกิจการรับซื้อน้ำยาง (Rubber Purchasing Management System) ที่ทันสมัยและมีประสิทธิภาพ
 
@@ -410,5 +410,5 @@ npm run electron:build:all
 
 ## ลิขสิทธิ์
 
-© 2025 Punsook Innotech. All rights reserved.
+© 2025 Yang Dee. All rights reserved.
 

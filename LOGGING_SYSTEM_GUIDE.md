@@ -17,7 +17,7 @@ Logs are stored in different locations depending on the environment:
 
 ### **In Electron App (Production)**
 ```
-~/Library/Application Support/Punsook Innotech/logs/
+~/Library/Application Support/pos.punsook.innotech/logs/
 ```
 *The logger automatically detects if running in Electron and uses the app's userData directory*
 
