@@ -329,8 +329,8 @@ export default function Layout({ children }: LayoutProps) {
               <Link
                 href="/admin"
                 onClick={() => setOverlayOpen(false)}
-                title="ตั้งค่า"
-                aria-label="ไปที่หน้าตั้งค่า"
+                title="ตั้งค่าระบบ"
+                aria-label="ไปที่หน้าตั้งค่าระบบ"
                 aria-current={isAdminPage ? 'page' : undefined}
                 className={`group/user relative flex min-w-0 rounded-lg transition-colors duration-200 ${
                   isAdminPage
