@@ -109,17 +109,17 @@ export const CartTable: React.FC<CartTableProps> = ({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800 max-lg:rounded-none max-lg:border-0 max-lg:shadow-none">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900 lg:border-gray-100 lg:bg-gradient-to-br lg:from-green-50 lg:via-emerald-50 lg:to-teal-50 lg:px-6 lg:py-4 dark:lg:border-gray-600 dark:lg:from-gray-800 dark:lg:via-gray-700 dark:lg:to-gray-600">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center space-x-3">
-            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-md lg:flex">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="border-b border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900 lg:border-gray-100 lg:bg-gradient-to-br lg:from-green-50 lg:via-emerald-50 lg:to-teal-50 lg:px-4 lg:py-2.5 dark:lg:border-gray-600 dark:lg:from-gray-800 dark:lg:via-gray-700 dark:lg:to-gray-600">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm lg:flex">
+              <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
               </svg>
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white lg:text-xl">ตะกร้า</h2>
-              <p className="hidden text-xs text-gray-600 dark:text-gray-300 lg:block lg:text-sm">
+              <h2 className="text-lg font-bold leading-tight text-gray-900 dark:text-white lg:text-xl">ตะกร้า</h2>
+              <p className="hidden text-xs leading-tight text-gray-600 dark:text-gray-300 lg:block lg:text-sm">
                 {cart.length > 0 
                   ? `รายการรับซื้อที่รอการบันทึก (${cart.length} รายการ)`
                   : 'ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น'

@@ -318,20 +318,19 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   return (
     <div className="flex flex-col overflow-visible bg-gray-50 dark:bg-gray-900 lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
       {/* Header */}
-      <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-3 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-6 lg:py-4">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-2 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-4 lg:py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
+            <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold lg:text-xl">
+            <h2 className="text-lg font-bold leading-tight lg:text-xl">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
                 บันทึกการรับซื้อ
               </span>
             </h2>
-            <p className="text-xs text-gray-600 dark:text-gray-300 sm:text-sm">กรอกข้อมูลการรับซื้อน้ำยางและเพิ่มลงตะกร้า</p>
           </div>
         </div>
       </div>

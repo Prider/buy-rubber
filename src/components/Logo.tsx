@@ -11,7 +11,7 @@ export default function Logo({
     <img
       src="/logo.png"
       alt={alt}
-      className={`object-contain [image-rendering:pixelated] ${className}`}
+      className={`object-contain ${className}`}
     />
   );
 }
