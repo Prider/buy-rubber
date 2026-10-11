@@ -257,23 +257,33 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="w-full pb-6 lg:pb-10">
-      <h1 className="mb-8 hidden text-2xl font-bold tracking-tight sm:text-3xl lg:block">
-        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-          รายงาน
-        </span>
-      </h1>
+    <div className="w-full pb-6 lg:pb-2">
+      <div className="max-md:-mx-4 max-md:-mt-4 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
+        <div className="hidden border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 lg:block">
+          <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+              รายงาน
+            </span>
+          </h1>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            สรุปรับซื้อ การขาย สมาชิก และค่าใช้จ่ายตามช่วงวันที่
+          </p>
+        </div>
 
-      <div className="max-md:-mx-4 max-md:-mt-4">
-        <div className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 dark:md:bg-transparent">
+        <div className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 lg:px-5 dark:md:bg-transparent">
           <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
-        <div className="mt-5 space-y-5 px-4 md:px-0 lg:space-y-8">
+        <div className="mt-5 space-y-5 px-4 md:px-0 lg:mt-0 lg:space-y-0 lg:px-0">
       <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
-        {activeTab === 'profit_loss' ? <ProfitLossReport /> : null}
+        {activeTab === 'profit_loss' ? (
+          <div className="lg:px-5 lg:py-5">
+            <ProfitLossReport />
+          </div>
+        ) : null}
 
         {!isEmbeddedTab(activeTab) ? (
+        <div className="lg:border-b lg:border-gray-100 lg:px-5 lg:py-4 lg:dark:border-gray-700">
         <ReportFilterCard
           reportType={reportType}
           setReportType={setReportType}
@@ -292,6 +302,7 @@ export default function ReportsPage() {
           }
           selectMode={activeTab}
         />
+        </div>
         ) : null}
       </div>
 
@@ -346,17 +357,20 @@ export default function ReportsPage() {
             }
           `}</style>
 
-          <ReportSummaryCards
-            reportType={reportType}
-            totalAmount={getTotalAmount()}
-            totalWeight={getTotalWeight()}
-            totalCount={totalCount}
-            expenseSummary={expenseSummary}
-          />
+          <div className="lg:px-5 lg:py-4">
+            <ReportSummaryCards
+              reportType={reportType}
+              totalAmount={getTotalAmount()}
+              totalWeight={getTotalWeight()}
+              totalCount={totalCount}
+              expenseSummary={expenseSummary}
+            />
+          </div>
 
+          <div className="lg:border-t lg:border-gray-100 lg:dark:border-gray-700">
           <section
             id="print-area"
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+            className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:dark:bg-transparent"
           >
             <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -398,11 +412,12 @@ export default function ReportsPage() {
               )}
             </div>
           </section>
+          </div>
         </>
       )}
 
       {!isEmbeddedTab(activeTab) && !data && !loading ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700">
+        <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700 lg:rounded-none lg:border-none">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {activeTab === 'daily_purchase' || activeTab === 'sell_summary'
               ? 'เลือกประเภทรายงานและช่วงวันที่ แล้วกดสร้างรายงาน'

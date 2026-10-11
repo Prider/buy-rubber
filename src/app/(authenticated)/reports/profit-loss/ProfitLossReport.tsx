@@ -254,7 +254,7 @@ export default function ProfitLossReport() {
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80"
+              className="rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80 lg:bg-gray-50 lg:dark:bg-gray-900/40"
             >
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.label}</p>
               {item.pnl != null ? (

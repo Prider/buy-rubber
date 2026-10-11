@@ -43,7 +43,6 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈', accountantVisible: true },
   { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
-  { name: 'ตั้งค่า', href: '/admin', icon: '⚙️', adminOnly: true },
 ];
 
 interface LayoutProps {
@@ -185,6 +184,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const reportsOnly = isAccountantRole(user?.role);
   const homeHref = homePathForRole(user?.role);
+  const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
 
   useEffect(() => {
     if (!isLoading && user && !canAccessAppPath(user.role, pathname)) {
@@ -326,25 +326,54 @@ export default function Layout({ children }: LayoutProps) {
             <div className={`flex transition-all duration-200 ${
               labelsVisible ? 'items-center gap-3' : 'flex-col items-center gap-2'
             }`}>
-              <div className="flex-shrink-0">
-                <div className={`flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 font-semibold text-white shadow-sm ${
-                  labelsVisible ? 'h-10 w-10 rounded-xl text-base' : 'h-8 w-8 rounded-lg text-sm'
-                }`}>
-                  {user?.username?.charAt(0) || 'A'}
+              <Link
+                href="/admin"
+                onClick={() => setOverlayOpen(false)}
+                title="ตั้งค่า"
+                aria-label="ไปที่หน้าตั้งค่า"
+                aria-current={isAdminPage ? 'page' : undefined}
+                className={`group/user relative flex min-w-0 rounded-lg transition-colors duration-200 ${
+                  isAdminPage
+                    ? 'text-blue-700 dark:text-blue-300'
+                    : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/40'
+                } ${
+                  labelsVisible ? 'flex-1 items-center gap-3 p-1 -m-1' : 'items-center justify-center p-0.5'
+                }`}
+              >
+                {isAdminPage && (
+                  <>
+                    <div className="absolute right-0 top-1/2 h-8 w-1 -translate-y-1/2 animate-slideIn rounded-l-full bg-gradient-to-b from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50 dark:from-blue-400 dark:to-blue-500 dark:shadow-blue-400/30" />
+                    <div className="absolute inset-0 -z-0 animate-fadeIn rounded-lg bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-900/20 dark:to-transparent" />
+                  </>
+                )}
+                <div className="relative z-10 flex-shrink-0">
+                  <div className={`flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 font-semibold text-white shadow-sm ${
+                    isAdminPage
+                      ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-white dark:ring-blue-300 dark:ring-offset-gray-800'
+                      : ''
+                  } ${
+                    labelsVisible ? 'h-10 w-10 rounded-xl text-base' : 'h-8 w-8 rounded-lg text-sm'
+                  }`}>
+                    {user?.username?.charAt(0) || 'A'}
+                  </div>
                 </div>
-              </div>
-              {labelsVisible && (
-                <div className="min-w-0 flex-1 overflow-hidden transition-all duration-200">
-                  <p className="truncate text-sm font-semibold">
-                    <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-                      {user?.username || 'ผู้ใช้งาน'}
-                    </span>
-                  </p>
-                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                    {user?.role ? getRoleLabel(user.role) : 'User'}
-                  </p>
-                </div>
-              )}
+                {labelsVisible && (
+                  <div className="relative z-10 min-w-0 flex-1 overflow-hidden transition-all duration-200">
+                    <p className="truncate text-sm font-semibold">
+                      <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+                        {user?.username || 'ผู้ใช้งาน'}
+                      </span>
+                    </p>
+                    <p className={`truncate text-xs ${
+                      isAdminPage
+                        ? 'font-medium text-blue-700 dark:text-blue-300'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {user?.role ? getRoleLabel(user.role) : 'User'}
+                    </p>
+                  </div>
+                )}
+              </Link>
               <button
                 onClick={handleLogout}
                 className="group flex-shrink-0 rounded-lg p-2 text-gray-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"

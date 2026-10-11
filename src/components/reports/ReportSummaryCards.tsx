@@ -19,7 +19,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80">
+    <div className="rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80 lg:bg-gray-50 lg:dark:bg-gray-900/40">
       <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{value}</p>
       {hint ? <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p> : null}
