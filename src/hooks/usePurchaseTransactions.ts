@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import axios, { CancelTokenSource } from 'axios';
 import { PurchaseTransaction, PaginationInfo } from '@/components/purchases/types';
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 10;
 
 function uniqueByPurchaseNo(items: PurchaseTransaction[]): PurchaseTransaction[] {
   const seen = new Set<string>();

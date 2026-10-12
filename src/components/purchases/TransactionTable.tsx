@@ -219,9 +219,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
 
   // Memoize empty state
   const emptyState = useMemo(() => (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 text-center">
-      <p className="text-gray-600 dark:text-gray-400">ไม่มีข้อมูลการรับซื้อ</p>
-    </div>
+    <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">ไม่มีข้อมูลการรับซื้อ</p>
   ), []);
 
   if (sortedTransactions.length === 0) {
@@ -230,7 +228,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:hidden">
+      <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 md:p-4 lg:hidden">
         {sortedTransactions.map((transaction, index) => (
           <TransactionCard
             key={transaction.purchaseNo}
@@ -244,12 +242,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
         ))}
       </div>
 
-      <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 lg:block">
+      <div className="hidden lg:block">
         <table className="w-full table-fixed">
           <thead className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 dark:border-gray-600 dark:from-gray-700 dark:to-gray-600">
             <tr>
               <th className="w-[16%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
-                เลขที่รับซื้อ
+                เลขที่
               </th>
               <th className="w-[14%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
                 วันที่

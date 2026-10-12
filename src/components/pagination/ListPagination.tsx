@@ -13,6 +13,8 @@ export interface ListPaginationProps {
   pagination: ListPaginationInfo;
   loading?: boolean;
   onPageChange: (page: number) => void;
+  /** When true, render as a footer inside a parent card (no outer card or margin). */
+  embedded?: boolean;
 }
 
 function visiblePageItems(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
@@ -36,7 +38,12 @@ function visiblePageItems(currentPage: number, totalPages: number): Array<number
   return items;
 }
 
-export function ListPagination({ pagination, loading = false, onPageChange }: ListPaginationProps) {
+export function ListPagination({
+  pagination,
+  loading = false,
+  onPageChange,
+  embedded = false,
+}: ListPaginationProps) {
   if (pagination.totalPages <= 1) {
     return null;
   }
@@ -46,9 +53,17 @@ export function ListPagination({ pagination, loading = false, onPageChange }: Li
   const pageButton =
     'inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 sm:min-h-9 sm:px-4';
 
+  const outerClass = embedded
+    ? 'shrink-0 border-t border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800'
+    : 'mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:mt-6';
+
+  const innerClass = embedded
+    ? 'flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5'
+    : 'flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4';
+
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:mt-6">
-      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+    <div className={outerClass}>
+      <div className={innerClass}>
         <div className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
           แสดง {(pagination.page - 1) * pagination.limit + 1} -{' '}
           {Math.min(pagination.page * pagination.limit, pagination.total)} จาก {pagination.total} รายการ

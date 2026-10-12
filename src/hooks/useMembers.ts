@@ -3,13 +3,15 @@ import axios from 'axios';
 import { logger } from '@/lib/logger';
 import { Member, MemberFormData, UseMembersReturn, PaginationInfo, DeleteMemberResponse } from '@/types/member';
 
+const ITEMS_PER_PAGE = 10;
+
 export const useMembers = (): UseMembersReturn => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
-    limit: 30,
+    limit: ITEMS_PER_PAGE,
     total: 0,
     totalPages: 0,
     hasMore: false,
@@ -22,7 +24,7 @@ export const useMembers = (): UseMembersReturn => {
       
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '30',
+        limit: String(ITEMS_PER_PAGE),
       });
       
       if (search) {

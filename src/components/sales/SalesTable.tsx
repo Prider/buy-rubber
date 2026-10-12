@@ -140,9 +140,7 @@ export default function SalesTable({
   onRecordDelivery,
 }: SalesTableProps) {
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
-  const titleClass = compact
-    ? 'text-base font-bold text-gray-900 dark:text-white'
-    : 'text-xl font-bold text-gray-900 dark:text-white';
+  const titleClass = compact ? 'text-base font-bold' : 'text-xl font-bold';
   const cellPad = compact
     ? 'px-1.5 py-2 align-top leading-snug xl:px-2'
     : 'px-2 py-2.5 align-top leading-snug';
@@ -159,9 +157,13 @@ export default function SalesTable({
       <div
         className={`flex shrink-0 flex-col gap-3 border-b border-gray-200 dark:border-gray-600 lg:flex-row lg:items-center lg:gap-4 ${headPad}`}
       >
-        <h2 className={`${titleClass} whitespace-nowrap`}>ประวัติการขาย</h2>
+        <h2 className={`${titleClass} whitespace-nowrap`}>
+          <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+            ประวัติการขาย
+          </span>
+        </h2>
 
-        <div className="flex w-full min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div className="grid w-full min-w-0 flex-1 grid-cols-1 items-center gap-2 md:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-3">
         {onSearchChange && (
           <>
             <div className="relative min-w-0 flex-1">
@@ -180,7 +182,7 @@ export default function SalesTable({
                 type="text"
                 value={searchTerm}
                 onChange={onSearchChange}
-                className={`w-full pl-10 pr-10 ${inputPadY} border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 max-lg:min-h-11 max-lg:text-base ${inputText} transition-all duration-200 shadow-sm`}
+                className={`w-full min-w-0 pl-10 pr-10 ${inputPadY} border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 max-lg:min-h-11 max-lg:text-base ${inputText} transition-all duration-200 shadow-sm`}
                 placeholder={searchPlaceholder}
               />
 
@@ -220,7 +222,7 @@ export default function SalesTable({
         )}
 
         {onRecordDelivery || onAddSale ? (
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row md:col-span-2 lg:col-span-1">
             {onRecordDelivery ? (
               <button
                 type="button"
@@ -372,8 +374,8 @@ export default function SalesTable({
         <table className={`w-full table-fixed ${tableText}`}>
           <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
             <tr>
+            <th className={`${textCell} w-[7%] text-left`}>เลขที่</th>
               <th className={`${textCell} w-[7%] text-left`}>วันที่ / เวลา</th>
-              <th className={`${textCell} w-[9%] text-left`}>เลขที่</th>
               <th className={`${textCell} w-[7.5%] text-left`}>บริษัท</th>
               <th className={`${textCell} w-[7%] text-left`}>ประเภทสินค้า</th>
               <th className={`${textCell} w-[8%] text-right`}>น้ำหนัก</th>
@@ -411,10 +413,12 @@ export default function SalesTable({
                       : 'border-t border-gray-100 dark:border-gray-700'
                   }`}
                 >
+                  <td className={`${textCell} break-all font-medium text-blue-600 dark:text-blue-400`}>
+                    {row.saleNo}
+                  </td>
                   <td className={textCell}>
                     <SaleDateCell value={row.date} />
                   </td>
-                  <td className={`${textCell} break-all`}>{row.saleNo}</td>
                   <td className={textCell}>{row.companyName}</td>
                   <td className={textCell}>{row.productType?.name || '-'}</td>
                   <td className={numCell}>{formatNumber(row.weight)}</td>

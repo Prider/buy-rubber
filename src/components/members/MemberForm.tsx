@@ -125,7 +125,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     >
       <div className="w-full text-base font-normal">
         <p className="mb-6 w-full text-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {editingMember ? 'แก้ไขข้อมูลสมาชิก' : 'กรอกข้อมูลสมาชิกใหม่'}
+          {editingMember ? 'แก้ไขข้อมูลสมาชิก' : ''}
         </p>
         <form id={FORM_ID} onSubmit={handleSubmit} className="w-full space-y-5 px-2">
           {validationError ? (
