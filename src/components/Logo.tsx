@@ -3,8 +3,6 @@ interface LogoProps {
   alt?: string;
 }
 
-const logoColor = 'bg-black dark:bg-white';
-
 export default function Logo({
   className = 'h-10 w-10',
   alt = 'Yang Dee',
@@ -13,22 +11,11 @@ export default function Logo({
     <span
       role="img"
       aria-label={alt}
-      className={`relative inline-flex aspect-square shrink-0 items-center justify-center ${className}`}
+      className={`relative inline-flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 shadow-sm ${className}`}
     >
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 rounded-full p-[2px] ${logoColor}`}
-        style={{
-          WebkitMask:
-            'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude',
-        }}
-      />
-      <span
-        aria-hidden="true"
-        className={`block h-[68%] aspect-[603/898] ${logoColor}`}
+        className="block h-[68%] aspect-[603/898] bg-white"
         style={{
           WebkitMaskImage: 'url(/logo.png?v=2)',
           maskImage: 'url(/logo.png?v=2)',
