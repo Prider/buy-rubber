@@ -30,8 +30,8 @@ export default function Logo({
         aria-hidden="true"
         className={`block h-[68%] aspect-[603/898] ${logoColor}`}
         style={{
-          WebkitMaskImage: 'url(/logo.png)',
-          maskImage: 'url(/logo.png)',
+          WebkitMaskImage: 'url(/logo.png?v=2)',
+          maskImage: 'url(/logo.png?v=2)',
           WebkitMaskRepeat: 'no-repeat',
           maskRepeat: 'no-repeat',
           WebkitMaskPosition: 'center',
