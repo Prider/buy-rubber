@@ -222,21 +222,6 @@ export function SlipSettingsPanel({
           </div>
 
           <div className="space-y-2">
-            <p id="slip-font-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              ขนาดตัวอักษร
-            </p>
-            <Radio
-              options={FONT_SIZE_RADIO_OPTIONS}
-              value={fontSize}
-              size="large"
-              direction="horizontal"
-              disabled={busy}
-              className="slip-font-radio py-2"
-              onChange={(value) => onFontSizeChange(normalizeSlipFontSize(value))}
-            />
-          </div>
-
-          <div className="space-y-2">
             <p id="slip-template-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               รูปแบบใบ
             </p>
@@ -248,6 +233,21 @@ export function SlipSettingsPanel({
               disabled={busy}
               className="slip-template-radio py-2"
               onChange={(value) => onTemplateChange(normalizeSlipTemplate(value))}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <p id="slip-font-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              ขนาดตัวอักษร
+            </p>
+            <Radio
+              options={FONT_SIZE_RADIO_OPTIONS}
+              value={fontSize}
+              size="large"
+              direction="horizontal"
+              disabled={busy}
+              className="slip-font-radio py-2"
+              onChange={(value) => onFontSizeChange(normalizeSlipFontSize(value))}
             />
           </div>
 

@@ -2,6 +2,7 @@
 @import '../styles/animal-island-wallet.css';
 @import '../styles/animal-island-time.css';
 @import '../styles/animal-island-radio.css';
+@import '../styles/animal-island-tooltip.css';
 
 @tailwind base;
 @tailwind components;

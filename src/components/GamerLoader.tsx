@@ -34,7 +34,7 @@ function RunningTruck({ colorClass, delay }: { colorClass: string; delay?: strin
   return (
     <svg
       viewBox="0 0 68 34"
-      className={`h-14 w-auto overflow-visible animate-truck motion-reduce:animate-none ${delayClass} ${colorClass}`}
+      className={`h-8 w-auto sm:h-14 overflow-visible animate-truck motion-reduce:animate-none ${delayClass} ${colorClass}`}
       aria-hidden="true"
     >
       <rect x="0.5" y="6" width="38" height="16" rx="2" fill="currentColor" />
@@ -53,7 +53,7 @@ export function GamerLoader({ fullScreen = false, message = ' กำลังโ
   return (
     <div className={`${fullScreen ? 'min-h-screen flex items-center justify-center' : ''} ${className}`}>
       <div className="text-center">
-        <div className="flex items-end justify-center gap-3">
+        <div className="flex items-end justify-center gap-1.5 sm:gap-3">
           <RunningTruck colorClass="text-sky-500 dark:text-sky-400" />
           <RunningTruck colorClass="text-fuchsia-500 dark:text-fuchsia-400" delay="150ms" />
           <RunningTruck colorClass="text-emerald-500 dark:text-emerald-400" delay="300ms" />
