@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getApiClient } from '@/lib/apiClient';
-import { PaginationControls } from '@/components/members/history/PaginationControls';
+import { ListPagination } from '@/components/pagination/ListPagination';
 import {
   ACTIVITY_ACTION_LABELS,
   ACTIVITY_ACTIONS,
@@ -192,8 +192,9 @@ export function ActivityLogPanel() {
     };
   }, [action, entityType, page, userId]);
 
-  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / (data?.pageSize || 20)));
   const retentionDays = data?.retentionDays ?? ACTIVITY_LOG_RETENTION_DAYS;
+  const pageSize = data?.pageSize || 20;
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
 
   return (
     <section
@@ -327,12 +328,16 @@ export function ActivityLogPanel() {
         )}
       </div>
 
-      {data && data.total > data.pageSize && (
-        <PaginationControls
-          currentPage={page}
-          totalPages={totalPages}
-          onPrev={() => setPage((current) => Math.max(1, current - 1))}
-          onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+      {data && (
+        <ListPagination
+          pagination={{
+            page,
+            limit: pageSize,
+            total: data.total,
+            totalPages,
+          }}
+          loading={loading}
+          onPageChange={setPage}
         />
       )}
     </section>
