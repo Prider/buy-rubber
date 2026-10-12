@@ -164,7 +164,13 @@ function LandingPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex min-w-0 items-center gap-3">
               <Logo className="h-10 w-auto shrink-0" />
-              <p className="truncate text-lg font-bold text-gray-900 dark:text-white">Yang Dee</p>
+              <p className="truncate text-lg font-bold">
+                <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
+                <span className="text-violet-500 dark:text-violet-400">a</span>
+                <span className="text-violet-500 dark:text-sky-400">n</span>
+                <span className="text-emerald-500 dark:text-emerald-400">g</span>
+                <span className="hidden text-gray-900 dark:text-white sm:inline"> Dee</span>
+              </p>
             </div>
             
             <nav className="hidden min-w-0 items-center gap-1 xl:flex" aria-label="ส่วนของหน้า">
@@ -1151,7 +1157,13 @@ function LandingPage() {
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <Logo className="h-10 w-auto" />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Yang Dee</h3>
+                <h3 className="text-lg font-bold">
+                  <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
+                  <span className="text-violet-500 dark:text-violet-400">a</span>
+                  <span className="text-violet-500 dark:text-sky-400">n</span>
+                  <span className="text-emerald-500 dark:text-emerald-400">g</span>
+                  <span className="hidden text-gray-900 dark:text-white sm:inline"> Dee</span>
+                </h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 ระบบบริหารจัดการรับซื้อน้ำยางที่ทันสมัยและมีประสิทธิภาพ

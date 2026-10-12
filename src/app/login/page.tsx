@@ -73,7 +73,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <div className="flex items-center space-x-3">
                 <Logo className="h-12 w-auto" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Yang Dee</h1>
+                  <h1 className="text-2xl font-bold">
+                    <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
+                    <span className="text-violet-500 dark:text-violet-400">a</span>
+                    <span className="text-violet-500 dark:text-sky-400">n</span>
+                    <span className="text-emerald-500 dark:text-emerald-400">g</span>
+                    <span className="hidden text-gray-900 dark:text-white sm:inline"> Dee</span>
+                  </h1>
                   <p className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent drop-shadow-sm">ระบบบริหารจัดการรับซื้อยาง</p>
                 </div>
               </div>
