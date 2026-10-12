@@ -38,16 +38,23 @@ module.exports = {
           '0%': { transform: 'translateY(8px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
-        swim: {
-          '0%, 100%': { transform: 'translateX(1.5rem)' },
-          '50%': { transform: 'translateX(-1.5rem)' },
+        truck: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '35%': { transform: 'translateY(-8px)' },
+          '50%': { transform: 'translateY(0)' },
+          '70%': { transform: 'translateY(-3px)' },
+          '85%': { transform: 'translateY(0)' },
+        },
+        wheel: {
+          to: { transform: 'rotate(360deg)' },
         },
       },
       animation: {
         slideIn: 'slideIn 0.3s ease-out',
         fadeIn: 'fadeIn 0.3s ease-out',
         fadeInUp: 'fadeInUp 0.4s ease-out forwards',
-        swim: 'swim 1.6s ease-in-out infinite',
+        truck: 'truck 0.8s ease-in-out infinite',
+        wheel: 'wheel 0.45s linear infinite',
       },
     },
   },
