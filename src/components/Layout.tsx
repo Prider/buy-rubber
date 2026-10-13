@@ -222,7 +222,7 @@ export default function Layout({ children }: LayoutProps) {
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className={`relative flex items-center justify-center overflow-hidden border-b border-gray-200/50 transition-all duration-200 dark:border-gray-700/50 ${
+          <div className={`relative flex items-center justify-center overflow-hidden transition-all duration-200 ${
             labelsVisible ? 'px-4 py-4' : 'px-2 py-4'
           }`}>
             <Link href={homeHref} className="group flex flex-col items-center justify-center" onClick={() => setOverlayOpen(false)}>
@@ -425,10 +425,10 @@ export default function Layout({ children }: LayoutProps) {
       >
         {/* Top bar */}
         <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80">
-          <div className="relative flex items-center justify-between gap-2 px-3 py-3 sm:px-4 lg:px-6">
+          <div className="relative flex h-12 items-center justify-between gap-2 px-3 sm:px-4 lg:px-6">
             <button
                 onClick={toggleSidebar}
-                className="group relative z-10 shrink-0 rounded-lg p-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                className="group relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
                 aria-controls="app-sidebar"
                 aria-expanded={sidebarExpanded}
                 aria-label={sidebarExpanded ? "Close sidebar" : "Open sidebar"}

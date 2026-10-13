@@ -4,12 +4,16 @@
 .app-island-time .animal-acDatetime-hVKh7 {
   flex-direction: row;
   flex-wrap: nowrap;
-  gap: 12px;
-  padding: 6px 14px;
+  align-self: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
   border: none;
   border-radius: 0.5rem;
   animation: none;
   background: #f9fafb;
+  line-height: 1;
+  box-sizing: border-box;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k {
   flex-direction: row;
@@ -21,20 +25,21 @@
   white-space: nowrap;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acWeekday-bxDHR {
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 0;
   text-transform: none;
   color: #7c3aed;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acDate-rhO3k .animal-acMonthday-1jUmX {
-  font-size: 16px;
+  font-size: 14px;
   white-space: nowrap;
   color: #4b5563;
 }
 .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb,
 .app-island-time .animal-acDatetime-hVKh7 .animal-acTime-S-twb .animal-acColon-g4vuJ {
-  font-size: 26px;
-  letter-spacing: 1px;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  line-height: 1;
   color: #4b5563;
   white-space: nowrap;
 }
