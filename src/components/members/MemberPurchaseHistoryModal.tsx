@@ -88,48 +88,39 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
       <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transform transition-all">
-          <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-b border-gray-200.dark:border-gray-700 rounded-t-2xl">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center space-x-3">
+        <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-white text-left shadow-xl dark:bg-gray-800">
+          <div className="rounded-t-2xl border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 dark:border-gray-700 dark:from-blue-900/30 dark:to-indigo-900/30">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
                 <HeaderIcon />
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">ประวัติการรับซื้อ</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{member?.name} ({member?.code})</p>
+                  <h2 className="text-lg font-bold leading-tight text-gray-900 dark:text-white">ประวัติการรับซื้อ</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{member?.name} ({member?.code})</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {/* <button
-                  onClick={handleDownload}
-                  disabled={isDownloading || !hasPurchases}
-                  className="px-4 py-2 bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <DownloadIcon />
-                  {isDownloading ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลด PDF'}
-                </button> */}
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <CloseIcon />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <CloseIcon />
+              </button>
             </div>
           </div>
 
-          <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="max-h-[calc(100vh-140px)] overflow-y-auto p-4">
+            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
               {summaryCards.map((card) => (
                 <SummaryCard key={card.title} {...card} />
               ))}
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6 border border-gray-200 dark:border-gray-600">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🔍 ตัวกรองด่วน</label>
-                <QuickFilters filters={QUICK_FILTERS} activeFilter={selectedQuickFilter} onFilterSelect={handleQuickFilter} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-3 flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 lg:flex-row lg:items-center">
+              <span className="shrink-0 text-xs font-medium text-gray-700 dark:text-gray-300">ตัวกรองด่วน</span>
+              <QuickFilters filters={QUICK_FILTERS} activeFilter={selectedQuickFilter} onFilterSelect={handleQuickFilter} />
+              <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
                 <DateInput
-                  label="📅 วันที่เริ่ม"
+                  label="วันที่เริ่ม"
                   value={startDate}
                   onChange={(value) => {
                     setStartDate(value);
@@ -138,7 +129,7 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                   }}
                 />
                 <DateInput
-                  label="📅 วันที่สิ้นสุด"
+                  label="วันที่สิ้นสุด"
                   value={endDate}
                   onChange={(value) => {
                     setEndDate(value);
@@ -154,17 +145,17 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
             ) : !hasPurchases ? (
               <EmptyState />
             ) : (
-              <>
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <PurchasesTable purchases={purchases} totalCount={summary?.totalPurchases ?? purchases.length} />
                 {totalPages > 1 && (
                   <PaginationControls
+                    embedded
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPrev={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    onNext={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    onPageChange={setCurrentPage}
                   />
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>

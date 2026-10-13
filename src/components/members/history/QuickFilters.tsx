@@ -9,17 +9,18 @@ interface QuickFiltersProps {
 }
 
 export const QuickFilters = ({ filters, activeFilter, onFilterSelect }: QuickFiltersProps) => (
-  <div className="flex flex-wrap gap-2">
+  <div className="flex flex-wrap gap-1.5">
     {filters.map((filter) => {
       const isActive = activeFilter === filter.value;
       return (
         <button
           key={filter.value ?? 'all'}
+          type="button"
           onClick={() => onFilterSelect(filter.value)}
-          className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium border ${
+          className={`inline-flex min-h-8 items-center rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
             isActive
-              ? 'bg-primary-600 text-white border-primary-600 shadow-md'
-              : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500'
+              ? 'border-primary-600 bg-primary-600 text-white'
+              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
           }`}
         >
           {filter.label}

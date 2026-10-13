@@ -29,7 +29,7 @@ export const MembersPagination = ({
     <div
       className={
         embedded
-          ? 'border-t border-gray-100 dark:border-gray-700'
+          ? 'shrink-0 border-t border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800'
           : 'mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800'
       }
     >

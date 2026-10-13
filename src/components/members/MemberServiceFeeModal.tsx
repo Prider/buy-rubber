@@ -12,40 +12,38 @@ interface MemberServiceFeeModalProps {
   onClose: () => void;
 }
 
-// Helper function to format date with time (without seconds)
-// Uses createdAt if available (actual timestamp), otherwise uses date field
-const formatDateWithTime = (date: Date | string): string => {
-  const dateStr = typeof date === 'string' ? date : date.toISOString();
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  // Get local time components
+function ServiceFeeDateCell({ value }: { value: string }) {
+  const dateObj = new Date(value);
+  if (Number.isNaN(dateObj.getTime())) return <>–</>;
+
   const localHours = dateObj.getHours();
   const localMinutes = dateObj.getMinutes();
-  
-  // Check if this is likely a date-only value that was timezone-shifted
-  // UTC midnight (00:00:00) becomes 07:00 in Thailand (UTC+7)
-  // If time is 07:00:00, it's likely a date-only value - don't show time
-  const isDateOnly = (localHours === 7 && localMinutes === 0) || 
-                     (dateStr.includes('T00:00:00') && localHours === 7);
-  
-  if (isDateOnly) {
-    // This is likely a date-only value, just show the date
-    return new Intl.DateTimeFormat('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(dateObj);
-  }
-  
-  // Show date with actual time
-  return new Intl.DateTimeFormat('th-TH', {
-    year: 'numeric',
-    month: 'long',
+  const isDateOnly =
+    (localHours === 7 && localMinutes === 0) ||
+    (value.includes('T00:00:00') && localHours === 7);
+
+  const day = new Intl.DateTimeFormat('th-TH', {
     day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  }).format(dateObj);
+
+  if (isDateOnly) {
+    return <div className="leading-tight">{day}</div>;
+  }
+
+  const time = new Intl.DateTimeFormat('th-TH', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(dateObj);
-};
+
+  return (
+    <>
+      <div className="leading-tight">{day}</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400">{time}</div>
+    </>
+  );
+}
 
 interface ServiceFee {
   id: string;
@@ -150,26 +148,15 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 py-8">
-        {/* Background overlay */}
-        <div
-          className="fixed inset-0 transition-opacity bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75"
-          onClick={onClose}
-        />
+      <div className="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/75" onClick={onClose} />
 
-        {/* Modal panel */}
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-5xl">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-white text-left shadow-xl dark:bg-gray-800">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+                  <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -179,132 +166,102 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">
-                    ประวัติค่าบริการ
-                  </h3>
-                  <p className="text-purple-100 text-sm">
+                  <h3 className="text-lg font-bold leading-tight text-white">ประวัติค่าบริการ</h3>
+                  <p className="text-xs text-purple-100">
                     {member?.name} ({member?.code})
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="text-white hover:text-purple-100 transition-colors"
+                className="rounded-lg p-1.5 text-white transition-colors hover:bg-white/10"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
 
-          {/* Summary Cards */}
+          <div className="max-h-[calc(100vh-140px)] overflow-y-auto p-4">
           {summary && (
-            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    จำนวนรายการ
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {summary.totalRecords} รายการ
-                  </div>
+            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+              <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">จำนวนรายการ</div>
+                <div className="mt-0.5 text-lg font-bold leading-tight text-gray-900 dark:text-white">
+                  {summary.totalRecords} รายการ
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    ยอดรวม
-                  </div>
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {formatCurrency(summary.totalAmount)}
-                  </div>
+              </div>
+              <div className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 dark:border-purple-800 dark:bg-purple-950/50">
+                <div className="text-xs font-medium text-purple-800 dark:text-purple-200">ยอดรวม</div>
+                <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums text-purple-950 dark:text-purple-100">
+                  {formatCurrency(summary.totalAmount)}
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    ประเภท
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {Object.keys(summary.categorySummary || {}).length} ประเภท
-                  </div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">ประเภท</div>
+                <div className="mt-0.5 text-lg font-bold leading-tight text-gray-900 dark:text-white">
+                  {Object.keys(summary.categorySummary || {}).length} ประเภท
                 </div>
               </div>
             </div>
           )}
 
-          {/* Filters */}
-          <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div className="space-y-4">
-              {/* Quick Filters */}
-              <div className="flex flex-wrap gap-2">
-                {QUICK_FILTERS.map((filter) => (
-                  <button
-                    key={filter.label}
-                    onClick={() => handleQuickFilter(filter.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      selectedQuickFilter === filter.value
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Date Range */}
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    วันที่เริ่มต้น
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value);
-                      setSelectedQuickFilter(null);
-                      setCurrentPage(1);
-                    }}
-                    className="input w-full"
-                  />
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    วันที่สิ้นสุด
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => {
-                      setEndDate(e.target.value);
-                      setSelectedQuickFilter(null);
-                      setCurrentPage(1);
-                    }}
-                    className="input w-full"
-                  />
-                </div>
-              </div>
+          <div className="mb-3 flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 lg:flex-row lg:items-center">
+            <span className="shrink-0 text-xs font-medium text-gray-700 dark:text-gray-300">ตัวกรองด่วน</span>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_FILTERS.map((filter) => (
+                <button
+                  key={filter.label}
+                  type="button"
+                  onClick={() => handleQuickFilter(filter.value)}
+                  className={`inline-flex min-h-8 items-center rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    selectedQuickFilter === filter.value
+                      ? 'border-purple-600 bg-purple-600 text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                <span className="shrink-0">วันที่เริ่ม</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setSelectedQuickFilter(null);
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 w-[9.25rem] rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-500 dark:bg-gray-600 dark:text-white"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                <span className="shrink-0">วันที่สิ้นสุด</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setSelectedQuickFilter(null);
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 w-[9.25rem] rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-500 dark:bg-gray-600 dark:text-white"
+                />
+              </label>
             </div>
           </div>
-
-          {/* Content */}
-          <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
             {loading ? (
-              <GamerLoader className="py-12" message="กำลังโหลดข้อมูล..." />
+              <GamerLoader className="py-8" message="กำลังโหลดข้อมูล..." />
             ) : serviceFees.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 dark:text-gray-500 mb-2">
+              <div className="py-8 text-center">
+                <div className="mb-2 text-gray-400 dark:text-gray-500">
                   <svg
-                    className="w-16 h-16 mx-auto"
+                    className="mx-auto h-10 w-10"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -322,63 +279,61 @@ export const MemberServiceFeeModal: React.FC<MemberServiceFeeModalProps> = ({
                 </p>
               </div>
             ) : (
-              <>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">รายการค่าบริการ</h3>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      ทั้งหมด {summary?.totalRecords ?? serviceFees.length} รายการ
-                    </span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">วันที่</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">เลขที่รับซื้อ</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">ประเภท</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">จำนวนเงิน</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">หมายเหตุ</th>
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">รายการค่าบริการ</h3>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">
+                    ทั้งหมด {summary?.totalRecords ?? serviceFees.length} รายการ
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">วันที่</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">เลขที่รับซื้อ</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">ประเภท</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200">จำนวนเงิน</th>
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">หมายเหตุ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {serviceFees.map((fee, index) => (
+                        <tr
+                          key={fee.id}
+                          className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/60 dark:bg-gray-750'
+                          }`}
+                        >
+                          <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+                            <ServiceFeeDateCell value={fee.createdAt || fee.date} />
+                          </td>
+                          <td className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400">
+                            {fee.purchaseNo || '-'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+                            {fee.category}
+                          </td>
+                          <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums text-purple-600 dark:text-purple-400">
+                            {formatCurrency(fee.amount)}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
+                            {fee.notes || '-'}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                        {serviceFees.map((fee, index) => (
-                          <tr
-                            key={fee.id}
-                            className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'
-                            }`}
-                          >
-                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                              {formatDateWithTime(fee.createdAt || fee.date)}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">
-                              {fee.purchaseNo || '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                              {fee.category}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right font-semibold text-purple-600 dark:text-purple-400">
-                              {formatCurrency(fee.amount)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                              {fee.notes || '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
                 {totalPages > 1 && (
                   <PaginationControls
+                    embedded
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onPageChange={setCurrentPage}
                   />
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>

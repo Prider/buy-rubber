@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { MemberTable } from '@/components/members/MemberTable';
 import { MembersPageHeader } from '@/components/members/MembersPageHeader';
-import { MembersSearchBar } from '@/components/members/MembersSearchBar';
 import { MembersPagination } from '@/components/members/MembersPagination';
 import { MembersErrorDisplay } from '@/components/members/MembersErrorDisplay';
 import { useMembers } from '@/hooks/useMembers';
@@ -132,43 +131,41 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="min-h-[60vh] pb-2">
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <MembersPageHeader
-            totalMembers={pagination.total}
-            onAddMember={openFormForNew}
-          />
+      <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <div className="relative z-0 flex min-w-0 flex-col lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 lg:min-h-0 lg:flex-1">
+            <MembersPageHeader
+              onAddMember={openFormForNew}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onClearSearch={clearSearch}
+              isLoading={membersLoading}
+              resultCount={members.length}
+              totalCount={pagination.total}
+            />
 
-          <MembersSearchBar
-            embedded
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onClearSearch={clearSearch}
-            isLoading={membersLoading}
-            resultCount={members.length}
-            totalCount={pagination.total}
-            placeholder="ค้นหาชื่อ รหัส หรือเบอร์โทร"
-          />
+            <MembersErrorDisplay error={error || ''} />
 
-          <MembersErrorDisplay error={error || ''} />
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
+              <MemberTable
+                members={members}
+                onEdit={openFormForEdit}
+                onDelete={handleDelete}
+                onReactivate={handleReactivate}
+                onViewHistory={historyModal.open}
+                onViewServiceFees={serviceFeeModal.open}
+                isLoading={membersLoading}
+              />
+            </div>
 
-          <MemberTable
-            members={members}
-            onEdit={openFormForEdit}
-            onDelete={handleDelete}
-            onReactivate={handleReactivate}
-            onViewHistory={historyModal.open}
-            onViewServiceFees={serviceFeeModal.open}
-            isLoading={membersLoading}
-          />
-
-          <MembersPagination
-            embedded
-            pagination={pagination}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            isLoading={membersLoading}
-          />
+            <MembersPagination
+              embedded
+              pagination={pagination}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              isLoading={membersLoading}
+            />
+          </div>
         </div>
       </div>
 

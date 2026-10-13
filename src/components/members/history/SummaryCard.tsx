@@ -17,7 +17,7 @@ const SummaryIcon = ({ type }: { type: SummaryIconType }) => {
   switch (type) {
     case 'currency':
       return (
-        <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -28,7 +28,7 @@ const SummaryIcon = ({ type }: { type: SummaryIconType }) => {
       );
     case 'clipboard':
       return (
-        <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -39,7 +39,7 @@ const SummaryIcon = ({ type }: { type: SummaryIconType }) => {
       );
     default:
       return (
-        <svg className="w-8 h-8 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -52,13 +52,13 @@ const SummaryIcon = ({ type }: { type: SummaryIconType }) => {
 };
 
 export const SummaryCard = ({ title, icon, bg, value, subText }: SummaryCardProps) => (
-  <div className={`bg-gradient-to-br ${bg} rounded-xl p-6 text-white shadow-lg transform hover:-translate-y-1 transition-all duration-200`}>
-    <div className="flex items-center justify-between mb-2">
-      <div className="text-sm opacity-90">{title}</div>
+  <div className={`rounded-lg border px-3 py-2 ${bg}`}>
+    <div className="flex items-center justify-between gap-2">
+      <div className="text-xs font-medium">{title}</div>
       <SummaryIcon type={icon} />
     </div>
-    <div className="text-3xl font-bold">{value}</div>
-    <div className="text-xs opacity-75 mt-1">{subText}</div>
+    <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{value}</div>
+    <div className="text-[11px] leading-4 opacity-80">{subText}</div>
   </div>
 );
 
@@ -66,21 +66,21 @@ export const SUMMARY_CARD_CONFIG = [
   {
     title: 'ยอดรวมทั้งหมด',
     icon: 'currency' as SummaryIconType,
-    bg: 'from-green-500 to-emerald-600',
+    bg: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100',
     formatter: (summary: PurchaseSummary) => formatCurrency(summary.totalAmount),
     subText: (summary: PurchaseSummary) => `${summary.totalPurchases} รายการ`,
   },
   {
     title: 'จำนวนครั้ง',
     icon: 'clipboard' as SummaryIconType,
-    bg: 'from-blue-500 to-indigo-600',
+    bg: 'border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100',
     formatter: (summary: PurchaseSummary) => formatNumber(summary.totalPurchases),
     subText: () => 'รายการรับซื้อ',
   },
   {
     title: 'น้ำหนักรวม',
     icon: 'weight' as SummaryIconType,
-    bg: 'from-purple-500 to-pink-600',
+    bg: 'border-purple-200 bg-purple-50 text-purple-950 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-100',
     formatter: (summary: PurchaseSummary) => `${formatNumber(summary.totalWeight)} กก.`,
     subText: (summary: PurchaseSummary) => `ราคาเฉลี่ย ${formatNumber(summary.avgPrice)} บ./กก.`,
   },

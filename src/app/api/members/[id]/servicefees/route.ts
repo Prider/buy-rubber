@@ -34,11 +34,11 @@ export async function GET(
     `;
 
     // Aggregate: total and per-category breakdown — single subquery instead of loading all rows
-    type AggRow = { category: string; cnt: bigint; total: number };
+    type AggRow = { category: string; cnt: number | bigint; total: number };
     const aggRows = await prisma.$queryRaw<AggRow[]>`
       SELECT sf.category,
-             COUNT(*)::bigint                        AS cnt,
-             COALESCE(SUM(sf.amount), 0)::float      AS total
+             COUNT(*)                                 AS cnt,
+             COALESCE(SUM(sf.amount), 0)             AS total
       FROM   "ServiceFee" sf
       WHERE  sf."purchaseNo" IN (
                SELECT DISTINCT "purchaseNo" FROM "Purchase" WHERE "memberId" = ${memberId}
