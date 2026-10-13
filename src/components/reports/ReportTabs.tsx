@@ -35,11 +35,11 @@ export default function ReportTabs({ activeTab, onTabChange }: ReportTabsProps) 
   return (
     <div
       ref={scrollerRef}
-      className="-mx-4 overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0 md:border-b md:border-gray-200 md:dark:border-gray-700"
+      className="-mx-4 overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0 lg:ml-auto"
       role="tablist"
       aria-label="ประเภทรายงาน"
     >
-      <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap md:gap-1">
+      <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap md:gap-1 lg:justify-end">
       {REPORT_TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         return (

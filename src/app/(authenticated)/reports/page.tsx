@@ -259,17 +259,16 @@ export default function ReportsPage() {
   return (
     <div className="w-full pb-6 lg:pb-2">
       <div className="max-md:-mx-4 max-md:-mt-4 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
-        <div className="hidden border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 lg:block">
-          <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
-            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-              รายงาน
-            </span>
-          </h1>
-        </div>
-
-        <div className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 lg:px-5 dark:md:bg-transparent">
-          <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
+        <header className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
+          <div className="flex min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            <h1 className="hidden shrink-0 text-lg font-semibold tracking-tight lg:block">
+              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+                รายงาน
+              </span>
+            </h1>
+            <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
+          </div>
+        </header>
 
         <div className="mt-5 space-y-5 px-4 md:px-0 lg:mt-0 lg:space-y-0 lg:px-0">
       <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
