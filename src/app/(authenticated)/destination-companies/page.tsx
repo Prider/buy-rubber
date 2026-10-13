@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { DestinationCompanyTable } from '@/components/destination-companies/DestinationCompanyTable';
 import { DestinationCompaniesPageHeader } from '@/components/destination-companies/DestinationCompaniesPageHeader';
-import { MembersSearchBar } from '@/components/members/MembersSearchBar';
 import { MembersPagination } from '@/components/members/MembersPagination';
 import { MembersErrorDisplay } from '@/components/members/MembersErrorDisplay';
 import { useDestinationCompanies } from '@/hooks/useDestinationCompanies';
@@ -100,41 +99,39 @@ export default function DestinationCompaniesPage() {
 
   return (
     <>
-      <div className="min-h-[60vh] pb-2">
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <DestinationCompaniesPageHeader
-            totalCompanies={pagination.total}
-            onAddCompany={openFormForNew}
-          />
+      <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <div className="relative z-0 flex min-w-0 flex-col lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 lg:min-h-0 lg:flex-1">
+            <DestinationCompaniesPageHeader
+              onAddCompany={openFormForNew}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onClearSearch={clearSearch}
+              isLoading={companiesLoading}
+              resultCount={companies.length}
+              totalCount={pagination.total}
+            />
 
-          <MembersSearchBar
-            embedded
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onClearSearch={clearSearch}
-            isLoading={companiesLoading}
-            resultCount={companies.length}
-            totalCount={pagination.total}
-            placeholder="ค้นหาชื่อ รหัส เบอร์ หรือที่อยู่"
-          />
+            <MembersErrorDisplay error={error || ''} />
 
-          <MembersErrorDisplay error={error || ''} />
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
+              <DestinationCompanyTable
+                companies={companies}
+                onEdit={openFormForEdit}
+                onDelete={handleDelete}
+                onReactivate={handleReactivate}
+                isLoading={companiesLoading}
+              />
+            </div>
 
-          <DestinationCompanyTable
-            companies={companies}
-            onEdit={openFormForEdit}
-            onDelete={handleDelete}
-            onReactivate={handleReactivate}
-            isLoading={companiesLoading}
-          />
-
-          <MembersPagination
-            embedded
-            pagination={pagination}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            isLoading={companiesLoading}
-          />
+            <MembersPagination
+              embedded
+              pagination={pagination}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              isLoading={companiesLoading}
+            />
+          </div>
         </div>
       </div>
 
