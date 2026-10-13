@@ -72,7 +72,7 @@ export default function ReportFilterCard({
                   </svg>
                   <span className="lg:hidden">จัดการกลุ่ม</span>
                   <span className="hidden lg:inline">
-                    จัดการกลุ่มรายงาน{selectMode === 'sell_summary' ? 'การขายยาง' : 'การรับซื้อยาง'}
+                    จัดการกลุ่มรายงาน{selectMode === 'sell_summary' ? 'ขาย' : 'ซื้อ'}
                   </span>
                 </button>
               ) : null}

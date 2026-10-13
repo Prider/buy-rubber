@@ -177,7 +177,7 @@ export default function ReportGroupManagementModal({
 
   const previewLabel = buildPreviewLabel(name, selectedProductTypeIds, productTypes);
   const isSaleGroups = kind === 'sale';
-  const modalTitle = isSaleGroups ? 'จัดการกลุ่มรายงานการขายยาง' : 'จัดการกลุ่มรายงานการรับซื้อยาง';
+  const modalTitle = isSaleGroups ? 'จัดการกลุ่มรายงานขาย' : 'จัดการกลุ่มรายงานซื้อ';
   const modalDescription = isSaleGroups
     ? 'สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานสรุปการขาย เช่น ยางจอก + ยางพรก'
     : 'สร้างกลุ่มประเภทสินค้าเพื่อใช้ในรายงานรับซื้อประจำวัน เช่น ยางจอก + ยางพรก';

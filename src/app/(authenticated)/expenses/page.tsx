@@ -90,7 +90,7 @@ export default function ExpensesPage() {
                 </span>
               </h1>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                จัดการค่าใช้จ่ายประจำวันของกิจการ
+                จัดการค่าใช้จ่ายของกิจการ
               </p>
             </div>
             <button
@@ -105,42 +105,42 @@ export default function ExpensesPage() {
 
           <div className="grid shrink-0 grid-cols-1 gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700 sm:grid-cols-3 sm:px-5">
             <div
-              className="rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายวันนี้"
             >
-              <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 text-xs">
                 <span className="opacity-90">ค่าใช้จ่ายวันนี้</span>
-                <span className="shrink-0 opacity-75">{summary.todayCount} รายการ</span>
+                <span className="max-w-full min-w-0 text-right opacity-75">{summary.todayCount} รายการ</span>
               </div>
-              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.todayTotal.toLocaleString()} บาท</div>
+              <div className="mt-0.5 min-w-0 text-lg font-bold leading-tight tabular-nums">{summary.todayTotal.toLocaleString()} บาท</div>
             </div>
 
             <div
-              className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายเดือนนี้"
             >
-              <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 text-xs">
                 <span className="opacity-90">ค่าใช้จ่ายเดือนนี้</span>
-                <span className="shrink-0 opacity-75">{summary.monthCount} รายการ</span>
+                <span className="max-w-full min-w-0 text-right opacity-75">{summary.monthCount} รายการ</span>
               </div>
-              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.monthTotal.toLocaleString()} บาท</div>
+              <div className="mt-0.5 min-w-0 text-lg font-bold leading-tight tabular-nums">{summary.monthTotal.toLocaleString()} บาท</div>
             </div>
 
             <div
-              className="rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าเฉลี่ยรายวัน"
             >
-              <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 text-xs">
                 <span className="opacity-90">ค่าเฉลี่ยต่อวัน</span>
-                <span className="shrink-0 opacity-75">เฉลี่ย {summary.avgCount} รายการ/วัน</span>
+                <span className="max-w-full min-w-0 text-right opacity-75">เฉลี่ย {summary.avgCount} รายการ/วัน</span>
               </div>
-              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.avgDaily.toLocaleString()} บาท</div>
+              <div className="mt-0.5 min-w-0 break-words text-lg font-bold leading-tight tabular-nums">{summary.avgDaily.toLocaleString()} บาท</div>
             </div>
           </div>
 

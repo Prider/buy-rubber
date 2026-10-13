@@ -265,9 +265,6 @@ export default function ReportsPage() {
               รายงาน
             </span>
           </h1>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            สรุปรับซื้อ การขาย สมาชิก และค่าใช้จ่ายตามช่วงวันที่
-          </p>
         </div>
 
         <div className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-0 md:bg-transparent md:p-0 lg:px-5 dark:md:bg-transparent">
