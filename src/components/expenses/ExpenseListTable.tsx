@@ -9,20 +9,12 @@ interface ExpenseListTableProps {
   expenses: Expense[];
   loading: boolean;
   onDelete: (id: string) => Promise<void>;
-  page: number;
-  pageSize: number;
-  total: number;
-  onPageChange: (page: number) => void | Promise<void>;
 }
 
 export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   expenses,
   loading,
   onDelete,
-  page,
-  pageSize,
-  total,
-  onPageChange,
 }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
@@ -92,20 +84,6 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
       return createdAtB - createdAtA;
     });
   }, [expenses]);
-
-  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
-  const currentPage = Math.min(page, totalPages);
-  const canGoPrev = !loading && currentPage > 1 && total > 0;
-  const canGoNext = !loading && currentPage < totalPages && total > 0;
-  const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = total === 0 ? 0 : Math.min(currentPage * pageSize, total);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    if (newPage < 1 || newPage > totalPages || newPage === currentPage) {
-      return;
-    }
-    onPageChange(newPage);
-  }, [totalPages, currentPage, onPageChange]);
 
   // Memoized row component
   interface ExpenseRowProps {
@@ -205,16 +183,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
 
   ExpenseRow.displayName = 'ExpenseRow';
 
-  if (loading) {
+  if (loading && expenses.length === 0) {
     return <GamerLoader className="py-12" message="กำลังโหลดข้อมูล..." />;
-  }
-
-  if (expenses.length === 0) {
-    return (
-      <p className="px-4 py-14 text-center text-sm text-gray-500 dark:text-gray-400">
-        ยังไม่มีค่าใช้จ่าย
-      </p>
-    );
   }
 
   return (
@@ -225,12 +195,19 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
         </h3>
       </div>
 
+      {loading ? (
+        <GamerLoader className="py-12" message="กำลังโหลดข้อมูล..." />
+      ) : expenses.length === 0 ? (
+        <p className="px-4 py-14 text-center text-sm text-gray-500 dark:text-gray-400">
+          ยังไม่มีค่าใช้จ่าย
+        </p>
+      ) : (
       <div role="table" className="w-full text-sm">
         <div
           role="row"
           className={`hidden bg-gray-50 text-xs font-medium text-gray-500 dark:bg-gray-700/50 dark:text-gray-300 lg:grid ${desktopCols}`}
         >
-          <div role="columnheader" className="px-3 py-3 text-left">รหัส</div>
+          <div role="columnheader" className="px-3 py-3 text-left">เลขที่</div>
           <div role="columnheader" className="px-3 py-3 text-left">วันที่</div>
           <div role="columnheader" className="px-3 py-3 text-left">ประเภท</div>
           <div role="columnheader" className="px-3 py-3 text-left">รายละเอียด</div>
@@ -253,43 +230,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
           ))}
         </div>
       </div>
-
-      <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <p className="text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-          {total === 0
-            ? 'ยังไม่มีข้อมูลค่าใช้จ่ายในระบบ'
-            : `แสดง ${startItem.toLocaleString()}-${endItem.toLocaleString()} จาก ${total.toLocaleString()} รายการ`}
-        </p>
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={!canGoPrev}
-            className={`inline-flex min-h-11 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-colors sm:min-h-9 ${
-              canGoPrev
-                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-                : 'cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500'
-            }`}
-          >
-            ก่อนหน้า
-          </button>
-          <span className="text-sm font-medium tabular-nums text-gray-700 dark:text-gray-300">
-            หน้า {total === 0 ? 0 : currentPage} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={!canGoNext}
-            className={`inline-flex min-h-11 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-colors sm:min-h-9 ${
-              canGoNext
-                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-                : 'cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500'
-            }`}
-          >
-            ถัดไป
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 });

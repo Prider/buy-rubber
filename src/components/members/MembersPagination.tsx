@@ -1,5 +1,26 @@
 import { PaginationInfo } from '@/types/member';
 
+function visiblePageItems(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
+  const pages = new Set<number>([1, totalPages]);
+  for (let pageNum = currentPage - 1; pageNum <= currentPage + 1; pageNum += 1) {
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      pages.add(pageNum);
+    }
+  }
+
+  const sorted = [...pages].sort((left, right) => left - right);
+  const items: Array<number | 'ellipsis'> = [];
+  for (let index = 0; index < sorted.length; index += 1) {
+    const pageNum = sorted[index];
+    const previous = sorted[index - 1];
+    if (previous != null && pageNum - previous > 1) {
+      items.push('ellipsis');
+    }
+    items.push(pageNum);
+  }
+  return items;
+}
+
 interface MembersPaginationProps {
   pagination: PaginationInfo;
   currentPage: number;
@@ -21,6 +42,7 @@ export const MembersPagination = ({
 
   const startItem = (pagination.page - 1) * pagination.limit + 1;
   const endItem = Math.min(pagination.page * pagination.limit, pagination.total);
+  const pageItems = visiblePageItems(pagination.page, pagination.totalPages);
 
   const pageButton =
     'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 sm:min-h-9 sm:min-w-9 sm:rounded-lg';
@@ -52,37 +74,30 @@ export const MembersPagination = ({
           </span>
 
           <div className="hidden items-center gap-1 sm:flex">
-            {[...Array(pagination.totalPages)].map((_, i) => {
-              const pageNum = i + 1;
-              if (
-                pageNum === 1 ||
-                pageNum === pagination.totalPages ||
-                (pageNum >= pagination.page - 1 && pageNum <= pagination.page + 1)
-              ) {
+            {pageItems.map((item, index) => {
+              if (item === 'ellipsis') {
                 return (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    onClick={() => onPageChange(pageNum)}
-                    disabled={isLoading}
-                    className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                      pagination.page === pageNum
-                        ? 'bg-primary-600 text-white'
-                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              }
-              if (pageNum === pagination.page - 2 || pageNum === pagination.page + 2) {
-                return (
-                  <span key={pageNum} className="px-1 text-gray-400">
+                  <span key={`ellipsis-${index}`} className="px-1 text-gray-400">
                     …
                   </span>
                 );
               }
-              return null;
+
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => onPageChange(item)}
+                  disabled={isLoading}
+                  className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    pagination.page === item
+                      ? 'bg-primary-600 text-white'
+                      : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {item}
+                </button>
+              );
             })}
           </div>
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
+import { MembersPagination } from '@/components/members/MembersPagination';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
@@ -79,9 +80,9 @@ export default function ExpensesPage() {
 
   return (
     <>
-      <div className="min-h-[60vh] pb-2">
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex shrink-0 flex-col gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <h1 className="hidden text-lg font-semibold tracking-tight sm:text-xl lg:block">
                 <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
@@ -102,49 +103,67 @@ export default function ExpensesPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:grid-cols-3 sm:px-5">
+          <div className="grid shrink-0 grid-cols-1 gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700 sm:grid-cols-3 sm:px-5">
             <div
-              className="rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-4 text-white shadow-md"
+              className="rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายวันนี้"
             >
-              <div className="text-xs opacity-90 sm:text-sm">ค่าใช้จ่ายวันนี้</div>
-              <div className="mt-1 text-xl font-bold leading-tight sm:text-2xl">{summary.todayTotal.toLocaleString()} บาท</div>
-              <div className="mt-0.5 text-xs opacity-75">{summary.todayCount} รายการ</div>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="opacity-90">ค่าใช้จ่ายวันนี้</span>
+                <span className="shrink-0 opacity-75">{summary.todayCount} รายการ</span>
+              </div>
+              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.todayTotal.toLocaleString()} บาท</div>
             </div>
 
             <div
-              className="rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 text-white shadow-md"
+              className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายเดือนนี้"
             >
-              <div className="text-xs opacity-90 sm:text-sm">ค่าใช้จ่ายเดือนนี้</div>
-              <div className="mt-1 text-xl font-bold leading-tight sm:text-2xl">{summary.monthTotal.toLocaleString()} บาท</div>
-              <div className="mt-0.5 text-xs opacity-75">{summary.monthCount} รายการ</div>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="opacity-90">ค่าใช้จ่ายเดือนนี้</span>
+                <span className="shrink-0 opacity-75">{summary.monthCount} รายการ</span>
+              </div>
+              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.monthTotal.toLocaleString()} บาท</div>
             </div>
 
             <div
-              className="rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 p-4 text-white shadow-md"
+              className="rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 px-3 py-2 text-white shadow-sm"
               tabIndex={0}
               role="group"
               aria-label="ค่าเฉลี่ยรายวัน"
             >
-              <div className="text-xs opacity-90 sm:text-sm">ค่าเฉลี่ยต่อวัน</div>
-              <div className="mt-1 text-xl font-bold leading-tight sm:text-2xl">{summary.avgDaily.toLocaleString()} บาท</div>
-              <div className="mt-0.5 text-xs opacity-75">เฉลี่ย {summary.avgCount} รายการ/วัน</div>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="opacity-90">ค่าเฉลี่ยต่อวัน</span>
+                <span className="shrink-0 opacity-75">เฉลี่ย {summary.avgCount} รายการ/วัน</span>
+              </div>
+              <div className="mt-0.5 text-lg font-bold leading-tight tabular-nums">{summary.avgDaily.toLocaleString()} บาท</div>
             </div>
           </div>
 
-          <ExpenseListTable
-            expenses={expenses}
-            loading={loading}
-            onDelete={handleDeleteExpense}
-            page={pagination.page}
-            pageSize={pagination.pageSize}
-            total={pagination.total}
+          <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            <ExpenseListTable
+              expenses={expenses}
+              loading={loading}
+              onDelete={handleDeleteExpense}
+            />
+          </div>
+
+          <MembersPagination
+            embedded
+            pagination={{
+              page: pagination.page,
+              limit: pagination.pageSize,
+              total: pagination.total,
+              totalPages: pagination.totalPages,
+              hasMore: pagination.page < pagination.totalPages,
+            }}
+            currentPage={pagination.page}
             onPageChange={handlePageChange}
+            isLoading={loading}
           />
         </div>
       </div>
