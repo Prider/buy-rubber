@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 const REPORT_TYPES = ['daily_purchase', 'sell_summary', 'member_summary', 'expense_summary'] as const;
 type ReportSummaryType = (typeof REPORT_TYPES)[number];
 
-const DEFAULT_PAGE_SIZE = 15;
+const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 50;
 const EXPORT_MAX = 10_000;
 

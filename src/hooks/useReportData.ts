@@ -13,7 +13,7 @@ import {
 
 export type ReportType = 'daily_purchase' | 'member_summary' | 'expense_summary' | string;
 
-export const REPORT_PAGE_SIZE = 15;
+export const REPORT_PAGE_SIZE = 10;
 
 interface ExpenseCategorySummary {
   category: string;

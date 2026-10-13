@@ -13,16 +13,37 @@ function StatCard({
   label,
   value,
   hint,
+  compact = false,
 }: {
   label: string;
   value: string;
   hint?: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80 lg:bg-gray-50 lg:dark:bg-gray-900/40">
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{value}</p>
-      {hint ? <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p> : null}
+    <div
+      className={
+        compact
+          ? 'min-w-[9.5rem] flex-1 rounded-xl border border-gray-100 bg-white/80 px-2.5 py-1.5 dark:border-gray-700 dark:bg-gray-800/80 lg:bg-gray-50 lg:dark:bg-gray-900/40'
+          : 'rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80 lg:bg-gray-50 lg:dark:bg-gray-900/40'
+      }
+    >
+      <p className={compact ? 'text-[11px] leading-4 text-gray-500 dark:text-gray-400' : 'text-xs text-gray-500 dark:text-gray-400'}>
+        {label}
+      </p>
+      <p
+        className={
+          compact
+            ? 'mt-0.5 text-sm font-semibold leading-5 tabular-nums text-gray-900 dark:text-gray-100'
+            : 'mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100'
+        }
+      >
+        {value}
+        {compact && hint ? (
+          <span className="ml-1 text-[11px] font-normal text-gray-400 dark:text-gray-500">{hint}</span>
+        ) : null}
+      </p>
+      {!compact && hint ? <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p> : null}
     </div>
   );
 }
@@ -74,16 +95,22 @@ export default function ReportSummaryCards({
     : isSell
       ? 'รายการขาย'
       : 'สมาชิก';
+  const showAveragePrice = isDaily || isSell;
+  const averagePrice = showAveragePrice && totalWeight > 0 ? totalAmount / totalWeight : 0;
 
   return (
-    <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
+    <div className="no-print flex flex-wrap gap-2">
       <StatCard
+        compact
         label="จำนวนรายการ"
         value={totalCount.toLocaleString('th-TH')}
         hint={countHint}
       />
-      <StatCard label="น้ำหนักรวม" value={formatNumber(totalWeight)} hint="กิโลกรัม" />
-      <StatCard label="ยอดเงินรวม" value={formatCurrency(totalAmount)} hint="บาท" />
+      <StatCard compact label="น้ำหนักรวม" value={formatNumber(totalWeight)} hint="กิโลกรัม" />
+      <StatCard compact label="ยอดเงินรวม" value={formatCurrency(totalAmount)} hint="บาท" />
+      {showAveragePrice ? (
+        <StatCard compact label="ราคาเฉลี่ย" value={formatNumber(averagePrice)} hint="บาท/กก." />
+      ) : null}
     </div>
   );
 }

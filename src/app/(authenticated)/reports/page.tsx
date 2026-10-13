@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useReportData } from '@/hooks/useReportData';
+import { REPORT_PAGE_SIZE, useReportData } from '@/hooks/useReportData';
 import { useReportProductTypeGroups } from '@/hooks/useReportProductTypeGroups';
 import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
@@ -26,7 +26,7 @@ import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
 import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
 import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
-import { PaginationControls } from '@/components/members/history/PaginationControls';
+import { ListPagination } from '@/components/pagination/ListPagination';
 import ProfitLossReport from './profit-loss/ProfitLossReport';
 
 const EMBEDDED_TABS = ['profit_loss'] as const;
@@ -49,8 +49,6 @@ const ReportGroupManagementModal = dynamic(
   () => import(/* webpackPrefetch: true */ '@/components/reports/ReportGroupManagementModal'),
   { ssr: false, loading: () => null },
 );
-
-const PAGE_SIZE = 15;
 
 function tabFromReportType(reportType: string): ReportTabId {
   if (isSellSummaryReport(reportType)) return 'sell_summary';
@@ -138,7 +136,7 @@ export default function ReportsPage() {
     [startDate, endDate],
   );
 
-  const rowOffset = useMemo(() => (tablePage - 1) * PAGE_SIZE, [tablePage]);
+  const rowOffset = useMemo(() => (tablePage - 1) * REPORT_PAGE_SIZE, [tablePage]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -257,9 +255,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="w-full pb-6 lg:pb-2">
-      <div className="max-md:-mx-4 max-md:-mt-4 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
-        <header className="sticky -top-4 z-30 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:static md:top-auto md:z-auto md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden max-md:-mx-4 max-md:-mt-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
+        <header className="shrink-0 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
           <div className="flex min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <h1 className="hidden shrink-0 text-lg font-semibold tracking-tight lg:block">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
@@ -270,8 +268,8 @@ export default function ReportsPage() {
           </div>
         </header>
 
-        <div className="mt-5 space-y-5 px-4 md:px-0 lg:mt-0 lg:space-y-0 lg:px-0">
-      <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`}>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 md:px-0 lg:px-0">
+      <div id="report-tabpanel" role="tabpanel" aria-labelledby={`report-tab-${activeTab}`} className={isEmbeddedTab(activeTab) ? 'min-h-0 flex-1 overflow-y-auto' : 'shrink-0'}>
         {activeTab === 'profit_loss' ? (
           <div className="lg:px-5 lg:py-5">
             <ProfitLossReport />
@@ -353,7 +351,7 @@ export default function ReportsPage() {
             }
           `}</style>
 
-          <div className="lg:px-5 lg:py-4">
+          <div className="shrink-0 py-3 lg:px-5 lg:py-2">
             <ReportSummaryCards
               reportType={reportType}
               totalAmount={getTotalAmount()}
@@ -368,7 +366,7 @@ export default function ReportsPage() {
             id="print-area"
             className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:dark:bg-transparent"
           >
-            <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex shrink-0 flex-col gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getReportTitle()}</h2>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{dateRangeLabel}</p>
@@ -398,14 +396,6 @@ export default function ReportsPage() {
                   totalAmount={getTotalAmount()}
                 />
               )}
-              {hasData && totalPages > 1 && (
-                <PaginationControls
-                  currentPage={tablePage}
-                  totalPages={totalPages}
-                  onPrev={() => goToPage(Math.max(1, tablePage - 1))}
-                  onNext={() => goToPage(Math.min(totalPages, tablePage + 1))}
-                />
-              )}
             </div>
           </section>
           </div>
@@ -413,7 +403,7 @@ export default function ReportsPage() {
       )}
 
       {!isEmbeddedTab(activeTab) && !data && !loading ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700 lg:rounded-none lg:border-none">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-dashed border-gray-200 px-5 py-16 text-center dark:border-gray-700 lg:rounded-none lg:border-none">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {activeTab === 'daily_purchase' || activeTab === 'sell_summary'
               ? 'เลือกประเภทรายงานและช่วงวันที่ แล้วกดสร้างรายงาน'
@@ -422,6 +412,21 @@ export default function ReportsPage() {
         </div>
       ) : null}
         </div>
+        {!isEmbeddedTab(activeTab) && data ? (
+          <div className="no-print shrink-0">
+            <ListPagination
+              embedded
+              pagination={{
+                page: tablePage,
+                limit: REPORT_PAGE_SIZE,
+                total: totalCount,
+                totalPages,
+              }}
+              loading={paging}
+              onPageChange={goToPage}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
