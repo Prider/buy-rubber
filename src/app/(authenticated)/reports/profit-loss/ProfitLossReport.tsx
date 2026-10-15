@@ -1,14 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
+import { useAlert } from '@/hooks/useAlert';
 import { formatCurrency } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { downloadProfitLossExcel } from './exportExcel';
-import { downloadProfitLossPdf } from './exportPdf';
+import { downloadProfitLossPdf, generateProfitLossPreviewHtml } from './exportPdf';
 import { ProfitLossChart } from './ProfitLossChart';
 import {
   EMPTY_TOTALS,
@@ -60,10 +61,13 @@ function ProfitLossText({ value, className = '' }: { value: number; className?: 
 export default function ProfitLossReport() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { showWarning } = useAlert();
 
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [loading, setLoading] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const downloadLock = useRef(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [rows, setRows] = useState<ProfitLossRow[]>([]);
   const [totals, setTotals] = useState<ProfitLossTotals>(EMPTY_TOTALS);
@@ -123,13 +127,44 @@ export default function ProfitLossReport() {
     }
   }, [endDate, exportBusy, hasRows, rows, startDate, totals, viewMode]);
 
-  const handleExportPdf = useCallback(async () => {
+  const handlePreview = useCallback(() => {
     if (!hasRows || exportBusy) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showWarning(
+        'ไม่สามารถเปิดหน้าต่างใหม่ได้',
+        'กรุณาอนุญาตให้เปิดหน้าต่างใหม่เพื่อดูตัวอย่างการพิมพ์\n\nหากใช้เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตสำหรับเว็บไซต์นี้',
+      );
+      return;
+    }
+
+    printWindow.document.write(
+      generateProfitLossPreviewHtml({ rows, totals, startDate, endDate, viewMode }),
+    );
+    printWindow.document.close();
+  }, [endDate, exportBusy, hasRows, rows, showWarning, startDate, totals, viewMode]);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!hasRows || exportBusy || downloadLock.current) return;
+    downloadLock.current = true;
     setExportingPdf(true);
+    setDownloadProgress(0);
     try {
-      await downloadProfitLossPdf({ rows, totals, startDate, endDate, viewMode });
+      await downloadProfitLossPdf({
+        rows,
+        totals,
+        startDate,
+        endDate,
+        viewMode,
+        onProgress: (completed, total) => {
+          setDownloadProgress(total > 0 ? Math.round((completed / total) * 100) : 0);
+        },
+      });
     } finally {
+      downloadLock.current = false;
       setExportingPdf(false);
+      setDownloadProgress(null);
     }
   }, [endDate, exportBusy, hasRows, rows, startDate, totals, viewMode]);
 
@@ -141,8 +176,45 @@ export default function ProfitLossReport() {
     );
   }
 
+  const downloading = downloadProgress !== null;
+
   return (
     <div className="space-y-6">
+      {downloading ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4"
+          role="alertdialog"
+          aria-modal="true"
+          aria-busy="true"
+          aria-labelledby="profit-loss-download-progress-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white px-5 py-4 shadow-xl dark:bg-gray-800">
+            <p id="profit-loss-download-progress-title" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {downloadProgress > 0 ? 'กำลังสร้างไฟล์ PDF' : 'กำลังเตรียมข้อมูล'}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              กรุณารอจนกว่าไฟล์จะดาวน์โหลดเสร็จ
+            </p>
+            <div
+              className="mt-4 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={downloadProgress}
+            >
+              <div
+                className={`h-full rounded-full bg-rose-600 ${
+                  downloadProgress > 0 ? 'transition-[width] duration-200' : 'w-1/3 animate-pulse'
+                }`}
+                style={downloadProgress > 0 ? { width: `${downloadProgress}%` } : undefined}
+              />
+            </div>
+            <p className="mt-2 text-right text-xs font-medium tabular-nums text-gray-600 dark:text-gray-300">
+              {downloadProgress}%
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">กำไร / ขาดทุน</h2>
@@ -154,12 +226,22 @@ export default function ProfitLossReport() {
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             type="button"
+            onClick={handlePreview}
+            disabled={isExportDisabled({ hasRows, loading, exportBusy })}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 sm:w-auto"
+          >
+            ดูตัวอย่าง
+          </button>
+          <button
+            type="button"
             onClick={() => void handleExportPdf()}
             disabled={isExportDisabled({ hasRows, loading, exportBusy })}
+            aria-busy={exportingPdf}
             className="w-full rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-red-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-rose-700 hover:via-pink-700 hover:to-red-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-rose-500 dark:via-pink-500 dark:to-red-400 sm:w-auto"
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
+          {/*
           <button
             type="button"
             onClick={() => void handleExportExcel()}
@@ -168,6 +250,7 @@ export default function ProfitLossReport() {
           >
             {getExportExcelButtonText(exportingExcel)}
           </button>
+          */}
         </div>
       </div>
 

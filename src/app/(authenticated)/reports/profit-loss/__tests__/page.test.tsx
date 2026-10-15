@@ -14,6 +14,10 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('@/hooks/useAlert', () => ({
+  useAlert: () => ({ showWarning: vi.fn() }),
+}));
+
 vi.mock('@/components/GamerLoader', () => ({
   default: ({ message }: { message: string }) => <div>{message}</div>,
 }));
@@ -24,6 +28,7 @@ vi.mock('../ProfitLossChart', () => ({
 
 vi.mock('../exportPdf', () => ({
   downloadProfitLossPdf: vi.fn(async () => undefined),
+  generateProfitLossPreviewHtml: vi.fn(() => '<html><body>preview</body></html>'),
 }));
 
 vi.mock('../exportExcel', () => ({
@@ -32,7 +37,7 @@ vi.mock('../exportExcel', () => ({
 
 import { useAuth } from '@/contexts/AuthContext';
 import { downloadProfitLossExcel } from '../exportExcel';
-import { downloadProfitLossPdf } from '../exportPdf';
+import { downloadProfitLossPdf, generateProfitLossPreviewHtml } from '../exportPdf';
 import ProfitLossReport from '../ProfitLossReport';
 
 describe('ProfitLossReport', () => {
@@ -43,6 +48,7 @@ describe('ProfitLossReport', () => {
       isLoading: false,
     } as ReturnType<typeof useAuth>);
 
+    vi.mocked(downloadProfitLossPdf).mockImplementation(async () => undefined);
     vi.mocked(axios.get).mockResolvedValue({
       data: {
         periods: [
@@ -89,9 +95,55 @@ describe('ProfitLossReport', () => {
 
     expect(await screen.findByText(/Profit:/)).toBeInTheDocument();
     expect(screen.getByTestId('profit-loss-chart')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ดูตัวอย่าง' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Export Excel' })).toBeEnabled();
-    expect(screen.getAllByRole('link', { name: 'ดูต่อกองตามสินค้า' }).length).toBeGreaterThan(0);
+  });
+
+  it('opens a preview window with the profit-loss report', async () => {
+    const user = userEvent.setup();
+    const write = vi.fn();
+    const close = vi.fn();
+    vi.spyOn(window, 'open').mockReturnValue({
+      document: { write, close },
+    } as unknown as Window);
+
+    render(<ProfitLossReport />);
+
+    const previewButton = await screen.findByRole('button', { name: 'ดูตัวอย่าง' });
+    await waitFor(() => expect(previewButton).toBeEnabled());
+    await user.click(previewButton);
+
+    expect(generateProfitLossPreviewHtml).toHaveBeenCalledTimes(1);
+    expect(write).toHaveBeenCalledWith('<html><body>preview</body></html>');
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('blocks the page with progress while the PDF is exporting', async () => {
+    const user = userEvent.setup();
+    let finishDownload: (() => void) | undefined;
+    vi.mocked(downloadProfitLossPdf).mockImplementation(
+      (params) =>
+        new Promise((resolve) => {
+          params.onProgress?.(1, 2);
+          finishDownload = () => resolve();
+        }),
+    );
+
+    render(<ProfitLossReport />);
+
+    const pdfButton = await screen.findByRole('button', { name: 'Export PDF' });
+    await waitFor(() => expect(pdfButton).toBeEnabled());
+    await user.click(pdfButton);
+
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+    expect(screen.getByRole('button', { name: 'กำลังสร้าง PDF...' })).toBeDisabled();
+
+    finishDownload?.();
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
   });
 
   it('calls downloadProfitLossPdf when Export PDF is clicked', async () => {

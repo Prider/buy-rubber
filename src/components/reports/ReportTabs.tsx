@@ -12,6 +12,11 @@ export const REPORT_TABS = [
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];
 
+export function parseReportTab(value: string | null): ReportTabId | null {
+  if (!value) return null;
+  return REPORT_TABS.some((tab) => tab.id === value) ? (value as ReportTabId) : null;
+}
+
 interface ReportTabsProps {
   activeTab: ReportTabId;
   onTabChange: (tab: ReportTabId) => void;

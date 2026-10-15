@@ -10,7 +10,7 @@ import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import { generatePrintPreviewHTML } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
-import ReportTabs, { type ReportTabId } from '@/components/reports/ReportTabs';
+import ReportTabs, { parseReportTab, type ReportTabId } from '@/components/reports/ReportTabs';
 import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
 import { getSelectedGroupId, isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
 import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
@@ -23,20 +23,8 @@ import { downloadReportPDF } from '@/lib/reportPdfUtils';
 import { ListPagination } from '@/components/pagination/ListPagination';
 import ProfitLossReport from './profit-loss/ProfitLossReport';
 
-const EMBEDDED_TABS = ['profit_loss'] as const;
-type EmbeddedTab = (typeof EMBEDDED_TABS)[number];
-
-function isEmbeddedTabId(value: string): value is EmbeddedTab {
-  return (EMBEDDED_TABS as readonly string[]).includes(value);
-}
-
-function embeddedTabFromSearch(value: string | null): EmbeddedTab | null {
-  if (value && isEmbeddedTabId(value)) return value;
-  return null;
-}
-
-function isEmbeddedTab(tab: ReportTabId): tab is EmbeddedTab {
-  return isEmbeddedTabId(tab);
+function isEmbeddedTab(tab: ReportTabId): boolean {
+  return tab === 'profit_loss';
 }
 
 const ReportGroupManagementModal = dynamic(
@@ -80,6 +68,7 @@ export default function ReportsPage() {
     deleteGroup: deleteSellGroup,
   } = saleGroupManager;
   const groupModal = useReportGroupManagementModal();
+  const requestedTab = parseReportTab(searchParams.get('tab'));
   const {
     loading,
     paging,
@@ -102,15 +91,21 @@ export default function ReportsPage() {
     getTotalAmount,
     getTotalWeight,
     getReportTitle,
-  } = useReportData(reportGroupRecords, sellGroupRecords);
+  } = useReportData(
+    reportGroupRecords,
+    sellGroupRecords,
+    requestedTab && !isEmbeddedTab(requestedTab) ? requestedTab : 'daily_purchase',
+  );
 
-  const embeddedFromUrl = embeddedTabFromSearch(searchParams.get('tab'));
-  const [embeddedTab, setEmbeddedTab] = useState<EmbeddedTab | null>(embeddedFromUrl);
-  const activeTab: ReportTabId = embeddedTab ?? tabFromReportType(reportType);
+  const [activeTab, setActiveTab] = useState<ReportTabId>(requestedTab ?? 'daily_purchase');
 
   useEffect(() => {
-    setEmbeddedTab(embeddedTabFromSearch(searchParams.get('tab')));
-  }, [searchParams]);
+    const tab = parseReportTab(searchParams.get('tab')) ?? 'daily_purchase';
+    setActiveTab(tab);
+    if (isEmbeddedTab(tab) || tabFromReportType(reportType) === tab) return;
+    setTablePage(1);
+    setReportType(tab);
+  }, [reportType, searchParams, setReportType]);
 
   useEffect(() => {
     void loadGroups();
@@ -140,23 +135,21 @@ export default function ReportsPage() {
 
   const handleTabChange = useCallback(
     (tab: ReportTabId) => {
-      if (isEmbeddedTab(tab)) {
-        setEmbeddedTab(tab);
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('tab', tab);
-        params.delete('productTypeId');
-        router.replace(`/reports?${params.toString()}`, { scroll: false });
-        return;
+      setActiveTab(tab);
+      if (!isEmbeddedTab(tab) && tabFromReportType(reportType) !== tab) {
+        setTablePage(1);
+        setReportType(tab);
       }
 
-      setEmbeddedTab(null);
-      if (searchParams.get('tab') || searchParams.get('productTypeId')) {
-        router.replace('/reports', { scroll: false });
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', tab);
+      params.delete('productTypeId');
+      const next = params.toString();
+      if (next !== searchParams.toString()) {
+        router.replace(`/reports?${next}`, { scroll: false });
       }
-      setTablePage(1);
-      setReportType(tab);
     },
-    [router, searchParams, setReportType],
+    [reportType, router, searchParams, setReportType],
   );
 
   const handleGroupsChanged = useCallback(async () => {

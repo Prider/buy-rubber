@@ -253,7 +253,7 @@ async function renderHtmlToCanvas(html: string): Promise<HTMLCanvasElement> {
   }
 }
 
-export async function downloadProfitLossPdf({
+export function generateProfitLossPreviewHtml({
   rows,
   totals,
   startDate,
@@ -265,8 +265,75 @@ export async function downloadProfitLossPdf({
   startDate: string;
   endDate: string;
   viewMode: ViewMode;
+}): string {
+  const html = generateProfitLossPdfHtml({
+    page: {
+      periodRows: rows,
+      showFullHeader: true,
+      showSummary: true,
+      showPeriodTotal: true,
+      showFooter: true,
+      pageNumber: 1,
+      totalPages: 1,
+    },
+    totals,
+    startDate,
+    endDate,
+    viewMode,
+  });
+
+  return html.replace(
+    '</body>',
+    `<style>
+      body { background: #f3f4f6; }
+      .wrapper {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 16px auto;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      .print-button {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 20px;
+        background: #111827;
+        color: #fff;
+        font: 600 14px Sarabun, sans-serif;
+        cursor: pointer;
+      }
+      @media print {
+        body { background: #fff; }
+        .wrapper { width: auto; min-height: 0; margin: 0; box-shadow: none; }
+        .print-button { display: none; }
+      }
+    </style>
+    <button class="print-button" onclick="window.print()">พิมพ์รายงาน</button>
+    </body>`,
+  );
+}
+
+export async function downloadProfitLossPdf({
+  rows,
+  totals,
+  startDate,
+  endDate,
+  viewMode,
+  onProgress,
+}: {
+  rows: ProfitLossRow[];
+  totals: ProfitLossTotals;
+  startDate: string;
+  endDate: string;
+  viewMode: ViewMode;
+  onProgress?: (completed: number, total: number) => void;
 }): Promise<void> {
   const pages = buildProfitLossPdfPages(rows);
+  const total = Math.max(pages.length, 1);
+  onProgress?.(0, total);
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageMarginTop = 10;
   const pageMarginBottom = 10;
@@ -292,6 +359,7 @@ export async function downloadProfitLossPdf({
     }
 
     doc.addImage(imgData, 'PNG', 0, pageMarginTop, pdfWidth, drawHeight);
+    onProgress?.(index + 1, total);
   }
 
   doc.save(`profit-loss-${startDate}-to-${endDate}.pdf`);

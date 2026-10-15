@@ -63,11 +63,12 @@ function summaryTypeFor(
 export function useReportData(
   reportGroupRecords: ReportProductTypeGroupRecord[] = [],
   sellGroupRecords: ReportProductTypeGroupRecord[] = [],
+  initialReportType: ReportType = 'daily_purchase',
 ) {
   const [loading, setLoading] = useState(false);
   const [paging, setPaging] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [reportType, setReportType] = useState<ReportType>('daily_purchase');
+  const [reportType, setReportType] = useState<ReportType>(initialReportType);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

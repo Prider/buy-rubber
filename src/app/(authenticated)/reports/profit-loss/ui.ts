@@ -7,7 +7,7 @@ export function getViewModeLabel(viewMode: ViewMode): string {
 }
 
 export function getExportPdfButtonText(exportingPdf: boolean): string {
-  return exportingPdf ? 'กำลังสร้าง PDF...' : 'Export PDF';
+  return exportingPdf ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF';
 }
 
 export function getExportExcelButtonText(exportingExcel: boolean): string {

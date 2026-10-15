@@ -39,8 +39,8 @@ export function reportColumns(reportType: ReportType): ReportColumn[] {
 
   if (isSellSummaryReport(reportType)) {
     return [
-      { header: 'วันที่', align: 'left', value: (row) => new Date(row.date).toLocaleDateString('th-TH') },
       { header: 'เลขที่', align: 'left', value: (row) => row.saleNo || '-' },
+      { header: 'วันที่', align: 'left', value: (row) => new Date(row.date).toLocaleDateString('th-TH') },
       { header: 'บริษัท', align: 'left', value: (row) => row.companyName || '-' },
       { header: 'ประเภทสินค้า', align: 'left', value: (row) => row.productType?.name || '-' },
       { header: 'น้ำหนัก (กก.)', align: 'right', value: (row) => formatNumber(row.weight) },

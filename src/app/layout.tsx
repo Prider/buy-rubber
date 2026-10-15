@@ -49,9 +49,9 @@ export const metadata: Metadata = {
   title: 'Yang Dee - ระบบบริหารจัดการรับซื้อยาง',
   description: 'โปรแกรมบริหารกิจการรับซื้อยาง พัฒนาด้วย Next.js และ AI',
   icons: {
-    icon: '/icon.png',
-    shortcut: '/icon.png',
-    apple: '/icon.png',
+    icon: '/icon.png?v=3',
+    shortcut: '/icon.png?v=3',
+    apple: '/icon.png?v=3',
   },
 };
 
