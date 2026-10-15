@@ -1,12 +1,12 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatCurrency } from '@/lib/utils';
-import type { ProfitLossRow, ProfitLossTotals, ViewMode } from './types';
+import { CHART_SERIES, type ProfitLossRow, type ProfitLossTotals, type ViewMode } from './types';
 import { getViewModeLabel } from './ui';
 import { periodLabel } from './utils';
 
-/** Row slots available after header/summary on page 1 */
-export const PDF_SLOTS_FIRST_PAGE = 26;
+/** Row slots available after header, summary, and chart on page 1 */
+export const PDF_SLOTS_FIRST_PAGE = 16;
 /** Row slots available on continuation pages */
 export const PDF_SLOTS_PER_PAGE = 34;
 
@@ -60,6 +60,12 @@ const PDF_STYLES = `
   td.number { text-align: right; }
   tr.total td { font-weight: 700; background: #f0f0f0; }
   footer { margin-top: 4px; text-align: center; font-size: 10px; color: #666; }
+  .chart { margin: 0 0 16px; }
+  .chart-subtitle { margin: 0 0 8px; font-size: 11px; color: #444; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 6px; font-size: 11px; color: #333; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .chart svg { display: block; width: 100%; height: auto; }
 `;
 
 export interface ProfitLossPdfPage {
@@ -98,6 +104,119 @@ export function buildProfitLossPdfPages(
   }));
 }
 
+const compactAmount = new Intl.NumberFormat('th-TH', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function niceCeiling(value: number): number {
+  if (value <= 0) return 1;
+  const exponent = Math.floor(Math.log10(value));
+  const magnitude = 10 ** exponent;
+  const normalized = value / magnitude;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return nice * magnitude;
+}
+
+function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): string {
+  if (rows.length === 0) return '';
+
+  const width = 720;
+  const height = 210;
+  const pad = { top: 8, right: 68, bottom: 36, left: 68 };
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
+
+  const expenseMax = niceCeiling(Math.max(...rows.map((row) => row.expenses), 0));
+  const prices = rows.flatMap((row) =>
+    [row.purchasePricePerKg, row.salePricePerKg].filter((value) => value > 0),
+  );
+  const priceMin = prices.length > 0 ? Math.floor(Math.min(...prices) - 2) : 0;
+  const priceMax = prices.length > 0 ? Math.ceil(Math.max(...prices) + 2) : 1;
+
+  const groupW = plotW / rows.length;
+  const innerGap = 3;
+  const barW = Math.max(2, Math.min(22, (groupW - 16 - innerGap * 2) / 3));
+  const clusterW = barW * 3 + innerGap * 2;
+  const labelStep = groupW >= 52 ? 1 : Math.ceil(52 / groupW);
+
+  const yOf = (value: number, min: number, max: number) => {
+    const span = max - min || 1;
+    return pad.top + plotH * (1 - (value - min) / span);
+  };
+
+  const grid: string[] = [];
+  for (let tick = 0; tick <= 4; tick += 1) {
+    const ratio = tick / 4;
+    const y = pad.top + plotH * (1 - ratio);
+    const expenseLabel = compactAmount.format(expenseMax * ratio);
+    const priceLabel = formatCurrency(priceMin + (priceMax - priceMin) * ratio);
+    grid.push(
+      `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 6" />`,
+      `<text x="${pad.left - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="#64748b">${escapeXml(expenseLabel)}</text>`,
+      `<text x="${width - pad.right + 8}" y="${y + 3}" text-anchor="start" font-size="10" fill="#64748b">${escapeXml(priceLabel)}</text>`,
+    );
+  }
+
+  const series = [
+    { key: 'expenses' as const, color: CHART_SERIES[0].color, min: 0, max: expenseMax },
+    { key: 'purchasePricePerKg' as const, color: CHART_SERIES[1].color, min: priceMin, max: priceMax },
+    { key: 'salePricePerKg' as const, color: CHART_SERIES[2].color, min: priceMin, max: priceMax },
+  ];
+
+  const bars: string[] = [];
+  const labels: string[] = [];
+
+  rows.forEach((row, index) => {
+    const center = pad.left + groupW * index + groupW / 2;
+    const startX = center - clusterW / 2;
+
+    series.forEach((item, seriesIndex) => {
+      const value = row[item.key];
+      if (value <= 0) return;
+      const y = yOf(value, item.min, item.max);
+      const base = yOf(item.min, item.min, item.max);
+      const barHeight = Math.max(0, base - y);
+      const x = startX + seriesIndex * (barW + innerGap);
+      bars.push(
+        `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barHeight.toFixed(1)}" rx="2" fill="${item.color}" />`,
+      );
+    });
+
+    if (index % labelStep === 0) {
+      labels.push(
+        `<text x="${center.toFixed(1)}" y="${height - 10}" text-anchor="middle" font-size="10" fill="#64748b">${escapeXml(periodLabel(row.period, viewMode))}</text>`,
+      );
+    }
+  });
+
+  const legend = CHART_SERIES.map(
+    (item) =>
+      `<span class="legend-item"><span class="legend-swatch" style="background:${item.color}"></span>${escapeXml(item.label)}</span>`,
+  ).join('');
+
+  return `
+    <div class="chart">
+      <p class="section-title">แนวโน้ม</p>
+      <p class="chart-subtitle">ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.</p>
+      <div class="legend">${legend}</div>
+      <svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="แนวโน้ม">
+        ${grid.join('')}
+        ${bars.join('')}
+        ${labels.join('')}
+      </svg>
+    </div>
+  `;
+}
+
 function renderPeriodTableRows(rows: ProfitLossRow[], viewMode: ViewMode): string {
   return rows
     .map(
@@ -120,6 +239,7 @@ export function generateProfitLossPdfHtml({
   startDate,
   endDate,
   viewMode,
+  chartRows,
   printedAt = new Date(),
 }: {
   page: ProfitLossPdfPage;
@@ -127,6 +247,7 @@ export function generateProfitLossPdfHtml({
   startDate: string;
   endDate: string;
   viewMode: ViewMode;
+  chartRows?: ProfitLossRow[];
   printedAt?: Date;
 }): string {
   const printedDate = printedAt.toLocaleDateString('th-TH', {
@@ -170,6 +291,10 @@ export function generateProfitLossPdfHtml({
         </div>
       </div>
     `
+    : '';
+
+  const chartSection = page.showFullHeader
+    ? renderProfitLossChart(chartRows ?? page.periodRows, viewMode)
     : '';
 
   const periodSection = `
@@ -220,6 +345,7 @@ export function generateProfitLossPdfHtml({
         <div class="wrapper">
           ${headerSection}
           ${summarySection}
+          ${chartSection}
           ${periodSection}
           ${footerSection}
         </div>
@@ -280,6 +406,7 @@ export function generateProfitLossPreviewHtml({
     startDate,
     endDate,
     viewMode,
+    chartRows: rows,
   });
 
   return html.replace(
@@ -347,6 +474,7 @@ export async function downloadProfitLossPdf({
       startDate,
       endDate,
       viewMode,
+      chartRows: rows,
     });
 
     const canvas = await renderHtmlToCanvas(html);

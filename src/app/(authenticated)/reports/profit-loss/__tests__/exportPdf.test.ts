@@ -60,19 +60,25 @@ describe('buildProfitLossPdfPages', () => {
     expect(pages[2].totalPages).toBe(3);
   });
 
-  it('never includes a Trend data section', () => {
-    const rows = [makeRow('2026-01')];
+  it('includes the trend chart on the first page', () => {
+    const rows = [makeRow('2026-01'), makeRow('2026-02')];
     const pages = buildProfitLossPdfPages(rows);
     const html = generateProfitLossPdfHtml({
       page: pages[0],
       totals,
       startDate: '2026-01-01',
-      endDate: '2026-01-31',
+      endDate: '2026-02-28',
       viewMode: 'monthly',
+      chartRows: rows,
       printedAt: new Date('2026-07-14T10:00:00'),
     });
 
-    expect(html).not.toContain('Trend data');
+    expect(html).toContain('แนวโน้ม');
+    expect(html).toContain('ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.');
+    expect(html).toContain('<svg');
+    expect(html).toContain('fill="#2563eb"');
+    expect(html).toContain('fill="#dc2626"');
+    expect(html).toContain('fill="#16a34a"');
     expect(html).toContain('Period breakdown');
     expect(html).toContain('Net Profit');
   });
@@ -111,5 +117,6 @@ describe('generateProfitLossPdfHtml', () => {
     expect(html).toContain('Period breakdown (continued)');
     expect(html).toContain('หน้า 2/3');
     expect(html).not.toContain('ผลลัพธ์สุทธิ');
+    expect(html).not.toContain('<svg');
   });
 });

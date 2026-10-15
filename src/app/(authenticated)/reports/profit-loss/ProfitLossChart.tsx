@@ -1,9 +1,9 @@
 'use client';
 
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -80,7 +80,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {CHART_SERIES.map((series) => (
             <div key={series.key} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <span className="h-1 w-6 rounded-full" style={{ backgroundColor: series.color }} />
+              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: series.color }} />
               {series.label}
             </div>
           ))}
@@ -90,7 +90,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
       <div className="h-[280px]">
         {hasRows ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points} margin={{ top: 12, right: 8, left: 4, bottom: 8 }}>
+            <BarChart data={points} margin={{ top: 12, right: 8, left: 4, bottom: 8 }} barGap={4} barCategoryGap="22%">
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 8" vertical={false} />
               <XAxis
                 dataKey="periodLabel"
@@ -117,23 +117,19 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
                 domain={[(min: number) => Math.floor(min - 2), (max: number) => Math.ceil(max + 2)]}
                 width={72}
               />
-              <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} />
               {CHART_SERIES.map((series) => (
-                <Line
+                <Bar
                   key={series.key}
                   yAxisId={series.axis}
-                  type="monotone"
                   dataKey={series.key}
                   name={series.label}
-                  stroke={series.color}
-                  strokeWidth={4}
-                  strokeLinecap="round"
-                  connectNulls
-                  dot={{ r: 5, strokeWidth: 2, fill: '#ffffff', stroke: series.color }}
-                  activeDot={{ r: 8, strokeWidth: 3, fill: series.color, stroke: '#ffffff' }}
+                  fill={series.color}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
                 />
               ))}
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/60 dark:border-gray-600 dark:bg-gray-900/30">
