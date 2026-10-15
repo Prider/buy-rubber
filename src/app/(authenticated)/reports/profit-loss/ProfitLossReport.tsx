@@ -8,7 +8,6 @@ import GamerLoader from '@/components/GamerLoader';
 import { useAlert } from '@/hooks/useAlert';
 import { formatCurrency } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-import { downloadProfitLossExcel } from './exportExcel';
 import { downloadProfitLossPdf, generateProfitLossPreviewHtml } from './exportPdf';
 import { ProfitLossChart } from './ProfitLossChart';
 import {
@@ -18,12 +17,7 @@ import {
   type ProfitLossTotals,
   type ViewMode,
 } from './types';
-import {
-  getExportExcelButtonText,
-  getExportPdfButtonText,
-  getNetResultLabel,
-  isExportDisabled,
-} from './ui';
+import { getExportPdfButtonText, getNetResultLabel, isExportDisabled } from './ui';
 import { isDateRangeInvalid, periodLabel, toInputDate } from './utils';
 
 const inputClass =
@@ -68,7 +62,6 @@ export default function ProfitLossReport() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const downloadLock = useRef(false);
-  const [exportingExcel, setExportingExcel] = useState(false);
   const [rows, setRows] = useState<ProfitLossRow[]>([]);
   const [totals, setTotals] = useState<ProfitLossTotals>(EMPTY_TOTALS);
   const [error, setError] = useState('');
@@ -86,7 +79,7 @@ export default function ProfitLossReport() {
 
   const hasRows = rows.length > 0;
   const rangeInvalid = isDateRangeInvalid(startDate, endDate);
-  const exportBusy = exportingPdf || exportingExcel;
+  const exportBusy = exportingPdf;
 
   const fetchData = useCallback(async () => {
     if (rangeInvalid) return;
@@ -117,17 +110,6 @@ export default function ProfitLossReport() {
     if (isLoading || !user || rangeInvalid) return;
     void fetchData();
   }, [endDate, fetchData, isLoading, rangeInvalid, startDate, user, viewMode]);
-
-  const handleExportExcel = useCallback(async () => {
-    if (!hasRows || exportBusy) return;
-    setExportingExcel(true);
-    try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      downloadProfitLossExcel({ rows, totals, viewMode, startDate, endDate });
-    } finally {
-      setExportingExcel(false);
-    }
-  }, [endDate, exportBusy, hasRows, rows, startDate, totals, viewMode]);
 
   const handlePreview = useCallback(() => {
     if (!hasRows || exportBusy) return;
@@ -243,16 +225,6 @@ export default function ProfitLossReport() {
           >
             {getExportPdfButtonText(exportingPdf)}
           </button>
-          {/*
-          <button
-            type="button"
-            onClick={() => void handleExportExcel()}
-            disabled={isExportDisabled({ hasRows, loading, exportBusy })}
-            className="w-full rounded-xl bg-gradient-to-r from-teal-600 via-emerald-500 to-green-500 px-3.5 py-2 text-sm font-medium text-white shadow-md transition hover:from-teal-700 hover:via-emerald-600 hover:to-green-600 disabled:cursor-not-allowed disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-400 disabled:shadow-none animate-gradient dark:from-teal-500 dark:via-emerald-400 dark:to-green-400 sm:w-auto"
-          >
-            {getExportExcelButtonText(exportingExcel)}
-          </button>
-          */}
         </div>
       </div>
 

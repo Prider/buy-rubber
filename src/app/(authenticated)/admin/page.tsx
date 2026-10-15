@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -102,24 +102,15 @@ export default function AdminSettingsPage() {
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
   const requestedTab = parseAdminTab(searchParams.get('tab'));
-  const [activeTab, setActiveTab] = useState<AdminSettingsTab>(requestedTab ?? 'slip');
+  const activeTab: AdminSettingsTab = requestedTab ?? 'slip';
   const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
 
-  const handleTabChange = useCallback(
-    (tab: AdminSettingsTab) => {
-      setActiveTab(tab);
-      const params = new URLSearchParams(searchParams.toString());
-      if (tab === 'slip') params.delete('tab');
-      else params.set('tab', tab);
-      const query = params.toString();
-      router.replace(query ? `/admin?${query}` : '/admin', { scroll: false });
-    },
-    [router, searchParams],
-  );
-
   useEffect(() => {
-    if (requestedTab) setActiveTab(requestedTab);
-  }, [requestedTab]);
+    if (requestedTab) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', 'slip');
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  }, [requestedTab, router, searchParams]);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -312,7 +303,7 @@ export default function AdminSettingsPage() {
                   ตั้งค่าระบบ
                 </span>
               </h1>
-              <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />
+              <AdminTabs activeTab={activeTab} />
             </div>
           </header>
 

@@ -28,7 +28,7 @@ test.describe('Admin — user management', () => {
 
   test('admin can navigate to admin page', async ({ page }) => {
     await page.goto('/admin')
-    await expect(page).toHaveURL('/admin')
+    await expect(page).toHaveURL(/\/admin\?tab=slip/)
   })
 
   test('admin page shows user management tab', async ({ page }) => {

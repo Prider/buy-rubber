@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 export const ADMIN_TABS = [
   { id: 'slip', label: 'ใบรับซื้อ (Slip)' },
@@ -21,10 +23,10 @@ export function parseAdminTab(value: string | null): AdminSettingsTab | null {
 
 interface AdminTabsProps {
   activeTab: AdminSettingsTab;
-  onTabChange: (tab: AdminSettingsTab) => void;
 }
 
-export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
+export function AdminTabs({ activeTab }: AdminTabsProps) {
+  const searchParams = useSearchParams();
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,16 +51,19 @@ export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
       <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap md:gap-1 lg:justify-end">
         {ADMIN_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
+          const params = new URLSearchParams(searchParams.toString());
+          params.set('tab', tab.id);
           return (
-            <button
+            <Link
               key={tab.id}
-              type="button"
+              href={`/admin?${params.toString()}`}
+              replace
+              scroll={false}
               role="tab"
               id={`admin-tab-${tab.id}`}
               aria-selected={isActive}
               aria-controls={`admin-tabpanel-${tab.id}`}
               tabIndex={isActive ? 0 : -1}
-              onClick={() => onTabChange(tab.id)}
               className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium leading-4 transition-colors duration-200 md:-mb-px md:rounded-b-none md:rounded-t-lg md:border-b-2 md:px-4 md:py-2.5 md:text-sm ${
                 isActive
                   ? 'bg-blue-600 text-white md:border-blue-600 md:bg-transparent md:text-blue-600 dark:md:border-blue-400 dark:md:text-blue-400'
@@ -66,7 +71,7 @@ export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
               }`}
             >
               {tab.label}
-            </button>
+            </Link>
           );
         })}
       </div>

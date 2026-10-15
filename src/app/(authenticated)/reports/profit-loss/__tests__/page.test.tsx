@@ -31,12 +31,7 @@ vi.mock('../exportPdf', () => ({
   generateProfitLossPreviewHtml: vi.fn(() => '<html><body>preview</body></html>'),
 }));
 
-vi.mock('../exportExcel', () => ({
-  downloadProfitLossExcel: vi.fn(),
-}));
-
 import { useAuth } from '@/contexts/AuthContext';
-import { downloadProfitLossExcel } from '../exportExcel';
 import { downloadProfitLossPdf, generateProfitLossPreviewHtml } from '../exportPdf';
 import ProfitLossReport from '../ProfitLossReport';
 
@@ -97,7 +92,6 @@ describe('ProfitLossReport', () => {
     expect(screen.getByTestId('profit-loss-chart')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ดูตัวอย่าง' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Export Excel' })).toBeEnabled();
   });
 
   it('opens a preview window with the profit-loss report', async () => {
@@ -157,20 +151,6 @@ describe('ProfitLossReport', () => {
 
     await waitFor(() => {
       expect(downloadProfitLossPdf).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('calls downloadProfitLossExcel when Export Excel is clicked', async () => {
-    const user = userEvent.setup();
-    render(<ProfitLossReport />);
-
-    const excelButton = await screen.findByRole('button', { name: 'Export Excel' });
-    await waitFor(() => expect(excelButton).toBeEnabled());
-
-    await user.click(excelButton);
-
-    await waitFor(() => {
-      expect(downloadProfitLossExcel).toHaveBeenCalledTimes(1);
     });
   });
 

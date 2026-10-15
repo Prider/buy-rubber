@@ -22,7 +22,7 @@ async function routeMisconfiguredApiClient(page: Page) {
 
 async function gotoAdminPage(page: Page) {
   await page.goto('/admin')
-  await expect(page).toHaveURL('/admin')
+  await expect(page).toHaveURL(/\/admin\?tab=slip/)
   await expect(page.getByRole('heading', { name: 'ตั้งค่าระบบ' })).toBeVisible()
 }
 
