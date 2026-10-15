@@ -1,19 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
-import { AdminTabs, type AdminSettingsTab } from '@/components/admin/AdminTabs';
+import { AdminTabs, parseAdminTab, type AdminSettingsTab } from '@/components/admin/AdminTabs';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import { SoftwareLicensePanel } from '@/components/admin/SoftwareLicensePanel';
 import { ActivityLogPanel } from '@/components/admin/ActivityLogPanel';
 import { DisplaySettingsPanel } from '@/components/admin/DisplaySettingsPanel';
+import { BackupPanel } from '@/app/(authenticated)/backup/BackupPanel';
 import GamerLoader from '@/components/GamerLoader';
 import { getApiClient } from '@/lib/apiClient';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
@@ -58,6 +59,7 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
 
 export default function AdminSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const { showSuccess, showError } = useAlert();
   
@@ -99,8 +101,25 @@ export default function AdminSettingsPage() {
   const [slipTemplate, setSlipTemplate] = useState<SlipTemplateId>('slip');
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminSettingsTab>('slip');
+  const requestedTab = parseAdminTab(searchParams.get('tab'));
+  const [activeTab, setActiveTab] = useState<AdminSettingsTab>(requestedTab ?? 'slip');
   const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
+
+  const handleTabChange = useCallback(
+    (tab: AdminSettingsTab) => {
+      setActiveTab(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === 'slip') params.delete('tab');
+      else params.set('tab', tab);
+      const query = params.toString();
+      router.replace(query ? `/admin?${query}` : '/admin', { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  useEffect(() => {
+    if (requestedTab) setActiveTab(requestedTab);
+  }, [requestedTab]);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -293,7 +312,7 @@ export default function AdminSettingsPage() {
                   ตั้งค่าระบบ
                 </span>
               </h1>
-              <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+              <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
           </header>
 
@@ -344,8 +363,6 @@ export default function AdminSettingsPage() {
               )}
               {activeTab === 'activity' && <ActivityLogPanel />}
 
-              {activeTab === 'license' && <SoftwareLicensePanel />}
-
               {activeTab === 'connection' && (
                 <div
                   id="admin-tabpanel-connection"
@@ -375,6 +392,10 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               )}
+
+              {activeTab === 'backup' && <BackupPanel />}
+
+              {activeTab === 'license' && <SoftwareLicensePanel />}
             </div>
           </div>
       </div>

@@ -262,11 +262,8 @@ test.describe('UI flow', () => {
     const page = await newElectronAdminPage(browser)
 
     try {
-      await page.goto('/dashboard')
-      const backupLink = page.locator('[data-nav-link="/backup"]')
-      await expect(backupLink).toBeVisible()
-      await backupLink.click()
-      await expect(page).toHaveURL('/backup')
+      await page.goto('/admin?tab=backup')
+      await expect(page.getByRole('tab', { name: 'สำรองข้อมูล' })).toHaveAttribute('aria-selected', 'true')
       await expect(page.getByRole('heading', { name: 'สำรองข้อมูล', exact: true })).toBeVisible()
     } finally {
       await page.context().close()

@@ -88,11 +88,12 @@ test.describe.serial('Backup flow', () => {
     await expect(page.getByRole('link', { name: 'สำรองข้อมูล' })).not.toBeVisible()
 
     await page.goto('/backup')
-    await expect(page).toHaveURL('/dashboard')
+    await expect(page).toHaveURL(/\/admin\?tab=backup/)
+    await expect(page.getByRole('tab', { name: 'สำรองข้อมูล' })).toHaveAttribute('aria-selected', 'true')
 
     const electronPage = await newElectronAdminPage(browser)
     await electronPage.goto('/dashboard')
-    await expect(electronPage.getByRole('link', { name: 'สำรองข้อมูล' })).toBeVisible()
+    await expect(electronPage.getByRole('link', { name: 'สำรองข้อมูล' })).toHaveCount(0)
 
     await gotoBackupPage(electronPage)
     await expect(electronPage.getByRole('button', { name: 'สำรองข้อมูลตอนนี้' })).toBeVisible()

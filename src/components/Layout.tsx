@@ -28,7 +28,6 @@ interface NavigationItem {
   href: string;
   icon: string;
   adminOnly?: boolean;
-  electronOnly?: boolean;
   /** Shown for the report-only accountant role. */
   accountantVisible?: boolean;
 }
@@ -43,7 +42,6 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'บริษัทปลายทาง', href: '/destination-companies', icon: '🏢' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈', accountantVisible: true },
-  { name: 'สำรองข้อมูล', href: '/backup', icon: '💾', adminOnly: true, electronOnly: true },
 ];
 
 interface LayoutProps {
@@ -196,10 +194,6 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = NAV_ITEMS.filter((item) => {
     if (reportsOnly) {
       return item.accountantVisible === true;
-    }
-    // Check if item is Electron-only and we're not in Electron
-    if (item.electronOnly && !isElectron) {
-      return false;
     }
     // Check if item is admin-only and user is not admin
     if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') {

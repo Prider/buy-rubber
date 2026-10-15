@@ -17,11 +17,11 @@ export function BackupHeader({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white sm:text-xl">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
               สำรองข้อมูล
             </span>
-          </h1>
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canResetToInitial && (

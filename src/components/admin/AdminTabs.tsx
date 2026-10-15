@@ -8,10 +8,16 @@ export const ADMIN_TABS = [
   { id: 'users', label: 'ผู้ใช้งาน' },
   { id: 'activity', label: 'ประวัติการใช้งาน' },
   { id: 'connection', label: 'การเชื่อมต่อ' },
+  { id: 'backup', label: 'สำรองข้อมูล' },
   { id: 'license', label: 'ใบอนุญาตซอฟต์แวร์' },
 ] as const;
 
 export type AdminSettingsTab = (typeof ADMIN_TABS)[number]['id'];
+
+export function parseAdminTab(value: string | null): AdminSettingsTab | null {
+  if (!value) return null;
+  return ADMIN_TABS.some((tab) => tab.id === value) ? (value as AdminSettingsTab) : null;
+}
 
 interface AdminTabsProps {
   activeTab: AdminSettingsTab;
