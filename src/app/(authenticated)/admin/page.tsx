@@ -7,7 +7,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
-import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminTabs, type AdminSettingsTab } from '@/components/admin/AdminTabs';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
@@ -285,14 +284,20 @@ export default function AdminSettingsPage() {
 
   return (
     <ProtectedRoute requiredRole="admin">
-      <div className="min-w-0 space-y-5 sm:space-y-6 lg:space-y-8">
-          {/* Header */}
-          <AdminHeader title="ตั้งค่าระบบ" />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden max-md:-mx-4 max-md:-mt-4">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
+          <header className="shrink-0 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
+            <div className="flex min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+              <h1 className="hidden shrink-0 text-lg font-semibold tracking-tight sm:text-xl lg:block">
+                <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+                  ตั้งค่าระบบ
+                </span>
+              </h1>
+              <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            </div>
+          </header>
 
-          <div className="w-full mx-auto">
-            <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-            <div className="mt-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-0 lg:px-5 lg:py-5">
 
               {activeTab === 'slip' && (
                 <SlipSettingsPanel

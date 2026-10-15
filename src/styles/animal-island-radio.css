@@ -9,13 +9,19 @@
   color: #f3f4f6;
 }
 
+.slip-font-radio,
+.slip-paper-radio,
+.slip-template-radio {
+  gap: 8px 14px;
+}
+
 @media (max-width: 639px) {
   .slip-font-radio,
   .slip-paper-radio,
   .slip-template-radio {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 12px;
+    gap: 8px 12px;
   }
 }
 

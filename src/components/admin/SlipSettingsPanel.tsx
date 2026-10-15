@@ -24,8 +24,17 @@ import {
 } from '@/lib/slipTemplate';
 
 const PREVIEW_IFRAME_HEIGHT = 560;
-const PREVIEW_STAGE_WIDTH = 320;
-const PREVIEW_STAGE_HEIGHT = 480;
+const PREVIEW_STAGE_WIDTH = 420;
+const PREVIEW_STAGE_HEIGHT = 560;
+
+function choiceLabel(primary: string, hint: string) {
+  return (
+    <span className="inline-flex items-baseline gap-1 leading-tight">
+      <span>{primary}</span>
+      <span className="text-xs font-normal opacity-70">{hint}</span>
+    </span>
+  );
+}
 
 const FONT_HINT: Record<SlipFontSizeId, string> = {
   h4: 'เล็ก',
@@ -36,12 +45,7 @@ const FONT_HINT: Record<SlipFontSizeId, string> = {
 
 const FONT_SIZE_RADIO_OPTIONS = SLIP_FONT_OPTIONS.map((opt) => ({
   value: opt.id,
-  label: (
-    <span className="inline-flex flex-col leading-tight">
-      <span>{opt.label}</span>
-      <span className="text-xs font-normal opacity-80">{FONT_HINT[opt.id]}</span>
-    </span>
-  ),
+  label: choiceLabel(opt.label, FONT_HINT[opt.id]),
 }));
 
 const PAPER_HINT: Record<SlipPaperSizeId, string> = {
@@ -53,26 +57,16 @@ const PAPER_HINT: Record<SlipPaperSizeId, string> = {
 
 const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.filter((opt) => opt.id !== 'a4').map((opt) => ({
   value: opt.id,
-  label: (
-    <span className="inline-flex flex-col leading-tight">
-      <span>{slipPaperShortLabel(opt.id)}</span>
-      <span className="text-xs font-normal opacity-80">{PAPER_HINT[opt.id]}</span>
-    </span>
-  ),
+  label: choiceLabel(slipPaperShortLabel(opt.id), PAPER_HINT[opt.id]),
 }));
 
 const TEMPLATE_RADIO_OPTIONS = SLIP_TEMPLATE_OPTIONS.map((opt) => ({
   value: opt.id,
-  label: (
-    <span className="inline-flex flex-col leading-tight">
-      <span>{opt.label}</span>
-      <span className="text-xs font-normal opacity-80">{opt.hint}</span>
-    </span>
-  ),
+  label: choiceLabel(opt.label, opt.hint),
 }));
 
 const fieldClass =
-  'w-full rounded-xl border-0 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 transition-shadow focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900/50 dark:text-gray-100 dark:ring-gray-700 dark:focus:bg-gray-900';
+  'w-full rounded-xl border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 transition-shadow focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900/50 dark:text-gray-100 dark:ring-gray-700 dark:focus:bg-gray-900';
 
 interface SlipSettingsPanelProps {
   companyName: string;
@@ -146,6 +140,8 @@ export function SlipSettingsPanel({
       ? Math.min(stageWidth / previewFrameWidth, stageHeight / previewFrameHeight)
       : 1;
   const busy = loading || saving;
+  const templateLabel = SLIP_TEMPLATE_OPTIONS.find((opt) => opt.id === template)?.label ?? '';
+  const labelClass = 'block text-xs font-medium text-gray-600 dark:text-gray-400';
 
   return (
     <div
@@ -154,143 +150,158 @@ export function SlipSettingsPanel({
       aria-labelledby="admin-tab-slip"
       className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]">
-        <div className="order-2 flex w-full min-w-0 flex-col gap-4 border-t border-gray-100 p-4 dark:border-gray-700 sm:p-6 md:order-1 md:border-t-0 lg:p-8">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               ตั้งค่าข้อมูลใบรับซื้อ (Slip)
             </h3>
             {loading && (
               <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">กำลังโหลด...</span>
             )}
           </div>
-          <div className="space-y-1.5">
-            <label htmlFor="slip-company-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              ชื่อบริษัท
-            </label>
-            <input
-              id="slip-company-name"
-              type="text"
-              value={companyName}
-              onChange={(e) => onCompanyNameChange(e.target.value)}
-              disabled={busy}
-              className={fieldClass}
-            />
-          </div>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            ข้อความบนใบและรูปแบบการพิมพ์ ตัวอย่างอัปเดตทันที
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={busy}
+          className="min-h-10 w-full shrink-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        >
+          {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+        </button>
+      </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="slip-company-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              ที่อยู่บริษัท
-            </label>
-            <textarea
-              id="slip-company-address"
-              value={companyAddress}
-              onChange={(e) => onCompanyAddressChange(e.target.value)}
-              disabled={busy}
-              rows={3}
-              className={`${fieldClass} resize-none`}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="slip-tax-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              หมายเลขผู้เสียภาษี
-            </label>
-            <input
-              id="slip-tax-id"
-              type="text"
-              inputMode="numeric"
-              value={taxId}
-              onChange={(e) => onTaxIdChange(e.target.value)}
-              disabled={busy}
-              className={fieldClass}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="slip-footer-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              ข้อความท้ายใบ
-            </label>
-            <textarea
-              id="slip-footer-text"
-              value={footerText}
-              onChange={(e) => onFooterTextChange(e.target.value)}
-              disabled={busy}
-              rows={3}
-              className={`${fieldClass} resize-none`}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <p id="slip-template-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              รูปแบบใบ
-            </p>
-            <Radio
-              options={TEMPLATE_RADIO_OPTIONS}
-              value={template}
-              size="large"
-              direction="horizontal"
-              disabled={busy}
-              className="slip-template-radio py-2"
-              onChange={(value) => onTemplateChange(normalizeSlipTemplate(value))}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <p id="slip-font-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              ขนาดตัวอักษร
-            </p>
-            <Radio
-              options={FONT_SIZE_RADIO_OPTIONS}
-              value={fontSize}
-              size="large"
-              direction="horizontal"
-              disabled={busy}
-              className="slip-font-radio py-2"
-              onChange={(value) => onFontSizeChange(normalizeSlipFontSize(value))}
-            />
-          </div>
-
-          {template !== 'a4' && (
-            <div className="space-y-2">
-              <p id="slip-paper-size-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                ขนาดกระดาษ
-              </p>
-              <Radio
-                options={PAPER_SIZE_RADIO_OPTIONS}
-                value={paperSize}
-                size="large"
-                direction="horizontal"
-                disabled={busy}
-                className="slip-paper-radio py-2"
-                onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
-              />
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
+        <div className="order-2 flex w-full min-w-0 flex-col gap-4 p-4 md:order-1 sm:p-5">
+          <section className="space-y-3">
+            <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">ข้อมูลบนใบ</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label htmlFor="slip-company-name" className={labelClass}>
+                  ชื่อบริษัท
+                </label>
+                <input
+                  id="slip-company-name"
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => onCompanyNameChange(e.target.value)}
+                  disabled={busy}
+                  className={fieldClass}
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="slip-tax-id" className={labelClass}>
+                  หมายเลขผู้เสียภาษี
+                </label>
+                <input
+                  id="slip-tax-id"
+                  type="text"
+                  inputMode="numeric"
+                  value={taxId}
+                  onChange={(e) => onTaxIdChange(e.target.value)}
+                  disabled={busy}
+                  className={fieldClass}
+                />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <label htmlFor="slip-company-address" className={labelClass}>
+                  ที่อยู่บริษัท
+                </label>
+                <textarea
+                  id="slip-company-address"
+                  value={companyAddress}
+                  onChange={(e) => onCompanyAddressChange(e.target.value)}
+                  disabled={busy}
+                  rows={2}
+                  className={`${fieldClass} resize-none`}
+                />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <label htmlFor="slip-footer-text" className={labelClass}>
+                  ข้อความท้ายใบ
+                </label>
+                <textarea
+                  id="slip-footer-text"
+                  value={footerText}
+                  onChange={(e) => onFooterTextChange(e.target.value)}
+                  disabled={busy}
+                  rows={2}
+                  className={`${fieldClass} resize-none`}
+                />
+              </div>
             </div>
-          )}
+          </section>
 
-          <div className="flex pt-1 sm:justify-end">
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={busy}
-              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
-            >
-              {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
-            </button>
-          </div>
+          <section className="space-y-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+            <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">การพิมพ์</p>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p id="slip-template-label" className={labelClass}>
+                  รูปแบบใบ
+                </p>
+                <Radio
+                  options={TEMPLATE_RADIO_OPTIONS}
+                  value={template}
+                  size="middle"
+                  direction="horizontal"
+                  disabled={busy}
+                  className="slip-template-radio"
+                  onChange={(value) => onTemplateChange(normalizeSlipTemplate(value))}
+                />
+              </div>
+              <div className="space-y-1">
+                <p id="slip-font-size-label" className={labelClass}>
+                  ขนาดตัวอักษร
+                </p>
+                <Radio
+                  options={FONT_SIZE_RADIO_OPTIONS}
+                  value={fontSize}
+                  size="middle"
+                  direction="horizontal"
+                  disabled={busy}
+                  className="slip-font-radio"
+                  onChange={(value) => onFontSizeChange(normalizeSlipFontSize(value))}
+                />
+              </div>
+              {template !== 'a4' ? (
+                <div className="space-y-1">
+                  <p id="slip-paper-size-label" className={labelClass}>
+                    ขนาดกระดาษ
+                  </p>
+                  <Radio
+                    options={PAPER_SIZE_RADIO_OPTIONS}
+                    value={paperSize}
+                    size="middle"
+                    direction="horizontal"
+                    disabled={busy}
+                    className="slip-paper-radio"
+                    onChange={(value) => onPaperSizeChange(normalizeSlipPaperSize(value))}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className={labelClass}>ขนาดกระดาษ</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200">A4 · 210×297 มม.</p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
-        <div className="order-1 min-w-0 bg-gray-50/80 p-4 dark:bg-gray-900/40 sm:p-5 md:order-2 md:border-t md:border-gray-100 md:dark:border-gray-700 lg:border-l lg:border-t-0">
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
+        <div className="order-1 min-w-0 border-b border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40 md:order-2 md:border-b-0 md:border-l md:dark:border-gray-700">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {slipPaperShortLabel(paperSize)} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
+              {slipPaperShortLabel(paperSize)} · {templateLabel} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
             </p>
           </div>
-          <div className="rounded-xl bg-gray-100 p-3 dark:bg-gray-950/60 sm:p-4">
+          <div className="rounded-xl bg-gray-100 p-2.5 dark:bg-gray-950/60">
             <div
               ref={stageRef}
-              className="relative mx-auto w-full max-w-[320px] overflow-hidden"
+              className="relative mx-auto w-full overflow-hidden"
               style={{ aspectRatio: `${PREVIEW_STAGE_WIDTH} / ${PREVIEW_STAGE_HEIGHT}` }}
             >
               {stageWidth > 0 && (
