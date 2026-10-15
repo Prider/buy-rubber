@@ -3,18 +3,23 @@ import axios from 'axios';
 import { Member, MemberFormData } from '@/types/member';
 import { generateMemberCode, validateMemberData } from '@/lib/memberUtils';
 
+const emptyForm = (code = ''): MemberFormData => ({
+  name: '',
+  code,
+  phone: '',
+  idCard: '',
+  address: '',
+  bankName: '',
+  bankAccount: '',
+  ownerPercent: 100,
+  tapperPercent: 0,
+  tapperName: '',
+});
+
 export const useMemberForm = (members: Member[]) => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [formData, setFormData] = useState<MemberFormData>({
-    name: '',
-    code: '',
-    phone: '',
-    address: '',
-    ownerPercent: 100,
-    tapperPercent: 0,
-    tapperName: '',
-  });
+  const [formData, setFormData] = useState<MemberFormData>(emptyForm());
 
   const openFormForNew = useCallback(async () => {
     let newCode = '';
@@ -32,15 +37,7 @@ export const useMemberForm = (members: Member[]) => {
       newCode = generateMemberCode();
     }
     
-    setFormData({
-      name: '',
-      code: newCode,
-      phone: '',
-      address: '',
-      ownerPercent: 100,
-      tapperPercent: 0,
-      tapperName: '',
-    });
+    setFormData(emptyForm(newCode));
     setEditingMember(null);
     setIsOpen(true);
   }, []);
@@ -50,7 +47,10 @@ export const useMemberForm = (members: Member[]) => {
       name: member.name,
       code: member.code,
       phone: member.phone || '',
+      idCard: member.idCard || '',
       address: member.address || '',
+      bankName: member.bankName || '',
+      bankAccount: member.bankAccount || '',
       ownerPercent: member.ownerPercent,
       tapperPercent: member.tapperPercent,
       tapperName: member.tapperName || '',
@@ -62,15 +62,7 @@ export const useMemberForm = (members: Member[]) => {
   const closeForm = useCallback(() => {
     setIsOpen(false);
     setEditingMember(null);
-    setFormData({
-      name: '',
-      code: '',
-      phone: '',
-      address: '',
-      ownerPercent: 100,
-      tapperPercent: 0,
-      tapperName: '',
-    });
+    setFormData(emptyForm());
   }, []);
 
   const updateFormData = useCallback((data: Partial<MemberFormData>) => {

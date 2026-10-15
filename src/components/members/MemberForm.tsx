@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button, Modal } from 'animal-island-ui';
 import { MemberFormProps, MemberFormData } from '@/types/member';
+import { THAI_BANKS } from '@/lib/memberUtils';
 
 const FORM_ID = 'member-form';
 
@@ -23,6 +24,9 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const initialEditingDataRef = useRef<MemberFormData | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const idCardRef = useRef<HTMLInputElement>(null);
+  const bankRef = useRef<HTMLInputElement>(null);
+  const accountRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -36,7 +40,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
         name: editingMember.name,
         code: editingMember.code,
         phone: editingMember.phone || '',
+        idCard: editingMember.idCard || '',
         address: editingMember.address || '',
+        bankName: editingMember.bankName || '',
+        bankAccount: editingMember.bankAccount || '',
         ownerPercent: editingMember.ownerPercent,
         tapperPercent: editingMember.tapperPercent,
         tapperName: editingMember.tapperName || '',
@@ -91,7 +98,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
       localFormData.name !== initialData.name ||
       localFormData.code !== initialData.code ||
       localFormData.phone !== initialData.phone ||
+      localFormData.idCard !== initialData.idCard ||
       localFormData.address !== initialData.address ||
+      localFormData.bankName !== initialData.bankName ||
+      localFormData.bankAccount !== initialData.bankAccount ||
       localFormData.ownerPercent !== initialData.ownerPercent ||
       localFormData.tapperPercent !== initialData.tapperPercent ||
       localFormData.tapperName !== initialData.tapperName
@@ -182,7 +192,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
                   const numericValue = e.target.value.replace(/\D/g, '');
                   handleInputChange('phone', numericValue);
                 }}
-                onKeyDown={(e) => handleKeyDown(e, addressRef, nameRef)}
+                onKeyDown={(e) => handleKeyDown(e, idCardRef, nameRef)}
                 className={fieldClassName}
                 disabled={isLoading}
                 placeholder="กรอกเบอร์โทรศัพท์"
@@ -192,23 +202,86 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่</label>
-              <textarea
-                ref={addressRef}
-                value={localFormData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เลขบัตรประชาชน</label>
+              <input
+                ref={idCardRef}
+                type="text"
+                value={localFormData.idCard}
+                onChange={(e) => {
+                  const numericValue = e.target.value.replace(/\D/g, '').slice(0, 13);
+                  handleInputChange('idCard', numericValue);
+                }}
+                onKeyDown={(e) => handleKeyDown(e, addressRef, phoneRef)}
+                className={fieldClassName}
+                disabled={isLoading}
+                placeholder="กรอกเลขบัตรประชาชน 13 หลัก"
+                inputMode="numeric"
+                maxLength={13}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ที่อยู่</label>
+            <textarea
+              ref={addressRef}
+              value={localFormData.address}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, bankRef, idCardRef)}
+              className={`${fieldClassName} resize-none`}
+              rows={2}
+              disabled={isLoading}
+              placeholder="กรอกที่อยู่"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">ธนาคาร</label>
+              <input
+                ref={bankRef}
+                type="text"
+                list="member-thai-banks"
+                value={localFormData.bankName}
+                onChange={(e) => handleInputChange('bankName', e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, accountRef, addressRef)}
+                className={fieldClassName}
+                disabled={isLoading}
+                placeholder="เลือกหรือกรอกชื่อธนาคาร"
+                autoComplete="off"
+              />
+              <datalist id="member-thai-banks">
+                {THAI_BANKS.map((bank) => (
+                  <option key={bank} value={bank} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เลขบัญชี</label>
+              <input
+                ref={accountRef}
+                type="text"
+                value={localFormData.bankAccount}
+                onChange={(e) => {
+                  const numericValue = e.target.value.replace(/\D/g, '').slice(0, 15);
+                  handleInputChange('bankAccount', numericValue);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     e.currentTarget.form?.requestSubmit();
                     return;
                   }
-                  handleKeyDown(e, undefined, phoneRef);
+                  handleKeyDown(e, undefined, bankRef);
                 }}
-                className={`${fieldClassName} resize-none`}
-                rows={2}
+                className={fieldClassName}
                 disabled={isLoading}
-                placeholder="กรอกที่อยู่"
+                placeholder="กรอกเลขบัญชี"
+                inputMode="numeric"
+                maxLength={15}
+                autoComplete="off"
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateMemberCode, validateMemberData } from '../memberUtils';
+import { formatThaiNationalId, generateMemberCode, isValidThaiNationalId, validateMemberData } from '../memberUtils';
 import { Member } from '@/types/member';
 
 describe('generateMemberCode', () => {
@@ -58,6 +58,32 @@ describe('generateMemberCode', () => {
   });
 });
 
+describe('isValidThaiNationalId', () => {
+  it('accepts a 13-digit id with a valid checksum', () => {
+    expect(isValidThaiNationalId('1234567890121')).toBe(true);
+  });
+
+  it('rejects an id with a bad checksum', () => {
+    expect(isValidThaiNationalId('1234567890123')).toBe(false);
+  });
+
+  it('rejects ids that are not 13 digits', () => {
+    expect(isValidThaiNationalId('123456789012')).toBe(false);
+    expect(isValidThaiNationalId('')).toBe(false);
+  });
+});
+
+describe('formatThaiNationalId', () => {
+  it('formats a 13-digit id with hyphens', () => {
+    expect(formatThaiNationalId('1234567890121')).toBe('1-2345-67890-12-1');
+  });
+
+  it('returns an empty string when the id is missing', () => {
+    expect(formatThaiNationalId()).toBe('');
+    expect(formatThaiNationalId(null)).toBe('');
+  });
+});
+
 describe('validateMemberData', () => {
   const mockMembers: Member[] = [
     {
@@ -88,6 +114,29 @@ describe('validateMemberData', () => {
     it('should return null when name is valid and unique', () => {
       const result = validateMemberData({ name: 'New Member' }, mockMembers);
       expect(result).toBeNull();
+    });
+
+    it('should accept a valid national id and bank account', () => {
+      const result = validateMemberData(
+        { name: 'New Member', idCard: '1234567890121', bankAccount: '1234567890' },
+        mockMembers
+      );
+      expect(result).toBeNull();
+    });
+
+    it('should reject a national id that is not 13 digits', () => {
+      const result = validateMemberData({ name: 'New Member', idCard: '1234' }, mockMembers);
+      expect(result).toBe('เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก');
+    });
+
+    it('should reject a national id with a bad checksum', () => {
+      const result = validateMemberData({ name: 'New Member', idCard: '1234567890123' }, mockMembers);
+      expect(result).toBe('เลขบัตรประชาชนไม่ถูกต้อง');
+    });
+
+    it('should reject a bank account that is too short', () => {
+      const result = validateMemberData({ name: 'New Member', bankAccount: '12345' }, mockMembers);
+      expect(result).toBe('เลขบัญชีต้องเป็นตัวเลข 8–15 หลัก');
     });
 
     it('should return null when name has leading/trailing whitespace but is valid', () => {

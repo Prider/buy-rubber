@@ -146,7 +146,7 @@ export default function MembersPage() {
 
             <MembersErrorDisplay error={error || ''} />
 
-            <div className="lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-auto">
               <MemberTable
                 members={members}
                 onEdit={openFormForEdit}

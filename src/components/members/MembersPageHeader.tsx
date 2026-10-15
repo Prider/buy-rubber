@@ -19,7 +19,7 @@ export const MembersPageHeader = ({
   isLoading,
   resultCount,
   totalCount,
-  placeholder = 'ค้นหาชื่อ รหัส หรือเบอร์โทร',
+  placeholder = 'ค้นหาชื่อ รหัส เบอร์โทร เลขบัตร หรือเลขบัญชี',
 }: MembersPageHeaderProps) => {
   const router = useRouter();
 

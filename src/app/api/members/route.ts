@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
         { code: { contains: search } },
         { name: { contains: search } },
         { phone: { contains: search } },
+        { idCard: { contains: search } },
         { address: { contains: search } },
+        { bankName: { contains: search } },
+        { bankAccount: { contains: search } },
         { tapperName: { contains: search } },
       ];
     }

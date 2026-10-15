@@ -4,8 +4,10 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { Member, MemberTableProps } from '@/types/member';
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
+import { formatThaiNationalId } from '@/lib/memberUtils';
 
-const desktopCols = 'lg:grid-cols-[5.5rem_minmax(0,1fr)_7.5rem_max-content]';
+const desktopCols =
+  'lg:grid-cols-[4.5rem_minmax(0,1.15fr)_6.25rem_9.25rem_minmax(0,0.9fr)_7.5rem_max-content]';
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -40,6 +42,9 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
         <div role="columnheader" className="px-4 py-3 text-left">รหัส</div>
         <div role="columnheader" className="px-4 py-3 text-left">ชื่อ-นามสกุล</div>
         <div role="columnheader" className="px-4 py-3 text-left">เบอร์โทร</div>
+        <div role="columnheader" className="px-4 py-3 text-left">เลขบัตรประชาชน</div>
+        <div role="columnheader" className="px-4 py-3 text-left">ธนาคาร</div>
+        <div role="columnheader" className="px-4 py-3 text-left">เลขบัญชี</div>
         <div role="columnheader" className="px-4 py-3 text-right">จัดการ</div>
       </div>
 
@@ -90,6 +95,9 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   const handleViewServiceFees = useCallback(() => onViewServiceFees?.(member), [member, onViewServiceFees]);
 
   const phoneDisplay = useMemo(() => member.phone || '–', [member.phone]);
+  const idCardDisplay = useMemo(() => formatThaiNationalId(member.idCard) || '–', [member.idCard]);
+  const bankDisplay = useMemo(() => member.bankName || '–', [member.bankName]);
+  const accountDisplay = useMemo(() => member.bankAccount || '–', [member.bankAccount]);
   const muted = member.isActive ? '' : 'text-gray-400 line-through decoration-gray-300 dark:text-gray-500 dark:decoration-gray-600';
 
   return (
@@ -121,6 +129,14 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
             </span>
           ) : null}
         </div>
+        {member.idCard || member.bankName || member.bankAccount ? (
+          <div className={`mt-1 space-y-0.5 text-xs lg:hidden ${member.isActive ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
+            {member.idCard ? <div>เลขบัตร {idCardDisplay}</div> : null}
+            {member.bankName || member.bankAccount ? (
+              <div>{[member.bankName, member.bankAccount].filter(Boolean).join(' · ')}</div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div role="cell" className={`font-mono text-xs text-gray-500 dark:text-gray-400 lg:col-start-1 lg:row-start-1 lg:px-4 lg:py-3 lg:text-sm ${muted}`}>
@@ -131,7 +147,19 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
         {phoneDisplay}
       </div>
 
-      <div role="cell" className="col-span-2 mt-2.5 lg:col-span-1 lg:col-start-4 lg:row-start-1 lg:mt-0 lg:px-3 lg:py-2">
+      <div role="cell" className={`hidden font-mono text-xs lg:col-start-4 lg:row-start-1 lg:block lg:px-4 lg:py-3 ${member.isActive ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
+        {idCardDisplay}
+      </div>
+
+      <div role="cell" title={member.bankName || undefined} className={`hidden min-w-0 truncate text-sm lg:col-start-5 lg:row-start-1 lg:block lg:px-4 lg:py-3 ${member.isActive ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
+        {bankDisplay}
+      </div>
+
+      <div role="cell" className={`hidden font-mono text-xs lg:col-start-6 lg:row-start-1 lg:block lg:px-4 lg:py-3 ${member.isActive ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
+        {accountDisplay}
+      </div>
+
+      <div role="cell" className="col-span-2 mt-2.5 lg:col-span-1 lg:col-start-7 lg:row-start-1 lg:mt-0 lg:px-3 lg:py-2">
         <div className="flex flex-wrap gap-1 lg:flex-nowrap lg:justify-end">
           <ActionButton onClick={handleViewHistory} tone="primary">ประวัติ</ActionButton>
           {onViewServiceFees ? (

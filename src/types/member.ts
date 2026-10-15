@@ -2,8 +2,11 @@ export interface Member {
   id: string;
   code: string;
   name: string;
+  idCard?: string;
   phone?: string;
   address?: string;
+  bankName?: string;
+  bankAccount?: string;
   ownerPercent: number;
   tapperPercent: number;
   tapperName?: string;
@@ -17,7 +20,10 @@ export interface MemberFormData {
   name: string;
   code: string;
   phone: string;
+  idCard: string;
   address: string;
+  bankName: string;
+  bankAccount: string;
   ownerPercent: number;
   tapperPercent: number;
   tapperName: string;
