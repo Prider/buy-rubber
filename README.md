@@ -245,6 +245,7 @@ vercel --prod
 
 ## เอกสารเพิ่มเติม
 
+- [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) - คู่มือผู้ใช้งาน (พนักงานหน้าร้าน / ผู้ดูแลร้าน)
 - [QUICKSTART.md](./QUICKSTART.md) - คู่มือเริ่มต้นใช้งาน
 - [PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md) - สรุปโปรเจคและฟีเจอร์
 - [DEPLOYMENT_SUMMARY.md](./DEPLOYMENT_SUMMARY.md) - คู่มือการ Deploy
