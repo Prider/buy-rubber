@@ -10,7 +10,6 @@ import {
   getSlipSettings,
   getStockQuantity,
   findOrCreateProductType,
-  setDailyPrices,
   setSlipSettings,
   uniqueSuffix,
 } from '../fixtures/data.fixture'
@@ -41,10 +40,6 @@ test.describe('Purchase flow', () => {
     }>
     expect(productTypes.length).toBeGreaterThan(0)
     productType = productTypes[0]
-
-    await setDailyPrices(request, adminToken, [
-      { productTypeId: productType.id, price: 50 },
-    ])
   })
 
   test.afterEach(async ({ request }) => {
@@ -71,11 +66,10 @@ test.describe('Purchase flow', () => {
   async function gotoPurchasesPage(page: Page) {
     const membersReq = page.waitForResponse((r) => r.url().includes('/api/members'))
     const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types'))
-    const pricesReq = page.waitForResponse((r) => r.url().includes('/api/prices/daily'))
 
     await page.goto('/purchases')
     await expect(page.getByText('บันทึกการรับซื้อ')).toBeVisible()
-    await Promise.all([membersReq, productTypesReq, pricesReq])
+    await Promise.all([membersReq, productTypesReq])
   }
 
   async function selectMember(page: Page) {
@@ -97,7 +91,12 @@ test.describe('Purchase flow', () => {
     await productSearch.click()
     await productSearch.fill(pt.code)
     await page.getByRole('button', { name: new RegExp(`${pt.code} - ${pt.name}`) }).click()
-    await expect(page.locator('input[name="pricePerUnit"]')).not.toHaveValue('', { timeout: 10_000 })
+  }
+
+  async function fillPrice(page: Page, price: string) {
+    const priceInput = page.locator('input[name="pricePerUnit"]')
+    await priceInput.clear()
+    await priceInput.fill(price)
   }
 
   async function fillWeights(page: Page, gross: string, container: string) {
@@ -129,12 +128,13 @@ test.describe('Purchase flow', () => {
     page: Page,
     gross: string,
     container: string,
-    options?: { includeMember?: boolean; productType?: { code: string; name: string } }
+    options?: { includeMember?: boolean; productType?: { code: string; name: string }; price?: string }
   ) {
     if (options?.includeMember) {
       await selectMember(page)
     }
     await selectProductTypeBy(page, options?.productType ?? productType)
+    await fillPrice(page, options?.price ?? '50')
     await fillWeights(page, gross, container)
     await expect(purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' })).toBeEnabled()
     await purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' }).click()
@@ -155,12 +155,12 @@ test.describe('Purchase flow', () => {
     await expect(page.locator('input[name="netWeight"]')).toHaveValue('95.00')
   })
 
-  test('applies daily price when product type is selected', async ({ page }) => {
+  test('leaves unit price empty until the user enters it', async ({ page }) => {
     await gotoPurchasesPage(page)
 
     await selectProductType(page)
 
-    await expect(page.locator('input[name="pricePerUnit"]')).toHaveValue('50')
+    await expect(page.locator('input[name="pricePerUnit"]')).toHaveValue('')
   })
 
   test('shows validation error when container weight is invalid', async ({ page }) => {
@@ -187,6 +187,7 @@ test.describe('Purchase flow', () => {
     await expect(addBtn).toBeDisabled()
 
     await selectProductType(page)
+    await fillPrice(page, '50')
     await expect(page.locator('input[name="pricePerUnit"]')).toHaveValue('50')
     await expect(addBtn).toBeEnabled()
 
@@ -212,11 +213,6 @@ test.describe('Purchase flow', () => {
 
     const dryPrice = 55
     const scrapPrice = 35
-    await setDailyPrices(request, adminToken, [
-      { productTypeId: productType.id, price: 50 },
-      { productTypeId: dryRubber.id, price: dryPrice },
-      { productTypeId: scrapRubber.id, price: scrapPrice },
-    ])
 
     const dryNet = 200 - 10
     const scrapNet = 80 - 3
@@ -226,12 +222,14 @@ test.describe('Purchase flow', () => {
     await addPurchaseItem(page, '200', '10', {
       includeMember: true,
       productType: dryRubber,
+      price: String(dryPrice),
     })
     await expect(page.getByPlaceholder('ค้นหาตามชื่อหรือรหัส...')).toHaveValue('')
     await expect(page.locator('input[name="grossWeight"]')).toHaveValue('')
     await expect(page.locator('input[name="containerWeight"]')).toHaveValue('')
 
     await selectProductTypeBy(page, scrapRubber)
+    await fillPrice(page, String(scrapPrice))
     await fillWeights(page, '80', '3')
     await expect(page.locator('input[name="netWeight"]')).toHaveValue('77.00')
     await purchaseForm(page).getByRole('button', { name: 'เพิ่มลงตะกร้า' }).click()

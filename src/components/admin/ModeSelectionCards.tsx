@@ -17,10 +17,8 @@ interface ModeSelectionCardsProps {
 }
 
 export function ModeSelectionCards({
-  serverPort,
   localIP,
   ipLoading,
-  onServerPortChange,
   onCopyToClipboard,
 }: ModeSelectionCardsProps) {
   return (

@@ -21,7 +21,7 @@ export default function PurchasesPage() {
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
   
   // Data loading hook
-  const { loading: _loading, members, productTypes, dailyPrices, loadData, loadPurchases } = usePurchaseData();
+  const { loading: _loading, members, productTypes, loadData, loadPurchases } = usePurchaseData();
   
   // Cart management hook
   const {
@@ -76,7 +76,6 @@ export default function PurchasesPage() {
   } = usePurchaseForm({
     members,
     productTypes,
-    dailyPrices,
   });
 
   // Service fee form management hook

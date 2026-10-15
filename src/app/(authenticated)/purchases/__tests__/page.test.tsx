@@ -32,14 +32,12 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 vi.mock('@/hooks/usePurchaseData', () => ({
   usePurchaseData: () => {
-    const today = new Date().toISOString().split('T')[0];
     return {
       loading: false,
       members: [
         { id: 'member-1', code: 'M001', name: 'Member One', ownerPercent: 100, tapperPercent: 0 },
       ],
       productTypes: [{ id: 'product-1', code: 'PT001', name: 'น้ำยางสด' }],
-      dailyPrices: [{ id: 'price-1', productTypeId: 'product-1', date: today, price: 50 }],
       loadData: mockLoadData,
       loadPurchases: mockLoadPurchases,
     };
@@ -135,6 +133,10 @@ describe('PurchasesPage UI integration', () => {
     await user.type(grossWeightInput, gross);
     await user.clear(containerWeightInput);
     await user.type(containerWeightInput, container);
+
+    const priceInput = document.querySelector('input[name="pricePerUnit"]') as HTMLInputElement;
+    await user.clear(priceInput);
+    await user.type(priceInput, '50');
   };
 
   it('auto-calculates netWeight from gross minus container', async () => {
@@ -153,7 +155,7 @@ describe('PurchasesPage UI integration', () => {
     });
   });
 
-  it('applies daily price after selecting product type', async () => {
+  it('leaves unit price empty until the user enters it', async () => {
     render(<PurchasesPage />);
     const user = userEvent.setup();
 
@@ -163,9 +165,7 @@ describe('PurchasesPage UI integration', () => {
     await user.click(screen.getByRole('button', { name: /PT001 - น้ำยางสด/i }));
 
     const priceInput = document.querySelector('input[name="pricePerUnit"]') as HTMLInputElement;
-    await waitFor(() => {
-      expect(priceInput.value).toBe('50');
-    });
+    expect(priceInput.value).toBe('');
   });
 
   it('shows validation error when container weight is invalid', async () => {

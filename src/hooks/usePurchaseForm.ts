@@ -27,13 +27,19 @@ interface PurchaseFormData {
   notes: string;
 }
 
+const EMPTY_DAILY_PRICES: any[] = [];
+
 interface UsePurchaseFormProps {
   members: Member[];
   productTypes: ProductType[];
-  dailyPrices: any[];
+  dailyPrices?: any[];
 }
 
-export const usePurchaseForm = ({ members, productTypes, dailyPrices }: UsePurchaseFormProps) => {
+export const usePurchaseForm = ({
+  members,
+  productTypes,
+  dailyPrices = EMPTY_DAILY_PRICES,
+}: UsePurchaseFormProps) => {
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
