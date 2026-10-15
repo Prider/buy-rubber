@@ -74,7 +74,9 @@ export default function ProfitLossReport() {
   const [error, setError] = useState('');
 
   const now = useMemo(() => new Date(), []);
-  const [startDate, setStartDate] = useState(() => toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+  const [startDate, setStartDate] = useState(() =>
+    toInputDate(new Date(now.getFullYear(), now.getMonth() - 3, 1)),
+  );
   const [endDate, setEndDate] = useState(() => toInputDate(now));
 
   const chartData = useMemo(

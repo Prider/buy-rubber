@@ -12,6 +12,15 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { CHART_SERIES, type ProfitLossRow } from './types';
 
+const compactAmount = new Intl.NumberFormat('th-TH', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+function formatAxisAmount(value: number): string {
+  return compactAmount.format(value);
+}
+
 interface ChartPoint extends ProfitLossRow {
   periodLabel: string;
 }
@@ -47,8 +56,17 @@ function ChartTooltip({
   );
 }
 
+function priceOrNull(value: number): number | null {
+  return value > 0 ? value : null;
+}
+
 export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
   const hasRows = data.length > 0;
+  const points = data.map((row) => ({
+    ...row,
+    purchasePricePerKg: priceOrNull(row.purchasePricePerKg),
+    salePricePerKg: priceOrNull(row.salePricePerKg),
+  }));
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -72,7 +90,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
       <div className="h-[280px]">
         {hasRows ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 8 }}>
+            <LineChart data={points} margin={{ top: 12, right: 8, left: 4, bottom: 8 }}>
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 8" vertical={false} />
               <XAxis
                 dataKey="periodLabel"
@@ -82,22 +100,35 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
                 dy={8}
               />
               <YAxis
+                yAxisId="amount"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 12 }}
+                tickFormatter={formatAxisAmount}
+                width={64}
+              />
+              <YAxis
+                yAxisId="price"
+                orientation="right"
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: '#64748b', fontSize: 12 }}
                 tickFormatter={(value: number) => formatCurrency(value)}
-                width={88}
+                domain={[(min: number) => Math.floor(min - 2), (max: number) => Math.ceil(max + 2)]}
+                width={72}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }} />
               {CHART_SERIES.map((series) => (
                 <Line
                   key={series.key}
+                  yAxisId={series.axis}
                   type="monotone"
                   dataKey={series.key}
                   name={series.label}
                   stroke={series.color}
                   strokeWidth={4}
                   strokeLinecap="round"
+                  connectNulls
                   dot={{ r: 5, strokeWidth: 2, fill: '#ffffff', stroke: series.color }}
                   activeDot={{ r: 8, strokeWidth: 3, fill: series.color, stroke: '#ffffff' }}
                 />

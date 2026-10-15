@@ -30,7 +30,7 @@ export const EMPTY_TOTALS: ProfitLossTotals = {
 };
 
 export const CHART_SERIES = [
-  { key: 'expenses', label: 'Expenses', color: '#2563eb' },
-  { key: 'purchasePricePerKg', label: 'Purchase price/kg', color: '#dc2626' },
-  { key: 'salePricePerKg', label: 'Sale price/kg', color: '#16a34a' },
+  { key: 'expenses', label: 'Expenses', color: '#2563eb', axis: 'amount' },
+  { key: 'purchasePricePerKg', label: 'Purchase price/kg', color: '#dc2626', axis: 'price' },
+  { key: 'salePricePerKg', label: 'Sale price/kg', color: '#16a34a', axis: 'price' },
 ] as const;
