@@ -183,16 +183,32 @@ export function useReportData(
     }
   }, [applyResponse, buildParams, data]);
 
-  const fetchExportRows = useCallback(async () => {
+  const fetchExportRows = useCallback(async (allPages = false) => {
     setExporting(true);
     try {
-      const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
-        params: buildParams(1, true),
-      });
+      const rows: unknown[] = [];
+      let page = 1;
+      let expenseSummary: ExpenseCategorySummary[] = [];
+      let reportTotals = totals;
+      let total = 0;
+
+      while (page <= 50) {
+        const response = await axios.get<ReportSummaryResponse>('/api/reports/summary', {
+          params: buildParams(page, true),
+        });
+        const batch = Array.isArray(response.data.rows) ? response.data.rows : [];
+        rows.push(...batch);
+        expenseSummary = response.data.categorySummary ?? expenseSummary;
+        reportTotals = response.data.totals ?? reportTotals;
+        total = response.data.total ?? rows.length;
+        if (!allPages || batch.length === 0 || rows.length >= total) break;
+        page += 1;
+      }
+
       return {
-        rows: (Array.isArray(response.data.rows) ? response.data.rows : []) as unknown as any[],
-        expenseSummary: response.data.categorySummary ?? [],
-        totals: response.data.totals ?? totals,
+        rows: rows as any[],
+        expenseSummary,
+        totals: reportTotals,
       };
     } catch (error) {
       logger.error('Failed to export report', error);
@@ -217,12 +233,12 @@ export function useReportData(
       if (isSellSummaryReport(reportType)) {
         return groupLabel ? `สรุปรายการขาย - ${groupLabel}` : 'สรุปรายการขาย';
       }
-      return groupLabel ? `รายงานรับซื้อประจำวัน - ${groupLabel}` : 'รายงานรับซื้อประจำวัน';
+      return groupLabel ? `รายงานรับซื้อ - ${groupLabel}` : 'รายงานรับซื้อ';
     }
 
     switch (reportType) {
       case 'daily_purchase':
-        return 'รายงานรับซื้อประจำวัน';
+        return 'รายงานรับซื้อ';
       case 'sell_summary':
         return 'สรุปรายการขาย';
       case 'member_summary':

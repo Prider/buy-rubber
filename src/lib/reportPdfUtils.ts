@@ -1,16 +1,15 @@
 'use client';
 
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import { formatCurrency, formatNumber } from './utils';
+import autoTable from 'jspdf-autotable';
+import { formatCurrency } from './utils';
 import { ReportType } from '@/hooks/useReportData';
-import { isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
-
-interface ExpenseCategorySummary {
-  category: string;
-  totalAmount: number;
-  count: number;
-}
+import {
+  reportColumns,
+  reportRangeLabel,
+  reportSummaryLines,
+  ReportExpenseSummary,
+} from './reportDocument';
 
 interface DownloadReportPDFParams {
   reportTitle: string;
@@ -20,290 +19,45 @@ interface DownloadReportPDFParams {
   endDate: string;
   totalAmount: number;
   totalWeight: number;
-  expenseSummary?: ExpenseCategorySummary[];
+  totalCount?: number;
+  expenseSummary?: ReportExpenseSummary[];
+  onProgress?: (completed: number, total: number) => void;
 }
 
-const ROWS_PER_PAGE = 15;
+const FONT_NAME = 'Sarabun';
 
-const renderTableRows = (reportType: ReportType, rows: any[]) => {
-  if (isDailyPurchaseReport(reportType)) {
-    return rows
-      .map(
-        (item) => `
-          <tr>
-            <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
-            <td>${item.purchaseNo || '-'}</td>
-            <td>${item.member?.name || '-'}</td>
-            <td>${item.productType?.name || '-'}</td>
-            <td class=\"number\">${formatNumber(item.dryWeight)}</td>
-            <td class=\"number\">${formatNumber(item.dryWeight ? item.totalAmount / item.dryWeight : 0)}</td>
-            <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
-          </tr>
-        `
-      )
-      .join('');
+let fontBase64Promise: Promise<string> | null = null;
+
+function loadSarabunBase64(): Promise<string> {
+  if (!fontBase64Promise) {
+    fontBase64Promise = fetch('/fonts/Sarabun-Regular.ttf')
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load report font');
+        return response.arrayBuffer();
+      })
+      .then((buffer) => {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let index = 0; index < bytes.length; index += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+        }
+        return btoa(binary);
+      });
   }
+  return fontBase64Promise;
+}
 
-  if (isSellSummaryReport(reportType)) {
-    return rows
-      .map(
-        (item) => `
-          <tr>
-            <td>${new Date(item.date).toLocaleDateString('th-TH')}</td>
-            <td>${item.saleNo || '-'}</td>
-            <td>${item.companyName || '-'}</td>
-            <td>${item.productType?.name || '-'}</td>
-            <td class=\"number\">${formatNumber(item.weight)}</td>
-            <td class=\"number\">${formatNumber(item.pricePerUnit ?? (item.weight ? item.totalAmount / item.weight : 0))}</td>
-            <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
-          </tr>
-        `
-      )
-      .join('');
-  }
-
-  if (reportType === 'member_summary') {
-    return rows
-      .map(
-        (item) => `
-          <tr>
-            <td>${item.member?.name || '-'}</td>
-            <td class=\"number\">${item.count?.toLocaleString('th-TH')}</td>
-            <td class=\"number\">${formatNumber(item.totalWeight)}</td>
-            <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
-          </tr>
-        `
-      )
-      .join('');
-  }
-
-  return rows
-    .map(
-      (item) => `
-        <tr>
-          <td>${new Date(item.date || item.createdAt).toLocaleDateString('th-TH')}</td>
-          <td>${item.expenseNo || '-'}</td>
-          <td>${item.category || '-'}</td>
-          <td>${item.description || '-'}</td>
-          <td class=\"number\">${formatCurrency(item.amount || 0)}</td>
-        </tr>
-      `
-    )
-    .join('');
-};
-
-const renderTableHeaders = (reportType: ReportType) => {
-  if (isDailyPurchaseReport(reportType)) {
-    return `
-      <tr>
-        <th>วันที่</th>
-        <th>เลขที่</th>
-        <th>สมาชิก</th>
-        <th>ประเภทสินค้า</th>
-        <th>น้ำหนัก (กก.)</th>
-        <th>ราคา/กก.</th>
-        <th>ยอดเงิน</th>
-      </tr>
-    `;
-  }
-
-  if (isSellSummaryReport(reportType)) {
-    return `
-      <tr>
-        <th>วันที่</th>
-        <th>เลขที่</th>
-        <th>บริษัท</th>
-        <th>ประเภทสินค้า</th>
-        <th>น้ำหนัก (กก.)</th>
-        <th>ราคา/กก.</th>
-        <th>ยอดเงิน</th>
-      </tr>
-    `;
-  }
-
-  if (reportType === 'member_summary') {
-    return `
-      <tr>
-        <th>สมาชิก</th>
-        <th>จำนวนครั้ง</th>
-        <th>น้ำหนักรวม (กก.)</th>
-        <th>ยอดเงินรวม</th>
-      </tr>
-    `;
-  }
-
-  return `
-    <tr>
-      <th>วันที่</th>
-      <th>เลขที่</th>
-      <th>หมวดค่าใช้จ่าย</th>
-      <th>รายละเอียด</th>
-      <th>จำนวนเงิน</th>
-    </tr>
-  `;
-};
-
-const renderSummarySection = ({
-  reportType,
-  totalAmount,
-  totalWeight,
-  dataLength,
-  expenseSummary,
-}: {
-  reportType: ReportType;
-  totalAmount: number;
-  totalWeight: number;
-  dataLength: number;
-  expenseSummary: ExpenseCategorySummary[];
-}) => {
-  const summaryLines = [
-    `<p><strong>จำนวนรายการ:</strong> ${dataLength.toLocaleString('th-TH')} รายการ</p>`,
-    `<p><strong>ยอดรวม:</strong> ${formatCurrency(totalAmount)}</p>`,
-  ];
-
-  if (reportType !== 'expense_summary') {
-    summaryLines.push(`<p><strong>น้ำหนักรวม:</strong> ${formatNumber(totalWeight)} กิโลกรัม</p>`);
-  }
-
-  const expenseSummaryTable =
-    reportType === 'expense_summary' && expenseSummary.length > 0
-      ? `
-        <div class=\"summary-table\">
-          <h3>สรุปตามหมวดค่าใช้จ่าย</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>หมวดค่าใช้จ่าย</th>
-                <th>จำนวนรายการ</th>
-                <th>ยอดรวม</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${expenseSummary
-                .map(
-                  (item) => `
-                    <tr>
-                      <td>${item.category}</td>
-                      <td class=\"number\">${item.count.toLocaleString('th-TH')}</td>
-                      <td class=\"number\">${formatCurrency(item.totalAmount)}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `
-      : '';
-
-  return `
-    <div class=\"summary\">
-      <h3>สรุปผลรวม</h3>
-      ${summaryLines.join('')}
-      ${expenseSummaryTable}
-    </div>
-  `;
-};
-
-const generateReportHTML = ({
-  reportTitle,
-  reportType,
-  rows,
-  page,
-  totalPages,
-  startDate,
-  endDate,
-  totalAmount,
-  totalWeight,
-  dataLength,
-  expenseSummary,
-  includeSummary,
-}: {
-  reportTitle: string;
-  reportType: ReportType;
-  rows: any[];
-  page: number;
-  totalPages: number;
-  startDate: string;
-  endDate: string;
-  totalAmount: number;
-  totalWeight: number;
-  dataLength: number;
-  expenseSummary: ExpenseCategorySummary[];
-  includeSummary: boolean;
-}) => {
-  const printedDate = new Date().toLocaleDateString('th-TH', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-  const rangeLabel = `ช่วงวันที่ ${new Date(startDate).toLocaleDateString('th-TH')} - ${new Date(endDate).toLocaleDateString('th-TH')}`;
-  const pageLabel = totalPages > 1 ? `หน้า ${page}/${totalPages}` : '';
-  const startIndex = (page - 1) * ROWS_PER_PAGE + 1;
-  const endIndex = startIndex + rows.length - 1;
-  const rowLabel = `แสดงรายการ ${startIndex.toLocaleString('th-TH')} - ${endIndex.toLocaleString('th-TH')}`;
-
-  return `
-    <html>
-      <head>
-        <meta charset=\"utf-8\" />
-        <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
-        <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
-        <link href=\"https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap\" rel=\"stylesheet\">
-        <style>
-          body { font-family: 'Sarabun', 'TH Sarabun New', 'Leelawadee UI', Arial, sans-serif; margin: 16px 40px; color: #000; }
-          .wrapper { padding: 28px 40px; border: 1px solid #ddd; border-radius: 16px; }
-          h1 { text-align: center; margin-bottom: 12px; font-size: 24px; }
-          .meta { text-align: center; margin-bottom: 16px; font-size: 14px; color: #374151; }
-          .info { margin-bottom: 16px; font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #000000; }
-          th, td { border: 1px solid #ddd; padding: 10px; font-size: 13px; }
-          th { background: #f4f4f4; font-weight: 600; text-align: left; }
-          td.number { text-align: right; }
-          .summary { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
-          .summary h3 { margin-bottom: 8px; font-size: 16px; }
-          .summary p { margin: 4px 0; font-size: 13px; }
-          .summary-table { margin-top: 12px; }
-          .summary-table table th { background: #ecfdf5; }
-          footer { margin-top: 24px; text-align: center; font-size: 11px; color: #6b7280; }
-        </style>
-      </head>
-      <body>
-        <div class=\"wrapper\">
-          <h1>${reportTitle}</h1>
-          <div class=\"meta\">${rangeLabel}${pageLabel ? ` • ${pageLabel}` : ''}</div>
-          <div class=\"info\">
-            <p><strong>วันที่จัดทำ:</strong> ${printedDate}</p>
-            <p><strong>${rowLabel}</strong></p>
-          </div>
-          <table>
-            <thead>
-              ${renderTableHeaders(reportType)}
-            </thead>
-            <tbody>
-              ${renderTableRows(reportType, rows)}
-            </tbody>
-          </table>
-          ${
-            includeSummary
-              ? renderSummarySection({
-                  reportType,
-                  totalAmount,
-                  totalWeight,
-                  dataLength,
-                  expenseSummary,
-                })
-              : ''
-          }
-          <footer>รายงานจัดทำโดยระบบจัดการรับซื้อยาง</footer>
-        </div>
-      </body>
-    </html>
-  `;
-};
+function drawPageChrome(doc: jsPDF, reportTitle: string, rangeLabel: string) {
+  const width = doc.internal.pageSize.getWidth();
+  doc.setFont(FONT_NAME, 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(17, 24, 39);
+  doc.text(reportTitle, width / 2, 10, { align: 'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(55, 65, 81);
+  doc.text(rangeLabel, width / 2, 16, { align: 'center' });
+}
 
 export async function downloadReportPDF({
   reportTitle,
@@ -313,65 +67,116 @@ export async function downloadReportPDF({
   endDate,
   totalAmount,
   totalWeight,
+  totalCount,
   expenseSummary = [],
+  onProgress,
 }: DownloadReportPDFParams) {
-  if (!Array.isArray(data) || data.length === 0) {
-    return;
-  }
+  if (!Array.isArray(data) || data.length === 0) return;
+
+  onProgress?.(0, 1);
+  const fontBase64 = await loadSarabunBase64();
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
 
   const doc = new jsPDF('p', 'mm', 'a4');
-  const pageMarginTop = 10;
-  const pageMarginBottom = 10;
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const availableHeight = doc.internal.pageSize.getHeight() - pageMarginTop - pageMarginBottom;
-  const totalPages = Math.max(1, Math.ceil(data.length / ROWS_PER_PAGE));
+  doc.addFileToVFS('Sarabun-Regular.ttf', fontBase64);
+  doc.addFont('Sarabun-Regular.ttf', FONT_NAME, 'normal');
+  doc.setFont(FONT_NAME, 'normal');
 
-  for (let page = 0; page < totalPages; page += 1) {
-    const startIndex = page * ROWS_PER_PAGE;
-    const rows = data.slice(startIndex, startIndex + ROWS_PER_PAGE);
-    const includeSummary = page === totalPages - 1;
+  const columns = reportColumns(reportType);
+  const rangeLabel = reportRangeLabel(startDate, endDate);
+  const columnStyles: Record<number, { halign: 'right' }> = {};
+  columns.forEach((column, index) => {
+    if (column.align === 'right') columnStyles[index] = { halign: 'right' };
+  });
 
-    const html = generateReportHTML({
-      reportTitle,
-      reportType,
-      rows,
-      page: page + 1,
-      totalPages,
-      startDate,
-      endDate,
-      totalAmount,
-      totalWeight,
-      dataLength: data.length,
-      expenseSummary,
-      includeSummary,
-    });
+  autoTable(doc, {
+    head: [columns.map((column) => column.header)],
+    body: data.map((row) => columns.map((column) => column.value(row))),
+    startY: 22,
+    margin: { top: 22, left: 8, right: 8, bottom: 12 },
+    styles: {
+      font: FONT_NAME,
+      fontStyle: 'normal',
+      fontSize: 8,
+      cellPadding: 1.1,
+      textColor: [17, 24, 39],
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      overflow: 'ellipsize',
+    },
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      font: FONT_NAME,
+      fontStyle: 'normal',
+    },
+    columnStyles,
+    didDrawPage: () => {
+      drawPageChrome(doc, reportTitle, rangeLabel);
+    },
+  });
 
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    container.style.position = 'fixed';
-    container.style.top = '-10000px';
-    container.style.left = '0';
-    container.style.width = '794px';
-    container.style.color = '#000';
-    container.style.background = '#fff';
-    document.body.appendChild(container);
-
-    await new Promise<void>((resolve) => setTimeout(resolve, 120));
-
-    const canvas = await html2canvas(container, { scale: 1, useCORS: true });
-    document.body.removeChild(container);
-
-    const imgData = canvas.toDataURL('image/png');
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-    const drawHeight = Math.min(imgHeight, availableHeight);
-
-    if (page > 0) {
-      doc.addPage();
-    }
-
-    doc.addImage(imgData, 'PNG', 0, pageMarginTop, pdfWidth, drawHeight);
+  const lines = reportSummaryLines(reportType, totalAmount, totalWeight, totalCount ?? data.length);
+  const expenseRows = reportType === 'expense_summary' ? expenseSummary : [];
+  let cursorY = ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 22) + 6;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const needed = 8 + lines.length * 5 + (expenseRows.length > 0 ? 12 + (expenseRows.length + 1) * 6 : 0);
+  if (cursorY + needed > pageHeight - 12) {
+    doc.addPage();
+    drawPageChrome(doc, reportTitle, rangeLabel);
+    cursorY = 22;
   }
 
+  doc.setFont(FONT_NAME, 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(17, 24, 39);
+  doc.text('สรุปผลรวม', 8, cursorY);
+  doc.setFontSize(9);
+  lines.forEach((line, index) => {
+    doc.text(line, 8, cursorY + 6 + index * 5);
+  });
+
+  if (expenseRows.length > 0) {
+    autoTable(doc, {
+      head: [['หมวดค่าใช้จ่าย', 'จำนวนรายการ', 'ยอดรวม']],
+      body: expenseRows.map((item) => [
+        item.category,
+        item.count.toLocaleString('th-TH'),
+        formatCurrency(item.totalAmount),
+      ]),
+      startY: cursorY + 8 + lines.length * 5,
+      margin: { left: 8, right: 8, bottom: 12 },
+      styles: {
+        font: FONT_NAME,
+        fontStyle: 'normal',
+        fontSize: 8,
+        cellPadding: 1.1,
+        textColor: [17, 24, 39],
+      },
+      headStyles: {
+        fillColor: [243, 244, 246],
+        textColor: [17, 24, 39],
+        font: FONT_NAME,
+        fontStyle: 'normal',
+      },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } },
+    });
+  }
+
+  const pageCount = doc.getNumberOfPages();
+  const width = doc.internal.pageSize.getWidth();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    doc.setFont(FONT_NAME, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`หน้า ${page}/${pageCount}`, width - 8, 16, { align: 'right' });
+    doc.text('รายงานจัดทำโดยระบบจัดการรับซื้อยาง', width / 2, pageHeight - 6, { align: 'center' });
+  }
+
+  onProgress?.(1, 1);
   const fileName = `${reportTitle}_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 }

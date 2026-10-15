@@ -5,12 +5,14 @@ interface ReportActionButtonsProps {
   onDownloadPDF: () => void;
   onPrint: () => void;
   disabled?: boolean;
+  downloading?: boolean;
 }
 
 export default function ReportActionButtons({
   onPreview,
   onDownloadPDF,
   disabled = false,
+  downloading = false,
 }: ReportActionButtonsProps) {
   return (
     <div className="no-print flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -25,10 +27,11 @@ export default function ReportActionButtons({
       <button
         type="button"
         onClick={onDownloadPDF}
-        disabled={disabled}
+        disabled={disabled || downloading}
+        aria-busy={downloading}
         className="w-full rounded-xl bg-rose-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto"
       >
-        ดาวน์โหลด PDF
+        {downloading ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF'}
       </button>
     </div>
   );

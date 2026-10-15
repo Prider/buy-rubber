@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
     }
 
     const exporting = searchParams.get('export') === '1' || searchParams.get('export') === 'true';
-    const page = exporting ? 1 : parsePage(searchParams.get('page'));
+    const page = parsePage(searchParams.get('page'));
     const pageSize = parsePageSize(searchParams.get('pageSize'), exporting);
     const productTypeIds = parseProductTypeIds(searchParams.get('productTypeIds'));
 

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber, formatReportDateTime } from '@/lib/utils';
 
 interface DailyPurchaseRow {
   id: string;
@@ -23,10 +23,10 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
         <thead className="bg-gray-50 dark:bg-gray-700/50">
           <tr>
             <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-              วันที่
+              เลขที่
             </th>
             <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-              เลขที่
+              วันที่
             </th>
             <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               สมาชิก
@@ -51,25 +51,18 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
             const unitPrice = item.dryWeight ? item.totalAmount / item.dryWeight : 0;
             return (
             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+              <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   <span className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-300">
                     {displayIndex}
                   </span>
-                  {new Date(item.date).toLocaleString('th-TH', { 
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                  })}
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                    {item.purchaseNo}
+                  </span>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                  {item.purchaseNo}
-                </span>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                {formatReportDateTime(item.date)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                 {item.member?.name}

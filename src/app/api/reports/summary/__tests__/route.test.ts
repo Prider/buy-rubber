@@ -290,4 +290,25 @@ describe('GET /api/reports/summary', () => {
     expect(body.truncated).toBe(true);
     expect(body.pageSize).toBe(10_000);
   });
+
+  it('pages export results past the first batch', async () => {
+    prisma.purchase.findMany.mockResolvedValue([]);
+    prisma.purchase.aggregate.mockResolvedValue({
+      _count: { _all: 12_000 },
+      _sum: { dryWeight: 1, totalAmount: 1 },
+    });
+
+    const response = await GET(
+      req({
+        type: 'daily_purchase',
+        startDate: '2025-01-01',
+        endDate: '2026-01-01',
+        export: '1',
+        page: '2',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(prisma.purchase.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 10_000, take: 10_000 }));
+  });
 });

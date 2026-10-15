@@ -84,10 +84,10 @@ export default function ReportFilterCard({
             >
               {selectMode === 'daily_purchase' ? (
                 <>
-                  <option value="daily_purchase">รายงานรับซื้อประจำวัน (ทั้งหมด)</option>
+                  <option value="daily_purchase">รายงานรับซื้อ (ทั้งหมด)</option>
                   {reportGroups.map((group) => (
                     <option key={group.id} value={group.reportType}>
-                      รายงานรับซื้อประจำวัน - {group.label}
+                      รายงานรับซื้อ - {group.label}
                     </option>
                   ))}
                 </>

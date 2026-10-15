@@ -23,6 +23,17 @@ export function formatNumber(num: number, decimals: number = 2): string {
   }).format(num);
 }
 
+export function formatReportDateTime(date: Date | string): string {
+  return new Date(date).toLocaleString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('th-TH', {

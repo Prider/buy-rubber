@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,13 +8,7 @@ import { REPORT_PAGE_SIZE, useReportData } from '@/hooks/useReportData';
 import { useReportProductTypeGroups } from '@/hooks/useReportProductTypeGroups';
 import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
-import {
-  generatePrintPreviewHTML,
-  generateDailyPurchaseTableHTML,
-  generateSellSummaryTableHTML,
-  generateMemberSummaryTableHTML,
-  generateExpenseTableHTML,
-} from '@/lib/reportPrintUtils';
+import { generatePrintPreviewHTML } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
 import ReportTabs, { type ReportTabId } from '@/components/reports/ReportTabs';
 import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
@@ -63,6 +57,8 @@ export default function ReportsPage() {
   const { user, isLoading } = useAuth();
   const { showWarning } = useAlert();
   const [tablePage, setTablePage] = useState(1);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const downloadLock = useRef(false);
   const purchaseGroupManager = useReportProductTypeGroups('purchase');
   const saleGroupManager = useReportProductTypeGroups('sale');
   const {
@@ -182,7 +178,7 @@ export default function ReportsPage() {
   const handlePrintPreview = useCallback(async () => {
     if (!hasData) return;
 
-    const exported = await fetchExportRows();
+    const exported = await fetchExportRows(true);
     if (!exported) return;
 
     const printWindow = window.open('', '_blank');
@@ -194,44 +190,48 @@ export default function ReportsPage() {
       return;
     }
 
-    const reportTitle = getReportTitle();
-    let tableContent = '';
-    if (isDailyPurchaseReport(reportType)) {
-      tableContent = generateDailyPurchaseTableHTML(exported.rows);
-    } else if (isSellSummaryReport(reportType)) {
-      tableContent = generateSellSummaryTableHTML(exported.rows);
-    } else if (reportType === 'member_summary') {
-      tableContent = generateMemberSummaryTableHTML(exported.rows);
-    } else if (reportType === 'expense_summary') {
-      tableContent = generateExpenseTableHTML(exported.rows, exported.expenseSummary);
-    }
-
-    const htmlContent = generatePrintPreviewHTML(
-      reportTitle,
-      dateRangeLabel,
-      tableContent,
-      exported.rows.length,
-    );
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-  }, [dateRangeLabel, fetchExportRows, getReportTitle, hasData, reportType, showWarning]);
-
-  const handleDownloadPDF = useCallback(async () => {
-    if (!hasData) return;
-
-    const exported = await fetchExportRows();
-    if (!exported) return;
-
-    downloadReportPDF({
+    const htmlContent = generatePrintPreviewHTML({
       reportTitle: getReportTitle(),
       reportType,
-      data: exported.rows,
+      rows: exported.rows,
       startDate,
       endDate,
       totalAmount: exported.totals.totalAmount,
       totalWeight: exported.totals.totalWeight,
+      totalCount: exported.totals.count || exported.rows.length,
       expenseSummary: exported.expenseSummary,
     });
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  }, [endDate, fetchExportRows, getReportTitle, hasData, reportType, showWarning, startDate]);
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!hasData || downloadLock.current) return;
+
+    downloadLock.current = true;
+    setDownloadProgress(0);
+    try {
+      const exported = await fetchExportRows();
+      if (!exported) return;
+
+      await downloadReportPDF({
+        reportTitle: getReportTitle(),
+        reportType,
+        data: exported.rows,
+        startDate,
+        endDate,
+        totalAmount: exported.totals.totalAmount,
+        totalWeight: exported.totals.totalWeight,
+        totalCount: exported.totals.count,
+        expenseSummary: exported.expenseSummary,
+        onProgress: (completed, total) => {
+          setDownloadProgress(total > 0 ? Math.round((completed / total) * 100) : 0);
+        },
+      });
+    } finally {
+      downloadLock.current = false;
+      setDownloadProgress(null);
+    }
   }, [endDate, fetchExportRows, getReportTitle, hasData, reportType, startDate]);
 
   const goToPage = useCallback(
@@ -254,8 +254,45 @@ export default function ReportsPage() {
     );
   }
 
+  const downloading = downloadProgress !== null;
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden max-md:-mx-4 max-md:-mt-4">
+      {downloading ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4"
+          role="alertdialog"
+          aria-modal="true"
+          aria-busy="true"
+          aria-labelledby="report-download-progress-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white px-5 py-4 shadow-xl dark:bg-gray-800">
+            <p id="report-download-progress-title" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {downloadProgress > 0 ? 'กำลังสร้างไฟล์ PDF' : 'กำลังเตรียมข้อมูล'}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              กรุณารอจนกว่าไฟล์จะดาวน์โหลดเสร็จ
+            </p>
+            <div
+              className="mt-4 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={downloadProgress}
+            >
+              <div
+                className={`h-full rounded-full bg-rose-600 ${
+                  downloadProgress > 0 ? 'transition-[width] duration-200' : 'w-1/3 animate-pulse'
+                }`}
+                style={downloadProgress > 0 ? { width: `${downloadProgress}%` } : undefined}
+              />
+            </div>
+            <p className="mt-2 text-right text-xs font-medium tabular-nums text-gray-600 dark:text-gray-300">
+              {downloadProgress}%
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
         <header className="shrink-0 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
           <div className="flex min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
@@ -375,7 +412,8 @@ export default function ReportsPage() {
                 onPreview={handlePrintPreview}
                 onDownloadPDF={handleDownloadPDF}
                 onPrint={handlePrint}
-                disabled={!hasData || exporting}
+                disabled={!hasData || exporting || downloading}
+                downloading={downloading}
               />
             </div>
 
