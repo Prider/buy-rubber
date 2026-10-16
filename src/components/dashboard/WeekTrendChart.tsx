@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import type { TrendPoint } from '@/lib/dashboard/trend';
+import DashboardHeading from './DashboardHeading';
 
 const compactAmount = new Intl.NumberFormat('th-TH', {
   notation: 'compact',
@@ -52,7 +53,7 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
   return (
     <section className="flex h-full min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-4">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <h2 className="text-base font-bold text-gray-950 dark:text-white">แนวโน้ม 7 วัน</h2>
+        <DashboardHeading tone="trend">แนวโน้ม 7 วัน</DashboardHeading>
         <div className="flex gap-3 text-xs font-medium text-gray-700 dark:text-gray-200">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-[3px] bg-sky-600" />

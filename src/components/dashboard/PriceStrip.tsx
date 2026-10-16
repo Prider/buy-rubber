@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/lib/utils';
+import DashboardHeading from './DashboardHeading';
 
 interface PriceStripProps {
   productTypes: Array<{ id: string; code: string; name: string }>;
@@ -10,7 +11,7 @@ export default function PriceStrip({ productTypes, todayPrices }: PriceStripProp
 
   return (
     <section className="rounded-2xl border border-amber-200/70 bg-white p-3 shadow-sm dark:border-amber-900/40 dark:bg-gray-800 md:p-4">
-      <h2 className="text-base font-bold text-gray-950 dark:text-white">ราคาวันนี้</h2>
+      <DashboardHeading tone="amber">ราคาวันนี้</DashboardHeading>
       {productTypes.length > 0 ? (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {productTypes.map((productType) => {

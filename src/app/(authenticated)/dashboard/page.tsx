@@ -187,7 +187,7 @@ export default function DashboardPage() {
               แดชบอร์ด
             </span>
           </h2>
-          <p className="mt-0.5 text-sm text-gray-700 dark:text-gray-200">{todayLabel}</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{todayLabel}</p>
         </div>
         <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800" role="group" aria-label="ช่วงเวลา">
           {(['today', 'month'] as const).map((value) => {

@@ -1,5 +1,6 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import type { ProductBreakdownRow } from '@/hooks/useDashboardData';
+import DashboardHeading from './DashboardHeading';
 
 interface ProductBreakdownProps {
   rows: ProductBreakdownRow[];
@@ -10,7 +11,7 @@ interface ProductBreakdownProps {
 export default function ProductBreakdown({ rows, selectedId, onSelect }: ProductBreakdownProps) {
   return (
     <section>
-      <h2 className="text-base font-bold text-gray-950 dark:text-white">แบ่งตามประเภท</h2>
+      <DashboardHeading tone="violet">แบ่งตามประเภท</DashboardHeading>
       {rows.length > 0 ? (
         <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-2.5">
           {rows.map((row) => {

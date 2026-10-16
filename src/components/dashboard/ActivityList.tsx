@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import DashboardHeading, { type DashboardHeadingTone } from './DashboardHeading';
 import type { DashboardMetric } from './SummaryMetricCards';
 
 export interface ActivityRow {
@@ -23,11 +24,20 @@ const amountClass: Record<DashboardMetric, string> = {
   expenses: 'text-rose-900 dark:text-rose-100',
 };
 
+const titleTone: Record<DashboardMetric, DashboardHeadingTone> = {
+  purchases: 'sky',
+  sales: 'emerald',
+  serviceFees: 'amber',
+  expenses: 'rose',
+};
+
 export default function ActivityList({ title, metric, rows, emptyLabel }: ActivityListProps) {
   return (
     <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2.5 dark:border-gray-700">
-        <h2 className="truncate text-base font-bold text-gray-950 dark:text-white">{title}</h2>
+        <DashboardHeading tone={titleTone[metric]} className="min-w-0 truncate">
+          {title}
+        </DashboardHeading>
         {rows.length > 0 ? (
           <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">{rows.length} รายการ</span>
         ) : null}
