@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { buildSevenDayTrend } from '@/lib/dashboard/trend';
+
+type ProductTypeLookup = { id: string; name: string; code: string };
+
+function enrichProductGroups(
+  rows: Array<{
+    productTypeId: string;
+    _count: number;
+    _sum: { totalAmount?: number | null; dryWeight?: number | null; weight?: number | null };
+  }>,
+  productTypes: ProductTypeLookup[],
+  weightKey: 'dryWeight' | 'weight',
+) {
+  const byId = new Map(productTypes.map((productType) => [productType.id, productType]));
+  return rows
+    .map((row) => {
+      const productType = byId.get(row.productTypeId);
+      return {
+        productTypeId: row.productTypeId,
+        productTypeName: productType?.name || 'ไม่ระบุ',
+        productTypeCode: productType?.code || '',
+        count: row._count,
+        totalAmount: Number(row._sum.totalAmount) || 0,
+        totalWeight: Number(row._sum[weightKey]) || 0,
+      };
+    })
+    .sort((left, right) => right.totalAmount - left.totalAmount);
+}
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -50,6 +78,12 @@ export async function GET(_request: NextRequest) {
     ));
     firstDayOfNextMonth.setTime(firstDayOfNextMonth.getTime() - thailandOffset);
 
+    const sevenDaysStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+    const monthDateRange = {
+      gte: thailandMonthStart,
+      lt: firstDayOfNextMonth,
+    };
+
     // Batch 1: Execute all independent queries in parallel
     // This reduces 14+ sequential queries to 1 parallel batch
     const [
@@ -70,6 +104,12 @@ export async function GET(_request: NextRequest) {
       todaySales,
       monthSales,
       recentSales,
+      monthPurchasesByProductType,
+      todaySalesByProductType,
+      monthSalesByProductType,
+      trendPurchases,
+      trendSales,
+      recentServiceFees,
     ] = await Promise.all([
       // รายการรับซื้อวันนี้
       prisma.purchase.aggregate({
@@ -105,6 +145,7 @@ export async function GET(_request: NextRequest) {
       }),
       // รายการรับซื้อล่าสุด 10 รายการ
       prisma.purchase.findMany({
+        where: { date: monthDateRange },
         take: 10,
         orderBy: { date: 'desc' },
         include: {
@@ -182,6 +223,7 @@ export async function GET(_request: NextRequest) {
       }),
       // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
       prisma.expense.findMany({
+        where: { date: monthDateRange },
         take: 5,
         orderBy: { date: 'desc' },
       }),
@@ -254,6 +296,7 @@ export async function GET(_request: NextRequest) {
       }),
       // รายการขายล่าสุด 10 รายการ
       prisma.sale.findMany({
+        where: { date: monthDateRange },
         take: 10,
         orderBy: { date: 'desc' },
         select: {
@@ -265,6 +308,37 @@ export async function GET(_request: NextRequest) {
           totalAmount: true,
           productType: { select: { id: true, name: true, code: true } },
         },
+      }),
+      prisma.purchase.groupBy({
+        by: ['productTypeId'],
+        where: { date: monthDateRange },
+        _count: true,
+        _sum: { totalAmount: true, dryWeight: true },
+      }),
+      prisma.sale.groupBy({
+        by: ['productTypeId'],
+        where: { date: { gte: today, lt: tomorrow } },
+        _count: true,
+        _sum: { totalAmount: true, weight: true },
+      }),
+      prisma.sale.groupBy({
+        by: ['productTypeId'],
+        where: { date: monthDateRange },
+        _count: true,
+        _sum: { totalAmount: true, weight: true },
+      }),
+      prisma.purchase.findMany({
+        where: { date: { gte: sevenDaysStart, lt: tomorrow } },
+        select: { date: true, totalAmount: true },
+      }),
+      prisma.sale.findMany({
+        where: { date: { gte: sevenDaysStart, lt: tomorrow } },
+        select: { date: true, totalAmount: true },
+      }),
+      prisma.serviceFee.findMany({
+        where: { date: monthDateRange },
+        take: 10,
+        orderBy: { date: 'desc' },
       }),
     ]);
 
@@ -327,13 +401,36 @@ export async function GET(_request: NextRequest) {
         monthSales: monthSales._count,
         monthSaleAmount: monthSales._sum.totalAmount || 0,
         todayPurchasesByProductType: todayPurchasesByProductTypeWithDetails,
+        monthPurchasesByProductType: enrichProductGroups(
+          monthPurchasesByProductType,
+          productTypes,
+          'dryWeight',
+        ),
+        todaySalesByProductType: enrichProductGroups(
+          todaySalesByProductType,
+          productTypes,
+          'weight',
+        ),
+        monthSalesByProductType: enrichProductGroups(
+          monthSalesByProductType,
+          productTypes,
+          'weight',
+        ),
       },
+      bounds: {
+        todayStart: today.toISOString(),
+        tomorrow: tomorrow.toISOString(),
+        monthStart: thailandMonthStart.toISOString(),
+        nextMonth: firstDayOfNextMonth.toISOString(),
+      },
+      trend: buildSevenDayTrend(today, trendPurchases, trendSales),
       recentPurchases,
       topMembers: topMembersWithDetails,
       todayPrices,
       productTypes,
       recentExpenses,
       recentSales,
+      recentServiceFees,
     };
     
     return NextResponse.json(responseData, {

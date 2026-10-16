@@ -28,10 +28,12 @@ vi.mock('@/lib/prisma', () => ({
     },
     serviceFee: {
       aggregate: vi.fn(),
+      findMany: vi.fn(),
     },
     sale: {
       aggregate: vi.fn(),
       findMany: vi.fn(),
+      groupBy: vi.fn(),
     },
   },
 }));
@@ -122,8 +124,12 @@ describe('GET /api/dashboard', () => {
     // Clear cache before each test
     vi.mocked(cache.get).mockReturnValue(null);
     vi.mocked(prisma.serviceFee.aggregate).mockResolvedValue({ _count: 0, _sum: { amount: 0 } });
+    vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
     vi.mocked(prisma.sale.aggregate).mockResolvedValue({ _count: 0, _sum: { totalAmount: 0 } });
     vi.mocked(prisma.sale.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.sale.groupBy).mockResolvedValue([]);
+    vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.purchase.groupBy).mockResolvedValue([]);
   });
 
   describe('Successful retrieval', () => {
@@ -170,6 +176,12 @@ describe('GET /api/dashboard', () => {
       expect(data.productTypes).toBeDefined();
       expect(data.recentExpenses).toBeDefined();
       expect(data.recentSales).toBeDefined();
+      expect(data.recentServiceFees).toEqual([]);
+      expect(data.trend).toHaveLength(7);
+      expect(data.bounds.todayStart).toEqual(expect.any(String));
+      expect(data.stats.monthPurchasesByProductType).toEqual([]);
+      expect(data.stats.todaySalesByProductType).toEqual([]);
+      expect(data.stats.monthSalesByProductType).toEqual([]);
     });
 
     it('should return correct statistics', async () => {

@@ -478,8 +478,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* Dark Mode Toggle */}
               <DarkModeToggle />
               
-              {/* Date Display */}
-              <HeaderTime />
+              {pathname !== '/dashboard' && <HeaderTime />}
             </div>
           </div>
         </header>

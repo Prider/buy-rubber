@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getApiClient } from '@/lib/apiClient';
+import type { PeriodBounds } from '@/lib/dashboard/activity';
+import type { TrendPoint } from '@/lib/dashboard/trend';
 import { logger } from '@/lib/logger';
 
-export interface TodayPurchaseByProductType {
+export interface ProductBreakdownRow {
   productTypeId: string | null;
   productTypeName: string;
   productTypeCode: string;
@@ -30,66 +32,76 @@ export interface DashboardStats {
   todaySaleAmount: number;
   monthSales: number;
   monthSaleAmount: number;
-  todayPurchasesByProductType?: TodayPurchaseByProductType[];
+  todayPurchasesByProductType?: ProductBreakdownRow[];
+  monthPurchasesByProductType?: ProductBreakdownRow[];
+  todaySalesByProductType?: ProductBreakdownRow[];
+  monthSalesByProductType?: ProductBreakdownRow[];
 }
 
 export interface DashboardData {
   stats: DashboardStats;
+  bounds?: PeriodBounds;
+  trend?: TrendPoint[];
   todayPrices: any[];
   productTypes: any[];
   recentPurchases: any[];
   topMembers: any[];
   recentExpenses: any[];
   recentSales: any[];
+  recentServiceFees?: any[];
 }
 
 interface UseDashboardDataReturn {
   loading: boolean;
+  error: string | null;
   data: DashboardData | null;
   stats: DashboardStats;
+  bounds: PeriodBounds | null;
+  trend: TrendPoint[];
   todayPrices: any[];
   productTypes: any[];
   recentPurchases: any[];
   topMembers: any[];
   recentExpenses: any[];
   recentSales: any[];
+  recentServiceFees: any[];
   reload: () => Promise<void>;
 }
 
 export function useDashboardData(): UseDashboardDataReturn {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const mountedRef = useRef(true);
+  const hasDataRef = useRef(false);
 
   const loadData = useCallback(async () => {
     if (!mountedRef.current) return;
-    
+
+    if (!hasDataRef.current) setLoading(true);
+
     try {
-      setLoading(true);
       const apiClient = getApiClient();
-      
-      // Add a timeout wrapper to ensure we don't hang forever
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Dashboard request timeout after 30 seconds')), 30000);
       });
-      
+
       const response = await Promise.race([
         apiClient.getDashboard(),
         timeoutPromise,
       ]) as DashboardData;
-      
-      // Only update state if component is still mounted
+
       if (mountedRef.current) {
+        hasDataRef.current = true;
         setData(response);
+        setError(null);
         setLoading(false);
       }
-    } catch (error) {
-      logger.error('Failed to load dashboard', error);
-      // Always set loading to false on error if still mounted
+    } catch (loadError) {
+      logger.error('Failed to load dashboard', loadError);
       if (mountedRef.current) {
         setLoading(false);
-        // Set empty data to prevent infinite loading
-        setData(null);
+        setError('ไม่สามารถโหลดแดชบอร์ดได้');
       }
     }
   }, []);
@@ -97,14 +109,12 @@ export function useDashboardData(): UseDashboardDataReturn {
   useEffect(() => {
     mountedRef.current = true;
     loadData();
-    
-    // Cleanup on unmount
+
     return () => {
       mountedRef.current = false;
     };
   }, [loadData]);
 
-  // Memoize default stats to prevent object recreation on every render
   const defaultStats: DashboardStats = useMemo(() => ({
     todayPurchases: 0,
     todayAmount: 0,
@@ -126,30 +136,31 @@ export function useDashboardData(): UseDashboardDataReturn {
     monthSaleAmount: 0,
   }), []);
 
-  // Memoize stats to prevent unnecessary re-renders
-  const stats = useMemo(() => {
-    return data?.stats || defaultStats;
-  }, [data?.stats, defaultStats]);
-
-  // Memoize arrays to prevent unnecessary re-renders
+  const stats = useMemo(() => data?.stats || defaultStats, [data?.stats, defaultStats]);
   const todayPrices = useMemo(() => data?.todayPrices || [], [data?.todayPrices]);
   const productTypes = useMemo(() => data?.productTypes || [], [data?.productTypes]);
   const recentPurchases = useMemo(() => data?.recentPurchases || [], [data?.recentPurchases]);
   const topMembers = useMemo(() => data?.topMembers || [], [data?.topMembers]);
   const recentExpenses = useMemo(() => data?.recentExpenses || [], [data?.recentExpenses]);
   const recentSales = useMemo(() => data?.recentSales || [], [data?.recentSales]);
+  const recentServiceFees = useMemo(() => data?.recentServiceFees || [], [data?.recentServiceFees]);
+  const trend = useMemo(() => data?.trend || [], [data?.trend]);
+  const bounds = data?.bounds ?? null;
 
   return {
     loading,
+    error,
     data,
     stats,
+    bounds,
+    trend,
     todayPrices,
     productTypes,
     recentPurchases,
     topMembers,
     recentExpenses,
     recentSales,
+    recentServiceFees,
     reload: loadData,
   };
 }
-
