@@ -36,6 +36,28 @@ import {
   type SlipTemplateId,
 } from '@/lib/slipTemplate';
 
+interface SavedSlipSettings {
+  companyName: string;
+  companyAddress: string;
+  taxId: string;
+  footerText: string;
+  fontSize: SlipFontSizeId;
+  paperSize: SlipPaperSizeId;
+  template: SlipTemplateId;
+}
+
+function sameSlipSettings(saved: SavedSlipSettings, current: SavedSlipSettings) {
+  return (
+    saved.companyName === current.companyName &&
+    saved.companyAddress === current.companyAddress &&
+    saved.taxId === current.taxId &&
+    saved.footerText === current.footerText &&
+    saved.fontSize === current.fontSize &&
+    saved.paperSize === current.paperSize &&
+    saved.template === current.template
+  );
+}
+
 const SLIP_PREVIEW_ITEMS: CartItem[] = [
   {
     id: 'preview-1',
@@ -101,6 +123,7 @@ export default function AdminSettingsPage() {
   const [slipTemplate, setSlipTemplate] = useState<SlipTemplateId>('slip');
   const [slipLoading, setSlipLoading] = useState(true);
   const [slipSaving, setSlipSaving] = useState(false);
+  const [savedSlip, setSavedSlip] = useState<SavedSlipSettings | null>(null);
   const requestedTab = parseAdminTab(searchParams.get('tab'));
   const activeTab: AdminSettingsTab = requestedTab ?? 'slip';
   const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
@@ -160,6 +183,15 @@ export default function AdminSettingsPage() {
         setSlipFontSize(fontSize);
         setSlipTemplate(template);
         setSlipPaperSize(paper);
+        setSavedSlip({
+          companyName,
+          companyAddress,
+          taxId,
+          footerText,
+          fontSize,
+          paperSize: paper,
+          template,
+        });
 
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('slip_companyName', companyName);
@@ -178,6 +210,15 @@ export default function AdminSettingsPage() {
         setSlipFontSize('h2');
         setSlipTemplate('slip');
         setSlipPaperSize('80mm');
+        setSavedSlip({
+          companyName: slipDefaults.companyName,
+          companyAddress: slipDefaults.companyAddress,
+          taxId: '',
+          footerText: slipDefaults.footerText,
+          fontSize: 'h2',
+          paperSize: '80mm',
+          template: 'slip',
+        });
         // Slip preload is non-blocking; defaults apply until the Slip tab is opened.
         console.warn('Failed to load slip settings', err);
       } finally {
@@ -229,6 +270,15 @@ export default function AdminSettingsPage() {
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, result?.paperSize || slipPaperSize);
       }
 
+      setSavedSlip({
+        companyName: slipCompanyName,
+        companyAddress: slipCompanyAddress,
+        taxId: slipTaxId,
+        footerText: slipFooterText,
+        fontSize: slipFontSize,
+        paperSize: slipPaperSize,
+        template: slipTemplate,
+      });
       showSuccess('บันทึกการตั้งค่าสลิปเรียบร้อยแล้ว', 'การตั้งค่าถูกบันทึกเรียบร้อย', { autoClose: true, autoCloseDelay: 2000 });
     } catch (err) {
       showError('บันทึกการตั้งค่าสลิปไม่สำเร็จ', err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
@@ -251,6 +301,18 @@ export default function AdminSettingsPage() {
       template: slipTemplate,
     });
   }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize, slipTaxId, slipTemplate]);
+
+  const slipDirty =
+    savedSlip !== null &&
+    !sameSlipSettings(savedSlip, {
+      companyName: slipCompanyName,
+      companyAddress: slipCompanyAddress,
+      taxId: slipTaxId,
+      footerText: slipFooterText,
+      fontSize: slipFontSize,
+      paperSize: slipPaperSize,
+      template: slipTemplate,
+    });
 
   const handleSlipFontSizeChange = (id: SlipFontSizeId) => {
     setSlipFontSize(id);
@@ -320,6 +382,7 @@ export default function AdminSettingsPage() {
                   template={slipTemplate}
                   loading={slipLoading}
                   saving={slipSaving}
+                  dirty={slipDirty}
                   previewHtml={slipPreviewHtml}
                   onCompanyNameChange={setSlipCompanyName}
                   onCompanyAddressChange={setSlipCompanyAddress}

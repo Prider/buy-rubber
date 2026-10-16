@@ -9,14 +9,17 @@ export const SLIP_FONT_SIZE_STORAGE_KEY = 'slip_fontSize';
 
 export const SLIP_FONT_OPTIONS: ReadonlyArray<{
   id: SlipFontSizeId;
+  /** Operator-facing size name. */
+  name: string;
+  /** Heading code kept as the secondary label. */
   label: string;
   /** Percent of the built-in slip sizes. H3 is 100. */
   percent: number;
 }> = [
-  { id: 'h4', label: 'H4', percent: 80 },
-  { id: 'h3', label: 'H3', percent: 100 },
-  { id: 'h2', label: 'H2', percent: 120 },
-  { id: 'h1', label: 'H1', percent: 160 },
+  { id: 'h4', name: 'เล็ก', label: 'H4', percent: 80 },
+  { id: 'h3', name: 'ปานกลาง', label: 'H3', percent: 100 },
+  { id: 'h2', name: 'ใหญ่', label: 'H2', percent: 120 },
+  { id: 'h1', name: 'ใหญ่มาก', label: 'H1', percent: 160 },
 ];
 
 const DEFAULT_SLIP_FONT: SlipFontSizeId = 'h2';
@@ -47,6 +50,10 @@ export function slipFontPercentFor(id: SlipFontSizeId): number {
 
 export function slipFontLabelFor(id: SlipFontSizeId): string {
   return SLIP_FONT_OPTIONS.find((option) => option.id === id)?.label ?? 'H2';
+}
+
+export function slipFontNameFor(id: SlipFontSizeId): string {
+  return SLIP_FONT_OPTIONS.find((option) => option.id === id)?.name ?? 'ใหญ่';
 }
 
 /** Rounded CSS px for a base size at the chosen heading size. H3 keeps the base. */

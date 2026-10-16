@@ -3,6 +3,7 @@ import {
   SLIP_FONT_SIZE_STORAGE_KEY,
   getStoredSlipFontSize,
   normalizeSlipFontSize,
+  slipFontNameFor,
   slipFontPx,
 } from '../slipFont';
 
@@ -72,6 +73,15 @@ describe('slipFont', () => {
 
     it('uses H2 when nothing is stored', () => {
       expect(getStoredSlipFontSize()).toBe('h2');
+    });
+  });
+
+  describe('slipFontNameFor', () => {
+    it('uses Thai size names and does not call the 100% size มาตรฐาน', () => {
+      expect(slipFontNameFor('h4')).toBe('เล็ก');
+      expect(slipFontNameFor('h3')).toBe('ปานกลาง');
+      expect(slipFontNameFor('h2')).toBe('ใหญ่');
+      expect(slipFontNameFor('h1')).toBe('ใหญ่มาก');
     });
   });
 });

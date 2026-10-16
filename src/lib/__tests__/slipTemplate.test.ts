@@ -1,11 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
+  SLIP_TEMPLATE_OPTIONS,
   normalizeSlipTemplate,
   paperSizeForTemplate,
   resolveStoredSlipTemplate,
 } from '../slipTemplate';
 
 describe('slipTemplate', () => {
+  it('lists the default slip before the signature and A4 templates', () => {
+    expect(SLIP_TEMPLATE_OPTIONS.map((option) => option.id)).toEqual(['slip', 'signature', 'a4']);
+  });
+
   it('accepts the three template ids and falls back to the current slip', () => {
     expect(normalizeSlipTemplate('signature')).toBe('signature');
     expect(normalizeSlipTemplate('slip')).toBe('slip');

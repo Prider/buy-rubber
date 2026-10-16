@@ -205,7 +205,7 @@ test.describe('Admin flow', () => {
         r.url().startsWith(`${E2E_BASE_URL}/api/slip/settings`) &&
         r.request().method() === 'POST'
     )
-    await slipPanel(page).getByRole('button', { name: 'บันทึกข้อมูล' }).click()
+    await slipPanel(page).getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' }).click()
     const saveRes = await saveReq
     expect(saveRes.ok()).toBeTruthy()
 
@@ -238,12 +238,14 @@ test.describe('Admin flow', () => {
     page,
     request,
   }) => {
+    await setSlipSettings(request, { paperSize: '80mm', template: 'slip' })
     await openSlipTab(page)
 
     const panel = slipPanel(page)
     await panel.getByRole('radio', { name: /104mm/ }).click()
 
-    await expect(page.getByText(/104mm.*393 px/)).toBeVisible()
+    await expect(panel.locator('[data-preview-width="393"]')).toBeVisible()
+    await expect(panel.getByText(/104 มม\./)).toBeVisible()
 
     const iframe = page.frameLocator('iframe[title="ตัวอย่างใบรับซื้อ"]')
     await expect(iframe.locator('.slip')).toHaveAttribute('data-slip-width', '393')
@@ -253,7 +255,7 @@ test.describe('Admin flow', () => {
         r.url().startsWith(`${E2E_BASE_URL}/api/slip/settings`) &&
         r.request().method() === 'POST'
     )
-    await slipPanel(page).getByRole('button', { name: 'บันทึกข้อมูล' }).click()
+    await slipPanel(page).getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' }).click()
     const saveRes = await saveReq
     expect(saveRes.ok()).toBeTruthy()
 
@@ -266,6 +268,7 @@ test.describe('Admin flow', () => {
     await page.reload()
     await page.getByRole('tab', { name: 'ใบรับซื้อ (Slip)' }).click()
     await expect(slipPanel(page).getByRole('radio', { name: /104mm/ })).toBeChecked()
-    await expect(page.getByText(/104mm.*393 px/)).toBeVisible()
+    await expect(panel.locator('[data-preview-width="393"]')).toBeVisible()
+    await expect(panel.getByText(/104 มม\./)).toBeVisible()
   })
 })

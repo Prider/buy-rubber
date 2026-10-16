@@ -12,8 +12,8 @@ export const SLIP_TEMPLATE_OPTIONS: ReadonlyArray<{
   label: string;
   hint: string;
 }> = [
-  { id: 'signature', label: 'สลิปมีลายเซ็น', hint: 'ผู้รับเงิน / ผู้จ่ายเงิน' },
   { id: 'slip', label: 'สลิป', hint: 'มาตรฐาน' },
+  { id: 'signature', label: 'สลิปมีลายเซ็น', hint: 'ผู้รับเงิน / ผู้จ่ายเงิน' },
   { id: 'a4', label: 'ใบ A4', hint: 'กระดาษ A4' },
 ];
 

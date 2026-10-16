@@ -15,6 +15,17 @@
   gap: 8px 14px;
 }
 
+/* Library labels are px, so they ignore the app font size on html. */
+.slip-font-radio .animal-label-4sFiA,
+.slip-paper-radio .animal-label-4sFiA,
+.slip-template-radio .animal-label-4sFiA {
+  font-size: 0.875rem;
+}
+
+.app-font-radio .animal-label-4sFiA {
+  font-size: 1rem;
+}
+
 @media (max-width: 639px) {
   .slip-font-radio,
   .slip-paper-radio,

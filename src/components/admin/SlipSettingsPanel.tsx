@@ -5,7 +5,7 @@ import { Radio } from 'animal-island-ui';
 import {
   SLIP_FONT_OPTIONS,
   normalizeSlipFontSize,
-  slipFontLabelFor,
+  slipFontNameFor,
   type SlipFontSizeId,
 } from '@/lib/slipFont';
 import {
@@ -29,36 +29,28 @@ const PREVIEW_STAGE_HEIGHT = 560;
 
 function choiceLabel(primary: string, hint: string) {
   return (
-    <span className="inline-flex items-baseline gap-1 leading-tight">
+    <span className="inline-flex flex-col leading-tight">
       <span>{primary}</span>
       <span className="text-xs font-normal opacity-70">{hint}</span>
     </span>
   );
 }
 
-const FONT_HINT: Record<SlipFontSizeId, string> = {
-  h4: 'เล็ก',
-  h3: 'มาตรฐาน',
-  h2: 'ใหญ่',
-  h1: 'ใหญ่มาก',
-};
-
 const FONT_SIZE_RADIO_OPTIONS = SLIP_FONT_OPTIONS.map((opt) => ({
   value: opt.id,
-  label: choiceLabel(opt.label, FONT_HINT[opt.id]),
+  label: choiceLabel(opt.name, opt.label),
 }));
-
-const PAPER_HINT: Record<SlipPaperSizeId, string> = {
-  '58mm': 'เล็ก',
-  '80mm': 'มาตรฐาน',
-  '104mm': 'กว้าง',
-  a4: 'เลเซอร์',
-};
 
 const PAPER_SIZE_RADIO_OPTIONS = SLIP_PAPER_OPTIONS.filter((opt) => opt.id !== 'a4').map((opt) => ({
   value: opt.id,
-  label: choiceLabel(slipPaperShortLabel(opt.id), PAPER_HINT[opt.id]),
+  label: choiceLabel(slipPaperShortLabel(opt.id), opt.hint),
 }));
+
+function previewCaption(paperSize: SlipPaperSizeId, templateLabel: string, fontSize: SlipFontSizeId) {
+  const paper =
+    paperSize === 'a4' ? 'A4' : `${slipPaperShortLabel(paperSize).replace(/mm$/, '')} มม.`;
+  return `${paper} · ${templateLabel} · ${slipFontNameFor(fontSize)}`;
+}
 
 const TEMPLATE_RADIO_OPTIONS = SLIP_TEMPLATE_OPTIONS.map((opt) => ({
   value: opt.id,
@@ -78,6 +70,7 @@ interface SlipSettingsPanelProps {
   template: SlipTemplateId;
   loading: boolean;
   saving: boolean;
+  dirty: boolean;
   previewHtml: string;
   onCompanyNameChange: (value: string) => void;
   onCompanyAddressChange: (value: string) => void;
@@ -99,6 +92,7 @@ export function SlipSettingsPanel({
   template,
   loading,
   saving,
+  dirty,
   previewHtml,
   onCompanyNameChange,
   onCompanyAddressChange,
@@ -113,7 +107,15 @@ export function SlipSettingsPanel({
   const sheetHeightMm = slipSheetHeightMm(paperSize);
   const previewFrameHeight = sheetHeightMm ? cssPxFromMm(sheetHeightMm) : PREVIEW_IFRAME_HEIGHT;
   const stageRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLTextAreaElement>(null);
   const [stageWidth, setStageWidth] = useState(0);
+
+  useEffect(() => {
+    const node = footerRef.current;
+    if (!node) return;
+    node.style.height = 'auto';
+    node.style.height = `${node.scrollHeight}px`;
+  }, [footerText]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -161,16 +163,16 @@ export function SlipSettingsPanel({
             )}
           </div>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            ข้อความบนใบและรูปแบบการพิมพ์ ตัวอย่างอัปเดตทันที
+            ตัวอย่างอัปเดตทันที บันทึกแล้วข้อความจึงไปปรากฏบนใบรับซื้อ
           </p>
         </div>
         <button
           type="button"
           onClick={onSave}
-          disabled={busy}
+          disabled={busy || !dirty}
           className="min-h-10 w-full shrink-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
-          {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+          {saving ? 'กำลังบันทึก...' : dirty ? 'บันทึกการเปลี่ยนแปลง' : 'บันทึกข้อมูล'}
         </button>
       </div>
 
@@ -224,12 +226,13 @@ export function SlipSettingsPanel({
                   ข้อความท้ายใบ
                 </label>
                 <textarea
+                  ref={footerRef}
                   id="slip-footer-text"
                   value={footerText}
                   onChange={(e) => onFooterTextChange(e.target.value)}
                   disabled={busy}
                   rows={2}
-                  className={`${fieldClass} resize-none`}
+                  className={`${fieldClass} min-h-16 resize-none overflow-hidden`}
                 />
               </div>
             </div>
@@ -294,8 +297,11 @@ export function SlipSettingsPanel({
         <div className="order-1 min-w-0 border-b border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40 md:order-2 md:border-b-0 md:border-l md:dark:border-gray-700">
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300">ตัวอย่างใบรับซื้อ</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {slipPaperShortLabel(paperSize)} · {templateLabel} · {slipFontLabelFor(fontSize)} · {previewFrameWidth} px
+            <p
+              data-preview-width={previewFrameWidth}
+              className="text-xs text-gray-500 dark:text-gray-400"
+            >
+              {previewCaption(paperSize, templateLabel, fontSize)}
             </p>
           </div>
           <div className="rounded-xl bg-gray-100 p-2.5 dark:bg-gray-950/60">

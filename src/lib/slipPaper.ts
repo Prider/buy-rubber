@@ -16,13 +16,15 @@ export const SLIP_PAPER_OPTIONS: ReadonlyArray<{
   label: string;
   /** Short label on the paper-size control. */
   shortLabel: string;
+  /** Printer the roll is for. Shown beside the width. */
+  hint: string;
   /** Nominal physical width of the print column (mm). A4 uses full sheet width 210mm. */
   widthMm: number;
 }> = [
-  { id: '58mm', label: '58mm — เครื่องพิมพ์ความร้อนเล็ก', shortLabel: '58mm', widthMm: 58 },
-  { id: '80mm', label: '80mm — เครื่องพิมพ์ความร้อนมาตรฐาน', shortLabel: '80mm', widthMm: 80 },
-  { id: '104mm', label: '104mm — กระดาษกว้าง', shortLabel: '104mm', widthMm: 104 },
-  { id: 'a4', label: `${A4_WIDTH_MM}mm — อิงค์เจ็ต / เลเซอร์`, shortLabel: `${A4_WIDTH_MM}mm`, widthMm: A4_WIDTH_MM },
+  { id: '58mm', label: '58mm — เครื่องพิมพ์ความร้อนเล็ก', shortLabel: '58mm', hint: 'เครื่องพิมพ์ความร้อนเล็ก', widthMm: 58 },
+  { id: '80mm', label: '80mm — เครื่องพิมพ์ความร้อนมาตรฐาน', shortLabel: '80mm', hint: 'เครื่องพิมพ์ความร้อนมาตรฐาน', widthMm: 80 },
+  { id: '104mm', label: '104mm — กระดาษกว้าง', shortLabel: '104mm', hint: 'กระดาษกว้าง', widthMm: 104 },
+  { id: 'a4', label: `${A4_WIDTH_MM}mm — อิงค์เจ็ต / เลเซอร์`, shortLabel: `${A4_WIDTH_MM}mm`, hint: 'อิงค์เจ็ต / เลเซอร์', widthMm: A4_WIDTH_MM },
 ];
 
 const DEFAULT_SLIP_PAPER: SlipPaperSizeId = '80mm';
