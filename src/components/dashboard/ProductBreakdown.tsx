@@ -79,7 +79,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
         {canScrollLeft ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-white from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200 lg:hidden"
+            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-white from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200"
           >
             &lt;&lt;
           </span>
@@ -87,7 +87,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
         {canScrollRight ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-white from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200 lg:hidden"
+            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-white from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200"
           >
             &gt;&gt;
           </span>
