@@ -23,8 +23,7 @@ test.describe('Dashboard dark mode', () => {
     expect(await statValues.count()).toBeGreaterThan(0)
 
     const sectionHeadings = [
-      page.getByRole('heading', { name: 'ราคาวันนี้' }),
-      page.getByRole('heading', { name: 'แบ่งตามประเภท' }),
+      page.getByRole('heading', { name: 'ประเภทสินค้า' }),
       page.getByRole('heading', { name: 'รายการรับซื้อวันนี้' }),
       page.getByRole('heading', { name: 'แนวโน้ม 7 วัน' }),
     ]

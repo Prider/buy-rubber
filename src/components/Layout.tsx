@@ -42,6 +42,7 @@ const NAV_ITEMS: NavigationItem[] = [
   { name: 'บริษัทปลายทาง', href: '/destination-companies', icon: '🏢' },
   { name: 'ค่าใช้จ่าย', href: '/expenses', icon: '💰' },
   { name: 'รายงาน', href: '/reports', icon: '📈', accountantVisible: true },
+  { name: 'คู่มือ', href: '/guide', icon: '📖', accountantVisible: true },
 ];
 
 interface LayoutProps {

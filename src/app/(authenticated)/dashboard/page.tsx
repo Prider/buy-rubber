@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useDashboardData, type ProductBreakdownRow } from '@/hooks/useDashboardData';
 import { isWithinPeriod, productTypeMatches, type DashboardPeriod } from '@/lib/dashboard/activity';
 import ActivityList, { formatActivityWhen, formatWeightDetail, type ActivityRow } from '@/components/dashboard/ActivityList';
-import PriceStrip from '@/components/dashboard/PriceStrip';
+import ExpensePieChart from '@/components/dashboard/ExpensePieChart';
 import ProductBreakdown from '@/components/dashboard/ProductBreakdown';
 import SummaryMetricCards, { type DashboardMetric } from '@/components/dashboard/SummaryMetricCards';
 import WeekTrendChart from '@/components/dashboard/WeekTrendChart';
@@ -47,7 +47,6 @@ export default function DashboardPage() {
     stats,
     bounds,
     trend,
-    todayPrices,
     productTypes,
     recentPurchases,
     recentSales,
@@ -179,15 +178,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5">
-        <div className="min-w-0">
-          <h2 className="text-base font-bold">
+    <div className="flex min-w-0 flex-col rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h2 className="shrink-0 text-base font-bold">
             <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
               แดชบอร์ด
             </span>
           </h2>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{todayLabel}</p>
+          <p className="truncate text-sm text-gray-500 dark:text-gray-400">{todayLabel}</p>
         </div>
         <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800" role="group" aria-label="ช่วงเวลา">
           {(['today', 'month'] as const).map((value) => {
@@ -211,32 +210,39 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 md:gap-5 sm:px-5">
+      <div className="flex flex-col gap-2.5 px-3 py-2.5 sm:px-4 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100" role="alert">
+        <p className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100" role="alert">
           {error}
         </p>
       ) : null}
 
-      <PriceStrip productTypes={productTypes} todayPrices={todayPrices} />
-      <SummaryMetricCards stats={stats} period={period} metric={metric} onSelect={setMetric} />
       <ProductBreakdown
         rows={breakdown as ProductBreakdownRow[]}
         selectedId={metric === 'serviceFees' || metric === 'expenses' ? null : productTypeId}
         onSelect={selectProduct}
       />
-      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-5">
-        <div className="min-w-0 lg:col-span-2">
-          <ActivityList
-            title={listTitle}
-            metric={metric}
-            rows={activity}
-            emptyLabel={productTypeId && (metric === 'purchases' || metric === 'sales')
-              ? 'ยังไม่มีรายการของประเภทนี้'
-              : EMPTY_LABEL[metric]}
-          />
+      <SummaryMetricCards stats={stats} period={period} metric={metric} onSelect={setMetric} />
+      <div className="grid grid-cols-1 gap-2.5 lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:grid-rows-1">
+        <div className="min-w-0 lg:col-span-2 lg:h-full lg:min-h-0">
+          {metric === 'expenses' ? (
+            <ExpensePieChart
+              title={listTitle}
+              rows={activity}
+              emptyLabel={EMPTY_LABEL.expenses}
+            />
+          ) : (
+            <ActivityList
+              title={listTitle}
+              metric={metric}
+              rows={activity}
+              emptyLabel={productTypeId && (metric === 'purchases' || metric === 'sales')
+                ? 'ยังไม่มีรายการของประเภทนี้'
+                : EMPTY_LABEL[metric]}
+            />
+          )}
         </div>
-        <div className="min-w-0 lg:col-span-3">
+        <div className="min-w-0 lg:col-span-3 lg:h-full lg:min-h-0">
           <WeekTrendChart points={trend} />
         </div>
       </div>

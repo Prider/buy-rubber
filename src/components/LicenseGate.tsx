@@ -7,7 +7,7 @@ import ActivateLicenseForm from '@/components/ActivateLicenseForm';
 import LicenseBlocked from '@/components/LicenseBlocked';
 import { useLicense } from '@/contexts/LicenseContext';
 
-const PUBLIC_LICENSE_PATHS = ['/activate', '/landing'];
+const PUBLIC_LICENSE_PATHS = ['/activate', '/landing', '/guide'];
 
 interface LicenseGateProps {
   children: ReactNode;
@@ -31,6 +31,8 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     pathname === '/activate' || Boolean(pathname?.startsWith('/activate/'));
   const isLandingPath =
     pathname === '/landing' || Boolean(pathname?.startsWith('/landing/'));
+  const isGuidePath =
+    pathname === '/guide' || Boolean(pathname?.startsWith('/guide/'));
   const isPublicPath = PUBLIC_LICENSE_PATHS.some(
     (path) => pathname === path || pathname?.startsWith(`${path}/`)
   );
@@ -60,6 +62,10 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     pathname,
     router,
   ]);
+
+  if (isGuidePath) {
+    return <>{children}</>;
+  }
 
   if (isLoading && !isActivatePath) {
     return (

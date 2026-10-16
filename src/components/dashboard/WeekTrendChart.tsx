@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -50,9 +51,23 @@ function ChartTooltip({
 }
 
 export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setDark(root.classList.contains('dark'));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const tickFill = dark ? '#e2e8f0' : '#334155';
+  const gridStroke = dark ? '#374151' : '#e5e7eb';
+
   return (
-    <section className="flex h-full min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-4">
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+    <section className="flex min-h-[16rem] min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:h-full lg:min-h-0">
+      <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <DashboardHeading tone="trend">แนวโน้ม 7 วัน</DashboardHeading>
         <div className="flex gap-3 text-xs font-medium text-gray-700 dark:text-gray-200">
           <span className="inline-flex items-center gap-1.5">
@@ -65,25 +80,26 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
           </span>
         </div>
       </div>
-      <div className="h-[240px] min-h-[240px]">
+      <div className="relative min-h-[12rem] flex-1 lg:min-h-0">
         {points.length === 0 ? (
           <p className="flex h-full items-center justify-center text-sm text-gray-700 dark:text-gray-200">
             ยังไม่มีข้อมูลแนวโน้ม
           </p>
         ) : (
+          <div className="absolute inset-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={points} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={4} barCategoryGap="22%">
-              <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 8" vertical={false} />
+              <CartesianGrid stroke={gridStroke} strokeDasharray="4 8" vertical={false} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#334155', fontSize: 12 }}
+                tick={{ fill: tickFill, fontSize: 12 }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#334155', fontSize: 12 }}
+                tick={{ fill: tickFill, fontSize: 12 }}
                 tickFormatter={(value: number) => compactAmount.format(value)}
                 width={48}
               />
@@ -92,6 +108,7 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
               <Bar dataKey="saleAmount" name="ขาย" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         )}
       </div>
     </section>

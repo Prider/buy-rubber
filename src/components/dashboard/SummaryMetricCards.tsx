@@ -62,7 +62,7 @@ const METRICS: Array<{
 
 export default function SummaryMetricCards({ stats, period, metric, onSelect }: SummaryMetricCardsProps) {
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3">
+    <div className="grid shrink-0 grid-cols-2 gap-2 md:grid-cols-4">
       {METRICS.map((item) => {
         const selected = metric === item.id;
         const count = Number(period === 'today' ? stats[item.todayCount] : stats[item.monthCount]) || 0;
@@ -76,23 +76,25 @@ export default function SummaryMetricCards({ stats, period, metric, onSelect }: 
             type="button"
             aria-pressed={selected}
             onClick={() => onSelect(item.id)}
-            className={`rounded-2xl border-2 p-3 text-left shadow-sm transition-colors duration-150 ${
+            className={`rounded-2xl border-2 px-3 py-2 text-left shadow-sm transition-colors duration-150 ${
               selected
                 ? 'border-transparent [background:linear-gradient(#fff,#fff)_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(#1f2937,#1f2937)_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
                 : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500'
             }`}
           >
-            <span className={`inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${item.iconClass}`}>
-              {item.title}
-            </span>
-            <p className="mt-2 text-4xl font-bold tabular-nums tracking-tight text-gray-950 dark:text-white">
+            <div className="flex items-center justify-between gap-2">
+              <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ${item.iconClass}`}>
+                {item.title}
+              </span>
+              <span className="truncate text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
+                {secondaryLabel} {formatCurrency(secondaryAmount)}
+              </span>
+            </div>
+            <p className="mt-1 text-4xl font-bold leading-none tabular-nums tracking-tight text-gray-950 dark:text-white">
               {countFormat.format(count)}
             </p>
-            <p className="mt-1 text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">
+            <p className="mt-1 truncate text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">
               {formatCurrency(amount)}
-            </p>
-            <p className="mt-1 text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
-              {secondaryLabel} {formatCurrency(secondaryAmount)}
             </p>
           </button>
         );

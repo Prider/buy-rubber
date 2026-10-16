@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
@@ -179,6 +180,11 @@ export default function ActivateLicenseForm({
             <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50">
               <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                 หากยังไม่มี License Key กรุณาติดต่อผู้ดูแลระบบ
+              </p>
+              <p className="mt-2 text-center text-sm">
+                <Link href="/guide#first-time" className="font-semibold text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200">
+                  วิธีเปิดใช้งานครั้งแรก
+                </Link>
               </p>
             </div>
           )}

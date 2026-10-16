@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { homePathForRole } from '@/types/user';
@@ -192,6 +193,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Footer */}
           <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+              <Link href="/guide" className="font-semibold text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200">
+                อ่านคู่มือผู้ใช้งาน
+              </Link>
+            </p>
+            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
               © 2025 Yang Dee. All rights reserved.
             </p>
           </div>

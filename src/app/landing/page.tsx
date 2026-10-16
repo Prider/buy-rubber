@@ -1229,6 +1229,11 @@ function LandingPage() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/guide" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
+                    คู่มือผู้ใช้งาน
+                  </Link>
+                </li>
+                <li>
                   <Link href="/landing#reviews" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
                     อ่านรีวิว
                   </Link>
