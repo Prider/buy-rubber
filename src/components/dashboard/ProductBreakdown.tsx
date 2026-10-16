@@ -1,4 +1,7 @@
-import { formatCurrency, formatNumber } from '@/lib/utils';
+'use client';
+
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { formatNumber } from '@/lib/utils';
 import type { ProductBreakdownRow } from '@/hooks/useDashboardData';
 import DashboardHeading from './DashboardHeading';
 
@@ -9,11 +12,36 @@ interface ProductBreakdownProps {
 }
 
 export default function ProductBreakdown({ rows, selectedId, onSelect }: ProductBreakdownProps) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollHints = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    setCanScrollLeft(scroller.scrollLeft > 4);
+    setCanScrollRight(scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 4);
+  }, []);
+
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    updateScrollHints();
+    scroller.addEventListener('scroll', updateScrollHints, { passive: true });
+    const observer = new ResizeObserver(updateScrollHints);
+    observer.observe(scroller);
+    return () => {
+      scroller.removeEventListener('scroll', updateScrollHints);
+      observer.disconnect();
+    };
+  }, [rows, updateScrollHints]);
+
   return (
     <section className="flex min-w-0 shrink-0 items-center gap-3">
       <DashboardHeading tone="violet" className="hidden shrink-0 md:block">ประเภทสินค้า</DashboardHeading>
       {rows.length > 0 ? (
-        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto overscroll-x-contain">
+        <div className="relative min-w-0 flex-1">
+        <div ref={scrollerRef} className="flex min-w-0 gap-1.5 overflow-x-auto overscroll-x-contain">
           {rows.map((row) => {
             const id = row.productTypeId || '';
             const selected = selectedId === id && id !== '';
@@ -42,14 +70,28 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
                   {row.count || 0} รายการ
                 </span>
                 <span className="text-sm font-bold tabular-nums text-gray-950 dark:text-white">
-                  {formatCurrency(row.totalAmount || 0)}
-                </span>
-                <span className="text-xs font-semibold tabular-nums text-gray-800 dark:text-gray-100">
                   {formatNumber(row.totalWeight || 0)} กก.
                 </span>
               </button>
             );
           })}
+        </div>
+        {canScrollLeft ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-white from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200 lg:hidden"
+          >
+            &lt;&lt;
+          </span>
+        ) : null}
+        {canScrollRight ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-white from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200 lg:hidden"
+          >
+            &gt;&gt;
+          </span>
+        ) : null}
         </div>
       ) : (
         <p className="text-sm text-gray-700 dark:text-gray-200">ยังไม่มีรายการในช่วงนี้</p>
