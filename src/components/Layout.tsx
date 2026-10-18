@@ -204,7 +204,7 @@ export default function Layout({ children }: LayoutProps) {
   });
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--app-bg)]">
       {/* Sidebar — drawer on phones, icon rail on tablets, persistent column on desktop */}
       <aside
         id="app-sidebar"

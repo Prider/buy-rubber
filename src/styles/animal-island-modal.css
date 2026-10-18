@@ -10,7 +10,7 @@
 }
 
 .animal-modalClipped-7IuAw {
-  background: #ffffff;
+  background: var(--tone-surface-hex);
   color: #111827;
   font-family: inherit;
 }
@@ -58,12 +58,12 @@
 
 .animal-btn-default-L7yE6 {
   color: #374151;
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  background: rgb(var(--tone-muted-light));
+  border-color: rgb(var(--tone-border));
 }
 
 .dark .animal-modalClipped-7IuAw {
-  background: #1f2937;
+  background: var(--tone-panel-hex);
   color: #f3f4f6;
 }
 
@@ -81,8 +81,8 @@
 
 .dark .animal-btn-default-L7yE6 {
   color: #e5e7eb;
-  background: #4b5563;
-  border-color: #4b5563;
+  background: rgb(var(--tone-chip-dark));
+  border-color: rgb(var(--tone-chip-dark));
 }
 
 /* Admin user modals: keep the island dialog inside phone and tablet screens. */

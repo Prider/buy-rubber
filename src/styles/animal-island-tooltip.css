@@ -8,7 +8,7 @@
 
 /* Match app surfaces: white / gray-800, gray borders, same text as cards. */
 .animal-tooltip-UY7BU:not(.animal-island-xz5YK) {
-  background: #ffffff;
+  background: var(--tone-surface-hex);
   color: #111827;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
   font-family: inherit !important;
@@ -19,12 +19,12 @@
 }
 
 .animal-tooltip-UY7BU:not(.animal-island-xz5YK):after {
-  background: #ffffff;
+  background: var(--tone-surface-hex);
   border-color: #e5e7eb;
 }
 
 .dark .animal-tooltip-UY7BU:not(.animal-island-xz5YK) {
-  background: #1f2937;
+  background: var(--tone-panel-hex);
   color: #f3f4f6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -34,6 +34,6 @@
 }
 
 .dark .animal-tooltip-UY7BU:not(.animal-island-xz5YK):after {
-  background: #1f2937;
+  background: var(--tone-panel-hex);
   border-color: #4b5563;
 }

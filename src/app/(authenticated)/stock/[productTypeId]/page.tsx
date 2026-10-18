@@ -156,7 +156,7 @@ export default function StockDetailPage() {
   }
 
   return (
-    <div className="min-h-[60vh] bg-gray-50 dark:bg-gray-900 pb-8">
+    <div className="min-h-[60vh] bg-[var(--app-bg)] pb-8">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold">

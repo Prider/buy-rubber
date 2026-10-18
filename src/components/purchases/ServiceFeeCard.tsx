@@ -48,7 +48,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   };
 
   return (
-    <div className="overflow-hidden bg-gray-50 dark:bg-gray-900 lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
+    <div className="overflow-hidden bg-[var(--app-bg)] lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
       <div className="p-4 space-y-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">

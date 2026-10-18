@@ -353,7 +353,7 @@ export default function UserGuide() {
   const backLabel = user ? 'กลับโปรแกรม' : 'เข้าสู่ระบบ';
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-[var(--app-bg)] text-gray-900 dark:text-gray-100">
       <button
         type="button"
         onClick={() => document.getElementById('guide-article')?.focus()}

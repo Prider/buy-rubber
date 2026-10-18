@@ -78,7 +78,7 @@ export default function SummaryMetricCards({ stats, period, metric, onSelect }: 
             onClick={() => onSelect(item.id)}
             className={`rounded-2xl border-2 px-3 py-2 text-left shadow-sm transition-colors duration-150 ${
               selected
-                ? 'border-transparent [background:linear-gradient(#fff,#fff)_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(#1f2937,#1f2937)_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
+                ? 'border-transparent [background:linear-gradient(var(--tone-surface-hex),var(--tone-surface-hex))_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(var(--tone-panel-hex),var(--tone-panel-hex))_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
                 : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500'
             }`}
           >

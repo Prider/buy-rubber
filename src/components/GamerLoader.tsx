@@ -109,7 +109,7 @@ function PickupTruck({ colorClass, delay }: { colorClass: string; delay?: string
 
 export function GamerLoader({ fullScreen = false, message = ' กำลังโหลด...', className = '' }: GamerLoaderProps) {
   return (
-    <div className={`${fullScreen ? 'min-h-screen flex items-center justify-center' : ''} ${className}`}>
+    <div className={`${fullScreen ? 'flex min-h-screen items-center justify-center bg-[var(--app-bg)]' : ''} ${className}`}>
       <div className="text-center">
         <div className="flex items-end justify-center gap-1.5 sm:gap-3">
           <BoxTruck colorClass="text-sky-500 dark:text-sky-400" />

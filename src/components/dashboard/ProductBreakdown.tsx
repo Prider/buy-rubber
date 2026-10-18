@@ -54,7 +54,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
                 title={row.productTypeName}
                 className={`flex shrink-0 items-baseline gap-2 rounded-xl border-2 px-2.5 py-1.5 text-left shadow-sm transition-colors duration-150 ${
                   selected
-                    ? 'border-transparent [background:linear-gradient(#fff,#fff)_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(#1f2937,#1f2937)_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
+                    ? 'border-transparent [background:linear-gradient(var(--tone-surface-hex),var(--tone-surface-hex))_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(var(--tone-panel-hex),var(--tone-panel-hex))_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
                     : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500'
                 }`}
               >
@@ -79,7 +79,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
         {canScrollLeft ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-white from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200"
+            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-[var(--tone-surface-hex)] from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
           >
             &lt;&lt;
           </span>
@@ -87,7 +87,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
         {canScrollRight ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-white from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-gray-800 dark:text-violet-200"
+            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[var(--tone-surface-hex)] from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
           >
             &gt;&gt;
           </span>

@@ -422,7 +422,7 @@ export default function StockPositionsPanel({
 
   return (
     <>
-      <div className={embedded ? '' : 'min-h-[60vh] bg-gray-50 pb-8 dark:bg-gray-900'}>
+      <div className={embedded ? '' : 'min-h-[60vh] bg-[var(--app-bg)] pb-8'}>
         {error ? <p className="mb-4 text-red-600">{error}</p> : null}
 
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">

@@ -8,6 +8,12 @@ import {
   SYSTEM_APP_FONT_STACK,
 } from '@/lib/appFontFamily';
 import { APP_FONT_SIZE_PX, APP_FONT_SIZE_STORAGE_KEY } from '@/lib/appFontSize';
+import {
+  APP_BG_DARK_STORAGE_KEY,
+  APP_BG_DARK_TONE,
+  APP_BG_LIGHT_STORAGE_KEY,
+  APP_BG_LIGHT_TONE,
+} from '@/lib/appBackground';
 import { DarkModeProvider } from '@/contexts/DarkModeContext';
 import { AppModeProvider } from '@/contexts/AppModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -89,6 +95,15 @@ export default function RootLayout({
                   rootStyle.setProperty('--app-font-family', family);
                   rootStyle.setProperty('--animal-font-family', controlFamily);
                   rootStyle.setProperty('--app-control-font-family', controlFamily);
+
+                  const lightTones = ${JSON.stringify(APP_BG_LIGHT_TONE)};
+                  const darkTones = ${JSON.stringify(APP_BG_DARK_TONE)};
+                  const storedLightBg = localStorage.getItem(${JSON.stringify(APP_BG_LIGHT_STORAGE_KEY)});
+                  const storedDarkBg = localStorage.getItem(${JSON.stringify(APP_BG_DARK_STORAGE_KEY)});
+                  const lightTone = lightTones[storedLightBg] || lightTones['off-white'];
+                  const darkTone = darkTones[storedDarkBg] || darkTones['dark-charcoal'];
+                  Object.keys(lightTone).forEach(function (key) { rootStyle.setProperty(key, lightTone[key]); });
+                  Object.keys(darkTone).forEach(function (key) { rootStyle.setProperty(key, darkTone[key]); });
                 } catch (e) {}
               })();
             `,

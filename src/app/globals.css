@@ -20,8 +20,8 @@
     --animal-error-color-active: #c94444;
     --animal-text-color: #111827;
     --animal-border-color: #e5e7eb;
-    --animal-bg-color: #ffffff;
-    --animal-bg-color-secondary: #f3f4f6;
+    --animal-bg-color: var(--tone-surface-hex);
+    --animal-bg-color-secondary: rgb(var(--tone-muted));
     --animal-mask-bg: rgba(0, 0, 0, 0.6);
     --app-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     --app-control-font-family: Nunito, 'Noto Sans SC', -apple-system, sans-serif;
@@ -40,6 +40,29 @@
     --animal-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
     --animal-height-sm: 32px;
     --animal-height-lg: 48px;
+    --tone-surface: 255 255 255;
+    --tone-surface-hex: #ffffff;
+    --tone-canvas-light: 249 250 251;
+    --tone-muted-light: 243 244 246;
+    --tone-chip-light: 229 231 235;
+    --tone-border-soft: 243 244 246;
+    --tone-border: 229 231 235;
+    --tone-panel: 31 41 55;
+    --tone-panel-hex: #1f2937;
+    --tone-deep: 17 24 39;
+    --tone-inset: 55 65 81;
+    --tone-chip-dark: 75 85 99;
+    --tone-canvas: var(--tone-canvas-light);
+    --tone-muted: var(--tone-muted-light);
+    --tone-chip: var(--tone-chip-light);
+    --tone-panel-bg: 31 41 55;
+    --tone-deep-bg: 17 24 39;
+    --tone-inset-bg: 55 65 81;
+    --tone-control: 75 85 99;
+    --tone-border-dark: 55 65 81;
+    --app-bg-light: #f9fafb;
+    --app-bg-dark: #111827;
+    --app-bg: var(--app-bg-light);
   }
   
   .dark {
@@ -47,13 +70,23 @@
     --foreground: 210 40% 98%;
     --animal-text-color: #f3f4f6;
     --animal-border-color: #4b5563;
-    --animal-bg-color: #1f2937;
-    --animal-bg-color-secondary: #374151;
+    --animal-bg-color: var(--tone-panel-hex);
+    --animal-bg-color-secondary: rgb(var(--tone-inset));
     --animal-mask-bg: rgba(0, 0, 0, 0.6);
+    --tone-canvas: var(--tone-deep);
+    --tone-muted: var(--tone-inset);
+    --tone-chip: var(--tone-chip-dark);
+    --tone-panel-bg: var(--tone-panel);
+    --tone-deep-bg: var(--tone-deep);
+    --tone-inset-bg: var(--tone-inset);
+    --tone-control: var(--tone-chip-dark);
+    --tone-border-dark: var(--tone-inset);
+    --app-bg: var(--app-bg-dark);
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+    background-color: var(--app-bg);
+    @apply text-gray-900 dark:text-gray-100;
     font-family: var(--app-font-family);
   }
 }

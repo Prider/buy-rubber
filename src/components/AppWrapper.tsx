@@ -27,7 +27,7 @@ export default function AppWrapper({ children }: AppWrapperProps) {
   // Show loading while checking configuration or authentication
   if (loading || authLoading) {
     return (
-      <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="min-h-screen bg-[var(--app-bg)]">
         <GamerLoader fullScreen message="กำลังโหลด..." />
       </div>
     );

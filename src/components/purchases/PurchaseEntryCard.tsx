@@ -316,7 +316,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 
 
   return (
-    <div className="flex flex-col overflow-visible bg-gray-50 dark:bg-gray-900 lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
+    <div className="flex flex-col overflow-visible bg-[var(--app-bg)] lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
       {/* Header */}
       <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-2 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-4 lg:py-2.5">
         <div className="flex items-center gap-2">

@@ -11,7 +11,7 @@ export default function ActivatePage() {
   // even if a background license check flips isLoading.
   if (isLoading && !awaitingAcknowledgment) {
     return (
-      <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="min-h-screen bg-[var(--app-bg)]">
         <GamerLoader fullScreen message="กำลังโหลด..." />
       </div>
     );

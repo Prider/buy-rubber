@@ -11,6 +11,25 @@ module.exports = {
   },
   theme: {
     extend: {
+      backgroundColor: {
+        white: 'rgb(var(--tone-surface) / <alpha-value>)',
+        gray: {
+          50: 'rgb(var(--tone-canvas) / <alpha-value>)',
+          100: 'rgb(var(--tone-muted) / <alpha-value>)',
+          200: 'rgb(var(--tone-chip) / <alpha-value>)',
+          600: 'rgb(var(--tone-control) / <alpha-value>)',
+          700: 'rgb(var(--tone-inset-bg) / <alpha-value>)',
+          800: 'rgb(var(--tone-panel-bg) / <alpha-value>)',
+          900: 'rgb(var(--tone-deep-bg) / <alpha-value>)',
+        },
+      },
+      borderColor: {
+        gray: {
+          100: 'rgb(var(--tone-border-soft) / <alpha-value>)',
+          200: 'rgb(var(--tone-border) / <alpha-value>)',
+          700: 'rgb(var(--tone-border-dark) / <alpha-value>)',
+        },
+      },
       colors: {
         primary: {
           50: '#f0f9ff',
