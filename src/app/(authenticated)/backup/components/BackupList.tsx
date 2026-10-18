@@ -71,9 +71,11 @@ export function BackupList({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          ประวัติการสำรองข้อมูล ({backups.length})
+      <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+        <h3 className="text-lg font-bold">
+          <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+            ประวัติการสำรองข้อมูล ({backups.length})
+          </span>
         </h3>
       </div>
 

@@ -16,7 +16,7 @@ interface CreateUserModalProps {
 const FORM_ID = 'create-user-form';
 
 const fieldClassName =
-  'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-medium text-gray-900 outline-none transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-600 dark:disabled:text-gray-400';
+  'w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-base font-medium text-gray-900 outline-none transition-all duration-200 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary-500 disabled:bg-gray-200 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:bg-gray-700 dark:disabled:bg-gray-600 dark:disabled:text-gray-400';
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
