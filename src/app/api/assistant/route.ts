@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!assistantConfigured()) {
       return NextResponse.json(
-        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วย' },
+        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ' },
         { status: 503 },
       );
     }
@@ -55,19 +55,19 @@ export async function POST(request: NextRequest) {
     const code = error instanceof Error ? error.message : '';
     if (code === 'OPENROUTER_AUTH') {
       return NextResponse.json(
-        { error: 'คีย์ผู้ช่วยใช้ไม่ได้' },
+        { error: 'คีย์ผู้ช่วยอัจฉริยะใช้ไม่ได้' },
         { status: 502 },
       );
     }
     if (code === 'ASSISTANT_NOT_CONFIGURED') {
       return NextResponse.json(
-        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วย' },
+        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ' },
         { status: 503 },
       );
     }
     logger.error('POST /api/assistant - Failed', error);
     return NextResponse.json(
-      { error: 'ไม่สามารถถามผู้ช่วยได้ในขณะนี้' },
+      { error: 'ไม่สามารถถามผู้ช่วยอัจฉริยะได้ในขณะนี้' },
       { status: 502 },
     );
   }

@@ -28,6 +28,7 @@ describe('user guide topics', () => {
     expect(searchTopics('รับซื้อ')[0]?.id).toBe('purchase');
     expect(searchTopics('สำรอง').some((topic) => topic.id === 'backup')).toBe(true);
     expect(searchTopics('admin123').some((topic) => topic.id === 'first-time')).toBe(true);
+    expect(searchTopics('ผู้ช่วยอัจฉริยะ').some((topic) => topic.id === 'assistant')).toBe(true);
     expect(searchTopics('ไม่มีหัวข้อนี้จริงๆ')).toEqual([]);
   });
 });

@@ -539,9 +539,9 @@ function AssistantNavButton({
     <button
       type="button"
       onClick={onOpen}
-      aria-label="AI Assistant"
+      aria-label="ผู้ช่วยอัจฉริยะ"
       aria-pressed={open}
-      title={tooltip || labelsVisible ? undefined : 'AI Assistant'}
+      title={tooltip || labelsVisible ? undefined : 'ผู้ช่วยอัจฉริยะ'}
       className={`group relative flex min-h-11 w-full items-center rounded-lg px-2 py-2.5 text-left transition-[color,transform] duration-150 ease-out motion-safe:active:scale-[0.96] ${
         labelsVisible ? '' : 'justify-center'
       } ${
@@ -566,7 +566,7 @@ function AssistantNavButton({
       <span className={`relative z-10 overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
         labelsVisible ? 'ml-2 w-auto opacity-100' : 'ml-0 w-0 opacity-0'
       } ${open ? 'font-semibold' : 'font-medium'}`}>
-        AI Assistant
+        ผู้ช่วยอัจฉริยะ
       </span>
       <div className="absolute inset-0 -z-0 rounded-lg bg-gray-50/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-700/20" />
     </button>
@@ -574,7 +574,7 @@ function AssistantNavButton({
 
   if (tooltip) {
     return (
-      <Tooltip title="AI Assistant" placement="right" className="flex w-full">
+      <Tooltip title="ผู้ช่วยอัจฉริยะ" placement="right" className="flex w-full">
         {button}
       </Tooltip>
     );

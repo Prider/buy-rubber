@@ -30,7 +30,7 @@ function errorMessage(error: unknown): string {
     const apiError = error.response?.data?.error;
     if (typeof apiError === 'string' && apiError.trim()) return apiError;
   }
-  return 'ไม่สามารถถามผู้ช่วยได้ในขณะนี้';
+  return 'ไม่สามารถถามผู้ช่วยอัจฉริยะได้ในขณะนี้';
 }
 
 export default function AssistantPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -149,7 +149,7 @@ export default function AssistantPanel({ open, onClose }: { open: boolean; onClo
       <button
         type="button"
         className="absolute inset-0 bg-black/40"
-        aria-label="ปิดผู้ช่วย"
+        aria-label="ปิดผู้ช่วยอัจฉริยะ"
         onClick={onClose}
       />
       <aside

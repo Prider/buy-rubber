@@ -147,7 +147,7 @@ describe('POST /api/assistant', () => {
     const data = await response.json();
 
     expect(response.status).toBe(502);
-    expect(data.error).toBe('คีย์ผู้ช่วยใช้ไม่ได้');
+    expect(data.error).toBe('คีย์ผู้ช่วยอัจฉริยะใช้ไม่ได้');
     expect(JSON.stringify(data)).not.toContain('secret-upstream');
   });
 

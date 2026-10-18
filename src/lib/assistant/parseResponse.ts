@@ -105,7 +105,7 @@ export function parseAssistantPayload(raw: string): AssistantReply {
   const parsed = extractJson(raw);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return {
-      text: raw.trim().slice(0, 4000) || 'ไม่พบคำตอบจากผู้ช่วย',
+      text: raw.trim().slice(0, 4000) || 'ไม่พบคำตอบจากผู้ช่วยอัจฉริยะ',
       charts: [],
       tables: [],
     };
