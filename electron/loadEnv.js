@@ -14,6 +14,9 @@ const LICENSE_ENV_KEYS = [
   'SKIP_LICENSE_CHECK',
 ];
 
+// Read at runtime from .env.local / .env. Never written into the packaged license.env.
+const ASSISTANT_ENV_KEYS = ['OPENROUTER_API_KEY', 'OPENROUTER_MODEL', 'ASSISTANT_PROXY_URL'];
+
 const DEFAULT_LICENSE_API_URL = 'https://license-api.punsookinnotech.co';
 
 function parseEnvText(text) {
@@ -47,13 +50,17 @@ function readEnvFile(filePath) {
   }
 }
 
-function pickLicenseEnv(source) {
+function pickEnvKeys(source, keys) {
   const picked = {};
-  for (const key of LICENSE_ENV_KEYS) {
+  for (const key of keys) {
     const value = typeof source[key] === 'string' ? source[key].trim() : '';
     if (value) picked[key] = value;
   }
   return picked;
+}
+
+function pickLicenseEnv(source) {
+  return pickEnvKeys(source, LICENSE_ENV_KEYS);
 }
 
 function applyLicenseEnv(values, { override = false } = {}) {
@@ -111,6 +118,21 @@ function writePackagedLicenseEnv(projectRoot) {
   return dest;
 }
 
+function loadAssistantEnv(appPath) {
+  const candidates = [
+    appPath ? path.join(appPath, '.env.local') : null,
+    path.join(__dirname, '..', '.env.local'),
+    appPath ? path.join(appPath, '.env') : null,
+    path.join(__dirname, '..', '.env'),
+    appPath ? path.join(appPath, 'electron.env') : null,
+    path.join(__dirname, '..', 'electron.env'),
+  ].filter(Boolean);
+
+  for (const filePath of candidates) {
+    applyLicenseEnv(pickEnvKeys(readEnvFile(filePath), ASSISTANT_ENV_KEYS), { override: false });
+  }
+}
+
 function loadElectronLicenseEnv(appPath) {
   const candidates = [
     path.join(__dirname, 'license.env'),
@@ -124,6 +146,8 @@ function loadElectronLicenseEnv(appPath) {
   for (const filePath of candidates) {
     applyLicenseEnv(pickLicenseEnv(readEnvFile(filePath)), { override: false });
   }
+
+  loadAssistantEnv(appPath);
 
   if (!process.env.LICENSE_API_URL) {
     process.env.LICENSE_API_URL = DEFAULT_LICENSE_API_URL;

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, cloneElement, useRef, useState, useEffect } from 'react';
+import { Fragment, ReactNode, cloneElement, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Tooltip } from 'animal-island-ui';
@@ -20,6 +20,7 @@ import {
   resolveStoredSlipTemplate,
 } from '@/lib/slipTemplate';
 import { attachAuthToAxios } from '@/lib/attachAuthToAxios';
+import AssistantPanel from '@/components/assistant/AssistantPanel';
 
 attachAuthToAxios();
 
@@ -60,6 +61,7 @@ export default function Layout({ children }: LayoutProps) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [viewport, setViewport] = useState<SidebarViewport>('desktop');
   const [isElectron, setIsElectron] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -183,6 +185,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const reportsOnly = isAccountantRole(user?.role);
+  const canUseAssistant = user?.role === 'admin';
   const homeHref = homePathForRole(user?.role);
   const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
 
@@ -314,15 +317,30 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 );
 
-                if (iconRailTooltip) {
-                  return (
-                    <Tooltip key={item.href} title={item.name} placement="right" className="flex w-full">
-                      {link}
-                    </Tooltip>
-                  );
-                }
+                const entry = iconRailTooltip ? (
+                  <Tooltip title={item.name} placement="right" className="flex w-full">
+                    {link}
+                  </Tooltip>
+                ) : (
+                  link
+                );
 
-                return cloneElement(link, { key: item.href });
+                return (
+                  <Fragment key={item.href}>
+                    {canUseAssistant && item.href === '/guide' && (
+                      <AssistantNavButton
+                        labelsVisible={labelsVisible}
+                        tooltip={iconRailTooltip}
+                        open={assistantOpen}
+                        onOpen={() => {
+                          setOverlayOpen(false);
+                          setAssistantOpen(true);
+                        }}
+                      />
+                    )}
+                    {entry}
+                  </Fragment>
+                );
               })}
             </div>
           </nav>
@@ -499,7 +517,87 @@ export default function Layout({ children }: LayoutProps) {
           onClick={() => setOverlayOpen(false)}
         />
       )}
+      {canUseAssistant && (
+        <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      )}
     </div>
+  );
+}
+
+function AssistantNavButton({
+  labelsVisible,
+  tooltip,
+  open,
+  onOpen,
+}: {
+  labelsVisible: boolean;
+  tooltip: boolean;
+  open: boolean;
+  onOpen: () => void;
+}) {
+  const button = (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label="AI Assistant"
+      aria-pressed={open}
+      title={tooltip || labelsVisible ? undefined : 'AI Assistant'}
+      className={`group relative flex min-h-11 w-full items-center rounded-lg px-2 py-2.5 text-left transition-[color,transform] duration-150 ease-out motion-safe:active:scale-[0.96] ${
+        labelsVisible ? '' : 'justify-center'
+      } ${
+        open
+          ? 'text-blue-700 dark:text-blue-300'
+          : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+      }`}
+    >
+      {open && (
+        <div className="absolute right-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-l-full bg-gradient-to-b from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50 dark:from-blue-400 dark:to-blue-500 dark:shadow-blue-400/30" />
+      )}
+      {open && (
+        <div className="absolute inset-0 -z-0 rounded-lg bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-900/20 dark:to-transparent" />
+      )}
+      <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 ${
+        open
+          ? 'bg-gradient-to-br from-blue-100 to-blue-50 shadow-sm shadow-blue-200/50 dark:from-blue-900/40 dark:to-blue-800/20 dark:shadow-blue-900/30'
+          : 'bg-transparent group-hover:bg-gray-100/50 dark:group-hover:bg-gray-700/30'
+      }`}>
+        <AiAssistantIcon />
+      </div>
+      <span className={`relative z-10 overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ${
+        labelsVisible ? 'ml-2 w-auto opacity-100' : 'ml-0 w-0 opacity-0'
+      } ${open ? 'font-semibold' : 'font-medium'}`}>
+        AI Assistant
+      </span>
+      <div className="absolute inset-0 -z-0 rounded-lg bg-gray-50/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-gray-700/20" />
+    </button>
+  );
+
+  if (tooltip) {
+    return (
+      <Tooltip title="AI Assistant" placement="right" className="flex w-full">
+        {button}
+      </Tooltip>
+    );
+  }
+
+  return button;
+}
+
+function AiAssistantIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3.5 13.4 8.1 18 9.5 13.4 10.9 12 15.5 10.6 10.9 6 9.5 10.6 8.1 12 3.5Z" />
+      <path d="M18.5 14.5 19.2 16.8 21.5 17.5 19.2 18.2 18.5 20.5 17.8 18.2 15.5 17.5 17.8 16.8 18.5 14.5Z" />
+    </svg>
   );
 }
 
