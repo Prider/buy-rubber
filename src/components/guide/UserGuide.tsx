@@ -245,7 +245,7 @@ function GuideBlocks({ blocks }: { blocks: GuideBlock[] }) {
                     role="region"
                     className={`grid motion-safe:transition-[grid-template-rows] motion-safe:duration-200 motion-safe:ease-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                   >
-                    <div className="overflow-hidden" {...(open ? {} : { inert: '', 'aria-hidden': true as const })}>
+                    <div className="overflow-hidden" {...(open ? {} : { inert: true, 'aria-hidden': true as const })}>
                       <p className="px-4 pb-4 text-base leading-7 text-gray-700 dark:text-gray-200">
                         <RichText text={item.a} />
                       </p>

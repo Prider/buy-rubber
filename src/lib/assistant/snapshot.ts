@@ -406,7 +406,8 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
       last90DaysStart: isoDateInThailand(rangeStart),
       breakdown: 'current month',
       recentRows: 'latest 20, not limited to 90 days',
-      quietMembers: 'no purchase in more than 30 days, or never purchased',
+      quietMembers: 'last purchase more than 30 days ago',
+      neverPurchased: 'active members with no purchase',
     },
     members: {
       total: memberTotal,

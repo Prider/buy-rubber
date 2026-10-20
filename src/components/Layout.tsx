@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, ReactNode, cloneElement, useRef, useState, useEffect } from 'react';
+import { Fragment, ReactNode, useRef, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Tooltip } from 'animal-island-ui';
