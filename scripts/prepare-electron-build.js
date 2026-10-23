@@ -58,4 +58,8 @@ console.log('✓ prisma/dev.db ← prisma/backups/initial-data.db');
 run('npx prisma generate');
 run('npx prisma db push');
 
+// Keep factory snapshot schema-aligned (first install copies initial-data.db).
+fs.copyFileSync(dbPath, initialDataPath);
+console.log('✓ prisma/backups/initial-data.db ← synced schema from prisma/dev.db');
+
 console.log('✅ Electron database ready for packaging (factory initial-data snapshot)');

@@ -62,6 +62,7 @@ const REQUIRED_TABLES = [
 
 /** Columns that may be missing on older DBs (added with safe defaults). */
 const COMPAT_COLUMNS = {
+  User: [{ name: 'other', sql: `ALTER TABLE "User" ADD COLUMN other TEXT` }],
   Expense: [
     { name: 'userId', sql: `ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''` },
     { name: 'userName', sql: `ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''` },

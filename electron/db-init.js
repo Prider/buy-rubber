@@ -10,7 +10,7 @@ const { app } = require('electron');
 const { rebuildStock } = require('./rebuild-stock');
 
 /** Tables added in recent schema versions; existing installs may lack these. */
-const REQUIRED_TABLES = ['Sale', 'StockPosition', 'StockLedgerEntry'];
+const REQUIRED_TABLES = ['Sale', 'StockPosition', 'StockLedgerEntry', 'ActivityLog'];
 
 // Create a debug log file to help troubleshoot database initialization
 function debugLog(message) {
@@ -140,34 +140,64 @@ function ensureInitialDataBackup(userDbDir) {
   debugLog(`Copied initial data snapshot to: ${dest}`);
 }
 
-async function ensureExpenseUserColumns(prisma) {
-  const columns = await prisma.$queryRaw`
-    SELECT name FROM pragma_table_info('Expense') WHERE name = 'userId'
-  `;
-  if (columns && columns.length > 0) {
-    return;
-  }
+/** Columns that may be missing on older / factory DBs (additive, safe defaults). */
+const COMPAT_COLUMNS = {
+  User: [{ name: 'other', sql: `ALTER TABLE "User" ADD COLUMN other TEXT` }],
+  Expense: [
+    { name: 'userId', sql: `ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''` },
+    { name: 'userName', sql: `ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''` },
+  ],
+  Member: [
+    { name: 'tapperId', sql: `ALTER TABLE Member ADD COLUMN tapperId TEXT` },
+    { name: 'tapperName', sql: `ALTER TABLE Member ADD COLUMN tapperName TEXT` },
+    { name: 'advanceBalance', sql: `ALTER TABLE Member ADD COLUMN advanceBalance REAL DEFAULT 0` },
+  ],
+  Sale: [
+    { name: 'expenseType', sql: `ALTER TABLE Sale ADD COLUMN expenseType TEXT` },
+    { name: 'expenseCost', sql: `ALTER TABLE Sale ADD COLUMN expenseCost REAL` },
+    { name: 'destinationCompanyId', sql: `ALTER TABLE Sale ADD COLUMN destinationCompanyId TEXT` },
+    { name: 'unitCostPerKg', sql: `ALTER TABLE Sale ADD COLUMN unitCostPerKg REAL` },
+    { name: 'costOfGoods', sql: `ALTER TABLE Sale ADD COLUMN costOfGoods REAL` },
+    { name: 'notes', sql: `ALTER TABLE Sale ADD COLUMN notes TEXT` },
+  ],
+  StockLedgerEntry: [
+    { name: 'refId', sql: `ALTER TABLE StockLedgerEntry ADD COLUMN refId TEXT` },
+  ],
+  Purchase: [
+    { name: 'bonusPrice', sql: `ALTER TABLE Purchase ADD COLUMN bonusPrice REAL DEFAULT 0` },
+    { name: 'notes', sql: `ALTER TABLE Purchase ADD COLUMN notes TEXT` },
+    { name: 'isPaid', sql: `ALTER TABLE Purchase ADD COLUMN isPaid INTEGER DEFAULT 0` },
+  ],
+};
 
-  debugLog('Adding missing userId and userName columns to Expense table...');
-  const alterStatements = [
-    `ALTER TABLE Expense ADD COLUMN userId TEXT DEFAULT ''`,
-    `ALTER TABLE Expense ADD COLUMN userName TEXT DEFAULT ''`,
-  ];
-  for (const sql of alterStatements) {
-    try {
-      await prisma.$executeRawUnsafe(sql);
-    } catch (e) {
-      if (!e.message.includes('duplicate column')) {
-        debugLog('⚠️  Could not run: ' + sql + ' — ' + e.message);
+async function ensureCompatColumns(prisma) {
+  for (const [table, columns] of Object.entries(COMPAT_COLUMNS)) {
+    const existingRows = await prisma.$queryRawUnsafe(
+      `SELECT name FROM pragma_table_info('${table}')`,
+    );
+    const existing = new Set((existingRows || []).map((row) => row.name));
+
+    for (const column of columns) {
+      if (existing.has(column.name)) {
+        continue;
+      }
+      debugLog(`Adding missing column ${table}.${column.name}...`);
+      try {
+        await prisma.$executeRawUnsafe(column.sql);
+        debugLog(`✅ Added ${table}.${column.name}`);
+      } catch (e) {
+        if (!String(e.message || '').includes('duplicate column')) {
+          debugLog(`⚠️  Could not add ${table}.${column.name}: ${e.message}`);
+        }
       }
     }
   }
+
   try {
     await prisma.$executeRaw`UPDATE Expense SET userId = '' WHERE userId IS NULL`;
     await prisma.$executeRaw`UPDATE Expense SET userName = '' WHERE userName IS NULL`;
-    debugLog('✅ Expense user columns updated');
   } catch (e) {
-    debugLog('⚠️  Could not update Expense rows: ' + e.message);
+    debugLog('⚠️  Could not normalize Expense user columns: ' + e.message);
   }
 }
 
@@ -186,7 +216,7 @@ async function ensureSchemaUpToDate(dbUrl) {
       return;
     }
 
-    await ensureExpenseUserColumns(prisma);
+    await ensureCompatColumns(prisma);
     debugLog('✅ Database schema is up to date');
   } catch (error) {
     debugLog('⚠️  Schema check failed: ' + error.message);
