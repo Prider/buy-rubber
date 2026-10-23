@@ -3,6 +3,8 @@ import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
 import { resetAssistantRateLimit } from '@/lib/assistant/rateLimit';
+import os from 'os';
+import path from 'path';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -45,6 +47,7 @@ describe('POST /api/assistant', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     resetAssistantRateLimit();
+    process.env.ASSISTANT_CONFIG_PATH = path.join(os.tmpdir(), `assistant-test-missing-${process.pid}.json`);
     process.env.OPENROUTER_API_KEY = 'test-key';
     process.env.OPENROUTER_MODEL = 'test-model';
     delete process.env.ASSISTANT_PROXY_URL;

@@ -12,6 +12,7 @@ export const ADMIN_TABS = [
   { id: 'connection', label: 'การเชื่อมต่อ' },
   { id: 'backup', label: 'สำรองข้อมูล' },
   { id: 'license', label: 'ใบอนุญาตซอฟต์แวร์' },
+  { id: 'assistant', label: 'ผู้ช่วยอัจฉริยะ' },
 ] as const;
 
 export type AdminSettingsTab = (typeof ADMIN_TABS)[number]['id'];

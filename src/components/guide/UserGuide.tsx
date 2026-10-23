@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
@@ -19,6 +19,21 @@ import {
 
 function isHeading(block: GuideBlock): block is Extract<GuideBlock, { kind: 'h' }> {
   return block.kind === 'h';
+}
+
+function isFigure(block: GuideBlock): block is Extract<GuideBlock, { kind: 'figure' }> {
+  return block.kind === 'figure';
+}
+
+function withoutLeadFigure(blocks: GuideBlock[]): {
+  lead: Extract<GuideBlock, { kind: 'figure' }> | undefined;
+  rest: GuideBlock[];
+} {
+  const index = blocks.findIndex(isFigure);
+  if (index < 0) return { lead: undefined, rest: blocks };
+  const lead = blocks[index];
+  if (!isFigure(lead)) return { lead: undefined, rest: blocks };
+  return { lead, rest: blocks.filter((_, blockIndex) => blockIndex !== index) };
 }
 
 function prefersReducedMotion(): boolean {
@@ -87,6 +102,57 @@ const NOTE_LABEL = {
   warn: 'ควรรู้',
   danger: 'ระวัง',
 } as const;
+
+function GuideFigure({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  return (
+    <figure className="overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-900/40">
+      <button
+        type="button"
+        className="block w-full cursor-zoom-in rounded-xl text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+        aria-haspopup="dialog"
+        aria-label={`ขยายภาพ: ${alt}`}
+        onClick={() => dialogRef.current?.showModal()}
+      >
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className="block w-full rounded-xl shadow-[inset_0_0_0_1px_oklch(0_0_0/0.1)] dark:shadow-[inset_0_0_0_1px_oklch(1_0_0/0.1)]"
+        />
+      </button>
+      <figcaption className="px-4 py-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+        {caption}
+        <span className="text-gray-400"> · กดที่ภาพเพื่อขยาย</span>
+      </figcaption>
+      <dialog
+        ref={dialogRef}
+        aria-label={alt}
+        className="w-[min(72rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-auto rounded-2xl bg-white p-3 text-gray-900 shadow-xl backdrop:bg-black/60 dark:bg-gray-900 dark:text-gray-100"
+        onClick={(event) => {
+          if (event.target === dialogRef.current) dialogRef.current.close();
+        }}
+      >
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold leading-6">{caption}</p>
+          <button
+            type="button"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            onClick={() => dialogRef.current?.close()}
+          >
+            ปิด
+          </button>
+        </div>
+        <img
+          src={src}
+          alt=""
+          className="w-full rounded-lg shadow-[inset_0_0_0_1px_oklch(0_0_0/0.1)] dark:shadow-[inset_0_0_0_1px_oklch(1_0_0/0.1)]"
+        />
+      </dialog>
+    </figure>
+  );
+}
 
 function GuideBlocks({ blocks }: { blocks: GuideBlock[] }) {
   const [openFaq, setOpenFaq] = useState<string | null>(null);
@@ -158,6 +224,10 @@ function GuideBlocks({ blocks }: { blocks: GuideBlock[] }) {
               </p>
             </aside>
           );
+        }
+
+        if (block.kind === 'figure') {
+          return <GuideFigure key={index} src={block.src} alt={block.alt} caption={block.caption} />;
         }
 
         if (block.kind === 'table') {
@@ -315,6 +385,8 @@ export default function UserGuide() {
   const groupLabel = GUIDE_GROUPS.find((group) => group.id === topic?.group)?.label;
   const nextTopic = topic?.nextId ? topicById(topic.nextId) : undefined;
   const headings = topic?.blocks.filter(isHeading) ?? [];
+  const { lead: leadFigure, rest: bodyBlocks } = withoutLeadFigure(topic?.blocks ?? []);
+  const phaseIndex = GUIDE_PHASES.findIndex((phase) => phase.topicId === topic?.id);
   const menuPath = topic?.href?.split('?')[0];
   const canOpenMenu = Boolean(
     user &&
@@ -511,14 +583,25 @@ export default function UserGuide() {
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
               <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">Yang Dee</p>
               <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-                คู่มือจุดรับซื้อ
+                อยากทำอะไร เปิดหัวข้อนั้น
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-gray-700 dark:text-gray-200">
-                ใช้บันทึกสมาชิก รับซื้อ ขายออก สต็อก ค่าใช้จ่าย และกำไรขาดทุนในโปรแกรมเดียว
-                ข้อมูลอยู่บนเครื่องนี้ และใช้ได้โดยไม่ต้องต่ออินเทอร์เน็ตหลังจากเปิดใบอนุญาตแล้ว
+                แต่ละหัวข้อมีภาพจากหน้าจอจริง แล้วตามด้วยขั้นตอนสั้นๆ
               </p>
 
-              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">วันหนึ่งของร้านเป็นแบบนี้</h2>
+              <button
+                type="button"
+                onClick={() => openTopic('purchase')}
+                className="mt-6 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl bg-primary-600 px-4 py-4 text-left text-white motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out hover:bg-primary-700 motion-safe:active:scale-[0.96]"
+              >
+                <span>
+                  <span className="block text-lg font-bold">รับซื้อยาง</span>
+                  <span className="mt-1 block text-sm leading-6 text-primary-50">งานที่ใช้บ่อยที่สุด ชั่ง ใส่ราคา บันทึก แล้วพิมพ์สลิป</span>
+                </span>
+                <span aria-hidden="true" className="text-xl">→</span>
+              </button>
+
+              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">หนึ่งวันของร้าน</h2>
               <ol className="mt-3 grid gap-3 sm:grid-cols-2">
                 {GUIDE_PHASES.map((phase, index) => (
                   <li key={phase.topicId}>
@@ -539,9 +622,18 @@ export default function UserGuide() {
                 ))}
               </ol>
 
-              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">อยากทำอะไร</h2>
+              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">หน้าตาโปรแกรม</h2>
+              <div className="mt-3">
+                <GuideFigure
+                  src="/guide/dashboard.jpg"
+                  alt="แดชบอร์ดของ Yang Dee พร้อมเมนูด้านซ้าย"
+                  caption="เมนูอยู่แถบซ้าย แดชบอร์ดคือหน้าแรกหลังเข้าสู่ระบบ"
+                />
+              </div>
+
+              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">เรื่องอื่นที่เจอบ่อย</h2>
               <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-                {GUIDE_SHORTCUTS.map((shortcut) => (
+                {GUIDE_SHORTCUTS.filter((shortcut) => shortcut.topicId !== 'purchase').map((shortcut) => (
                   <li key={shortcut.topicId}>
                     <button
                       type="button"
@@ -557,24 +649,41 @@ export default function UserGuide() {
             </section>
           ) : topic ? (
             <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
-              {groupLabel && (
-                <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{groupLabel}</p>
+              <button
+                type="button"
+                onClick={() => openTopic('home')}
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200"
+              >
+                ← หน้าแรกของคู่มือ
+              </button>
+              {phaseIndex >= 0 && (
+                <p className="mt-3 text-sm font-semibold text-primary-700 dark:text-primary-300">
+                  ขั้นที่ {phaseIndex + 1} จาก {GUIDE_PHASES.length} ในหนึ่งวัน
+                </p>
+              )}
+              {groupLabel && phaseIndex < 0 && (
+                <p className="mt-3 text-sm font-semibold text-primary-700 dark:text-primary-300">{groupLabel}</p>
               )}
               <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
                 {topic.title}
               </h1>
-              <p className="mt-3 text-base leading-7 text-gray-600 dark:text-gray-300">{topic.summary}</p>
+              <p className="mt-3 text-base leading-7 text-gray-700 dark:text-gray-200">{topic.summary}</p>
+              {leadFigure && (
+                <div className="mt-5">
+                  <GuideFigure src={leadFigure.src} alt={leadFigure.alt} caption={leadFigure.caption} />
+                </div>
+              )}
               {topic.menu && (
-                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  ในโปรแกรมเปิดเมนู <span className="font-semibold text-gray-800 dark:text-gray-100">{topic.menu}</span>
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                  เปิดเมนู <span className="font-semibold text-gray-900 dark:text-white">{topic.menu}</span>
                 </p>
               )}
               {canOpenMenu && topic.href && (
                 <Link
                   href={topic.href}
-                  className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out hover:bg-primary-700 motion-safe:active:scale-[0.96]"
+                  className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out hover:bg-primary-700 motion-safe:active:scale-[0.96]"
                 >
-                  เปิดหน้านี้
+                  เปิดหน้านี้ในโปรแกรม
                 </Link>
               )}
               {headings.length >= 2 && (
@@ -595,16 +704,18 @@ export default function UserGuide() {
                 </nav>
               )}
               <div className="mt-6">
-                <GuideBlocks key={topic.id} blocks={topic.blocks} />
+                <GuideBlocks key={topic.id} blocks={bodyBlocks} />
               </div>
               {nextTopic && (
                 <div className="mt-8 border-t border-gray-200 pt-5 dark:border-gray-700">
+                  <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">ขั้นถัดไป</p>
                   <button
                     type="button"
                     onClick={() => openTopic(nextTopic.id)}
-                    className="inline-flex min-h-11 items-center rounded-xl border border-gray-200 px-4 text-sm font-semibold text-gray-800 motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out hover:bg-gray-50 motion-safe:enabled:active:scale-[0.96] dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+                    className="mt-2 flex min-h-11 w-full flex-col items-start rounded-xl border border-gray-200 px-4 py-3 text-left motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out hover:bg-gray-50 motion-safe:enabled:active:scale-[0.96] dark:border-gray-600 dark:hover:bg-gray-700"
                   >
-                    อ่านต่อ: {nextTopic.title}
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">{nextTopic.title}</span>
+                    <span className="text-sm leading-6 text-gray-600 dark:text-gray-300">{nextTopic.summary}</span>
                   </button>
                 </div>
               )}

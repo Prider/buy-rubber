@@ -71,6 +71,17 @@ function applyLicenseEnv(values, { override = false } = {}) {
   }
 }
 
+function collectAssistantEnv(projectRoot) {
+  const root = projectRoot || path.join(__dirname, '..');
+  // .env.local wins so a local key is what gets packaged.
+  const fromFiles = {
+    ...readEnvFile(path.join(root, 'electron.env')),
+    ...readEnvFile(path.join(root, '.env')),
+    ...readEnvFile(path.join(root, '.env.local')),
+  };
+  return pickEnvKeys(fromFiles, ASSISTANT_ENV_KEYS);
+}
+
 function collectLicenseEnv(projectRoot) {
   const root = projectRoot || path.join(__dirname, '..');
   const fromFiles = {
@@ -115,6 +126,20 @@ function writePackagedLicenseEnv(projectRoot) {
     (key) => `${key}=${serializeEnvValue(env[key])}`
   );
   fs.writeFileSync(dest, `${lines.join('\n')}\n`, 'utf8');
+
+  const assistant = collectAssistantEnv(root);
+  const assistantDest = path.join(__dirname, 'assistant.env');
+  if (assistant.OPENROUTER_API_KEY || assistant.ASSISTANT_PROXY_URL) {
+    const assistantLines = ASSISTANT_ENV_KEYS.filter((key) => assistant[key]).map(
+      (key) => `${key}=${serializeEnvValue(assistant[key])}`
+    );
+    fs.writeFileSync(assistantDest, `${assistantLines.join('\n')}\n`, 'utf8');
+  } else {
+    console.warn(
+      '⚠️  Shop assistant is not configured. Set OPENROUTER_API_KEY in .env.local or ASSISTANT_PROXY_URL before packaging.'
+    );
+  }
+
   return dest;
 }
 
@@ -126,6 +151,8 @@ function loadAssistantEnv(appPath) {
     path.join(__dirname, '..', '.env'),
     appPath ? path.join(appPath, 'electron.env') : null,
     path.join(__dirname, '..', 'electron.env'),
+    path.join(__dirname, 'assistant.env'),
+    appPath ? path.join(appPath, 'electron', 'assistant.env') : null,
   ].filter(Boolean);
 
   for (const filePath of candidates) {

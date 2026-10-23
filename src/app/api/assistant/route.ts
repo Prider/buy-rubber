@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!assistantConfigured()) {
       return NextResponse.json(
-        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ' },
+        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ ไปที่ตั้งค่าแล้วใส่ API Key' },
         { status: 503 },
       );
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
     if (code === 'ASSISTANT_NOT_CONFIGURED') {
       return NextResponse.json(
-        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ' },
+        { error: 'ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ ไปที่ตั้งค่าแล้วใส่ API Key' },
         { status: 503 },
       );
     }

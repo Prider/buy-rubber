@@ -207,6 +207,12 @@ const startServer = async (customAppPath = null, databasePath = null) => {
     'LICENSE_VALIDATION_KEY:',
     process.env.LICENSE_VALIDATION_KEY ? 'set' : 'MISSING'
   );
+  console.log(
+    'Shop assistant:',
+    process.env.OPENROUTER_API_KEY || process.env.ASSISTANT_PROXY_URL
+      ? 'configured'
+      : 'NOT CONFIGURED'
+  );
 
   // Prefer WASM engine in packaged Electron to avoid native binary path issues
   try {

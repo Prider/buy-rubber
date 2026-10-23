@@ -12,6 +12,7 @@ import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
 import { SoftwareLicensePanel } from '@/components/admin/SoftwareLicensePanel';
+import { AssistantSettingsPanel } from '@/components/admin/AssistantSettingsPanel';
 import { ActivityLogPanel } from '@/components/admin/ActivityLogPanel';
 import { DisplaySettingsPanel } from '@/components/admin/DisplaySettingsPanel';
 import { BackupPanel } from '@/app/(authenticated)/backup/BackupPanel';
@@ -450,6 +451,8 @@ export default function AdminSettingsPage() {
               {activeTab === 'backup' && <BackupPanel />}
 
               {activeTab === 'license' && <SoftwareLicensePanel />}
+
+              {activeTab === 'assistant' && <AssistantSettingsPanel />}
             </div>
           </div>
       </div>
