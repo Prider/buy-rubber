@@ -2,1258 +2,699 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useId, useRef, useState } from 'react';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import { useState, useMemo, memo } from 'react';
 
-// Move features array outside component to prevent recreation on every render
-const features = [
-    {
-      title: 'การจัดการราคาและประเภทสินค้า',
-      items: [
-        'บันทึกราคาประกาศน้ำยางประจำวัน',
-        'จัดการประเภทสินค้ายาง (น้ำยางสด, ยางแห้ง, เศษยาง) เพิ่มประเภทสินค้าได้ไม่จำกัด',
-        'กำหนดเงื่อนไขการให้ราคาเพิ่ม/ลดตาม %ยาง',
-        'ให้ราคาบวกเพิ่มพิเศษได้',
-        'ดูประวัติราคาย้อนหลัง',
-      ],
-    },
-    {
-      title: 'การรับซื้อน้ำยาง',
-      items: [
-        'บันทึกการซื้อน้ำยางสด ยางแห้ง เศษยาง',
-        'คำนวณน้ำหนักแห้งจาก %ยางอัตโนมัติ',
-        'รองรับการซื้อแบบ Transaction (หลายรายการในครั้งเดียว)',
-        'คำนวณน้ำหนักสุทธิ (หักภาชนะ)',
-        'เพิ่มค่าบริการ (Service Fees) ในรายการรับซื้อ',
-        'ดูรายการรับซื้อทั้งหมด',
-        'พิมพ์สลิปการรับซื้อได้ทันที',
-      ],
-    },
-    {
-      title: 'การจัดการสมาชิก',
-      items: [
-        'เพิ่มข้อมูลเจ้าของสวนและคนตัด',
-        'แบ่ง % เจ้าของสวนและคนตัดอัตโนมัติ',
-        'ติดตามประวัติการรับซื้อของแต่ละสมาชิก',
-        'จัดการค่าบริการสมาชิก (Service Fees)',
-        'เบิกเงินล่วงหน้าและติดตามยอดค้างชำระ',
-      ],
-    },
-    {
-      title: 'ระบบการเงิน',
-      items: [
-        'เบิกเงินล่วงหน้าของสมาชิก',
-        'จ่ายชำระหนี้พร้อมหักหนี้อัตโนมัติ',
-        'บันทึกค่าใช้จ่ายประจำวัน (Expenses)',
-        'จัดการค่าบริการ (Service Fees)',
-        'ดูสรุปยอดการเงิน',
-      ],
-    },
-    {
-      title: 'รายงานและวิเคราะห์',
-      items: [
-        'รายงานรับซื้อประจำวัน',
-        'รายงานการจ่ายชำระหนี้',
-        'รายงานหนี้ค้างชำระ',
-        'วิเคราะห์ยอดรับซื้อรายสมาชิก',
-        'รายงานกำไร-ขาดทุน',
-        'Dashboard แสดงสถิติแบบ Real-time',
-      ],
-    },
-    {
-      title: 'การจัดการระบบ',
-      items: [
-        'สำรองข้อมูล (Backup) - เฉพาะ Electron และ Admin',
-        'ตั้งค่าระบบ - เฉพาะ Electron และ Admin',
-        'จัดการผู้ใช้งาน (User Management)',
-        'กำหนดสิทธิ์การใช้งานผู้ใช้ (Admin, User, Viewer)',
-        'Dark Mode Support',
-      ],
-    },
-];
+const LINE_URL = 'https://line.me/ti/p/~pawatify';
 
-/** Scroll order. Header, mobile menu, and footer share this list. */
-const LANDING_NAV = [
-  { id: 'gallery', label: 'ภาพรวมระบบ' },
-  { id: 'benefits', label: 'ประโยชน์' },
+const NAV = [
+  { id: 'problem', label: 'ปัญหา' },
+  { id: 'how', label: 'วิธีทำงาน' },
   { id: 'features', label: 'คุณสมบัติ' },
-  { id: 'platforms', label: 'แพลตฟอร์ม' },
-  { id: 'reviews', label: 'รีวิว' },
-  { id: 'faq', label: 'FAQ', stackedLabel: 'คำถามที่พบบ่อย' },
-  { id: 'contact', label: 'ติดต่อเรา' },
+  { id: 'proof', label: 'หลักฐาน' },
+  { id: 'pricing', label: 'ราคา' },
+  { id: 'faq', label: 'คำถามที่พบบ่อย', navLabel: 'คำถาม' },
+  { id: 'contact', label: 'ติดต่อ' },
 ] as const;
 
-function scrollToLandingSection(id: string) {
+const DEVICES = [
+  { id: 'computer', label: 'คอมพิวเตอร์' },
+  { id: 'tablet', label: 'แท็บเล็ต' },
+  { id: 'phone', label: 'มือถือ' },
+] as const;
+
+type DeviceId = (typeof DEVICES)[number]['id'];
+
+const DEVICE_CAPTION: Record<DeviceId, string> = {
+  computer: 'แถบซ้ายมีชื่อเมนู ใช้บนคอมพิวเตอร์ที่จุดรับซื้อ',
+  tablet: 'หน้าจอรับซื้อเดียวกัน ในกรอบแท็บเล็ต',
+  phone: 'ฟอร์มรับซื้อที่พนักงานเห็นตอนชั่ง',
+};
+
+const PROBLEMS = [
+  {
+    title: 'แถวที่ตาชั่ง',
+    body: 'ทุกคันต้องชั่งรวมภาชนะ หักถัง คิดบาทต่อกิโล แล้วพิมพ์สลิปก่อนคันถัดไปเข้า',
+  },
+  {
+    title: 'สมุดไม่ตรงสลิป',
+    body: 'พอเย็น สลิปที่จ่ายไปกับสมุดที่จดไว้ไม่ตรงกัน และไม่รู้ว่าใครเป็นคนคีย์ผิด',
+  },
+  {
+    title: 'ตัวเลขสิ้นเดือน',
+    body: 'น้ำมัน ค่าซ่อม และค่าขนส่งไปโรงงานอยู่นอกเล่มที่จดยอดรับซื้อ กำไรที่คิดได้จึงสูงกว่าของจริง',
+  },
+];
+
+const DAY = [
+  {
+    when: 'ก่อนเปิด',
+    body: 'เปิดแดชบอร์ด ยอดวันนี้เริ่มจากศูนย์ ถ้ามีสมาชิกหรือประเภทสินค้าใหม่ เพิ่มให้ครบก่อนชั่ง',
+  },
+  {
+    when: 'ระหว่างวัน',
+    body: 'รับซื้อลงตะกร้า กดบันทึกข้อมูล แล้วพิมพ์สลิปให้ชาวสวน เมื่อมีรถออก บันทึกการขายพร้อมค่าขนส่งของเที่ยวนั้น มีใบน้ำมันหรือค่าซ่อมเมื่อไร บันทึกที่ค่าใช้จ่ายทันที',
+  },
+  {
+    when: 'ก่อนปิด',
+    body: 'เปิดประวัติการรับซื้อของวันนี้ เทียบกับสลิปที่พิมพ์ออกไป ดูยอดที่แดชบอร์ด แล้วกดสำรองข้อมูลตอนนี้',
+  },
+  {
+    when: 'ปิดสัปดาห์หรือเดือน',
+    body: 'ดาวน์โหลด PDF สรุปการรับซื้อ การขาย ค่าใช้จ่าย และกำไรขาดทุน ตามช่วงวันที่ แล้วคัดลอกไฟล์สำรองออกนอกเครื่อง',
+  },
+];
+
+const FEATURES = [
+  {
+    title: 'รับซื้อและสลิป',
+    body: 'น้ำหนักสุทธิคือน้ำหนักรวมภาชนะลบน้ำหนักภาชนะ แก้เองไม่ได้ กดราคาล่าสุดของสินค้านี้ได้ Enter เลื่อนช่องถัดไป หลายรายการอยู่ในตะกร้าจนกว่าจะกดบันทึก แล้วสต็อกเพิ่ม สลิปรับชื่อจุด ที่อยู่ เลขผู้เสียภาษี ขนาดตัวอักษร และกระดาษความร้อน 58, 80 หรือ 104 มม. รวมใบ A4',
+  },
+  {
+    title: 'สต็อก',
+    body: 'แต่ละแถวบอกกิโลกรัมคงเหลือ ต้นทุนเฉลี่ยต่อกิโล ราคาขายเฉลี่ย และกำไรของที่ขายไปแล้ว เพิ่มได้สูงสุด 50 ประเภท ขายเกินของในสต็อกไม่ได้ ของที่มีประวัติจะปิดการใช้งานแทนการลบ',
+  },
+  {
+    title: 'ขายให้โรงงาน',
+    body: 'เลือกบริษัทปลายทาง ใส่ %ยางเมื่อล็อตนั้นต้องระบุ แล้วเลือกจ่ายสด ขายล่วง หรือฝาก ใส่ค่าใช้จ่ายของเที่ยวนั้นได้สี่รายการ เช่น ค่าขนส่ง ค่าแรง ค่าบริการ หรือภาษี ต้นทุนเฉลี่ยโชว์ก่อนตั้งราคาขาย',
+  },
+  {
+    title: 'ค่าใช้จ่ายและกำไรขาดทุน',
+    body: 'น้ำมัน ค่าซ่อมรถ ค่าคนงาน หรือหมวดที่พิมพ์เอง เข้ากำไรขาดทุน ค่าขนส่งของเที่ยวนั้นอยู่ที่บิลขาย ไม่ปนกับค่าใช้จ่ายทั้งจุด รายงานห้าแท็บดาวน์โหลดเป็น PDF กำไรเป็นสีเขียว ขาดทุนเป็นสีแดง ดูรายวันหรือรายเดือนได้',
+  },
+  {
+    title: 'สิทธิ์และประวัติการใช้งาน',
+    body: 'เจ้าของ ผู้จัดการ พนักงาน และบัญชี บัญชีเห็นแต่รายงาน และเปิดมาที่หน้ารายงานทันที ลบรายการรับซื้อได้เฉพาะเจ้าของ ประวัติการใช้งานบอกว่าใครเข้าโปรแกรมและใครแก้รายการสำคัญ',
+  },
+  {
+    title: 'เครื่องเดียวและวงแลน',
+    body: 'หลังใส่ใบอนุญาต งานรับซื้อ ขาย สต็อก และรายงานใช้ได้โดยไม่ต่ออินเทอร์เน็ต ข้อมูลอยู่ในเครื่องหลัก เครื่องอื่นในร้านเปิดผ่าน Server URL ขณะเครื่องหลักเปิดค้างไว้ สำรองข้อมูลกดเอง แล้วนำไฟล์ไปเก็บนอกเครื่อง',
+  },
+];
+
+const SHOTS = [
+  {
+    src: '/guide/dashboard.jpg',
+    alt: 'แดชบอร์ด Yang Dee สลับวันนี้กับเดือนนี้',
+    caption: 'แดชบอร์ด',
+    detail: 'วันนี้หรือเดือนนี้',
+  },
+  {
+    src: '/guide/purchases.jpg',
+    alt: 'หน้ารับซื้อยาง มีฟอร์มชั่งและตะกร้า',
+    caption: 'รับซื้อยาง',
+    detail: 'ตะกร้า แล้วพิมพ์สลิป',
+  },
+  {
+    src: '/guide/reports.jpg',
+    alt: 'หน้ารายงานห้าแท็บของ Yang Dee',
+    caption: 'รายงาน',
+    detail: 'ดาวน์โหลด PDF',
+  },
+];
+
+const INCLUDED = [
+  'สมาชิก รับซื้อ และพิมพ์สลิป',
+  'สต็อก การขาย ค่าใช้จ่าย และรายงาน',
+  'สำรองข้อมูล และกำหนดสิทธิ์ผู้ใช้',
+];
+
+const PLANS = [
+  {
+    title: 'เครื่องเดียว',
+    detail: 'ออฟไลน์',
+    body: 'ข้อมูลอยู่ในเครื่องนั้น เหมาะกับจุดที่ชั่งและขายบนคอมพิวเตอร์เครื่องเดียว',
+  },
+  {
+    title: 'หลายเครื่องในวงแลน',
+    detail: 'ร้านเดียวกัน',
+    body: 'เครื่องหลักเป็นที่เก็บข้อมูล เครื่องอื่นในวงแลนเห็นรายการชุดเดียวกันทันทีที่บันทึก',
+  },
+];
+
+const FAQ = [
+  {
+    q: 'ต้องติดตั้งโปรแกรมอะไรเพิ่มไหม?',
+    a: 'ไม่ต้อง ติดตั้ง Yang Dee บนคอมพิวเตอร์ หรือเปิดผ่านเบราว์เซอร์ของเครื่องอื่นในวงแลน',
+  },
+  {
+    q: 'ต้องต่ออินเทอร์เน็ตไหม?',
+    a: 'รับซื้อ ขาย สต็อก และรายงานใช้ได้โดยไม่ต่ออินเทอร์เน็ต หลังจากเปิดใบอนุญาตแล้ว ผู้ช่วยอัจฉริยะต้องต่ออินเทอร์เน็ต เครื่องอื่นในร้านต้องให้เครื่องหลักเปิดค้าง และอยู่ในวงแลนเดียวกัน',
+  },
+  {
+    q: 'สำรองข้อมูลอัตโนมัติหรือไม่?',
+    a: 'ไม่ กดสำรองข้อมูลตอนนี้ แล้วคัดลอกไฟล์ไปไว้นอกเครื่อง การกู้คืนจะแทนที่ข้อมูลปัจจุบันทั้งชุด',
+  },
+  {
+    q: 'ใครลบรายการรับซื้อได้?',
+    a: 'เฉพาะเจ้าของ พนักงานกดลบแล้วระบบจะบอกว่าไม่มีสิทธิ์',
+  },
+  {
+    q: 'บัญชีเข้ามาแล้วเห็นแต่รายงาน เพราะอะไร?',
+    a: 'บทบาทนั้นตั้งให้ดูรายงานอย่างเดียว ถ้าต้องรับซื้อ ให้เจ้าของเปลี่ยนเป็นพนักงานหรือผู้จัดการ',
+  },
+  {
+    q: 'ลืมรหัสผ่านทำอย่างไร?',
+    a: 'เจ้าของตั้งรหัสใหม่ให้ที่ผู้ใช้งาน รหัสเริ่มต้นของโปรแกรมต้องเลิกใช้หลังเข้าได้ครั้งแรก',
+  },
+  {
+    q: 'พิมพ์สลิปแล้วตัวเล็กหรือกว้างไม่พอดี?',
+    a: 'ไปที่ตั้งค่าใบรับซื้อ เปลี่ยนขนาดตัวอักษรและความกว้างกระดาษเป็น 58, 80 หรือ 104 มม. ให้ตรงกับม้วน แล้วพิมพ์ทดสอบ',
+  },
+  {
+    q: 'ใบอนุญาตหมดอายุแล้วเปิดไม่ได้?',
+    a: 'ใส่คีย์ที่ยังไม่หมดอายุ โปรแกรมจะเข้าไม่ได้จนกว่าจะใส่คีย์ใหม่ ดูวันหมดอายุได้ที่ตั้งค่าระบบ ใบอนุญาตซอฟต์แวร์',
+  },
+];
+
+function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // Read dark mode directly from DOM without subscribing to context
-  // This state is only for the gallery toggle, not for page theme
-  // Don't sync automatically - let user control via toggle buttons
-  const [showDarkMode, setShowDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
-    }
-    return true;
-  });
+function Wordmark() {
+  return (
+    <p className="truncate text-base font-semibold tracking-tight">
+      <span className="text-fuchsia-500">Y</span>
+      <span className="text-violet-500">a</span>
+      <span className="text-sky-500 dark:text-sky-400">n</span>
+      <span className="text-emerald-500">g</span>
+      <span className="text-[#1c1b16] dark:text-white"> Dee</span>
+    </p>
+  );
+}
 
-  // Memoize Features Section JSX with empty deps - created once, never changes
-  // This prevents rerenders even when parent component rerenders during scroll
-  const featuresSectionJSX = useMemo(() => (
-    <section id="features" className="scroll-mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-      <div className="text-center mb-10">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          คุณสมบัติหลัก
-        </h2>
-        <div className="w-16 h-1 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-400 dark:to-green-300 mx-auto rounded-full"></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature, index) => (
-          <div
-            key={index}
-            className="group relative bg-gradient-to-br from-white to-green-50/30 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-gray-200/50 dark:border-gray-700/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2"
-          >
-            <div className="relative">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-                {feature.title}
-              </h3>
-              
-              <ul className="space-y-3">
-                {feature.items.map((item, itemIndex) => (
-                  <li key={itemIndex} className="flex items-start text-sm text-gray-600 dark:text-gray-300 group/item">
-                    <span className="text-green-500 mr-3 mt-1 flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-xs font-bold group-hover/item:scale-110 transition-transform duration-300">✓</span>
-                    <span className="min-w-0 group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors duration-300">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div className="absolute top-0 right-0 w-20 h-20 border-t-2 border-r-2 border-green-400/30 dark:border-green-500/30 rounded-tr-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          </div>
-        ))}
-      </div>
-    </section>
-  ), []); // Empty deps - only create once, never recreate
+function InstallLink({ className = '' }: { className?: string }) {
+  return (
+    <a
+      href={LINE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex min-h-11 items-center justify-center rounded-full bg-green-600 px-5 text-base font-semibold text-white transition-colors hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 ${className}`}
+    >
+      ขอติดตั้งที่จุดรับซื้อ
+    </a>
+  );
+}
 
-  // Memoize Swiper modules and configs to prevent recreation
-  const swiperModules = useMemo(() => [Navigation, Pagination, Autoplay], []);
-  const swiperPagination = useMemo(() => ({ clickable: true }), []);
-  const swiperAutoplayFast = useMemo(() => ({
-    delay: 3000,
-    disableOnInteraction: false,
-  }), []);
-  const swiperAutoplaySlow = useMemo(() => ({
-    delay: 4000,
-    disableOnInteraction: false,
-  }), []);
+function ProductFrame({ device }: { device: DeviceId }) {
+  const crop =
+    device === 'computer'
+      ? 'object-contain object-left-top'
+      : device === 'tablet'
+        ? 'object-cover object-[26%_0%]'
+        : 'object-cover object-[24%_0%]';
+  const frame =
+    device === 'computer'
+      ? 'w-full'
+      : device === 'tablet'
+        ? 'mx-auto w-full max-w-[420px]'
+        : 'mx-auto w-full max-w-[280px]';
+  const aspect = device === 'computer' ? 'aspect-[1280/745]' : device === 'tablet' ? 'aspect-[3/4]' : 'aspect-[9/16]';
 
   return (
-    <div className="landing-page min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 dark:from-green-900 dark:via-gray-900 dark:to-green-950">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex min-w-0 items-center gap-3">
-              <Logo className="h-10 w-auto shrink-0" />
-              <p className="truncate text-lg font-bold">
-                <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
-                <span className="text-violet-500 dark:text-violet-400">a</span>
-                <span className="text-violet-500 dark:text-sky-400">n</span>
-                <span className="text-emerald-500 dark:text-emerald-400">g</span>
-                <span className="hidden text-gray-900 dark:text-white sm:inline"> Dee</span>
-              </p>
-            </div>
-            
-            <nav className="hidden min-w-0 items-center gap-1 xl:flex" aria-label="ส่วนของหน้า">
-              {LANDING_NAV.map((item) => (
-                <a
-                  key={item.id}
-                  href={`#${item.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToLandingSection(item.id);
-                  }}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap rounded-lg px-2 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-600 dark:text-gray-300 dark:hover:bg-green-900/20 dark:hover:text-green-400 2xl:px-3"
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              <DarkModeToggle />
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center text-gray-700 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400 xl:hidden"
-                aria-expanded={mobileMenuOpen}
-                aria-label={mobileMenuOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
-              >
-                {mobileMenuOpen ? (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
-              <Link
-                href="/login"
-                className="inline-flex min-h-11 items-center rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-3 text-xs font-medium text-white shadow-md transition-all duration-200 hover:from-green-700 hover:to-green-600 hover:shadow-lg dark:from-green-500 dark:to-green-400 dark:hover:from-green-600 dark:hover:to-green-500 md:px-4 md:text-sm"
-              >
-                ทดลองใช้ฟรี
-              </Link>
-            </div>
+    <figure className={frame}>
+      <div
+        className={`rounded-[20px] border border-[#e3dfd4] bg-white p-2 shadow-[0_1px_0_rgba(28,27,22,0.04),0_16px_40px_rgba(28,27,22,0.06)] dark:border-[#2c3128] dark:bg-[#1a1d18] dark:shadow-none ${
+          device === 'phone' ? 'rounded-[28px] p-3' : ''
+        }`}
+      >
+        {device === 'computer' && (
+          <div className="mb-2 flex h-8 items-center gap-1.5 px-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#e3dfd4] dark:bg-[#3a4034]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#e3dfd4] dark:bg-[#3a4034]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#e3dfd4] dark:bg-[#3a4034]" />
+            <span className="ml-2 text-xs text-[#6f6b62] dark:text-[#a8a496]">รับซื้อยาง</span>
           </div>
-          
-          {mobileMenuOpen && (
-            <div className="border-t border-gray-200/50 py-2 dark:border-gray-700/50 xl:hidden">
-              <nav className="flex flex-col" aria-label="ส่วนของหน้า">
-                {LANDING_NAV.map((item) => (
-                  <a
-                    key={item.id}
-                    href={`#${item.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setMobileMenuOpen(false);
-                      window.setTimeout(() => scrollToLandingSection(item.id), 0);
-                    }}
-                    className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm text-gray-700 transition-colors hover:bg-green-50 hover:text-green-600 dark:text-gray-300 dark:hover:bg-green-900/20 dark:hover:text-green-400"
-                  >
-                    {'stackedLabel' in item ? item.stackedLabel : item.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
-          )}
+        )}
+        <div className={`relative overflow-hidden rounded-xl bg-[#eceae4] dark:bg-[#10120e] ${device === 'phone' ? 'rounded-2xl' : ''} ${aspect}`}>
+          <Image
+            src="/guide/purchases.jpg"
+            alt="หน้าจอรับซื้อยางของ Yang Dee"
+            fill
+            priority
+            sizes={device === 'phone' ? '280px' : device === 'tablet' ? '420px' : '(min-width: 1024px) 560px, 100vw'}
+            className={crop}
+          />
         </div>
+      </div>
+      <figcaption className="mt-3 text-center text-sm leading-6 text-[#5c584f] dark:text-[#b7b3a8] lg:text-left">
+        {DEVICE_CAPTION[device]}
+      </figcaption>
+    </figure>
+  );
+}
+
+export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [device, setDevice] = useState<DeviceId>('computer');
+  const headerRef = useRef<HTMLElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [menuOpen]);
+
+  const go = (id: string) => {
+    setMenuOpen(false);
+    window.setTimeout(() => scrollToSection(id), 0);
+  };
+
+  return (
+    <div
+      id="top"
+      className="landing-page min-h-screen bg-[#f3f0e8] font-[family-name:var(--font-sarabun)] text-base text-[#1c1b16] antialiased dark:bg-[#121410] dark:text-[#eceae4]"
+    >
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-40 border-b border-[#e3dfd4] bg-[#f3f0e8]/90 backdrop-blur-md dark:border-[#2c3128] dark:bg-[#121410]/90"
+      >
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
+          <a href="#top" className="flex min-h-11 min-w-0 items-center gap-2">
+            <Logo className="h-9 w-9" />
+            <Wordmark />
+          </a>
+
+          <nav className="ml-6 hidden min-w-0 items-center gap-1 lg:flex" aria-label="ส่วนของหน้า">
+            {NAV.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  go(item.id);
+                }}
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-2 text-[13px] text-[#3f3c36] hover:bg-[#e7e3d8] xl:px-2.5 xl:text-sm dark:text-[#d5d1c6] dark:hover:bg-[#232820]"
+              >
+                {'navLabel' in item ? item.navLabel : item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+            <div className="inline-flex min-h-11 min-w-11 items-center justify-center">
+              <DarkModeToggle />
+            </div>
+            <a
+              href={LINE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center rounded-full bg-green-600 px-3 text-sm font-semibold text-white hover:bg-green-700"
+            >
+              ขอติดตั้ง
+            </a>
+            <button
+              type="button"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[#1c1b16] hover:bg-[#e7e3d8] lg:hidden dark:text-white dark:hover:bg-[#232820]"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {menuOpen && (
+          <nav id={menuId} className="border-t border-[#e3dfd4] px-4 py-2 dark:border-[#2c3128] lg:hidden" aria-label="ส่วนของหน้า">
+            {NAV.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  go(item.id);
+                }}
+                className="flex min-h-11 items-center rounded-lg px-2 text-base text-[#1c1b16] hover:bg-[#e7e3d8] dark:text-[#eceae4] dark:hover:bg-[#232820]"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        )}
       </header>
 
-      {/* Hero Section */}
-      <section id="hero" className="mx-auto max-w-7xl px-4 pb-6 pt-12 sm:px-6 md:pb-8 md:pt-16 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Left Side - Text Content */}
-          <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              <div className="block">ระบบบริหารจัดการ</div>
-              <div className="pt-4 bg-gradient-to-r from-green-600 via-green-500 to-green-600 dark:from-green-400 dark:via-green-300 dark:to-green-400 bg-clip-text text-transparent">
-                รับซื้อยางพารา
-              </div>
+      <main>
+        <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 lg:pb-24 lg:pt-16">
+          <div className="mx-auto max-w-[640px] lg:mx-0 lg:max-w-none">
+            <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+              <span className="block">จากตาชั่งถึงกำไร</span>
+              <span className="mt-1 block text-green-700 dark:text-green-400">ในสมุดเล่มเดียว</span>
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-gray-600 dark:text-gray-300 mb-8">
-              Rubber Purchasing Management System ที่ทันสมัยและมีประสิทธิภาพ
+            <p className="mt-5 max-w-xl text-base leading-7 text-[#3f3c36] md:text-lg dark:text-[#c9c5ba]">
+              บันทึกชาวสวนที่นำยางมาขาย พิมพ์สลิป ตัดสต็อกตอนขายออก แล้วสรุปกำไรจากตัวเลขที่คีย์จริง
             </p>
-            
-            <div className="flex flex-col items-start gap-4">
+            <div className="mt-8 flex flex-col items-stretch gap-1 md:items-start">
+              <InstallLink className="w-full md:w-auto" />
               <Link
-                href="/login"
-                className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                href="/guide"
+                className="inline-flex min-h-11 items-center justify-start px-1 text-base font-medium text-green-800 underline-offset-4 hover:underline dark:text-green-400"
               >
-                เริ่มใช้งาน
-              </Link>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                เวอร์ชัน 1.4.5
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side - Images Swiper */}
-          <div className="w-full">
-            <Swiper
-              modules={swiperModules}
-              spaceBetween={20}
-              slidesPerView={1}
-              navigation
-              pagination={swiperPagination}
-              autoplay={swiperAutoplayFast}
-              loop
-              className="h-80 rounded-2xl md:h-96"
-            >
-              <SwiperSlide>
-                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <Image
-                    src="/นำยาง.png"
-                    alt="น้ำยาง"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    priority
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">น้ำยาง</p>
-                  </div>
-                </div>
-              </SwiperSlide>
-              <SwiperSlide>
-                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <Image
-                    src="/ยางก้อนถ้วยที่เตรียมขาย.png"
-                    alt="ยางก้อนถ้วยที่เตรียมขาย"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    priority
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">ยางก้อนถ้วย</p>
-                  </div>
-                </div>
-              </SwiperSlide>
-              <SwiperSlide>
-                <div className="group relative h-full rounded-2xl overflow-hidden shadow-2xl border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <Image
-                    src="/ยางแผ่น.jpg"
-                    alt="ยางแผ่น"
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    priority
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                    <p className="text-white font-semibold text-lg md:text-xl drop-shadow-lg">ยางแผ่น</p>
-                  </div>
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Stats Section */}
-      <section id="stats" className="mx-auto max-w-7xl px-4 pb-12 pt-2 sm:px-6 md:pb-16 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
-              500+
-            </div>
-            <div className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-              ผู้ใช้และสิทธิ์
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
-              10K+
-            </div>
-            <div className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-              ประวัติการรับซื้อ
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
-              98%
-            </div>
-            <div className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-              ความพึงพอใจ
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="gallery" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-8 pt-16 sm:px-6 md:pb-10 md:pt-20 lg:px-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            ภาพรวมระบบ
-          </h2>
-          {/* Toggle Button */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <button
-              onClick={() => setShowDarkMode(false)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                !showDarkMode
-                  ? 'bg-green-600 text-white shadow-lg scale-105'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              White Mode
-            </button>
-            <button
-              onClick={() => setShowDarkMode(true)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                showDarkMode
-                  ? 'bg-green-600 text-white shadow-lg scale-105'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              Dark Mode
-            </button>
-          </div>
-        </div>
-
-        {/* White Mode Swiper */}
-        {!showDarkMode && (
-          <Swiper
-            key="white-mode"
-            modules={swiperModules}
-            spaceBetween={30}
-            slidesPerView={1}
-            navigation
-            pagination={swiperPagination}
-            autoplay={swiperAutoplaySlow}
-            loop
-            className="pb-12"
-          >
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing_white/white_purchase.png"
-                  alt="Dashboard"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">Dashboard</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing_white/white_purchase_list.png"
-                  alt="รายการรับซื้อ"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">รายการรับซื้อ</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing_white/white_expense.png"
-                  alt="ระบบการเงิน"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing_white/member_history.png"
-                  alt="ประวัติสมาชิก"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">ประวัติสมาชิก</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing_white/white_edit.png"
-                  alt="แก้ไขข้อมูล"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">แก้ไขข้อมูล</p>
-                </div>
-              </div>
-            </SwiperSlide>
-          </Swiper>
-        )}
-
-        {/* Dark Mode Swiper */}
-        {showDarkMode && (
-          <Swiper
-            key="dark-mode"
-            modules={swiperModules}
-            spaceBetween={30}
-            slidesPerView={1}
-            navigation
-            pagination={swiperPagination}
-            autoplay={swiperAutoplaySlow}
-            loop
-            className="pb-12"
-          >
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/dashboard.png"
-                  alt="Dashboard"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                  priority
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">Dashboard</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/purchase.png"
-                  alt="การรับซื้อน้ำยาง"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">การรับซื้อน้ำยาง</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/member.png"
-                  alt="การจัดการสมาชิก"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">การจัดการสมาชิก</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/expense.png"
-                  alt="ระบบการเงิน"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">ระบบการเงิน</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/report.png"
-                  alt="รายงานและวิเคราะห์"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">รายงานและวิเคราะห์</p>
-                </div>
-              </div>
-            </SwiperSlide>
-            <SwiperSlide>
-              <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Image
-                  src="/landing/backup.png"
-                  alt="การจัดการระบบ"
-                  width={1920}
-                  height={1080}
-                  className="object-contain w-full h-auto"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-semibold text-xl">การจัดการระบบ</p>
-                </div>
-              </div>
-            </SwiperSlide>
-          </Swiper>
-        )}
-      </section>
-
-      {/* Slip Example Section */}
-      <section id="slip" className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 md:pb-20 md:pt-10 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          <div className="w-full flex justify-center lg:justify-start">
-            <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 flex items-center justify-center p-4 md:p-6">
-              <Image
-                src="/slip.png"
-                alt="ตัวอย่างสลิปการรับซื้อ"
-                width={400}
-                height={533}
-                className="object-contain w-full h-auto rounded-lg"
-                unoptimized
-              />
-            </div>
-          </div>
-          <div className="text-left">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-              ตัวอย่างสลิปการรับซื้อ
-            </h2>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6">
-              ระบบสามารถพิมพ์สลิปการรับซื้อได้ทันที พร้อมข้อมูลครบถ้วนและเป็นระเบียบ
-            </p>
-            <ul className="space-y-3 text-gray-600 dark:text-gray-300">
-              <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
-                <span>พิมพ์สลิปได้ทันทีหลังการรับซื้อ</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
-                <span>ข้อมูลครบถ้วน ระบุรายละเอียดการรับซื้อ</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-green-500 mr-3 mt-1 flex-shrink-0">✓</span>
-                <span>รูปแบบสลิปสวยงาม เป็นระเบียบ</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section id="benefits" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            ประโยชน์
-          </h2>
-          <h3 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-green-600 via-green-500 to-green-600 dark:from-green-400 dark:via-green-300 dark:to-green-400 bg-clip-text text-transparent mb-2">
-            ทำไมต้องเลือก Yang Dee?
-          </h3>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            ระบบที่ออกแบบมาเพื่อธุรกิจรับซื้อยางพาราโดยเฉพาะ
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Benefit 1 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              ประหยัดเวลาในการทำงาน
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              ลดเวลาในการบันทึกข้อมูลและคำนวณลงได้มากกว่า 70% ด้วยระบบอัตโนมัติ
-            </p>
-          </div>
-
-          {/* Benefit 2 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              ลดข้อผิดพลาดในการคำนวณ
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              ระบบคำนวณอัตโนมัติช่วยลดความผิดพลาดจากการคำนวณด้วยมือ
-            </p>
-          </div>
-
-          {/* Benefit 3 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              ติดตามข้อมูลแบบเรียลไทม์
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              รู้สถานะธุรกิจทันที ไม่ว่าจะเป็นยอดรับซื้อ การเงิน หรือหนี้ค้างชำระ
-            </p>
-          </div>
-
-          {/* Benefit 4 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              รายงานที่ครบถ้วนและแม่นยำ
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              สร้างรายงานต่างๆ ได้อย่างรวดเร็ว ช่วยในการวิเคราะห์และวางแผนธุรกิจ
-            </p>
-          </div>
-
-          {/* Benefit 5 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              จัดการทีมได้อย่างมีประสิทธิภาพ
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              กำหนดสิทธิ์ผู้ใช้งานได้ ควบคุมการเข้าถึงข้อมูลสำคัญ
-            </p>
-          </div>
-
-          {/* Benefit 6 */}
-          <div className="group relative bg-gradient-to-br from-white to-green-50/50 dark:from-gray-800 dark:to-green-900/20 backdrop-blur-sm rounded-3xl p-8 shadow-lg border-2 border-green-200/50 dark:border-green-800/50 hover:border-green-400 dark:hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/20 transition-all duration-500 transform hover:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/10 dark:bg-green-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-green-500/30">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
-              ปลอดภัยและเชื่อถือได้
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              ข้อมูลของคุณปลอดภัยด้วยระบบสำรองข้อมูลอัตโนมัติ
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {featuresSectionJSX}
-
-      {/* Platforms Section */}
-      <section id="platforms" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-6 pt-16 sm:px-6 md:pb-8 md:pt-20 lg:px-8">
-        <div className="bg-gradient-to-r from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/30 rounded-2xl p-8 md:p-12 border border-green-200/50 dark:border-green-800/50">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              รองรับหลายแพลตฟอร์ม
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-2 max-w-2xl mx-auto">
-              โปรเจกต์นี้รองรับการทำงานเป็น
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* Desktop Application */}
-            <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Desktop Application
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Windows และ macOS
-              </p>
-            </div>
-
-            {/* Web Browser */}
-            <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Web Browser
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ใช้งานผ่านเบราว์เซอร์
-              </p>
-            </div>
-
-            {/* POS Terminal Android */}
-            <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center overflow-hidden relative">
-                <Image 
-                  src="/POS.png" 
-                  alt="POS Terminal" 
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                POS Terminal
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Android
-              </p>
-            </div>
-
-          </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-dashed border-amber-300/80 px-4 py-3 text-sm text-gray-600 dark:border-amber-700/80 dark:text-gray-300">
-            <span className="font-medium text-gray-900 dark:text-white">Mobile App</span>
-            <span>iOS & Android</span>
-            <span className="rounded-full bg-amber-500 px-2 py-1 text-xs font-semibold text-white">Coming Soon</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Deployment Modes Section */}
-      <section id="deployment" className="scroll-mt-20 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 md:pb-20 md:pt-8 lg:px-8">
-        <div className="mb-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            โหมดการใช้งาน
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            เลือกโหมดการใช้งานที่เหมาะสมกับธุรกิจของคุณ
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Standalone Mode */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="min-w-0 text-2xl font-semibold text-gray-900 dark:text-white">
-                ใช้งานแบบเครื่องเดียว
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong className="text-gray-900 dark:text-white">Standalone Mode</strong>
-            </p>
-            <ul className="space-y-3 text-gray-600 dark:text-gray-300">
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">ฐานข้อมูลเก็บอยู่ในเครื่องของท่าน โดยไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ต</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">เหมาะกับกิจการรับซื้อน้ำยางพาราส่วนตัวขนาดเล็ก</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">สามารถเพิ่มการใช้งานร่วมกันหลายเครื่องแบบเครือข่าย LAN ได้ตามต้องการ</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* LAN Network Mode */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-green-200/50 dark:border-green-800/50 hover:shadow-xl transition-all duration-200">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                </svg>
-              </div>
-              <h3 className="min-w-0 text-2xl font-semibold text-gray-900 dark:text-white">
-                ใช้ร่วมกันหลายเครื่องในเครือข่าย
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong className="text-gray-900 dark:text-white">LAN Network Mode</strong>
-            </p>
-            <ul className="space-y-3 text-gray-600 dark:text-gray-300">
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">ฐานข้อมูลเก็บอยู่ในเครื่องที่กำหนดเป็นเครื่อง Server (ควรเป็นเครื่องที่มีประสิทธิภาพสูงสุด)</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">ไม่จำเป็นต้องเชื่อมต่ออินเทอร์เน็ตก็สามารถใช้งานได้</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">เหมาะกับกิจการรับซื้อน้ำยางที่ต้องการใช้งานมากกว่า 1 เครื่อง</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mt-1 mr-2 shrink-0 text-green-500">✓</span>
-                <span className="min-w-0">เมื่อบันทึกข้อมูลที่เครื่องใดก็ตาม ข้อมูลจะอัปเดตอัตโนมัติทุกเครื่องที่อยู่ในวง LAN ทันที</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section id="reviews" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
-        <div className="mb-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            รีวิวจากลูกค้า
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
-            ความคิดเห็นจากผู้ใช้งานจริง
-          </p>
-          <p className="text-base text-gray-500 dark:text-gray-400">
-            เสียงจากเจ้าของธุรกิจรับซื้อน้ำยางที่เชื่อใจและใช้งาน Yang Dee
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Review 1 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ใช้งานง่ายมาก ประหยัดเวลาในการบันทึกข้อมูลได้เยอะ ตอนนี้ไม่ต้องนั่งคำนวณด้วยมือเหมือนเมื่อก่อนแล้ว&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณสมชาย วงษ์ใหญ่</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">สงขลา</p>
-            </div>
-          </div>
-
-          {/* Review 2 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ระบบดีมาก รายงานครบถ้วน ดูยอดรับซื้อและหนี้ค้างชำระได้ง่าย ช่วยให้ธุรกิจเราเป็นระบบขึ้นเยอะ&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณวิไล พรหมศิลป์</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">ตรัง</p>
-            </div>
-          </div>
-
-          {/* Review 3 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;คุ้มค่ามากครับ ราคาไม่แพง ฟีเจอร์ครบ ทีมงานดูแลดี ตอบคำถามเร็ว แนะนำเลยครับ&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณประเสริฐ แก้วมณี</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">สุราษฎร์ธานี</p>
-            </div>
-          </div>
-
-          {/* Review 4 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ตอนแรกกังวลว่าจะใช้งานไม่เป็น แต่พอได้ลองแล้วใช้ง่ายมาก อินเทอร์เฟซเข้าใจง่าย ลูกจ้างใช้ได้หมด&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณนิภา สุขสวัสดิ์</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">ชุมพร</p>
-            </div>
-          </div>
-
-          {/* Review 5 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ระบบเสถียร ไม่เคยมีปัญหา ข้อมูลปลอดภัย มีการสำรองข้อมูลอัตโนมัติ ใช้งานสบายใจครับ&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณอานนท์ ศรีสุข</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">กระบี่</p>
-            </div>
-          </div>
-
-          {/* Review 6 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="flex text-green-500 text-xl">
-                ★★★★★
-              </div>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
-              &quot;ดีมากค่ะ จัดการค่าบริการและเบิกเงินล่วงหน้าได้ง่าย ติดตามหนี้สะดวก ธุรกิจเราเติบโตขึ้นเยอะเลย&quot;
-            </p>
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <p className="font-semibold text-gray-900 dark:text-white">คุณสุดา ทองดี</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">นราธิวาส</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" className="scroll-mt-20 mx-auto max-w-4xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            คำถามที่พบบ่อย
-          </h2>
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            มีคำถามอะไรไหม?
-          </h3>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            คำตอบสำหรับคำถามที่พบบ่อยจากผู้ใช้งาน
-          </p>
-        </div>
-        <div className="space-y-4">
-          {/* FAQ 1 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              ต้องติดตั้งโปรแกรมอะไรเพิ่มไหม?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              ไม่ต้องติดตั้งโปรแกรมเพิ่มเติม ระบบทำงานผ่านเว็บเบราว์เซอร์ หรือสามารถดาวน์โหลด Desktop Application สำหรับใช้งานแบบ Offline ได้
-            </p>
-          </div>
-
-          {/* FAQ 2 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              ข้อมูลจะปลอดภัยไหม?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              ปลอดภัยครับ เรามีระบบสำรองข้อมูลอัตโนมัติทุกวัน ข้อมูลเข้ารหัส SSL และมีการควบคุมการเข้าถึงด้วยระบบ User Permission
-            </p>
-          </div>
-
-          {/* FAQ 3 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              สามารถทดลองใช้งานก่อนได้ไหม?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              ได้ครับ คุณสามารถทดลองใช้งานฟรีได้ทันทีด้วยแพ็คเกจเริ่มต้น ไม่ต้องใส่บัตรเครดิต ไม่มีข้อผูกมัด
-            </p>
-          </div>
-
-          {/* FAQ 4 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              รองรับหลายสาขาหรือไม่?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              รองรับครับ แพ็คเกจมาตรฐานรองรับหลายสาขา และแพ็คเกจองค์กรรองรับหลายสาขาไม่จำกัด พร้อมระบบจัดการข้อมูลแยกตามสาขา
-            </p>
-          </div>
-
-          {/* FAQ 5 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              มีการอบรมการใช้งานไหม?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              แพ็คเกจมาตรฐานและแพ็คเกจองค์กรมีคู่มือการใช้งานและวิดีโอสอนใช้งานออนไลน์ ส่วนแพ็คเกจองค์กรมีบริการฝึกอบรมการใช้งานแบบตัวต่อตัวเพิ่มเติม
-            </p>
-          </div>
-
-          {/* FAQ 6 */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              สามารถยกเลิกการใช้งานได้ไหม?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              ได้ครับ คุณสามารถยกเลิกการใช้งานได้ตลอดเวลา ไม่มีค่าธรรมเนียมการยกเลิก ข้อมูลของคุณจะถูกเก็บไว้เป็นเวลา 30 วันหลังจากยกเลิก
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section id="contact" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
-        <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/30 dark:to-gray-800/80 rounded-3xl p-8 md:p-12 border border-green-200/50 dark:border-green-800/50">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              พร้อมเริ่มต้นแล้วหรือยัง?
-            </h2>
-            <div className="inline-block bg-green-100 dark:bg-green-900/50 rounded-full px-6 py-2 mb-4">
-              <span className="text-2xl font-bold text-green-600 dark:text-green-400">ลองใช้งานฟรี</span>
-              <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 ml-2 line-through">30 วัน</span>
-              <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 ml-2">90 วัน</span>
-            </div>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-              ไม่ต้องใช้บัตรเครดิต ติดตั้งง่าย ใช้งานได้ทันที
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link
-                href="/login"
-                className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-500 dark:from-green-500 dark:to-green-400 text-white rounded-xl hover:from-green-700 hover:to-green-600 dark:hover:from-green-600 dark:hover:to-green-500 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                ทดลองใช้ฟรี
+                อ่านคู่มือ
               </Link>
             </div>
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-8">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                ไม่ต้องใช้บัตรเครดิต
-              </div>
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                ยกเลิกได้ทุกเมื่อ
-              </div>
-            </div>
           </div>
 
-          {/* Contact Information */}
-          <div className="border-t border-green-200/50 dark:border-green-800/50 pt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">ติดต่อเรา</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span>0926241010</span>
+          <div className="mx-auto mt-10 w-full max-w-[640px] lg:mt-0 lg:max-w-none">
+            <div role="tablist" aria-label="ขนาดหน้าจอ" className="mb-4 flex flex-wrap gap-2">
+              {DEVICES.map((item) => {
+                const selected = device === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setDevice(item.id)}
+                    className={`min-h-11 rounded-full px-4 text-sm font-medium ${
+                      selected
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-[#1c1b16] ring-1 ring-[#e3dfd4] hover:bg-[#f7f5f0] dark:bg-[#1a1d18] dark:text-[#eceae4] dark:ring-[#2c3128]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            <ProductFrame device={device} />
+            <p className="mt-2 text-center text-sm leading-6 text-[#6f6b62] lg:text-left dark:text-[#a8a496]">
+              โปรแกรมเดียวกัน เปิดในเบราว์เซอร์ของเครื่องนั้น
+            </p>
+          </div>
+        </section>
+
+        <section id="problem" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">งานที่หลุดระหว่างวัน</h2>
+            <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-3">
+              {PROBLEMS.map((item, index) => (
+                <article key={item.title}>
+                  <p className="text-sm font-semibold text-green-700 dark:text-green-400">0{index + 1}</p>
+                  <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-3 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="how" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">หนึ่งวันของจุดรับซื้อ</h2>
+            <ol className="mx-auto mt-10 max-w-3xl">
+              {DAY.map((step, index) => (
+                <li key={step.when} className="grid grid-cols-[2.5rem_1fr] gap-4">
+                  <div className="flex flex-col items-center">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white">
+                      {index + 1}
+                    </span>
+                    {index < DAY.length - 1 && <span className="mt-2 w-px flex-1 bg-[#e3dfd4] dark:bg-[#2c3128]" />}
                   </div>
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span className="min-w-0 break-all">support@punsookinnotech.co</span>
+                  <div className={index < DAY.length - 1 ? 'pb-8' : ''}>
+                    <h3 className="text-xl font-semibold">{step.when}</h3>
+                    <p className="mt-2 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">{step.body}</p>
                   </div>
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.057-1.266-.07-1.646-.07-4.85s.015-3.585.074-4.85c.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.057 1.65-.07 4.859-.07zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.44 1.44-1.44.793-.001 1.44.646 1.44 1.44z"/>
-                    </svg>
-                    <span>Line: pawatify</span>
-                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section id="features" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">สิ่งที่โปรแกรมทำให้ระหว่างวัน</h2>
+            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((feature) => (
+                <article
+                  key={feature.title}
+                  className="rounded-2xl border border-[#e3dfd4] bg-white p-6 dark:border-[#2c3128] dark:bg-[#1a1d18]"
+                >
+                  <h3 className="text-lg font-semibold">{feature.title}</h3>
+                  <p className="mt-3 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">{feature.body}</p>
+                </article>
+              ))}
+            </div>
+            <p className="mt-8 max-w-3xl text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+              ผู้ช่วยอัจฉริยะใช้ได้เฉพาะเจ้าของ ถามตัวเลขร้านเป็นภาษาไทยผ่าน Claude, ChatGPT หรือ OpenRouter ต้องมีอินเทอร์เน็ตและ API Key ของร้าน ผู้ช่วยไม่เห็นเลขบัญชี บัตรประชาชน เบอร์โทร หรือรหัสผ่าน
+            </p>
+          </div>
+        </section>
+
+        <section id="proof" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">ของที่เห็นในโปรแกรม</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+              ในโปรแกรมสลับโหมดมืดได้ ปรับขนาดตัวอักษร และเลือกฟอนต์ไทยได้ที่เครื่องนั้น
+            </p>
+
+            <div className="mt-10 grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
+              <div className="mx-auto w-full max-w-sm rounded-[20px] border border-[#e3dfd4] bg-white p-3 dark:border-[#2c3128] dark:bg-[#1a1d18]">
+                <div className="overflow-hidden rounded-xl bg-[#f7f5f0] dark:bg-[#10120e]">
+                  <Image
+                    src="/slip.png"
+                    alt="ตัวอย่างสลิปรับซื้อยาง มีน้ำหนักสุทธิ ราคาต่อกิโล และช่องผู้จัดทำกับผู้รับเงิน"
+                    width={648}
+                    height={892}
+                    className="h-auto w-full"
+                  />
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">ที่อยู่</h3>
-                <div className="flex items-start text-gray-700 dark:text-gray-300">
-                  <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>119/1, Punsook office, Moo 1 Bang Khu Wiang Subdistrict,<br />Bang Kruai District, Nonthaburi Province 11130</span>
-                </div>
+                <h3 className="text-2xl font-semibold">สลิปที่พิมพ์ให้ชาวสวน</h3>
+                <p className="mt-4 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+                  ตั้งชื่อจุดรับซื้อ ที่อยู่ เลขประจำตัวผู้เสียภาษี และข้อความท้ายใบก่อนพิมพ์ของจริง เลือกสลิปธรรมดา สลิปมีลายเซ็น หรือใบ A4 แล้วดูตัวอย่างก่อนบันทึก
+                </p>
               </div>
             </div>
+
+            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {SHOTS.map((shot) => (
+                <figure key={shot.src}>
+                  <div className="overflow-hidden rounded-2xl border border-[#e3dfd4] bg-[#eceae4] dark:border-[#2c3128] dark:bg-[#10120e]">
+                    <Image
+                      src={shot.src}
+                      alt={shot.alt}
+                      width={1280}
+                      height={745}
+                      className="h-auto w-full object-contain"
+                    />
+                  </div>
+                  <figcaption className="mt-3">
+                    <span className="block text-base font-semibold">{shot.caption}</span>
+                    <span className="text-sm text-[#5c584f] dark:text-[#b7b3a8]">{shot.detail}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }, (_, index) => (
+                <article
+                  key={index}
+                  className="rounded-2xl border border-dashed border-[#c9c3b4] p-6 dark:border-[#3a4034]"
+                >
+                  <p className="text-sm font-semibold">ใส่รีวิวจริง</p>
+                  <p className="mt-8 text-sm text-[#8a867c] dark:text-[#8d897f]">ชื่อ</p>
+                  <p className="text-sm text-[#8a867c] dark:text-[#8d897f]">จุดรับซื้อ · จังหวัด</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="pricing" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">ใบอนุญาต</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+              เปิดโปรแกรมด้วยคีย์ที่มีวันหมดอายุ หมดแล้วใส่คีย์ใหม่ โปรแกรมถึงจะเข้าได้อีก ราคาสอบถามตามจำนวนเครื่อง
+            </p>
+            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+              {PLANS.map((plan) => (
+                <article
+                  key={plan.title}
+                  className="flex flex-col rounded-2xl border border-[#e3dfd4] bg-white p-6 dark:border-[#2c3128] dark:bg-[#1a1d18]"
+                >
+                  <p className="text-sm font-semibold text-green-700 dark:text-green-400">{plan.detail}</p>
+                  <h3 className="mt-2 text-2xl font-semibold">{plan.title}</h3>
+                  <p className="mt-3 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">{plan.body}</p>
+                  <ul className="mt-6 space-y-2 text-base leading-7">
+                    {INCLUDED.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <a
+                    href={LINE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-green-600 px-5 text-base font-semibold text-white hover:bg-green-700"
+                  >
+                    ถามราคา
+                  </a>
+                </article>
+              ))}
+            </div>
+            <p className="mt-6 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+              ผู้ช่วยอัจฉริยะใช้ API Key ของร้านเอง และต้องต่ออินเทอร์เน็ต
+            </p>
+          </div>
+        </section>
+
+        <section id="faq" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">คำถามที่พบบ่อย</h2>
+            <div className="mt-10 grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2">
+              {FAQ.map((item) => (
+                <article key={item.q}>
+                  <h3 className="text-lg font-semibold">{item.q}</h3>
+                  <p className="mt-2 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">{item.a}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">นัดติดตั้งที่จุดรับซื้อ</h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
+              บอกรายชื่อจุด จำนวนเครื่อง และว่าจะใช้เครื่องเดียวหรือหลายเครื่องในวงแลน
+            </p>
+            <div className="mt-8">
+              <InstallLink className="w-full sm:w-auto" />
+            </div>
+            <dl className="mt-10 grid max-w-xl grid-cols-1 gap-4 text-base leading-7">
+              <div>
+                <dt className="text-sm text-[#6f6b62] dark:text-[#a8a496]">โทร</dt>
+                <dd>
+                  <a href="tel:0926241010" className="font-medium hover:underline">
+                    0926241010
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[#6f6b62] dark:text-[#a8a496]">Line</dt>
+                <dd>
+                  <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
+                    pawatify
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[#6f6b62] dark:text-[#a8a496]">อีเมล</dt>
+                <dd>
+                  <a href="mailto:support@punsookinnotech.co" className="break-all font-medium hover:underline">
+                    support@punsookinnotech.co
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[#6f6b62] dark:text-[#a8a496]">ที่อยู่</dt>
+                <dd>119/1 Punsook office หมู่ 1 ต.บางคูเวียง อ.บางกรวย จ.นนทบุรี 11130</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-[#e3dfd4] dark:border-[#2c3128]">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Logo className="h-9 w-9" />
+              <Wordmark />
+            </div>
+            <p className="mt-4 text-sm leading-6 text-[#5c584f] dark:text-[#b7b3a8]">
+              ระบบจุดรับซื้อน้ำยางของ Punsook Innotech
+            </p>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">เมนู</h2>
+            <ul className="mt-2">
+              {NAV.map((item) => (
+                <li key={item.id}>
+                  <a
+                    href={`#${item.id}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      go(item.id);
+                    }}
+                    className="flex min-h-11 items-center text-sm text-[#3f3c36] hover:text-green-800 dark:text-[#c9c5ba] dark:hover:text-green-400"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">ติดต่อ</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-[#3f3c36] dark:text-[#c9c5ba]">
+              <li>
+                <a href="tel:0926241010">0926241010</a>
+              </li>
+              <li>
+                <a href={LINE_URL} target="_blank" rel="noopener noreferrer">
+                  Line: pawatify
+                </a>
+              </li>
+              <li>
+                <a href="mailto:support@punsookinnotech.co" className="break-all">
+                  support@punsookinnotech.co
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">ลิงก์ด่วน</h2>
+            <ul className="mt-2">
+              <li>
+                <Link href="/guide" className="flex min-h-11 items-center text-sm hover:text-green-800 dark:hover:text-green-400">
+                  อ่านคู่มือ
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="flex min-h-11 items-center text-sm hover:text-green-800 dark:hover:text-green-400">
+                  เข้าสู่ระบบ
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            {/* Company Info */}
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <Logo className="h-10 w-auto" />
-                <h3 className="text-lg font-bold">
-                  <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
-                  <span className="text-violet-500 dark:text-violet-400">a</span>
-                  <span className="text-violet-500 dark:text-sky-400">n</span>
-                  <span className="text-emerald-500 dark:text-emerald-400">g</span>
-                  <span className="hidden text-gray-900 dark:text-white sm:inline"> Dee</span>
-                </h3>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                ระบบบริหารจัดการรับซื้อน้ำยางที่ทันสมัยและมีประสิทธิภาพ
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ออกแบบมาเพื่อธุรกิจของคุณโดยเฉพาะ
-              </p>
-            </div>
-
-            {/* Menu */}
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">เมนู</h4>
-              <ul className="flex flex-col">
-                {LANDING_NAV.map((item) => (
-                  <li key={item.id}>
-                    <a
-                      href={`#${item.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        scrollToLandingSection(item.id);
-                      }}
-                      className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400"
-                    >
-                      {'stackedLabel' in item ? item.stackedLabel : item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">ติดต่อ</h4>
-              <ul className="space-y-3">
-                <li className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <span>0926241010</span>
-                </li>
-                <li className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <span className="min-w-0 break-all">support@punsookinnotech.co</span>
-                </li>
-                <li className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.057-1.266-.07-1.646-.07-4.85s.015-3.585.074-4.85c.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.057 1.65-.07 4.859-.07zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.44 1.44-1.44.793-.001 1.44.646 1.44 1.44z"/>
-                  </svg>
-                  <span>Line: pawatify</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">ลิงก์ด่วน</h4>
-              <ul className="flex flex-col">
-                <li>
-                  <Link href="/login" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
-                    ทดลองใช้งาน
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/guide" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
-                    คู่มือผู้ใช้งาน
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/landing#reviews" className="flex min-h-11 w-full items-center text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
-                    อ่านรีวิว
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-8">
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-              <p>© 2025 Yang Dee. All rights reserved.</p>
-            </div>
-          </div>
+        <div className="border-t border-[#e3dfd4] px-4 py-6 text-center text-sm text-[#6f6b62] dark:border-[#2c3128] dark:text-[#a8a496]">
+          © 2026 Yang Dee
         </div>
       </footer>
     </div>
   );
 }
-
-// Export memoized component to prevent unnecessary rerenders from parent component
-export default memo(LandingPage);
-

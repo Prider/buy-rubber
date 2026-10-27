@@ -21,18 +21,18 @@ function isHeading(block: GuideBlock): block is Extract<GuideBlock, { kind: 'h' 
   return block.kind === 'h';
 }
 
-function isFigure(block: GuideBlock): block is Extract<GuideBlock, { kind: 'figure' }> {
-  return block.kind === 'figure';
+function isMedia(block: GuideBlock): block is Extract<GuideBlock, { kind: 'figure' | 'video' }> {
+  return block.kind === 'figure' || block.kind === 'video';
 }
 
-function withoutLeadFigure(blocks: GuideBlock[]): {
-  lead: Extract<GuideBlock, { kind: 'figure' }> | undefined;
+function withoutLeadMedia(blocks: GuideBlock[]): {
+  lead: Extract<GuideBlock, { kind: 'figure' | 'video' }> | undefined;
   rest: GuideBlock[];
 } {
-  const index = blocks.findIndex(isFigure);
+  const index = blocks.findIndex(isMedia);
   if (index < 0) return { lead: undefined, rest: blocks };
   const lead = blocks[index];
-  if (!isFigure(lead)) return { lead: undefined, rest: blocks };
+  if (!isMedia(lead)) return { lead: undefined, rest: blocks };
   return { lead, rest: blocks.filter((_, blockIndex) => blockIndex !== index) };
 }
 
@@ -102,6 +102,34 @@ const NOTE_LABEL = {
   warn: 'ควรรู้',
   danger: 'ระวัง',
 } as const;
+
+function GuideVideo({ src, poster, caption }: { src: string; poster: string; caption: string }) {
+  return (
+    <figure className="overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-900/40">
+      <video
+        key={src}
+        controls
+        playsInline
+        preload="metadata"
+        poster={poster}
+        aria-label={caption}
+        className="block w-full rounded-xl bg-black shadow-[inset_0_0_0_1px_oklch(0_0_0/0.1)] dark:shadow-[inset_0_0_0_1px_oklch(1_0_0/0.1)]"
+      >
+        <source src={src} type="video/mp4" />
+      </video>
+      <figcaption className="px-4 py-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+        {caption}
+      </figcaption>
+    </figure>
+  );
+}
+
+function GuideMedia({ block }: { block: Extract<GuideBlock, { kind: 'figure' | 'video' }> }) {
+  if (block.kind === 'video') {
+    return <GuideVideo src={block.src} poster={block.poster} caption={block.caption} />;
+  }
+  return <GuideFigure src={block.src} alt={block.alt} caption={block.caption} />;
+}
 
 function GuideFigure({ src, alt, caption }: { src: string; alt: string; caption: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -226,8 +254,8 @@ function GuideBlocks({ blocks }: { blocks: GuideBlock[] }) {
           );
         }
 
-        if (block.kind === 'figure') {
-          return <GuideFigure key={index} src={block.src} alt={block.alt} caption={block.caption} />;
+        if (block.kind === 'figure' || block.kind === 'video') {
+          return <GuideMedia key={index} block={block} />;
         }
 
         if (block.kind === 'table') {
@@ -385,7 +413,7 @@ export default function UserGuide() {
   const groupLabel = GUIDE_GROUPS.find((group) => group.id === topic?.group)?.label;
   const nextTopic = topic?.nextId ? topicById(topic.nextId) : undefined;
   const headings = topic?.blocks.filter(isHeading) ?? [];
-  const { lead: leadFigure, rest: bodyBlocks } = withoutLeadFigure(topic?.blocks ?? []);
+  const { lead: leadMedia, rest: bodyBlocks } = withoutLeadMedia(topic?.blocks ?? []);
   const phaseIndex = GUIDE_PHASES.findIndex((phase) => phase.topicId === topic?.id);
   const menuPath = topic?.href?.split('?')[0];
   const canOpenMenu = Boolean(
@@ -586,7 +614,7 @@ export default function UserGuide() {
                 อยากทำอะไร เปิดหัวข้อนั้น
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-gray-700 dark:text-gray-200">
-                แต่ละหัวข้อมีภาพจากหน้าจอจริง แล้วตามด้วยขั้นตอนสั้นๆ
+                แต่ละหัวข้อมีภาพหรือคลิปจากหน้าจอจริง แล้วตามด้วยขั้นตอนสั้นๆ
               </p>
 
               <button
@@ -668,9 +696,9 @@ export default function UserGuide() {
                 {topic.title}
               </h1>
               <p className="mt-3 text-base leading-7 text-gray-700 dark:text-gray-200">{topic.summary}</p>
-              {leadFigure && (
+              {leadMedia && (
                 <div className="mt-5">
-                  <GuideFigure src={leadFigure.src} alt={leadFigure.alt} caption={leadFigure.caption} />
+                  <GuideMedia block={leadMedia} />
                 </div>
               )}
               {topic.menu && (
