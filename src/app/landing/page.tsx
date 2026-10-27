@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
 import { useDarkMode } from '@/contexts/DarkModeContext';
@@ -28,6 +28,7 @@ const DEVICES = [
 type DeviceId = (typeof DEVICES)[number]['id'];
 
 const DEVICE_ROTATE_MS = 6000;
+const DEVICE_FADE_MS = 600;
 
 const DEVICE_CAPTION: Record<DeviceId, string> = {
   computer: 'แถบไอคอนด้านซ้าย ฟอร์มรับซื้ออยู่ข้างตะกร้า',
@@ -96,13 +97,26 @@ const FEATURES = [
   },
 ];
 
-const SHOTS = [
+const SHOTS: Array<{
+  src: string;
+  darkSrc?: string;
+  alt: string;
+  caption: string;
+  detail: string;
+}> = [
   {
     src: '/guide/dashboard.jpg',
     darkSrc: '/guide/dark/dashboard.jpg',
     alt: 'แดชบอร์ด Yang Dee สลับวันนี้กับเดือนนี้',
     caption: 'แดชบอร์ด',
     detail: 'วันนี้หรือเดือนนี้',
+  },
+  {
+    src: '/guide/stock.jpg?v=2',
+    darkSrc: '/guide/dark/stock.jpg',
+    alt: 'หน้าสต็อกสินค้า แสดงประเภทและกิโลกรัมคงเหลือ',
+    caption: 'สต็อกสินค้า',
+    detail: 'ประเภทและคงเหลือ',
   },
   {
     src: '/guide/purchases.jpg',
@@ -112,11 +126,102 @@ const SHOTS = [
     detail: 'ตะกร้า แล้วพิมพ์สลิป',
   },
   {
+    src: '/guide/sales.jpg?v=2',
+    darkSrc: '/guide/dark/sales.jpg?v=2',
+    alt: 'หน้าขายสินค้าและแบบฟอร์มบันทึกการขาย',
+    caption: 'ขายสินค้า',
+    detail: 'บันทึกขายให้โรงงาน',
+  },
+  {
+    src: '/guide/history.jpg?v=2',
+    darkSrc: '/guide/dark/history.jpg?v=2',
+    alt: 'หน้าประวัติการรับซื้อสำหรับค้นบิลและพิมพ์สลิป',
+    caption: 'ประวัติการรับซื้อ',
+    detail: 'ค้นบิลแล้วพิมพ์สลิป',
+  },
+  {
+    src: '/guide/members.jpg?v=2',
+    darkSrc: '/guide/dark/members.jpg',
+    alt: 'หน้ารายชื่อสมาชิกชาวสวน',
+    caption: 'สมาชิก',
+    detail: 'ชาวสวนที่นำยางมาขาย',
+  },
+  {
+    src: '/guide/companies.jpg?v=2',
+    darkSrc: '/guide/dark/companies.jpg?v=2',
+    alt: 'หน้าบริษัทปลายทางที่รับซื้อยาง',
+    caption: 'บริษัทปลายทาง',
+    detail: 'โรงงานที่รับซื้อ',
+  },
+  {
+    src: '/guide/expenses.jpg?v=2',
+    darkSrc: '/guide/dark/expenses.jpg?v=2',
+    alt: 'หน้าบันทึกค่าใช้จ่ายของจุดรับซื้อ',
+    caption: 'ค่าใช้จ่าย',
+    detail: 'น้ำมัน ค่าซ่อม ค่าคนงาน',
+  },
+  {
     src: '/guide/reports.jpg',
     darkSrc: '/guide/dark/reports.jpg',
     alt: 'หน้ารายงานห้าแท็บของ Yang Dee',
     caption: 'รายงาน',
     detail: 'ดาวน์โหลด PDF',
+  },
+  {
+    src: '/guide/assistant.jpg?v=2',
+    darkSrc: '/guide/dark/assistant.jpg',
+    alt: 'แผงผู้ช่วยอัจฉริยะสำหรับถามตัวเลขร้าน',
+    caption: 'ผู้ช่วยอัจฉริยะ',
+    detail: 'ถามตัวเลขร้าน',
+  },
+  {
+    src: '/guide/settings-slip.jpg',
+    darkSrc: '/guide/dark/settings-slip.jpg',
+    alt: 'แท็บตั้งค่าใบรับซื้อและตัวอย่างสลิป',
+    caption: 'ตั้งค่าใบรับซื้อ',
+    detail: 'ชื่อจุดและขนาดกระดาษ',
+  },
+  {
+    src: '/guide/settings-display.jpg?v=2',
+    darkSrc: '/guide/dark/settings-display.jpg',
+    alt: 'แท็บการแสดงผลสำหรับขนาดตัวอักษรและพื้นหลัง',
+    caption: 'การแสดงผล',
+    detail: 'ขนาดตัวอักษรและพื้นหลัง',
+  },
+  {
+    src: '/guide/settings-users.jpg?v=2',
+    darkSrc: '/guide/dark/settings-users.jpg',
+    alt: 'แท็บผู้ใช้งานสำหรับกำหนดบทบาท',
+    caption: 'ผู้ใช้งาน',
+    detail: 'กำหนดบทบาท',
+  },
+  {
+    src: '/guide/settings-connection.jpg?v=2',
+    darkSrc: '/guide/dark/settings-connection.jpg',
+    alt: 'แท็บการเชื่อมต่อที่แสดง Server URL',
+    caption: 'การเชื่อมต่อ',
+    detail: 'Server URL ในวงแลน',
+  },
+  {
+    src: '/guide/settings-backup.jpg?v=2',
+    darkSrc: '/guide/dark/settings-backup.jpg',
+    alt: 'แท็บสำรองข้อมูล',
+    caption: 'สำรองข้อมูล',
+    detail: 'กดสำรองแล้วเก็บนอกเครื่อง',
+  },
+  {
+    src: '/guide/settings-license.jpg?v=2',
+    darkSrc: '/guide/dark/settings-license.jpg',
+    alt: 'แท็บใบอนุญาตซอฟต์แวร์',
+    caption: 'ใบอนุญาต',
+    detail: 'วันหมดอายุของคีย์',
+  },
+  {
+    src: '/guide/settings-assistant.jpg?v=2',
+    darkSrc: '/guide/dark/settings-assistant.jpg',
+    alt: 'แท็บตั้งค่าผู้ช่วยอัจฉริยะ',
+    caption: 'ตั้งค่าผู้ช่วย',
+    detail: 'ผู้ให้บริการและ API Key',
   },
 ];
 
@@ -222,17 +327,17 @@ function PhoneField({
 }) {
   return (
     <div className="min-w-0">
-      <p className="mb-[1cqw] truncate text-[3.7cqw] font-semibold leading-none text-gray-700 dark:text-gray-300">
+      <p className="mb-[0.6cqw] truncate text-[3.6cqw] font-semibold leading-none text-gray-700 dark:text-gray-300">
         {label}
         {required && <span className="text-red-500"> *</span>}
       </p>
-      <div className={`flex h-[12.8cqw] items-center rounded-[2.8cqw] border border-gray-200 px-[2.6cqw] shadow-sm dark:border-gray-600 ${tone}`}>
+      <div className={`flex h-[10cqw] items-center rounded-[2.6cqw] border border-gray-200 px-[2.4cqw] shadow-sm dark:border-gray-600 ${tone}`}>
         {search && (
           <svg className="mr-[1.4cqw] h-[4.2cqw] w-[4.2cqw] shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         )}
-        <span className={`min-w-0 flex-1 truncate text-[4.8cqw] ${value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+        <span className={`min-w-0 flex-1 truncate text-[5.2cqw] ${value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
           {value || placeholder}
         </span>
         {suffix && <span className="shrink-0 pl-[1cqw] text-[3.4cqw] font-medium text-gray-500 dark:text-gray-400">{suffix}</span>}
@@ -244,7 +349,7 @@ function PhoneField({
 function MobilePurchaseScreen() {
   return (
     <div className="flex h-full flex-col bg-gray-50 text-gray-900 [container-type:size] dark:bg-gray-900 dark:text-gray-100">
-      <header className="flex h-[14cqw] shrink-0 items-center gap-[2cqw] border-b border-gray-200 bg-white px-[3cqw] dark:border-gray-700 dark:bg-gray-800">
+      <header className="flex h-[26cqw] shrink-0 items-end gap-[2cqw] border-b border-gray-200 bg-white px-[3cqw] pb-[2cqw] dark:border-gray-700 dark:bg-gray-800">
         <svg className="h-[5.6cqw] w-[5.6cqw] shrink-0 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
@@ -262,15 +367,15 @@ function MobilePurchaseScreen() {
         </svg>
       </header>
 
-      <div className="grid shrink-0 grid-cols-2 gap-[1.2cqw] border-b border-gray-200 bg-white p-[2cqw] dark:border-gray-700 dark:bg-gray-900">
-        <p className="flex h-[12.5cqw] items-center justify-center rounded-[2.8cqw] bg-blue-600 text-[4.3cqw] font-semibold text-white">รับซื้อ</p>
-        <p className="flex h-[12.5cqw] items-center justify-center text-[4.3cqw] font-semibold text-gray-500 dark:text-gray-400">ค่าบริการ</p>
+      <div className="grid shrink-0 grid-cols-2 gap-[1.2cqw] border-b border-gray-200 bg-white p-[1.4cqw] dark:border-gray-700 dark:bg-gray-900">
+        <p className="flex h-[11cqw] items-center justify-center rounded-[2.6cqw] bg-blue-600 text-[4.2cqw] font-semibold text-white">รับซื้อ</p>
+        <p className="flex h-[11cqw] items-center justify-center text-[4.2cqw] font-semibold text-gray-500 dark:text-gray-400">ค่าบริการ</p>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-[2cqw] overflow-hidden px-[3cqw] py-[2.4cqw]">
+      <div className="min-h-0 flex-1 space-y-[1.4cqw] overflow-hidden px-[3cqw] py-[1.6cqw]">
         <PhoneField label="วันที่รับซื้อ" required value="27/10/2026" />
         <PhoneField label="สมาชิก" required search placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส" />
-        <div className="grid grid-cols-2 gap-[2cqw]">
+        <div className="grid grid-cols-2 gap-[1.4cqw]">
           <PhoneField label="ประเภทสินค้า" required search placeholder="ค้นหาตามชื่อหรือรหัส..." />
           <PhoneField label="น้ำหนักรวมภาชนะ" required value="0.00" suffix="กก." />
           <PhoneField label="น้ำหนักภาชนะ" value="0.00" suffix="กก." />
@@ -280,17 +385,17 @@ function MobilePurchaseScreen() {
         </div>
       </div>
 
-      <div className="flex shrink-0 gap-[2cqw] border-t border-gray-200 bg-gray-50 px-[3cqw] py-[2cqw] dark:border-gray-700 dark:bg-gray-900">
-        <p className="flex h-[13.5cqw] flex-1 items-center justify-center rounded-[3cqw] bg-gray-100 text-[4cqw] font-medium text-gray-700 dark:bg-gray-600 dark:text-gray-300">รีเซ็ต</p>
-        <p className="flex h-[13.5cqw] flex-1 items-center justify-center gap-[1.2cqw] rounded-[3cqw] bg-gradient-to-r from-blue-600 to-indigo-600 text-[4cqw] font-medium text-white dark:from-blue-500 dark:to-indigo-500">
+      <div className="flex shrink-0 gap-[1.4cqw] border-t border-gray-200 bg-gray-50 px-[3cqw] py-[1.2cqw] dark:border-gray-700 dark:bg-gray-900">
+        <p className="flex h-[11cqw] flex-1 items-center justify-center rounded-[2.6cqw] bg-gray-100 text-[4cqw] font-medium text-gray-700 dark:bg-gray-600 dark:text-gray-300">รีเซ็ต</p>
+        <p className="flex h-[11cqw] flex-1 items-center justify-center gap-[1.2cqw] rounded-[2.6cqw] bg-gradient-to-r from-blue-600 to-indigo-600 text-[4cqw] font-medium text-white dark:from-blue-500 dark:to-indigo-500">
           <svg className="h-[4cqw] w-[4cqw]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.5 5m2.5-5l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6" />
           </svg>
           เพิ่มลงตะกร้า
         </p>
       </div>
-      <div className="flex h-[14.5cqw] shrink-0 items-center gap-[2cqw] bg-green-600 px-[3cqw] text-white">
-        <span className="flex h-[8cqw] min-w-[8cqw] items-center justify-center rounded-full bg-white/20 text-[3.8cqw] font-bold">0</span>
+      <div className="flex h-[12cqw] shrink-0 items-center gap-[2cqw] bg-green-600 px-[3cqw] text-white">
+        <span className="flex h-[7cqw] min-w-[7cqw] items-center justify-center rounded-full bg-white/20 text-[3.6cqw] font-bold">0</span>
         <span className="min-w-0 flex-1 text-[4.3cqw] font-semibold">ตะกร้าว่าง</span>
         <span className="text-[4.3cqw] font-bold">฿0.00</span>
       </div>
@@ -553,8 +658,8 @@ function DesktopPurchaseScreen() {
 function ShotFigure({ shot }: { shot: (typeof SHOTS)[number] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { isDarkMode } = useDarkMode();
-  const src = isDarkMode ? shot.darkSrc : shot.src;
-  const alt = isDarkMode ? `${shot.alt} ในโหมดมืด` : shot.alt;
+  const src = isDarkMode && shot.darkSrc ? shot.darkSrc : shot.src;
+  const alt = isDarkMode && shot.darkSrc ? `${shot.alt} ในโหมดมืด` : shot.alt;
 
   return (
     <figure>
@@ -610,7 +715,7 @@ function ShotFigure({ shot }: { shot: (typeof SHOTS)[number] }) {
 }
 
 function ScreenStage({ device }: { device: DeviceId }) {
-  const aspect = device === 'computer' ? 'aspect-[5/4]' : device === 'tablet' ? 'aspect-[3/4]' : 'aspect-[375/667]';
+  const aspect = device === 'computer' ? 'aspect-[5/4]' : device === 'tablet' ? 'aspect-[744/1133]' : 'aspect-[393/852]';
   return (
     <div className={`relative overflow-hidden bg-black ${aspect}`}>
       {device === 'phone' ? <MobilePurchaseScreen /> : device === 'tablet' ? <TabletPurchaseScreen /> : <DesktopPurchaseScreen />}
@@ -635,23 +740,28 @@ function DesktopMonitor({ children }: { children: ReactNode }) {
 
 function IpadFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="relative mx-auto w-full max-w-[34rem] rounded-[1.7rem] bg-gradient-to-b from-[#2a2a2a] to-[#111111] p-[0.9rem] pt-[1.65rem] shadow-[0_16px_36px_rgba(28,27,22,0.2)] ring-1 ring-black/40 dark:from-[#ffffff] dark:to-[#e8e8e8] dark:shadow-none dark:ring-black/10">
-      <span className="absolute left-1/2 top-[0.45rem] h-2 w-2 -translate-x-1/2 rounded-full bg-[#0a0a0a] ring-2 ring-[#5a5a5a] dark:bg-[#1c1c1e] dark:ring-[#bdbdbd]" />
-      <div className="overflow-hidden rounded-[0.7rem] ring-1 ring-white/15 dark:ring-black/15">{children}</div>
+    <div className="mx-auto w-[min(100%,28rem)] [container-type:inline-size]">
+      <div className="relative rounded-[1.15rem] bg-[#141414] p-[2.6cqw] shadow-[0_16px_36px_rgba(28,27,22,0.2)] ring-1 ring-black/40 dark:bg-[#ffffff] dark:shadow-none dark:ring-black/10">
+        <span className="absolute left-1/2 top-[1.3cqw] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0a0a0a] ring-1 ring-[#4a4a4a] dark:ring-[#cfcfcf]" />
+        <div className="overflow-hidden rounded-[0.7rem] ring-1 ring-white/15 dark:ring-black/10">{children}</div>
+      </div>
     </div>
   );
 }
 
 function IphoneFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="relative mx-auto w-full max-w-[25.5rem] rounded-[2.4rem] bg-gradient-to-b from-[#2c2c2e] to-[#111111] px-[0.7rem] pb-[3.35rem] pt-[2.35rem] shadow-[0_16px_36px_rgba(28,27,22,0.22)] ring-1 ring-black/40 dark:from-[#ffffff] dark:to-[#e6e6e6] dark:shadow-none dark:ring-black/10">
-      <span className="absolute left-[0.35rem] top-[22%] h-7 w-[3px] rounded-full bg-[#4a4a4e] dark:bg-[#c8c8c8]" />
-      <span className="absolute left-[0.35rem] top-[32%] h-11 w-[3px] rounded-full bg-[#4a4a4e] dark:bg-[#c8c8c8]" />
-      <span className="absolute right-[0.35rem] top-[26%] h-14 w-[3px] rounded-full bg-[#4a4a4e] dark:bg-[#c8c8c8]" />
-      <span className="absolute left-1/2 top-[0.85rem] h-[0.3rem] w-12 -translate-x-1/2 rounded-full bg-white/70 dark:bg-[#1c1c1e]/70" />
-      <span className="absolute left-[22%] top-[0.7rem] h-2.5 w-2.5 rounded-full bg-[#0a0a0a] ring-2 ring-[#6a6a6e] dark:ring-[#b5b5b5]" />
-      <div className="overflow-hidden rounded-[0.35rem] ring-1 ring-white/15 dark:ring-black/15">{children}</div>
-      <span className="absolute bottom-[0.7rem] left-1/2 h-11 w-11 -translate-x-1/2 rounded-full border-[3px] border-[#5a5a5e] bg-[#1c1c1e] dark:border-[#d0d0d0] dark:bg-[#ffffff]" />
+    <div className="mx-auto w-[min(100%,19rem)] [container-type:inline-size]">
+      <div className="relative rounded-[2.2rem] bg-[#141414] p-[2.2cqw] shadow-[0_16px_36px_rgba(28,27,22,0.22)] ring-1 ring-black/40 dark:bg-[#ffffff] dark:shadow-none dark:ring-black/10">
+        <span className="absolute left-[-3px] top-[16%] h-6 w-[3px] rounded-full bg-[#3a3a3e] dark:bg-[#d0d0d0]" />
+        <span className="absolute left-[-3px] top-[24%] h-10 w-[3px] rounded-full bg-[#3a3a3e] dark:bg-[#d0d0d0]" />
+        <span className="absolute left-[-3px] top-[34%] h-10 w-[3px] rounded-full bg-[#3a3a3e] dark:bg-[#d0d0d0]" />
+        <span className="absolute right-[-3px] top-[22%] h-16 w-[3px] rounded-full bg-[#3a3a3e] dark:bg-[#d0d0d0]" />
+        <div className="relative overflow-hidden rounded-[1.85rem] ring-1 ring-white/10 dark:ring-black/10">
+          {children}
+          <span className="pointer-events-none absolute left-1/2 top-[1.5%] z-10 h-[4.4%] w-[33%] -translate-x-1/2 rounded-full bg-black" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -662,6 +772,83 @@ function ProductFrame({ device }: { device: DeviceId }) {
     <figure className={device === 'computer' ? 'w-full' : 'mx-auto w-full'}>
       {device === 'computer' ? <DesktopMonitor>{screen}</DesktopMonitor> : device === 'tablet' ? <IpadFrame>{screen}</IpadFrame> : <IphoneFrame>{screen}</IphoneFrame>}
     </figure>
+  );
+}
+
+function DevicePreview({ device }: { device: DeviceId }) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const heightRef = useRef<number | null>(null);
+  const [frame, setFrame] = useState<{ shown: DeviceId; leaving: DeviceId | null }>({ shown: device, leaving: null });
+
+  if (device !== frame.shown) {
+    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setFrame({ shown: device, leaving: reduce ? null : frame.shown });
+  }
+
+  useEffect(() => {
+    if (!frame.leaving) return;
+    const timer = window.setTimeout(() => {
+      setFrame((current) => (current.leaving ? { shown: current.shown, leaving: null } : current));
+    }, DEVICE_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [frame.shown, frame.leaving]);
+
+  useLayoutEffect(() => {
+    const node = frameRef.current;
+    if (!node) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const locked = node.style.height;
+    const visual = locked ? Number.parseFloat(locked) : null;
+    node.style.transition = 'none';
+    node.style.overflow = '';
+    node.style.height = 'auto';
+    const next = node.getBoundingClientRect().height;
+    const prev = visual ?? heightRef.current;
+    heightRef.current = next;
+    if (reduce || prev == null || Math.abs(prev - next) < 1) {
+      node.style.height = '';
+      node.style.transition = '';
+      node.style.overflow = '';
+      return;
+    }
+    node.style.overflow = 'hidden';
+    node.style.height = `${prev}px`;
+    const animation = window.requestAnimationFrame(() => {
+      node.style.transition = `height ${DEVICE_FADE_MS}ms ease-in-out`;
+      node.style.height = `${next}px`;
+    });
+    const clear = (event?: Event) => {
+      if (event instanceof TransitionEvent && (event.target !== node || event.propertyName !== 'height')) return;
+      node.style.height = '';
+      node.style.transition = '';
+      node.style.overflow = '';
+      heightRef.current = node.getBoundingClientRect().height;
+    };
+    node.addEventListener('transitionend', clear);
+    const fallback = window.setTimeout(clear, DEVICE_FADE_MS + 80);
+    return () => {
+      window.cancelAnimationFrame(animation);
+      window.clearTimeout(fallback);
+      node.removeEventListener('transitionend', clear);
+    };
+  }, [frame.shown]);
+
+  return (
+    <div ref={frameRef}>
+      <div className="relative">
+        {frame.leaving ? (
+          <div className="landing-device-out pointer-events-none absolute inset-x-0 top-0" aria-hidden="true">
+            <ProductFrame device={frame.leaving} />
+          </div>
+        ) : null}
+        <div className={frame.leaving ? 'landing-device-in relative z-10' : 'relative'}>
+          <ProductFrame device={frame.shown} />
+        </div>
+      </div>
+      <p className="mt-2 text-center text-sm leading-6 text-[#6f6b62] lg:text-left dark:text-[#a8a496]">
+        โปรแกรมเดียวกัน เปิดในเบราว์เซอร์ของเครื่องนั้น
+      </p>
+    </div>
   );
 }
 
@@ -808,7 +995,7 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:items-center lg:gap-12 lg:pb-24 lg:pt-16">
+        <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:pb-24 lg:pt-16">
           <div className="mx-auto max-w-[640px] lg:mx-0 lg:max-w-none">
             <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
               <span className="block">จากตาชั่งถึงกำไร</span>
@@ -817,11 +1004,11 @@ export default function LandingPage() {
             <p className="mt-5 max-w-xl text-base leading-7 text-[#3f3c36] md:text-lg dark:text-[#c9c5ba]">
               บันทึกชาวสวนที่นำยางมาขาย พิมพ์สลิป ตัดสต็อกตอนขายออก แล้วสรุปกำไรจากตัวเลขที่คีย์จริง
             </p>
-            <div className="mt-8 flex flex-col items-stretch gap-1 md:items-start">
-              <InstallLink className="w-full md:w-auto" />
+            <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <InstallLink />
               <Link
                 href="/guide"
-                className="inline-flex min-h-11 items-center justify-start px-1 text-base font-medium text-green-800 underline-offset-4 hover:underline dark:text-green-400"
+                className="inline-flex min-h-11 items-center justify-center px-1 text-base font-medium text-green-800 underline-offset-4 hover:underline dark:text-green-400"
               >
                 อ่านคู่มือ
               </Link>
@@ -856,7 +1043,7 @@ export default function LandingPage() {
                     role="tab"
                     aria-selected={selected}
                     onClick={() => setDevice(item.id)}
-                    className={`relative min-h-11 overflow-hidden rounded-full px-4 text-sm font-medium ${
+                    className={`relative min-h-11 overflow-hidden rounded-full px-4 text-sm font-medium transition-colors duration-500 ${
                       selected
                         ? 'bg-green-600 text-white'
                         : 'bg-white text-[#1c1b16] ring-1 ring-[#e3dfd4] hover:bg-[#f7f5f0] dark:bg-[#1a1d18] dark:text-[#eceae4] dark:ring-[#2c3128]'
@@ -874,15 +1061,8 @@ export default function LandingPage() {
                 );
               })}
             </div>
-            <div className="[container-type:inline-size]">
-              <div style={{ minHeight: 'calc((min(100cqw, 25.5rem) - 1.4rem) * 667 / 375 + 7.7rem)' }}>
-                <ProductFrame device={device} />
-                <p className="mt-2 text-center text-sm leading-6 text-[#6f6b62] lg:text-left dark:text-[#a8a496]">
-                  โปรแกรมเดียวกัน เปิดในเบราว์เซอร์ของเครื่องนั้น
-                </p>
-              </div>
-            </div>
-            <style>{'@keyframes landing-device-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}@media (prefers-reduced-motion:reduce){.landing-device-progress{display:none}}'}</style>
+            <DevicePreview device={device} />
+            <style>{'@keyframes landing-device-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes landing-device-in{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}@keyframes landing-device-out{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.985)}}.landing-device-in,.landing-device-out{transform-origin:center top;animation-duration:600ms;animation-timing-function:ease-in-out;animation-fill-mode:both}.landing-device-in{animation-name:landing-device-in}.landing-device-out{animation-name:landing-device-out}@media (prefers-reduced-motion:reduce){.landing-device-progress,.landing-device-in,.landing-device-out{animation:none}}'}</style>
           </div>
         </section>
 
