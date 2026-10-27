@@ -205,9 +205,9 @@ test.describe('UI flow', () => {
     }
 
     await page.goto('/dashboard')
-    const sidebarToggle = page.getByRole('button', { name: 'Close sidebar' })
+    const sidebarToggle = page.getByRole('button', { name: 'Open sidebar' })
     await sidebarToggle.click()
-    await expect(page.getByRole('button', { name: 'Open sidebar' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Close sidebar' })).toBeVisible()
     await expect(page.locator('main')).toBeVisible()
     await assertNoHorizontalOverflow(page)
   })

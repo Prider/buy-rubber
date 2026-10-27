@@ -56,8 +56,8 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
-  // Desktop: collapsed icon rail vs full labels. Mobile/tablet overlay starts closed.
-  const [collapsed, setCollapsed] = useState(false);
+  // Desktop starts on the collapsed icon rail. Mobile/tablet overlay starts closed.
+  const [collapsed, setCollapsed] = useState(true);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [viewport, setViewport] = useState<SidebarViewport>('desktop');
   const [isElectron, setIsElectron] = useState(false);
