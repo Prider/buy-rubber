@@ -89,21 +89,11 @@ export default function AdminSettingsPage() {
   
   // Admin settings hook
   const {
-    serverUrl,
-    serverPort,
-    isConnecting,
     connectionError,
     successMessage,
     copySuccess,
     localIP,
     ipLoading,
-    isServerMode,
-    isClientMode,
-    setServerUrl,
-    setServerPort,
-    handleServerMode,
-    handleClientMode,
-    handleQuickConnect,
     copyToClipboard,
   } = useAdminSettings();
 
@@ -460,7 +450,7 @@ export default function AdminSettingsPage() {
                   id="admin-tabpanel-connection"
                   role="tabpanel"
                   aria-labelledby="admin-tab-connection"
-                  className="space-y-6"
+                  className="space-y-3"
                 >
                   <MessageDisplay
                     connectionError={connectionError}
@@ -468,18 +458,9 @@ export default function AdminSettingsPage() {
                     copySuccess={copySuccess}
                   />
                   <ModeSelectionCards
-                    serverPort={serverPort}
-                    serverUrl={serverUrl}
                     localIP={localIP}
                     ipLoading={ipLoading}
-                    isConnecting={isConnecting}
-                    isServerMode={isServerMode}
-                    isClientMode={isClientMode}
-                    onServerPortChange={setServerPort}
-                    onServerUrlChange={setServerUrl}
-                    onServerMode={handleServerMode}
-                    onClientMode={() => handleClientMode()}
-                    onQuickConnect={handleQuickConnect}
+                    copied={copySuccess.startsWith('Server URL')}
                     onCopyToClipboard={copyToClipboard}
                   />
                 </div>

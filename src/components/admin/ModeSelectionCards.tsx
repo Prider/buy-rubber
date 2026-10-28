@@ -1,79 +1,64 @@
 import React from 'react';
 
 interface ModeSelectionCardsProps {
-  serverPort: number;
-  serverUrl: string;
   localIP: string;
   ipLoading: boolean;
-  isConnecting: boolean;
-  isServerMode: boolean;
-  isClientMode: boolean;
-  onServerPortChange: (port: number) => void;
-  onServerUrlChange: (url: string) => void;
-  onServerMode: () => Promise<void>;
-  onClientMode: () => Promise<void>;
-  onQuickConnect: (ip: string) => void;
+  copied: boolean;
   onCopyToClipboard: (text: string, label: string) => Promise<void>;
 }
 
 export function ModeSelectionCards({
   localIP,
   ipLoading,
+  copied,
   onCopyToClipboard,
 }: ModeSelectionCardsProps) {
+  const serverUrl = `http://${localIP}:3000`;
+
   return (
-    <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800">
-      {/* Server Mode Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a7 7 0 01-7-7 7 7 0 017-7h14a7 7 0 017 7 7 7 0 01-7 7M5 12a7 7 0 00-7 7 7 7 0 007 7h14a7 7 0 007-7 7 7 0 00-7-7" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              โหมดเซิร์ฟเวอร์
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              รันฐานข้อมูลและ API บนเครื่องนี้
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Server Mode Content */}
-      <div className="p-4 space-y-3">      
-        {/* Network Info */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                Server URL
-              </span>
-            </div>
-            {!ipLoading && (
-              <button
-                onClick={() => onCopyToClipboard(`http://${localIP}:3000`, 'Server URL')}
-                className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                title="คัดลอก"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-            )}
-          </div>
-          <div className="break-all rounded bg-blue-100 px-2 py-1.5 font-mono text-xs text-blue-900 dark:bg-blue-800 dark:text-blue-100">
-            {ipLoading ? 'กำลังโหลด...' : `http://${localIP}:3000`}
-          </div>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5">
-            💡 ใช้ URL นี้ในเครื่องอื่นที่ต้องการเชื่อมต่อ
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-col items-start gap-2 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+            การเชื่อมต่อ
+          </h3>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            ข้อมูลอยู่ที่เครื่องนี้ เครื่องอื่นในร้านใช้ Server URL <span className="whitespace-nowrap">ด้านล่าง</span>
           </p>
         </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
+          โหมดเซิร์ฟเวอร์
+        </span>
+      </div>
+
+      <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
+            Server URL
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <p className="flex min-h-11 flex-1 items-center break-all rounded-xl bg-gray-50 px-3.5 py-2.5 font-mono text-sm text-gray-900 ring-1 ring-inset ring-gray-200 dark:bg-gray-900/50 dark:text-gray-100 dark:ring-gray-700">
+              {ipLoading ? 'กำลังโหลด...' : serverUrl}
+            </p>
+            <button
+              type="button"
+              disabled={ipLoading}
+              onClick={() => onCopyToClipboard(serverUrl, 'Server URL')}
+              className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 motion-safe:transition-[scale,background-color] motion-safe:duration-150 motion-safe:ease-out motion-safe:active:scale-[0.96] ${
+                copied
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+          เปิด URL นี้บนเครื่องอื่นที่อยู่ในวงแลนเดียวกัน เครื่องหลักต้องเปิดโปรแกรมค้างไว้ เครื่องอื่นถึงจะเชื่อมต่อได้
+        </p>
       </div>
     </div>
   );
