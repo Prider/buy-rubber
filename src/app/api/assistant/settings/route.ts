@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   ASSISTANT_DEFAULT_MODELS,
-  clearAssistantConfig,
   isAssistantProvider,
   normalizeAssistantKey,
   normalizeAssistantModel,
   readAssistantSettings,
-  readStoredApiKey,
+  removeAssistantProvider,
+  setActiveAssistantProvider,
   writeAssistantConfig,
   type AssistantProvider,
 } from '@/lib/assistant/credentials';
@@ -50,21 +50,26 @@ export async function PUT(request: NextRequest) {
   }
 
   const submittedKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
-  const apiKey = submittedKey ? normalizeAssistantKey(submittedKey) : readStoredApiKey(provider);
-  if (submittedKey && !normalizeAssistantKey(submittedKey)) {
-    return NextResponse.json({ error: 'API Key ไม่ถูกต้อง' }, { status: 400 });
-  }
-  if (!apiKey) {
-    return NextResponse.json({ error: 'กรุณาใส่ API Key' }, { status: 400 });
+  if (submittedKey) {
+    const apiKey = normalizeAssistantKey(submittedKey);
+    if (!apiKey) {
+      return NextResponse.json({ error: 'API Key ไม่ถูกต้อง' }, { status: 400 });
+    }
+    writeAssistantConfig({ provider, model, apiKey });
+    return NextResponse.json(readAssistantSettings());
   }
 
-  writeAssistantConfig({ provider, model, apiKey });
+  if (!setActiveAssistantProvider(provider, model)) {
+    return NextResponse.json({ error: 'กรุณาใส่ API Key' }, { status: 400 });
+  }
   return NextResponse.json(readAssistantSettings());
 }
 
 export async function DELETE(request: NextRequest) {
   const denied = requireOwner(request);
   if (denied) return denied;
-  clearAssistantConfig();
+  const body = await request.json().catch(() => null);
+  const provider = isAssistantProvider(body?.provider) ? body.provider : readAssistantSettings().provider;
+  removeAssistantProvider(provider);
   return NextResponse.json(readAssistantSettings());
 }

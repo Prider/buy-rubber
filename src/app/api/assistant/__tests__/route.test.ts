@@ -154,6 +154,25 @@ describe('POST /api/assistant', () => {
     expect(JSON.stringify(data)).not.toContain('secret-upstream');
   });
 
+  it('reports an upstream quota failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        status: 429,
+        json: async () => ({
+          error: { message: 'You exceeded your current quota', code: 'insufficient_quota' },
+        }),
+      })),
+    );
+
+    const response = await POST(request({ query: 'สต็อกเหลือเท่าไหร่' }));
+    const data = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(data.error).toBe('โควต้า API หมด เติมเครดิตในบัญชี OpenRouter ก่อนทดสอบอีกครั้ง');
+  });
+
   it('stops after the user rate limit', async () => {
     for (let index = 0; index < 20; index += 1) {
       const response = await POST(request({ query: `คำถาม ${index}` }));

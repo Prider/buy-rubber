@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { askShopAssistant, assistantConfigured, assistantMessages } from '@/lib/assistant/openrouter';
+import { assistantFailureMessage } from '@/lib/assistant/providerError';
 import { assistantSystemPrompt, assistantUserPrompt, normalizeHistory } from '@/lib/assistant/prompt';
 import { allowAssistantRequest } from '@/lib/assistant/rateLimit';
 import { buildShopSnapshot } from '@/lib/assistant/snapshot';
@@ -53,11 +54,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(reply);
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
-    if (code === 'OPENROUTER_AUTH') {
-      return NextResponse.json(
-        { error: 'คีย์ผู้ช่วยอัจฉริยะใช้ไม่ได้' },
-        { status: 502 },
-      );
+    const providerMessage = assistantFailureMessage(error, { authMessage: 'คีย์ผู้ช่วยอัจฉริยะใช้ไม่ได้' });
+    if (providerMessage) {
+      return NextResponse.json({ error: providerMessage }, { status: 502 });
     }
     if (code === 'ASSISTANT_NOT_CONFIGURED') {
       return NextResponse.json(

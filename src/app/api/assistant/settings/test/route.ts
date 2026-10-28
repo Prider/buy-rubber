@@ -10,6 +10,8 @@ import {
   type AssistantProvider,
 } from '@/lib/assistant/credentials';
 import { testAssistantCredentials } from '@/lib/assistant/openrouter';
+import { cachedAllowance, describeAllowance } from '@/lib/assistant/allowance';
+import { assistantFailureMessage } from '@/lib/assistant/providerError';
 import { isAdminLike } from '@/types/user';
 import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
 
@@ -60,16 +62,28 @@ export async function POST(request: NextRequest) {
     source: 'shop',
   };
 
+  const allowanceView = (usedModel: string) => {
+    const allowance = cachedAllowance(provider, apiKey, usedModel);
+    return allowance ? describeAllowance(allowance) : null;
+  };
+
   try {
-    await testAssistantCredentials(credentials);
-    return NextResponse.json({ ok: true, message: 'เชื่อมต่อได้' });
+    const result = await testAssistantCredentials(credentials);
+    const switched = result.model !== model;
+    return NextResponse.json({
+      ok: true,
+      message: switched ? `เชื่อมต่อได้ ใช้โมเดล ${result.model}` : 'เชื่อมต่อได้',
+      model: result.model,
+      allowance: allowanceView(result.model),
+    });
   } catch (error) {
-    const code = error instanceof Error ? error.message : '';
-    if (code === 'OPENROUTER_AUTH') {
-      return NextResponse.json({ ok: false, message: 'API Key ใช้ไม่ได้' }, { status: 200 });
-    }
     return NextResponse.json(
-      { ok: false, message: 'เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ต ชื่อโมเดล และ API Key' },
+      {
+        ok: false,
+        message:
+          assistantFailureMessage(error) ?? 'เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ต ชื่อโมเดล และ API Key',
+        allowance: allowanceView(model),
+      },
       { status: 200 },
     );
   }

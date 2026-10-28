@@ -7,6 +7,7 @@ import {
   maskAssistantKey,
   readAssistantSettings,
   resolveAssistantCredentials,
+  setActiveAssistantProvider,
   writeAssistantConfig,
 } from '../credentials';
 
@@ -63,5 +64,23 @@ describe('assistant credentials', () => {
       source: 'packaged',
     });
     expect(fs.existsSync(filePath)).toBe(false);
+  });
+
+  it('keeps a shop key when the active provider changes to the packaged OpenRouter key', () => {
+    process.env.ASSISTANT_CONFIG_PATH = filePath;
+    process.env.OPENROUTER_API_KEY = 'packaged-key-value';
+    process.env.OPENROUTER_MODEL = 'vendor/model';
+    writeAssistantConfig({ provider: 'anthropic', model: 'claude-sonnet-4-5', apiKey: 'sk-ant-secret-key' });
+
+    expect(setActiveAssistantProvider('openrouter', 'vendor/model')).toBe(true);
+
+    const resolved = resolveAssistantCredentials();
+    const view = readAssistantSettings();
+    expect(resolved).toMatchObject({ provider: 'openrouter', model: 'vendor/model', source: 'packaged' });
+    expect(view.accounts.anthropic.hasKey).toBe(true);
+    expect(view.accounts.openrouter.hasKey).toBe(true);
+    expect(JSON.stringify(view)).not.toContain('packaged-key-value');
+    expect(fs.readFileSync(filePath, 'utf8')).toContain('sk-ant-secret-key');
+    expect(fs.readFileSync(filePath, 'utf8')).not.toContain('packaged-key-value');
   });
 });
