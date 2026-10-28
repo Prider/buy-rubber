@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
 import { AdminTabs, parseAdminTab, type AdminSettingsTab } from '@/components/admin/AdminTabs';
+import { AdminTabStage } from '@/components/admin/AdminTabStage';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
 import { SlipSettingsPanel } from '@/components/admin/SlipSettingsPanel';
@@ -126,8 +127,18 @@ export default function AdminSettingsPage() {
   const [slipSaving, setSlipSaving] = useState(false);
   const [savedSlip, setSavedSlip] = useState<SavedSlipSettings | null>(null);
   const requestedTab = parseAdminTab(searchParams.get('tab'));
-  const activeTab: AdminSettingsTab = requestedTab ?? 'slip';
+  const urlTab: AdminSettingsTab = requestedTab ?? 'slip';
+  const [activeTab, setActiveTab] = useState<AdminSettingsTab>(urlTab);
+  const desiredTabRef = useRef<AdminSettingsTab | null>(null);
+  const panelScrollerRef = useRef<HTMLDivElement>(null);
+  const skipPanelScrollReset = useRef(true);
   const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
+
+  const selectTab = (next: AdminSettingsTab) => {
+    if (next === activeTab) return;
+    desiredTabRef.current = next;
+    setActiveTab(next);
+  };
 
   useEffect(() => {
     if (requestedTab) return;
@@ -135,6 +146,32 @@ export default function AdminSettingsPage() {
     params.set('tab', 'slip');
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   }, [requestedTab, router, searchParams]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      desiredTabRef.current = null;
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (desiredTabRef.current == null) {
+      setActiveTab(urlTab);
+      return;
+    }
+    if (urlTab === desiredTabRef.current) {
+      desiredTabRef.current = null;
+    }
+  }, [urlTab]);
+
+  useLayoutEffect(() => {
+    if (skipPanelScrollReset.current) {
+      skipPanelScrollReset.current = false;
+      return;
+    }
+    panelScrollerRef.current?.scrollTo({ top: 0 });
+  }, [activeTab]);
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -366,12 +403,12 @@ export default function AdminSettingsPage() {
                   ตั้งค่าระบบ
                 </span>
               </h1>
-              <AdminTabs activeTab={activeTab} />
+              <AdminTabs activeTab={activeTab} onSelect={selectTab} />
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-0 lg:px-5 lg:py-5">
-
+          <div ref={panelScrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-0 lg:px-5 lg:py-5">
+            <AdminTabStage tab={activeTab}>
               {activeTab === 'slip' && (
                 <SlipSettingsPanel
                   companyName={slipCompanyName}
@@ -453,7 +490,8 @@ export default function AdminSettingsPage() {
               {activeTab === 'license' && <SoftwareLicensePanel />}
 
               {activeTab === 'assistant' && <AssistantSettingsPanel />}
-            </div>
+            </AdminTabStage>
+          </div>
           </div>
       </div>
     </ProtectedRoute>
