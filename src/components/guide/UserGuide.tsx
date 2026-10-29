@@ -70,7 +70,7 @@ function revealCurrentTopic() {
 }
 
 function RichText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|!![^!]+!!)/g);
   return (
     <>
       {parts.map((part, index) => {
@@ -89,6 +89,13 @@ function RichText({ text }: { text: string }) {
             >
               {part.slice(1, -1)}
             </code>
+          );
+        }
+        if (part.startsWith('!!') && part.endsWith('!!')) {
+          return (
+            <span key={index} className="font-semibold text-rose-600 dark:text-rose-400">
+              {part.slice(2, -2)}
+            </span>
           );
         }
         return <span key={index}>{part}</span>;
