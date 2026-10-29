@@ -17,6 +17,8 @@ import {
   type GuideTopic,
 } from '@/lib/guide/manual';
 
+const SOFTWARE_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0';
+
 function isHeading(block: GuideBlock): block is Extract<GuideBlock, { kind: 'h' }> {
   return block.kind === 'h';
 }
@@ -31,6 +33,10 @@ function withoutLeadMedia(blocks: GuideBlock[]): {
 } {
   const index = blocks.findIndex(isMedia);
   if (index < 0) return { lead: undefined, rest: blocks };
+  const firstHeading = blocks.findIndex(isHeading);
+  if (firstHeading >= 0 && firstHeading < index) {
+    return { lead: undefined, rest: blocks };
+  }
   const lead = blocks[index];
   if (!isMedia(lead)) return { lead: undefined, rest: blocks };
   return { lead, rest: blocks.filter((_, blockIndex) => blockIndex !== index) };
@@ -275,10 +281,10 @@ function GuideBlocks({ blocks }: { blocks: GuideBlock[] }) {
                     className="grid grid-cols-1 sm:grid-cols-2"
                   >
                     <div className="bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 dark:bg-gray-900/40 dark:text-white sm:text-base">
-                      {row[0]}
+                      <RichText text={row[0]} />
                     </div>
                     <div className="px-4 py-3 text-base leading-7 text-gray-700 dark:text-gray-200">
-                      {row[1]}
+                      <RichText text={row[1]} />
                     </div>
                   </div>
                 ))}
@@ -373,10 +379,10 @@ function TopicButton({
       type="button"
       onClick={() => onSelect(topic.id)}
       aria-current={active ? 'page' : undefined}
-      className={`flex min-h-11 w-full items-center rounded-xl px-3 py-2 text-left text-sm motion-safe:transition-[background-color,color] motion-safe:duration-150 ${
+      className={`flex min-h-11 w-full items-center rounded-lg py-1.5 pl-5 pr-3 text-left text-xs leading-5 motion-safe:transition-[background-color,color] motion-safe:duration-150 ${
         active
-          ? 'bg-primary-50 font-semibold text-primary-800 dark:bg-primary-900/40 dark:text-primary-100'
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+          ? 'bg-primary-50 font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-100'
+          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
       }`}
     >
       {topic.title}
@@ -466,7 +472,12 @@ export default function UserGuide() {
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 lg:px-6">
           <Logo className="h-9 w-9" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-gray-900 dark:text-white">คู่มือผู้ใช้งาน</p>
+            <p className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate text-sm font-bold text-gray-900 dark:text-white">คู่มือผู้ใช้งาน</span>
+              <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-500 dark:text-gray-400">
+                v{SOFTWARE_VERSION}
+              </span>
+            </p>
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">Yang Dee · จุดรับซื้อยาง</p>
           </div>
           {!isLoading && (
@@ -542,22 +553,22 @@ export default function UserGuide() {
           id="guide-nav"
           className={`${navOpen ? 'block' : 'hidden'} lg:sticky lg:top-32 lg:block lg:max-h-[calc(100dvh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain`}
         >
-          <nav aria-label="หัวข้อคู่มือ" className="space-y-4">
+          <nav aria-label="หัวข้อคู่มือ" className="space-y-5">
             <button
               type="button"
               onClick={() => openTopic('home')}
               aria-current={!searching && topicId === 'home' ? 'page' : undefined}
-              className={`flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold motion-safe:transition-[background-color,color] motion-safe:duration-150 ${
+              className={`flex min-h-11 w-full items-center rounded-xl px-3 text-left text-base font-bold leading-6 text-primary-600 motion-safe:transition-[background-color] motion-safe:duration-150 dark:text-primary-400 ${
                 !searching && topicId === 'home'
-                  ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/40 dark:text-primary-100'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                  ? 'bg-primary-100 dark:bg-primary-500/25'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               เริ่มจากตรงนี้
             </button>
             {GUIDE_GROUPS.map((group) => (
               <div key={group.id}>
-                <p className="px-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <p className="px-3 pb-1 text-base font-bold leading-6 text-primary-600 dark:text-primary-400">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
@@ -611,7 +622,7 @@ export default function UserGuide() {
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8">
               <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">Yang Dee</p>
               <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-                อยากทำอะไร เปิดหัวข้อนั้น
+                แนะนำการใช้งาน
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-gray-700 dark:text-gray-200">
                 แต่ละหัวข้อมีภาพหรือคลิปจากหน้าจอจริง แล้วตามด้วยขั้นตอนสั้นๆ
@@ -624,12 +635,12 @@ export default function UserGuide() {
               >
                 <span>
                   <span className="block text-lg font-bold">รับซื้อยาง</span>
-                  <span className="mt-1 block text-sm leading-6 text-primary-50">งานที่ใช้บ่อยที่สุด ชั่ง ใส่ราคา บันทึก แล้วพิมพ์สลิป</span>
+                  <span className="mt-1 block text-sm leading-6 text-primary-50">ใช้ข้อมูลการรับซื้อยาง ใส่ราคา บันทึก แล้วพิมพ์สลิป</span>
                 </span>
                 <span aria-hidden="true" className="text-xl">→</span>
               </button>
 
-              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">หนึ่งวันของร้าน</h2>
+              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">ตั้งค่าเริ่มต้น</h2>
               <ol className="mt-3 grid gap-3 sm:grid-cols-2">
                 {GUIDE_PHASES.map((phase, index) => (
                   <li key={phase.topicId}>
@@ -659,7 +670,7 @@ export default function UserGuide() {
                 />
               </div>
 
-              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">เรื่องอื่นที่เจอบ่อย</h2>
+              <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">อื่นๆ</h2>
               <ul className="mt-3 grid gap-3 sm:grid-cols-2">
                 {GUIDE_SHORTCUTS.filter((shortcut) => shortcut.topicId !== 'purchase').map((shortcut) => (
                   <li key={shortcut.topicId}>

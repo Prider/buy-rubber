@@ -270,6 +270,14 @@ export function AssistantSettingsPanel() {
       </div>
 
       <form onSubmit={save} className="space-y-6 px-4 py-4 sm:px-5 sm:py-5">
+        {!loading && settings && !settings.hasKey && (
+          <p
+            role="status"
+            className="rounded-xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-900"
+          >
+            ยังไม่ได้ตั้งค่าผู้ช่วยอัจฉริยะ เลือกผู้ให้บริการ วาง API Key แล้วกดบันทึก
+          </p>
+        )}
         <div className="space-y-2">
           <p id="assistant-provider-label" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             ผู้ให้บริการ
@@ -309,11 +317,9 @@ export function AssistantSettingsPanel() {
               );
             })}
           </div>
-          {!loading && !selectedHasKey && (
+          {!loading && !selectedHasKey && activeProvider && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {activeProvider
-                ? `ผู้ช่วยยังใช้ ${ASSISTANT_PROVIDER_LABELS[activeProvider]} อยู่ วาง API Key แล้วกดบันทึก`
-                : 'วาง API Key แล้วกดบันทึก'}
+              {`ผู้ช่วยยังใช้ ${ASSISTANT_PROVIDER_LABELS[activeProvider]} อยู่ วาง API Key แล้วกดบันทึก`}
             </p>
           )}
           {!loading && selectedHasKey && activeProvider && activeProvider !== provider && (

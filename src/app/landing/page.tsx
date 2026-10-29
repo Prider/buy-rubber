@@ -38,15 +38,15 @@ const DEVICE_CAPTION: Record<DeviceId, string> = {
 
 const PROBLEMS = [
   {
-    title: 'แถวที่ตาชั่ง',
-    body: 'ทุกคันต้องชั่งรวมภาชนะ หักถัง คิดบาทต่อกิโล แล้วพิมพ์สลิปก่อนคันถัดไปเข้า',
+    title: 'แถวที่ตาชั่ง_fix',
+    body: 'ทุกครั้งที่ชั่งต้องรวมภาชนะ หักถัง คิดบาทต่อกิโล แล้วพิมพ์สลิปก่อนคันถัดไปเข้า',
   },
   {
-    title: 'สมุดไม่ตรงสลิป',
+    title: 'สมุดไม่ตรงสลิป_fix',
     body: 'พอเย็น สลิปที่จ่ายไปกับสมุดที่จดไว้ไม่ตรงกัน และไม่รู้ว่าใครเป็นคนคีย์ผิด',
   },
   {
-    title: 'ตัวเลขสิ้นเดือน',
+    title: 'ตัวเลขสิ้นเดือน_fix',
     body: 'น้ำมัน ค่าซ่อม และค่าขนส่งไปโรงงานอยู่นอกเล่มที่จดยอดรับซื้อ กำไรที่คิดได้จึงสูงกว่าของจริง',
   },
 ];
@@ -303,7 +303,7 @@ function InstallLink({ className = '' }: { className?: string }) {
       rel="noopener noreferrer"
       className={`inline-flex min-h-11 items-center justify-center rounded-full bg-green-600 px-5 text-base font-semibold text-white transition-colors hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 ${className}`}
     >
-      ขอติดตั้งที่จุดรับซื้อ
+    สนใจติดต่อ
     </a>
   );
 }
@@ -845,9 +845,6 @@ function DevicePreview({ device }: { device: DeviceId }) {
           <ProductFrame device={frame.shown} />
         </div>
       </div>
-      <p className="mt-2 text-center text-sm leading-6 text-[#6f6b62] lg:text-left dark:text-[#a8a496]">
-        โปรแกรมเดียวกัน เปิดในเบราว์เซอร์ของเครื่องนั้น
-      </p>
     </div>
   );
 }
@@ -952,7 +949,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center rounded-full bg-green-600 px-3 text-sm font-semibold text-white hover:bg-green-700"
             >
-              ขอติดตั้ง
+              ทดลองใช้งาน
             </a>
             <button
               type="button"
@@ -998,7 +995,7 @@ export default function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:pb-24 lg:pt-16">
           <div className="mx-auto max-w-[640px] lg:mx-0 lg:max-w-none">
             <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-              <span className="block">ยางดี</span>
+              <span className="block">YangDee</span>
               <span className="mt-1 block text-green-700 dark:text-green-400">โปรแกรมซื้อขายยางพารา ครบวงจร</span>
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-[#3f3c36] md:text-lg dark:text-[#c9c5ba]">
@@ -1008,9 +1005,11 @@ export default function LandingPage() {
               <InstallLink />
               <Link
                 href="/guide"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center justify-center px-1 text-base font-medium text-green-800 underline-offset-4 hover:underline dark:text-green-400"
               >
-                อ่านคู่มือ
+                รายละเอียดโปรแกรม
               </Link>
             </div>
           </div>
@@ -1068,7 +1067,7 @@ export default function LandingPage() {
 
         <section id="problem" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">งานที่หลุดระหว่างวัน</h2>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">ปัญหาที่พบบ่อย</h2>
             <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-3">
               {PROBLEMS.map((item, index) => (
                 <article key={item.title}>
@@ -1125,7 +1124,7 @@ export default function LandingPage() {
 
         <section id="proof" className="scroll-mt-20 border-t border-[#e3dfd4] dark:border-[#2c3128]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">ของที่เห็นในโปรแกรม</h2>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">ของที่เห็นในโปรแกรม_option</h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
               ในโปรแกรมสลับโหมดมืดได้ ปรับขนาดตัวอักษร และเลือกฟอนต์ไทยได้ที่เครื่องนั้น
             </p>
@@ -1181,7 +1180,7 @@ export default function LandingPage() {
                 </article>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold">สลิปที่พิมพ์ให้ชาวสวน</h3>
+                <h3 className="text-2xl font-semibold">สลิปที่พิมพ์ให้ชาวสวน_option_should have more then one template</h3>
                 <p className="mt-4 text-base leading-7 text-[#3f3c36] dark:text-[#c9c5ba]">
                   ตั้งชื่อจุดรับซื้อ ที่อยู่ เลขประจำตัวผู้เสียภาษี และข้อความท้ายใบก่อนพิมพ์ของจริง เลือกสลิปธรรมดา สลิปมีลายเซ็น หรือใบ A4 แล้วดูตัวอย่างก่อนบันทึก
                 </p>

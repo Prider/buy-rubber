@@ -14,7 +14,7 @@ const LICENSE_ENV_KEYS = [
   'SKIP_LICENSE_CHECK',
 ];
 
-// Read at runtime from .env.local / .env. Never written into the packaged license.env.
+// Local development only (.env.local / .env). The installer does not ship a provider key.
 const ASSISTANT_ENV_KEYS = ['OPENROUTER_API_KEY', 'OPENROUTER_MODEL', 'ASSISTANT_PROXY_URL'];
 
 const DEFAULT_LICENSE_API_URL = 'https://license-api.punsookinnotech.co';
@@ -71,17 +71,6 @@ function applyLicenseEnv(values, { override = false } = {}) {
   }
 }
 
-function collectAssistantEnv(projectRoot) {
-  const root = projectRoot || path.join(__dirname, '..');
-  // .env.local wins so a local key is what gets packaged.
-  const fromFiles = {
-    ...readEnvFile(path.join(root, 'electron.env')),
-    ...readEnvFile(path.join(root, '.env')),
-    ...readEnvFile(path.join(root, '.env.local')),
-  };
-  return pickEnvKeys(fromFiles, ASSISTANT_ENV_KEYS);
-}
-
 function collectLicenseEnv(projectRoot) {
   const root = projectRoot || path.join(__dirname, '..');
   const fromFiles = {
@@ -127,18 +116,14 @@ function writePackagedLicenseEnv(projectRoot) {
   );
   fs.writeFileSync(dest, `${lines.join('\n')}\n`, 'utf8');
 
-  const assistant = collectAssistantEnv(root);
   const assistantDest = path.join(__dirname, 'assistant.env');
-  if (assistant.OPENROUTER_API_KEY || assistant.ASSISTANT_PROXY_URL) {
-    const assistantLines = ASSISTANT_ENV_KEYS.filter((key) => assistant[key]).map(
-      (key) => `${key}=${serializeEnvValue(assistant[key])}`
-    );
-    fs.writeFileSync(assistantDest, `${assistantLines.join('\n')}\n`, 'utf8');
-  } else {
-    console.warn(
-      '⚠️  Shop assistant is not configured. Set OPENROUTER_API_KEY in .env.local or ASSISTANT_PROXY_URL before packaging.'
-    );
+  try {
+    fs.unlinkSync(assistantDest);
+  } catch (error) {
+    const code = error && error.code;
+    if (code !== 'ENOENT') throw error;
   }
+  console.log('Shop assistant: installer ships with no provider key. The shop sets one in admin.');
 
   return dest;
 }

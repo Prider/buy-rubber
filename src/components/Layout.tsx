@@ -21,6 +21,7 @@ import {
 } from '@/lib/slipTemplate';
 import { attachAuthToAxios } from '@/lib/attachAuthToAxios';
 import AssistantPanel from '@/components/assistant/AssistantPanel';
+import type { AssistantSettingsView } from '@/lib/assistant/credentials';
 
 attachAuthToAxios();
 
@@ -62,6 +63,7 @@ export default function Layout({ children }: LayoutProps) {
   const [viewport, setViewport] = useState<SidebarViewport>('desktop');
   const [isElectron, setIsElectron] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const assistantNavLock = useRef(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
 
@@ -186,6 +188,25 @@ export default function Layout({ children }: LayoutProps) {
 
   const reportsOnly = isAccountantRole(user?.role);
   const canUseAssistant = user?.role === 'admin';
+
+  const openAssistant = async () => {
+    if (assistantNavLock.current) return;
+    assistantNavLock.current = true;
+    setOverlayOpen(false);
+    try {
+      const settings = await getApiClient().get<AssistantSettingsView>('/api/assistant/settings');
+      if (settings.hasKey) {
+        setAssistantOpen(true);
+        return;
+      }
+    } catch {
+      // No readable key. The owner sets one on the assistant settings tab.
+    } finally {
+      assistantNavLock.current = false;
+    }
+    setAssistantOpen(false);
+    router.push('/admin?tab=assistant');
+  };
   const homeHref = homePathForRole(user?.role);
   const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
 
@@ -333,8 +354,7 @@ export default function Layout({ children }: LayoutProps) {
                         tooltip={iconRailTooltip}
                         open={assistantOpen}
                         onOpen={() => {
-                          setOverlayOpen(false);
-                          setAssistantOpen(true);
+                          void openAssistant();
                         }}
                       />
                     )}
