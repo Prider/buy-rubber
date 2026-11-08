@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ServiceFeeCategoryRecord } from '@/lib/serviceFeeCategories';
+import { useServiceFeeCategories } from '@/hooks/useServiceFeeCategories';
+
+const ServiceFeeCategoryModal = dynamic(
+  () => import(/* webpackPrefetch: true */ '@/components/purchases/ServiceFeeCategoryModal'),
+);
 
 interface ServiceFeeFormData {
   category: string;
@@ -10,7 +17,8 @@ interface ServiceFeeFormData {
 interface ServiceFeeCardProps {
   formData: ServiceFeeFormData;
   error: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  setCategory: (category: string) => void;
   isFormValid: boolean;
   resetForm: () => void;
   addToCart: () => void;
@@ -21,12 +29,44 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   formData,
   error,
   handleInputChange,
+  setCategory,
   isFormValid,
   resetForm,
   addToCart,
   submitting = false,
 }) => {
-  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const categoryInputRef = useRef<HTMLSelectElement>(null);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const {
+    categories,
+    loading: categoriesLoading,
+    saving: categoriesSaving,
+    error: categoriesError,
+    loadCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  } = useServiceFeeCategories();
+
+  useEffect(() => {
+    void loadCategories();
+  }, [loadCategories]);
+
+  const handleCategorySaved = (category: ServiceFeeCategoryRecord, previousName: string | null) => {
+    if (previousName && formData.category === previousName) {
+      setCategory(category.name);
+      return;
+    }
+    if (!previousName && !formData.category) {
+      setCategory(category.name);
+    }
+  };
+
+  const handleCategoryDeleted = (category: ServiceFeeCategoryRecord) => {
+    if (formData.category === category.name) {
+      setCategory('');
+    }
+  };
   const amountInputRef = useRef<HTMLInputElement>(null);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -47,7 +87,11 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
     }
   };
 
+  const selectedCategoryMissing =
+    Boolean(formData.category) && !categories.some((category) => category.name === formData.category);
+
   return (
+    <>
     <div className="overflow-hidden bg-[var(--app-bg)] lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
       <div className="p-4 space-y-4">
         {error && (
@@ -85,21 +129,52 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                  ประเภท <span className="text-red-500">*</span>
-                </label>
-                <input
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    ประเภท <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setCategoryModalOpen(true)}
+                    className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    <span className="lg:hidden">จัดการประเภท</span>
+                    <span className="hidden lg:inline">จัดการประเภทค่าบริการ</span>
+                  </button>
+                </div>
+                <select
                   ref={categoryInputRef}
-                  type="text"
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
                   onKeyDown={(e) => handleKeyDown(e, amountInputRef)}
-                  placeholder="ระบุประเภท..."
                   className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   required
-                  disabled={submitting}
-                />
+                  disabled={submitting || categoriesLoading}
+                >
+                  <option value="">
+                    {categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...'}
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                  {selectedCategoryMissing ? (
+                    <option value={formData.category}>{formData.category}</option>
+                  ) : null}
+                </select>
+                {categoriesError ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">{categoriesError}</p>
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -162,6 +237,20 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
         </form>
       </div>
     </div>
+    <ServiceFeeCategoryModal
+      isOpen={categoryModalOpen}
+      onClose={() => setCategoryModalOpen(false)}
+      categories={categories}
+      loading={categoriesLoading}
+      saving={categoriesSaving}
+      onCreateCategory={createCategory}
+      onUpdateCategory={updateCategory}
+      onDeleteCategory={deleteCategory}
+      onRefresh={loadCategories}
+      onSaved={handleCategorySaved}
+      onDeleted={handleCategoryDeleted}
+    />
+    </>
   );
 };
 

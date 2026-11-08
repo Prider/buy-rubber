@@ -85,6 +85,7 @@ export default function PurchasesPage() {
     error: serviceFeeFormError,
     setError: setServiceFeeFormError,
     handleInputChange: handleServiceFeeInputChange,
+    setCategory: setServiceFeeCategory,
     isFormValid: isServiceFeeFormValid,
     resetForm: resetServiceFeeForm,
   } = useServiceFeeForm();
@@ -231,6 +232,7 @@ export default function PurchasesPage() {
                   formData={serviceFeeFormData}
                   error={serviceFeeFormError}
                   handleInputChange={handleServiceFeeInputChange}
+                  setCategory={setServiceFeeCategory}
                   isFormValid={isServiceFeeFormValid()}
                   resetForm={resetServiceFeeForm}
                   addToCart={handleAddServiceFeeToCart}

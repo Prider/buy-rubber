@@ -14,9 +14,14 @@ export const useExpenseForm = () => {
   const [error, setError] = useState('');
 
   // Handle input change
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
+  }, []);
+
+  const setCategory = useCallback((category: string) => {
+    setFormData(prev => ({ ...prev, category }));
     setError('');
   }, []);
 
@@ -43,6 +48,7 @@ export const useExpenseForm = () => {
     error,
     setError,
     handleInputChange,
+    setCategory,
     isFormValid,
     resetForm,
   };

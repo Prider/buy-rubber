@@ -11,6 +11,7 @@ export const ACTIVITY_ENTITY_TYPES = [
   'productType',
   'expense',
   'serviceFee',
+  'serviceFeeCategory',
   'reportGroup',
   'user',
 ] as const;
@@ -31,6 +32,7 @@ export const ACTIVITY_ENTITY_LABELS: Record<ActivityEntityType, string> = {
   productType: 'ประเภทสินค้า',
   expense: 'ค่าใช้จ่าย',
   serviceFee: 'ค่าบริการ',
+  serviceFeeCategory: 'ประเภทค่าบริการ',
   reportGroup: 'กลุ่มรายงาน',
   user: 'ผู้ใช้งาน',
 };

@@ -307,6 +307,18 @@ model ReportProductTypeGroupMember {
   @@index([productTypeId])
 }
 
+// ประเภทค่าบริการที่ผู้ใช้กำหนดเอง สำหรับบันทึกค่าบริการ
+model ServiceFeeCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
 // ประวัติการสร้าง แก้ไข และลบ เก็บ 90 วัน
 model ActivityLog {
   id          String   @id @default(uuid())

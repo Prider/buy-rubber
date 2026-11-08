@@ -66,6 +66,7 @@ const ENTITY_CODE_PREFIX: Record<ActivityEntityType, string> = {
   productType: 'PT',
   expense: 'EXP',
   serviceFee: 'SF',
+  serviceFeeCategory: 'SFC',
   reportGroup: 'RG',
   user: 'USR',
 };
