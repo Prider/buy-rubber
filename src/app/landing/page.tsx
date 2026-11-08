@@ -30,11 +30,7 @@ type DeviceId = (typeof DEVICES)[number]['id'];
 const DEVICE_ROTATE_MS = 6000;
 const DEVICE_FADE_MS = 600;
 
-const DEVICE_CAPTION: Record<DeviceId, string> = {
-  computer: 'แถบไอคอนด้านซ้าย ฟอร์มรับซื้ออยู่ข้างตะกร้า',
-  tablet: 'แท็บเล็ตมีแถบไอคอน ฟอร์มรับซื้อ และแถบตะกร้าด้านล่าง',
-  phone: 'หน้าจอรับซื้อบนมือถือ มีแท็บรับซื้อกับค่าบริการ และแถบตะกร้าด้านล่าง',
-};
+
 
 const PROBLEMS = [
   {
@@ -168,8 +164,8 @@ const SHOTS: Array<{
     detail: 'ดาวน์โหลด PDF',
   },
   {
-    src: '/guide/assistant.jpg?v=2',
-    darkSrc: '/guide/dark/assistant.jpg',
+    src: '/guide/assistant.jpg?v=3',
+    darkSrc: '/guide/dark/assistant.jpg?v=3',
     alt: 'แผงผู้ช่วยอัจฉริยะสำหรับถามตัวเลขร้าน',
     caption: 'ผู้ช่วยอัจฉริยะ',
     detail: 'ถามตัวเลขร้าน',
@@ -217,8 +213,8 @@ const SHOTS: Array<{
     detail: 'วันหมดอายุของคีย์',
   },
   {
-    src: '/guide/settings-assistant.jpg?v=2',
-    darkSrc: '/guide/dark/settings-assistant.jpg',
+    src: '/guide/settings-assistant.jpg?v=3',
+    darkSrc: '/guide/dark/settings-assistant.jpg?v=3',
     alt: 'แท็บตั้งค่าผู้ช่วยอัจฉริยะ',
     caption: 'ตั้งค่าผู้ช่วย',
     detail: 'ผู้ให้บริการและ API Key',

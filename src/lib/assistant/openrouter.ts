@@ -278,7 +278,7 @@ async function askAnthropic(
   let lastError: AssistantProviderError | null = null;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    let response = await postAnthropic(credentials, messages, model, workspaceId);
+    const response = await postAnthropic(credentials, messages, model, workspaceId);
     rememberResponseAllowance('anthropic', credentials.apiKey, model, response.headers);
     if (response.ok) {
       if (model !== credentials.model) rememberAssistantModel(credentials.apiKey, model);

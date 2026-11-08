@@ -18,12 +18,12 @@ function simpleHash(password: string): string {
   return hash.toString();
 }
 
-/** Snapshot of prisma/backups/initial-data.db */
+/** One account per UserRole in src/types/user.ts, plus an extra user. */
 const USERS = [
   { username: 'root', password: simpleHash('root414428'), role: 'root' },
   { username: 'admin', password: simpleHash('admin123'), role: 'admin' },
-  { username: 'mayrin', password: simpleHash('mayrin123'), role: 'admin' },
   { username: 'user', password: simpleHash('user123'), role: 'user' },
+  { username: 'accountant', password: simpleHash('accountant123'), role: 'accountant' },
   { username: 'viewer', password: simpleHash('viewer123'), role: 'viewer' },
   { username: 'hello', password: simpleHash('hello123'), role: 'user' },
 ] as const;
@@ -54,30 +54,7 @@ const MEMBERS: Array<{
   { code: 'M008', name: 'สา', ownerPercent: 90, tapperPercent: 10, tapperName: 'นายสมพร คนตัด' },
   { code: 'M009', name: 'ชัน', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
   { code: 'M010', name: 'ยายยง', ownerPercent: 70, tapperPercent: 30, tapperName: 'นายสมชาย คนตัด' },
-  { code: 'M012', name: 'ชัย', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M013', name: 'จง', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M014', name: 'นะ', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M015', name: 'ขวัญ', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M016', name: 'เล็กนาไม้', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M017', name: 'ลำดวน', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M018', name: 'เก่ง โกแดง', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M019', name: 'ภิรมย์', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M020', name: 'หลุง', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M021', name: 'มอส', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M022', name: 'โบว', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M023', name: 'ต้อย', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M024', name: 'แกวด', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M025', name: 'test', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M026', name: 'เขียว', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M027', name: 'เจี๊ยบ', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M028', name: 'เขียด', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M029', name: 'แกะ', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M030', name: 'ภักดิ์', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M031', name: 'ตา', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M032', name: 'ฝน', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M033', name: 'ต้น', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-  { code: 'M034', name: 'สาว', ownerPercent: 100, tapperPercent: 0, tapperName: '' },
-];
+]
 
 const SETTINGS = [
   { key: 'backup_enabled', value: 'true' },
@@ -204,12 +181,12 @@ async function main() {
   console.log('');
   console.log('ข้อมูลการเข้าสู่ระบบ:');
   console.log('');
-  console.log('  Username: admin     Password: admin123');
-  console.log('  Username: mayrin    Password: mayrin123');
-  console.log('  Username: user      Password: user123');
-  console.log('  Username: viewer    Password: viewer123');
-  console.log('  Username: hello     Password: hello123');
-  console.log('  Username: root      (รหัสผ่านตาม initial-data.db)');
+  console.log('  Username: root        Password: root414428   (ผู้ดูแล)');
+  console.log('  Username: admin       Password: admin123     (เจ้าของ)');
+  console.log('  Username: user        Password: user123      (ผู้จัดการ)');
+  console.log('  Username: accountant  Password: accountant123 (บัญชี)');
+  console.log('  Username: viewer      Password: viewer123    (พนักงาน)');
+  console.log('  Username: hello       Password: hello123     (ผู้จัดการ)');
   console.log('');
 }
 

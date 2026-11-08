@@ -104,7 +104,7 @@ export function assistantConfigPath(): string {
 
 function accountFrom(
   provider: AssistantProvider,
-  value: Partial<StoredProviderAccount> | undefined,
+  value: (Partial<Omit<StoredProviderAccount, 'allowances'>> & { allowances?: unknown }) | undefined,
 ): StoredProviderAccount | null {
   const apiKey = typeof value?.apiKey === 'string' ? value.apiKey.trim() : '';
   if (!apiKey) return null;
@@ -284,7 +284,7 @@ export function removeAssistantProvider(provider: AssistantProvider): void {
 }
 
 export function setActiveAssistantProvider(provider: AssistantProvider, model: string): boolean {
-  const library = readLibrary() ?? { active: provider, accounts: {}, packagedModel: null };
+  const library: AssistantLibrary = readLibrary() ?? { active: provider, accounts: {}, packagedModel: null };
   const account = library.accounts[provider];
   if (account) {
     account.model = model;
@@ -297,7 +297,11 @@ export function setActiveAssistantProvider(provider: AssistantProvider, model: s
 }
 
 export function writeAssistantConfig(config: StoredAssistantConfig): void {
-  const library = readLibrary() ?? { active: config.provider, accounts: {} };
+  const library: AssistantLibrary = readLibrary() ?? {
+    active: config.provider,
+    accounts: {},
+    packagedModel: null,
+  };
   const previous = library.accounts[config.provider];
   const sameKey = previous?.apiKey === config.apiKey;
   library.accounts[config.provider] = {
