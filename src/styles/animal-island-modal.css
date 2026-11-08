@@ -166,4 +166,30 @@ html.dark body .animal-modalClipped-7IuAw {
   }
 }
 
+/* Header close sits on the full title row, including the narrow phone title rules above. */
+.app-island-modal .animal-header-udOSi {
+  position: relative;
+}
+
+html .app-island-modal .animal-title-s6pv3 button {
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.dark .app-island-modal .animal-title-s6pv3 button {
+  color: #f3f4f6;
+}
+
+@media (max-width: 767px) {
+  .admin-user-modal.app-island-modal .animal-title-s6pv3,
+  .report-group-modal.app-island-modal .animal-title-s6pv3 {
+    width: 100%;
+    max-width: none;
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
+
 

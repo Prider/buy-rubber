@@ -694,7 +694,7 @@ function ShotFigure({ shot }: { shot: (typeof SHOTS)[number] }) {
           <p className="text-sm font-semibold leading-6">{shot.caption}</p>
           <button
             type="button"
-            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-[#3f3c36] motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out hover:bg-[#eceae4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 enabled:active:scale-[0.96] dark:text-[#e7e3d8] dark:hover:bg-[#2c3128]"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-[#e3dfd4] bg-[#f6f4ee] px-3.5 text-sm font-semibold text-[#1c1b16] shadow-sm motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out hover:bg-[#eceae4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 enabled:active:scale-[0.96] dark:border-[#3a4034] dark:bg-[#232820] dark:text-white dark:hover:bg-[#2c3128]"
             onClick={() => dialogRef.current?.close()}
           >
             ปิด

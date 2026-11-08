@@ -20,6 +20,7 @@ import {
   getSalesWalletStyle,
 } from '@/components/sales/salesFormCardUi';
 import type { DestinationCompany } from '@/types/destinationCompany';
+import { CloseButton } from '@/components/common/CloseButton';
 
 interface ProductType {
   id: string;
@@ -326,6 +327,7 @@ export default function SalesFormCard({
             </span>
           ) : null}
         </div>
+        {onCancelEdit ? <CloseButton onClick={onCancelEdit} disabled={saving} /> : null}
       </div>
 
       <div className={`${layout.bodyPad} max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto max-lg:overscroll-contain lg:pb-0`}>

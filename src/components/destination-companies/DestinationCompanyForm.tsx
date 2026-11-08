@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button, Modal } from 'animal-island-ui';
+import { IslandModalTitle } from '@/components/common/IslandModalTitle';
 import { DestinationCompanyFormProps, DestinationCompanyFormData } from '@/types/destinationCompany';
 
 const FORM_ID = 'destination-company-form';
@@ -91,11 +92,7 @@ export const DestinationCompanyForm: React.FC<DestinationCompanyFormProps> = ({
     <Modal
       open={isOpen}
       className="app-island-modal"
-      title={
-        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-          {editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'}
-        </span>
-      }
+      title={<IslandModalTitle title={editingCompany ? 'แก้ไขบริษัทปลายทาง' : 'เพิ่มบริษัทปลายทาง'} onClose={onCancel} />}
       width={650}
       typewriter={false}
       onClose={onCancel}

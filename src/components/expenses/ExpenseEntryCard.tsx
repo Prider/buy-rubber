@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAlert } from '@/hooks/useAlert';
+import { CloseButton } from '@/components/common/CloseButton';
 
 const FORM_ID = 'expense-form';
 
@@ -180,13 +181,16 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
           aria-labelledby="expense-form-title"
           className="relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl"
         >
-          <div className="border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:px-6">
+          <div className="relative border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:px-6">
             <h2
               id="expense-form-title"
-              className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-center text-xl font-bold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 sm:text-2xl"
+              className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text px-16 text-center text-xl font-bold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 sm:text-2xl"
             >
               บันทึกค่าใช้จ่าย
             </h2>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6">
+              <CloseButton onClick={handleCancel} disabled={submitting} />
+            </span>
           </div>
 
           <div

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Button, Modal } from 'animal-island-ui';
+import { IslandModalTitle } from '@/components/common/IslandModalTitle';
 
 interface ProductType {
   id: string;
@@ -59,11 +60,7 @@ export default function ProductTypeFormModal({
     <Modal
       open={isOpen}
       className="app-island-modal"
-      title={
-        <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-gradient dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-          {editingProductType ? 'แก้ไขประเภทสินค้า' : 'เพิ่มประเภทสินค้า'}
-        </span>
-      }
+      title={<IslandModalTitle title={editingProductType ? 'แก้ไขประเภทสินค้า' : 'เพิ่มประเภทสินค้า'} onClose={onClose} />}
       width={650}
       typewriter={false}
       onClose={onClose}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { CloseButton } from '@/components/common/CloseButton';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -95,13 +96,16 @@ export function ConfirmModal({
         >
           {/* Header */}
           <div className={`px-6 py-4 ${styles.headerBg} border-b ${styles.borderColor} rounded-t-2xl`}>
-            <div className="flex items-center space-x-3">
-              <div className={`${styles.iconBg} rounded-full p-2 flex items-center justify-center`}>
-                <span className={styles.iconColor}>{icon}</span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center space-x-3">
+                <div className={`${styles.iconBg} rounded-full p-2 flex items-center justify-center`}>
+                  <span className={styles.iconColor}>{icon}</span>
+                </div>
+                <h3 id="confirm-title" className={`text-lg font-bold ${styles.titleColor}`}>
+                  {title}
+                </h3>
               </div>
-              <h3 id="confirm-title" className={`text-lg font-bold ${styles.titleColor}`}>
-                {title}
-              </h3>
+              <CloseButton onClick={onCancel} />
             </div>
           </div>
 

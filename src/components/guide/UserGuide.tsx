@@ -179,7 +179,7 @@ function GuideFigure({ src, alt, caption }: { src: string; alt: string; caption:
           <p className="text-sm font-semibold leading-6">{caption}</p>
           <button
             type="button"
-            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 enabled:active:scale-[0.96] dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
             onClick={() => dialogRef.current?.close()}
           >
             ปิด

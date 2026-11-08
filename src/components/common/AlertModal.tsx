@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { CloseButton } from '@/components/common/CloseButton';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
@@ -147,15 +148,7 @@ export function AlertModal({
                   {title}
                 </h3>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-gray-600/50 transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton onClick={onClose} />
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useAlert } from '@/hooks/useAlert';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { CloseButton } from '@/components/common/CloseButton';
 
 interface CartItem {
   id: string;
@@ -142,16 +143,7 @@ export const CartTable: React.FC<CartTableProps> = ({
             </div>
           )}
           {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 lg:hidden"
-              aria-label="ปิด"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <CloseButton onClick={onClose} className="lg:hidden" />
           )}
           </div>
           )}

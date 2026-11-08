@@ -11,7 +11,7 @@ import { LoadingState } from '@/components/members/history/LoadingState';
 import { EmptyState } from '@/components/members/history/EmptyState';
 import { PurchasesTable } from '@/components/members/history/PurchasesTable';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
-import { CloseIcon } from '@/components/members/history/Icons';
+import { CloseButton } from '@/components/common/CloseButton';
 
 interface MemberPurchaseHistoryModalProps {
   isOpen: boolean;
@@ -98,13 +98,7 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
                   <p className="text-xs text-gray-600 dark:text-gray-400">{member?.name} ({member?.code})</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <CloseIcon />
-              </button>
+              <CloseButton onClick={onClose} />
             </div>
           </div>
 

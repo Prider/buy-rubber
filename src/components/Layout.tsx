@@ -10,6 +10,7 @@ import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { canAccessAppPath, homePathForRole, isAccountantRole } from '@/types/user';
+import { CloseButton } from '@/components/common/CloseButton';
 import { getRoleLabel } from '@/components/user-management/utils';
 import { getApiClient } from '@/lib/apiClient';
 import { normalizeSlipFontSize, SLIP_FONT_SIZE_STORAGE_KEY } from '@/lib/slipFont';
@@ -252,25 +253,9 @@ export default function Layout({ children }: LayoutProps) {
               />
             </Link>
             {overlayOpen && (
-              <button
-                onClick={() => setOverlayOpen(false)}
-                className="absolute right-3 rounded-md p-1.5 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700/50 dark:hover:text-gray-300 lg:hidden"
-                aria-label="Close sidebar"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 lg:hidden">
+                <CloseButton onClick={() => setOverlayOpen(false)} />
+              </span>
             )}
           </div>
 

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiClient } from '@/lib/apiClient';
+import { CloseButton } from '@/components/common/CloseButton';
 import type { AssistantModelAllowanceView } from '@/lib/assistant/allowance';
 import {
   ASSISTANT_PROVIDER_LABELS,
@@ -218,16 +219,7 @@ export default function AssistantPanel({ open, onClose }: { open: boolean; onClo
                 </svg>
                 ตั้งค่า
               </Link>
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                aria-label="ปิด"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton onClick={onClose} />
             </div>
           </div>
           <div className="mt-2 flex max-w-full flex-wrap items-center gap-1.5">
