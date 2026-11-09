@@ -55,30 +55,30 @@ export default function ReportSummaryCards({
   totalCount,
   expenseSummary = [],
 }: ReportSummaryCardsProps) {
-  const averageExpense =
-    reportType === 'expense_summary' && totalCount > 0 ? totalAmount / totalCount : 0;
-  const topExpenseCategory =
-    reportType === 'expense_summary' && expenseSummary.length > 0 ? expenseSummary[0] : null;
+  const isServiceFee = reportType === 'service_fee';
+  const isCategoryReport = isServiceFee || reportType === 'expense_summary';
+  const averageAmount = isCategoryReport && totalCount > 0 ? totalAmount / totalCount : 0;
+  const topCategory = isCategoryReport && expenseSummary.length > 0 ? expenseSummary[0] : null;
 
-  if (reportType === 'expense_summary') {
+  if (isCategoryReport) {
     return (
       <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label="จำนวนรายการ"
           value={totalCount.toLocaleString('th-TH')}
-          hint="รายการค่าใช้จ่าย"
+          hint={isServiceFee ? 'รายการค่าบริการ' : 'รายการค่าใช้จ่าย'}
         />
         <StatCard
           label="เฉลี่ยต่อรายการ"
-          value={formatCurrency(averageExpense || 0)}
+          value={formatCurrency(averageAmount || 0)}
           hint={`จาก ${totalCount.toLocaleString('th-TH')} รายการ`}
         />
         <StatCard
-          label="หมวดสูงสุด"
-          value={topExpenseCategory ? topExpenseCategory.category : '-'}
+          label={isServiceFee ? 'ประเภทสูงสุด' : 'หมวดสูงสุด'}
+          value={topCategory ? topCategory.category : '-'}
           hint={
-            topExpenseCategory
-              ? `${formatCurrency(topExpenseCategory.totalAmount)} · ${topExpenseCategory.count.toLocaleString('th-TH')} รายการ`
+            topCategory
+              ? `${formatCurrency(topCategory.totalAmount)} · ${topCategory.count.toLocaleString('th-TH')} รายการ`
               : 'ไม่มีข้อมูล'
           }
         />

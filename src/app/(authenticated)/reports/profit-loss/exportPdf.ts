@@ -135,7 +135,9 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
-  const expenseMax = niceCeiling(Math.max(...rows.map((row) => row.expenses), 0));
+  const amountMax = niceCeiling(
+    Math.max(...rows.flatMap((row) => [row.expenses, row.serviceFees]), 0),
+  );
   const prices = rows.flatMap((row) =>
     [row.purchasePricePerKg, row.salePricePerKg].filter((value) => value > 0),
   );
@@ -144,8 +146,9 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
 
   const groupW = plotW / rows.length;
   const innerGap = 3;
-  const barW = Math.max(2, Math.min(22, (groupW - 16 - innerGap * 2) / 3));
-  const clusterW = barW * 3 + innerGap * 2;
+  const seriesCount = CHART_SERIES.length;
+  const barW = Math.max(2, Math.min(18, (groupW - 16 - innerGap * (seriesCount - 1)) / seriesCount));
+  const clusterW = barW * seriesCount + innerGap * (seriesCount - 1);
   const labelStep = groupW >= 52 ? 1 : Math.ceil(52 / groupW);
 
   const yOf = (value: number, min: number, max: number) => {
@@ -157,20 +160,21 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
   for (let tick = 0; tick <= 4; tick += 1) {
     const ratio = tick / 4;
     const y = pad.top + plotH * (1 - ratio);
-    const expenseLabel = compactAmount.format(expenseMax * ratio);
+    const amountLabel = compactAmount.format(amountMax * ratio);
     const priceLabel = formatCurrency(priceMin + (priceMax - priceMin) * ratio);
     grid.push(
       `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 6" />`,
-      `<text x="${pad.left - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="#64748b">${escapeXml(expenseLabel)}</text>`,
+      `<text x="${pad.left - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="#64748b">${escapeXml(amountLabel)}</text>`,
       `<text x="${width - pad.right + 8}" y="${y + 3}" text-anchor="start" font-size="10" fill="#64748b">${escapeXml(priceLabel)}</text>`,
     );
   }
 
-  const series = [
-    { key: 'expenses' as const, color: CHART_SERIES[0].color, min: 0, max: expenseMax },
-    { key: 'purchasePricePerKg' as const, color: CHART_SERIES[1].color, min: priceMin, max: priceMax },
-    { key: 'salePricePerKg' as const, color: CHART_SERIES[2].color, min: priceMin, max: priceMax },
-  ];
+  const series = CHART_SERIES.map((item) => ({
+    key: item.key,
+    color: item.color,
+    min: item.axis === 'amount' ? 0 : priceMin,
+    max: item.axis === 'amount' ? amountMax : priceMax,
+  }));
 
   const bars: string[] = [];
   const labels: string[] = [];
@@ -206,7 +210,7 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
   return `
     <div class="chart">
       <p class="section-title">แนวโน้ม</p>
-      <p class="chart-subtitle">ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.</p>
+      <p class="chart-subtitle">ค่าใช้จ่าย · ค่าบริการ · ราคาซื้อ/กก. · ราคาขาย/กก.</p>
       <div class="legend">${legend}</div>
       <svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="แนวโน้ม">
         ${grid.join('')}
@@ -224,6 +228,7 @@ function renderPeriodTableRows(rows: ProfitLossRow[], viewMode: ViewMode): strin
         <tr>
           <td>${periodLabel(row.period, viewMode)}</td>
           <td class="number">${formatCurrency(row.sales)}</td>
+          <td class="number">${formatCurrency(row.serviceFees)}</td>
           <td class="number">${formatCurrency(row.purchases)}</td>
           <td class="number">${formatCurrency(row.expenses)}</td>
           <td class="number">${formatCurrency(row.net)}</td>
@@ -282,10 +287,11 @@ export function generateProfitLossPdfHtml({
   const summarySection = page.showSummary
     ? `
       <div class="summary">
-        <p class="summary-label">ผลลัพธ์สุทธิ (ยอดขาย - ยอดรับซื้อ - ค่าใช้จ่าย)</p>
+        <p class="summary-label">ผลลัพธ์สุทธิ ((ยอดขาย + ค่าบริการ) − ยอดรับซื้อ − ค่าใช้จ่าย)</p>
         <p class="summary-value">${netLabel}: ${formatCurrency(totals.net)}</p>
         <div class="summary-grid">
           <span><strong>Sales:</strong> ${formatCurrency(totals.sales)}</span>
+          <span><strong>Service fees:</strong> ${formatCurrency(totals.serviceFees)}</span>
           <span><strong>Purchases:</strong> ${formatCurrency(totals.purchases)}</span>
           <span><strong>Expenses:</strong> ${formatCurrency(totals.expenses)}</span>
         </div>
@@ -304,6 +310,7 @@ export function generateProfitLossPdfHtml({
           <tr>
             <th>Period</th>
             <th>Sales</th>
+            <th>Service fees</th>
             <th>Purchases</th>
             <th>Expenses</th>
             <th>Net (Profit / Loss)</th>
@@ -317,6 +324,7 @@ export function generateProfitLossPdfHtml({
             <tr class="total">
               <td>Total</td>
               <td class="number">${formatCurrency(totals.sales)}</td>
+              <td class="number">${formatCurrency(totals.serviceFees)}</td>
               <td class="number">${formatCurrency(totals.purchases)}</td>
               <td class="number">${formatCurrency(totals.expenses)}</td>
               <td class="number">${formatCurrency(totals.net)}</td>

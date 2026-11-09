@@ -1,6 +1,7 @@
 import { ReportType } from '@/hooks/useReportData';
 import { formatCurrency } from './utils';
 import {
+  categoryBreakdownCopy,
   reportColumns,
   reportRangeLabel,
   reportSummaryLines,
@@ -60,10 +61,11 @@ export function generatePrintPreviewHTML({
     columns.map((column) => column.align),
     rows.map((row) => columns.map((column) => column.value(row))),
   );
+  const breakdown = categoryBreakdownCopy(reportType);
   const expenseTable =
-    reportType === 'expense_summary' && expenseSummary.length > 0
-      ? `<h2>สรุปตามหมวดค่าใช้จ่าย</h2>${renderTable(
-          ['หมวดค่าใช้จ่าย', 'จำนวนรายการ', 'ยอดรวม'],
+    breakdown && expenseSummary.length > 0
+      ? `<h2>${escapeHtml(breakdown.title)}</h2>${renderTable(
+          [breakdown.categoryHeader, 'จำนวนรายการ', 'ยอดรวม'],
           ['left', 'right', 'right'],
           expenseSummary.map((item) => [
             item.category,

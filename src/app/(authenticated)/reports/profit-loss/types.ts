@@ -3,6 +3,7 @@ export type ViewMode = 'daily' | 'weekly' | 'monthly';
 export interface ProfitLossRow {
   period: string;
   sales: number;
+  serviceFees: number;
   purchases: number;
   expenses: number;
   purchasePricePerKg: number;
@@ -12,6 +13,7 @@ export interface ProfitLossRow {
 
 export interface ProfitLossTotals {
   sales: number;
+  serviceFees: number;
   purchases: number;
   expenses: number;
   net: number;
@@ -24,6 +26,7 @@ export interface ProfitLossReportResponse {
 
 export const EMPTY_TOTALS: ProfitLossTotals = {
   sales: 0,
+  serviceFees: 0,
   purchases: 0,
   expenses: 0,
   net: 0,
@@ -31,6 +34,7 @@ export const EMPTY_TOTALS: ProfitLossTotals = {
 
 export const CHART_SERIES = [
   { key: 'expenses', label: 'Expenses', color: '#2563eb', axis: 'amount' },
+  { key: 'serviceFees', label: 'Service fees', color: '#d97706', axis: 'amount' },
   { key: 'purchasePricePerKg', label: 'Purchase price/kg', color: '#dc2626', axis: 'price' },
   { key: 'salePricePerKg', label: 'Sale price/kg', color: '#16a34a', axis: 'price' },
 ] as const;

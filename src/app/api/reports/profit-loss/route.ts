@@ -10,6 +10,7 @@ type ViewMode = 'daily' | 'weekly' | 'monthly';
 interface PeriodAccumulator {
   period: string;
   sales: number;
+  serviceFees: number;
   purchases: number;
   expenses: number;
   purchasePriceWeighted: number;
@@ -22,6 +23,7 @@ function emptyAccumulator(period: string): PeriodAccumulator {
   return {
     period,
     sales: 0,
+    serviceFees: 0,
     purchases: 0,
     expenses: 0,
     purchasePriceWeighted: 0,
@@ -29,6 +31,16 @@ function emptyAccumulator(period: string): PeriodAccumulator {
     salePriceWeighted: 0,
     saleWeight: 0,
   };
+}
+
+/** (ขาย + ค่าบริการ) − รับซื้อ − ค่าใช้จ่าย */
+export function profitLossNet(row: {
+  sales: number;
+  serviceFees: number;
+  purchases: number;
+  expenses: number;
+}): number {
+  return row.sales + row.serviceFees - row.purchases - row.expenses;
 }
 
 function parseViewMode(raw: string | null): ViewMode {
@@ -137,7 +149,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
     }
 
-    const [saleAggs, purchaseAggs, expenseAggs] = await fetchProfitLossAggregates(
+    const [saleAggs, purchaseAggs, expenseAggs, serviceFeeAggs] = await fetchProfitLossAggregates(
       startDate,
       endDate,
       viewMode,
@@ -173,14 +185,23 @@ export async function GET(request: NextRequest) {
       acc.expenses += Number(row.total);
     }
 
+    for (const row of serviceFeeAggs) {
+      const key = periodKeyFromAggregate(row.period, viewMode);
+      if (!key) continue;
+      const acc = periodMap.get(key);
+      if (!acc) continue;
+      acc.serviceFees += Number(row.total);
+    }
+
     const periods = Array.from(periodMap.values()).map((row) => {
       const purchasePricePerKg = row.purchaseWeight > 0 ? row.purchasePriceWeighted / row.purchaseWeight : 0;
       const salePricePerKg = row.saleWeight > 0 ? row.salePriceWeighted / row.saleWeight : 0;
-      const net = row.sales - row.purchases - row.expenses;
+      const net = profitLossNet(row);
 
       return {
         period: row.period,
         sales: row.sales,
+        serviceFees: row.serviceFees,
         purchases: row.purchases,
         expenses: row.expenses,
         purchasePricePerKg,
@@ -192,12 +213,13 @@ export async function GET(request: NextRequest) {
     const totals = periods.reduce(
       (acc, row) => {
         acc.sales += row.sales;
+        acc.serviceFees += row.serviceFees;
         acc.purchases += row.purchases;
         acc.expenses += row.expenses;
         acc.net += row.net;
         return acc;
       },
-      { sales: 0, purchases: 0, expenses: 0, net: 0 },
+      { sales: 0, serviceFees: 0, purchases: 0, expenses: 0, net: 0 },
     );
 
     return NextResponse.json({

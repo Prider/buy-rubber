@@ -18,6 +18,7 @@ import DailyPurchaseTable from '@/components/reports/DailyPurchaseTable';
 import SellSummaryTable from '@/components/reports/SellSummaryTable';
 import MemberSummaryTable from '@/components/reports/MemberSummaryTable';
 import ExpenseReportTable from '@/components/reports/ExpenseReportTable';
+import ServiceFeeReportTable from '@/components/reports/ServiceFeeReportTable';
 import ReportActionButtons from '@/components/reports/ReportActionButtons';
 import { downloadReportPDF } from '@/lib/reportPdfUtils';
 import { ListPagination } from '@/components/pagination/ListPagination';
@@ -35,6 +36,7 @@ const ReportGroupManagementModal = dynamic(
 function tabFromReportType(reportType: string): ReportTabId {
   if (isSellSummaryReport(reportType)) return 'sell_summary';
   if (reportType === 'member_summary') return 'member_summary';
+  if (reportType === 'service_fee') return 'service_fee';
   if (reportType === 'expense_summary') return 'expense_summary';
   return 'daily_purchase';
 }
@@ -291,7 +293,7 @@ export default function ReportsPage() {
           <div className="flex min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <h1 className="hidden shrink-0 text-lg font-semibold tracking-tight sm:text-xl lg:block">
               <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
-                รายงาน
+                รายงานสรุป
               </span>
             </h1>
             <ReportTabs activeTab={activeTab} onTabChange={handleTabChange} />
@@ -419,6 +421,13 @@ export default function ReportsPage() {
               )}
               {reportType === 'member_summary' && (
                 <MemberSummaryTable data={data ?? []} offset={rowOffset} />
+              )}
+              {reportType === 'service_fee' && (
+                <ServiceFeeReportTable
+                  data={data ?? []}
+                  categorySummary={expenseSummary}
+                  totalAmount={getTotalAmount()}
+                />
               )}
               {reportType === 'expense_summary' && (
                 <ExpenseReportTable

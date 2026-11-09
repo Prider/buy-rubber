@@ -16,6 +16,7 @@ export function buildProfitLossExcelHtml({
           <tr>
             <td>${periodLabel(row.period, viewMode)}</td>
             <td>${row.sales.toFixed(2)}</td>
+            <td>${row.serviceFees.toFixed(2)}</td>
             <td>${row.purchases.toFixed(2)}</td>
             <td>${row.expenses.toFixed(2)}</td>
             <td>${row.net.toFixed(2)}</td>
@@ -33,6 +34,7 @@ export function buildProfitLossExcelHtml({
               <tr>
                 <th>Period</th>
                 <th>Sales</th>
+                <th>Service fees</th>
                 <th>Purchases</th>
                 <th>Expenses</th>
                 <th>Net</th>
@@ -43,6 +45,7 @@ export function buildProfitLossExcelHtml({
               <tr>
                 <td><b>Total</b></td>
                 <td><b>${totals.sales.toFixed(2)}</b></td>
+                <td><b>${totals.serviceFees.toFixed(2)}</b></td>
                 <td><b>${totals.purchases.toFixed(2)}</b></td>
                 <td><b>${totals.expenses.toFixed(2)}</b></td>
                 <td><b>${totals.net.toFixed(2)}</b></td>

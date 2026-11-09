@@ -6,6 +6,7 @@ function makeRow(period: string, net = 10): ProfitLossRow {
   return {
     period,
     sales: 100,
+    serviceFees: 15,
     purchases: 40,
     expenses: 10,
     purchasePricePerKg: 50,
@@ -16,6 +17,7 @@ function makeRow(period: string, net = 10): ProfitLossRow {
 
 const totals: ProfitLossTotals = {
   sales: 100,
+  serviceFees: 0,
   purchases: 40,
   expenses: 10,
   net: 50,
@@ -74,9 +76,10 @@ describe('buildProfitLossPdfPages', () => {
     });
 
     expect(html).toContain('แนวโน้ม');
-    expect(html).toContain('ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.');
+    expect(html).toContain('ค่าใช้จ่าย · ค่าบริการ · ราคาซื้อ/กก. · ราคาขาย/กก.');
     expect(html).toContain('<svg');
     expect(html).toContain('fill="#2563eb"');
+    expect(html).toContain('fill="#d97706"');
     expect(html).toContain('fill="#dc2626"');
     expect(html).toContain('fill="#16a34a"');
     expect(html).toContain('Period breakdown');

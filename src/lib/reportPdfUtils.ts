@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { formatCurrency } from './utils';
 import { ReportType } from '@/hooks/useReportData';
 import {
+  categoryBreakdownCopy,
   reportColumns,
   reportRangeLabel,
   reportSummaryLines,
@@ -119,7 +120,8 @@ export async function downloadReportPDF({
   });
 
   const lines = reportSummaryLines(reportType, totalAmount, totalWeight, totalCount ?? data.length);
-  const expenseRows = reportType === 'expense_summary' ? expenseSummary : [];
+  const breakdown = categoryBreakdownCopy(reportType);
+  const expenseRows = breakdown ? expenseSummary : [];
   let cursorY = ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 22) + 6;
   const pageHeight = doc.internal.pageSize.getHeight();
   const needed = 8 + lines.length * 5 + (expenseRows.length > 0 ? 12 + (expenseRows.length + 1) * 6 : 0);
@@ -140,7 +142,7 @@ export async function downloadReportPDF({
 
   if (expenseRows.length > 0) {
     autoTable(doc, {
-      head: [['หมวดค่าใช้จ่าย', 'จำนวนรายการ', 'ยอดรวม']],
+      head: [[breakdown?.categoryHeader ?? 'หมวด', 'จำนวนรายการ', 'ยอดรวม']],
       body: expenseRows.map((item) => [
         item.category,
         item.count.toLocaleString('th-TH'),

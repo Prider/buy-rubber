@@ -74,7 +74,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">แนวโน้ม</h2>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            ค่าใช้จ่าย · ราคาซื้อ/กก. · ราคาขาย/กก.
+            ค่าใช้จ่าย · ค่าบริการ · ราคาซื้อ/กก. · ราคาขาย/กก.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2">

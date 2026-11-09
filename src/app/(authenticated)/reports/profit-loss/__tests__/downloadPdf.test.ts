@@ -38,6 +38,7 @@ function makeRow(period: string): ProfitLossRow {
   return {
     period,
     sales: 100,
+    serviceFees: 0,
     purchases: 40,
     expenses: 10,
     purchasePricePerKg: 50,
@@ -48,6 +49,7 @@ function makeRow(period: string): ProfitLossRow {
 
 const totals: ProfitLossTotals = {
   sales: 100,
+  serviceFees: 0,
   purchases: 40,
   expenses: 10,
   net: 50,

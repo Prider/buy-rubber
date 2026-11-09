@@ -21,6 +21,11 @@ vi.mock('@/lib/prisma', () => ({
       aggregate: vi.fn(),
       groupBy: vi.fn(),
     },
+    serviceFee: {
+      findMany: vi.fn(),
+      aggregate: vi.fn(),
+      groupBy: vi.fn(),
+    },
   },
 }));
 
@@ -40,6 +45,7 @@ describe('GET /api/reports/summary', () => {
     sale: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn> };
     member: { findMany: ReturnType<typeof vi.fn> };
     expense: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
+    serviceFee: { findMany: ReturnType<typeof vi.fn>; aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
   };
 
   beforeEach(async () => {
@@ -266,6 +272,52 @@ describe('GET /api/reports/summary', () => {
     expect(body.categorySummary).toEqual([
       { category: 'น้ำมัน', count: 20, totalAmount: 8000 },
       { category: 'ค่าไฟ', count: 27, totalAmount: 4000 },
+    ]);
+  });
+
+  it('returns service fee category totals independently of the paged rows', async () => {
+    prisma.serviceFee.findMany.mockResolvedValue([
+      {
+        id: 'sf1',
+        serviceFeeNo: 'SF-1',
+        purchaseNo: 'PUR-1',
+        date: new Date('2026-01-02'),
+        category: 'ค่าชั่ง',
+        amount: 150,
+        notes: null,
+        createdAt: new Date('2026-01-02'),
+      },
+    ]);
+    prisma.serviceFee.aggregate.mockResolvedValue({
+      _count: { _all: 12 },
+      _sum: { amount: 1800 },
+    });
+    prisma.serviceFee.groupBy.mockResolvedValue([
+      { category: 'ค่าชั่ง', _count: { _all: 8 }, _sum: { amount: 1200 } },
+      { category: 'ค่าขนส่ง', _count: { _all: 4 }, _sum: { amount: 600 } },
+    ]);
+
+    const response = await GET(
+      req({
+        type: 'service_fee',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        page: '1',
+        pageSize: '15',
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(prisma.serviceFee.findMany).toHaveBeenCalled();
+    expect(body.rows).toHaveLength(1);
+    expect(body.rows[0].serviceFeeNo).toBe('SF-1');
+    expect(body.totals.count).toBe(12);
+    expect(body.totals.totalAmount).toBe(1800);
+    expect(body.totals.totalWeight).toBe(0);
+    expect(body.categorySummary).toEqual([
+      { category: 'ค่าชั่ง', count: 8, totalAmount: 1200 },
+      { category: 'ค่าขนส่ง', count: 4, totalAmount: 600 },
     ]);
   });
 

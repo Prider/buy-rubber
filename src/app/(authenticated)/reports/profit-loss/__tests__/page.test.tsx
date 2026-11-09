@@ -50,6 +50,7 @@ describe('ProfitLossReport', () => {
           {
             period: '2026-07',
             sales: 1000,
+            serviceFees: 0,
             purchases: 400,
             expenses: 100,
             purchasePricePerKg: 50,
@@ -59,6 +60,7 @@ describe('ProfitLossReport', () => {
         ],
         totals: {
           sales: 1000,
+          serviceFees: 0,
           purchases: 400,
           expenses: 100,
           net: 500,

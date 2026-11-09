@@ -3,11 +3,12 @@
 import { useEffect, useRef } from 'react';
 
 export const REPORT_TABS = [
-  { id: 'daily_purchase', label: 'สรุปการรับซื้อ' },
-  { id: 'sell_summary', label: 'สรุปการขาย' },
-  { id: 'member_summary', label: 'สรุปรายสมาชิก' },
-  { id: 'expense_summary', label: 'ค่าใช้จ่าย' },
+  { id: 'daily_purchase', label: 'รับซื้อ' },
+  { id: 'service_fee', label: 'หักค่าบริการ' },
+  { id: 'sell_summary', label: 'การขาย' },
+  { id: 'member_summary', label: 'รายสมาชิก' },
   { id: 'profit_loss', label: 'กำไร/ขาดทุน' },
+  { id: 'expense_summary', label: 'ค่าใช้จ่ายร้าน' },
 ] as const;
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];

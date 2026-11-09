@@ -16,6 +16,7 @@ const rows: ProfitLossRow[] = [
   {
     period: '2026-07',
     sales: 100,
+    serviceFees: 0,
     purchases: 40,
     expenses: 10,
     purchasePricePerKg: 50,
@@ -26,6 +27,7 @@ const rows: ProfitLossRow[] = [
 
 const totals: ProfitLossTotals = {
   sales: 100,
+  serviceFees: 0,
   purchases: 40,
   expenses: 10,
   net: 50,
@@ -50,6 +52,7 @@ describe('buildProfitLossExcelHtml', () => {
         {
           period: '2026-08',
           sales: 200,
+          serviceFees: 0,
           purchases: 80,
           expenses: 20,
           purchasePricePerKg: 55,
@@ -57,7 +60,7 @@ describe('buildProfitLossExcelHtml', () => {
           net: 100,
         },
       ],
-      totals: { sales: 300, purchases: 120, expenses: 30, net: 150 },
+      totals: { sales: 300, serviceFees: 0, purchases: 120, expenses: 30, net: 150 },
       viewMode: 'monthly',
     });
 
