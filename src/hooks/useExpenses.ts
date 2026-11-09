@@ -39,13 +39,6 @@ interface LoadExpensesOptions {
   category?: string;
 }
 
-const EXPENSE_CATEGORIES = [
-  { value: 'ค่าน้ำมัน', label: 'ค่าน้ำมัน' },
-  { value: 'ค่าซ่อมรถ', label: 'ค่าซ่อมรถ' },
-  { value: 'ค่าคนงาน', label: 'ค่าคนงาน' },
-  { value: 'อื่นๆ', label: 'อื่นๆ' },
-];
-
 const DEFAULT_PAGE_SIZE = 10;
 
 export const useExpenses = () => {
@@ -205,7 +198,6 @@ export const useExpenses = () => {
     deleteExpense,
     changePage,
     changePageSize,
-    categories: EXPENSE_CATEGORIES,
   };
 };
 

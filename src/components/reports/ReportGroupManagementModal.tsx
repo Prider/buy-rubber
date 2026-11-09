@@ -188,7 +188,7 @@ export default function ReportGroupManagementModal({
       open={isOpen}
       className="app-island-modal report-group-modal"
       title={<IslandModalTitle title={modalTitle} onClose={onClose} />}
-      width={800}
+      width={960}
       typewriter={false}
       onClose={onClose}
       footer={

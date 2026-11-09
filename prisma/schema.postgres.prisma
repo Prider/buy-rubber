@@ -320,6 +320,18 @@ model ServiceFeeCategory {
   @@index([isActive, sortOrder])
 }
 
+// ประเภทค่าใช้จ่ายที่ผู้ใช้กำหนดเอง สำหรับบันทึกค่าใช้จ่าย
+model ExpenseCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
 // ประวัติการสร้าง แก้ไข และลบ เก็บ 90 วัน
 model ActivityLog {
   id          String   @id @default(uuid())

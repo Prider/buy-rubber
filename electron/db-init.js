@@ -10,7 +10,7 @@ const { app } = require('electron');
 const { rebuildStock } = require('./rebuild-stock');
 
 /** Tables added in recent schema versions; existing installs may lack these. */
-const REQUIRED_TABLES = ['Sale', 'StockPosition', 'StockLedgerEntry', 'ActivityLog'];
+const REQUIRED_TABLES = ['Sale', 'StockPosition', 'StockLedgerEntry', 'ActivityLog', 'ExpenseCategory'];
 
 // Create a debug log file to help troubleshoot database initialization
 function debugLog(message) {

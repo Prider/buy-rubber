@@ -1,9 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useExpenses } from '@/hooks/useExpenses';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import { useAlert } from '@/hooks/useAlert';
 import { CloseButton } from '@/components/common/CloseButton';
+import { ExpenseCategoryRecord } from '@/lib/expenseCategories';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
+
+const ExpenseCategoryModal = dynamic(
+  () => import(/* webpackPrefetch: true */ '@/components/expenses/ExpenseCategoryModal'),
+);
 
 const FORM_ID = 'expense-form';
 
@@ -21,8 +28,18 @@ interface ExpenseEntryCardProps {
 }
 
 export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onClose, onSubmit }) => {
-  const { categories, expenses } = useExpenses();
   const { showWarning, showError } = useAlert();
+  const {
+    categories,
+    loading: categoriesLoading,
+    saving: categoriesSaving,
+    error: categoriesError,
+    loadCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  } = useExpenseCategories();
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   // Helper function to get current datetime in local time format
   const getCurrentDateTimeLocal = () => {
     const now = new Date();
@@ -41,85 +58,115 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
     description: '',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [categoryMenuStyle, setCategoryMenuStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    visibility: 'hidden',
+  });
+  const categoryInputRef = useRef<HTMLSelectElement>(null);
+  const categoryFieldRef = useRef<HTMLDivElement>(null);
+  const categoryButtonRef = useRef<HTMLButtonElement>(null);
+  const categoryMenuRef = useRef<HTMLUListElement>(null);
 
-  // Get unique categories from expenses
-  const uniqueCategories = Array.from(new Set(expenses.map(exp => exp.category))).filter(Boolean);
-  
-  // Get default categories from the hook (fallback if no expenses exist yet)
-  const defaultCategoryValues = categories.map(cat => cat.value);
-  
-  // Combine both sources and get unique values
-  const allCategories = Array.from(new Set([...uniqueCategories, ...defaultCategoryValues]));
+  const selectedCategoryMissing =
+    Boolean(expenseData.category) && !categories.some((category) => category.name === expenseData.category);
 
-  // Handle category input change
-  const handleCategoryChange = (value: string) => {
-    setExpenseData({ ...expenseData, category: value });
-    setSelectedIndex(-1);
-    
-    if (value) {
-      // Filter categories based on input
-      const filtered = allCategories.filter(cat => 
-        cat.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 5)); // Show max 5 suggestions
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      // Show all categories if input is empty
-      setSuggestions(allCategories.slice(0, 5));
-      setShowSuggestions(allCategories.length > 0);
+  const focusCategoryField = () => {
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      categoryButtonRef.current?.focus();
+      return;
     }
+    categoryInputRef.current?.focus();
   };
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || suggestions.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => 
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      selectSuggestion(suggestions[selectedIndex]);
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-      inputRef.current?.blur();
-    }
+  const chooseCategory = (category: string) => {
+    setExpenseData((current) => ({ ...current, category }));
+    setCategoryMenuOpen(false);
   };
 
-  // Handle suggestion selection
-  const selectSuggestion = (suggestion: string) => {
-    setExpenseData({ ...expenseData, category: suggestion });
-    setShowSuggestions(false);
-    setSuggestions([]);
-    inputRef.current?.blur();
-  };
-
-  // Close suggestions when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        suggestionsRef.current && 
-        !suggestionsRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
+    if (isOpen) {
+      void loadCategories();
+    }
+  }, [isOpen, loadCategories]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+
+    const placeMenu = () => {
+      const field = categoryButtonRef.current?.getBoundingClientRect();
+      if (!field) return;
+      if (window.matchMedia('(min-width: 1024px)').matches) {
+        setCategoryMenuOpen(false);
+        return;
+      }
+
+      const gap = 4;
+      const preferredHeight = 240;
+      const spaceBelow = window.innerHeight - field.bottom - gap;
+      const spaceAbove = field.top - gap;
+      const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(120, Math.min(preferredHeight, openUp ? spaceAbove : spaceBelow));
+      const top = openUp
+        ? Math.max(8, field.top - gap - maxHeight)
+        : field.bottom + gap;
+      const maxLeft = Math.max(8, window.innerWidth - field.width - 8);
+
+      setCategoryMenuStyle({
+        position: 'fixed',
+        visibility: 'visible',
+        top,
+        left: Math.min(Math.max(8, field.left), maxLeft),
+        width: Math.min(field.width, window.innerWidth - 16),
+        maxHeight,
+        zIndex: 1200,
+      });
+    };
+
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (categoryFieldRef.current?.contains(target) || categoryMenuRef.current?.contains(target)) {
+        return;
+      }
+      setCategoryMenuOpen(false);
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setCategoryMenuOpen(false);
+        categoryButtonRef.current?.focus();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    placeMenu();
+    document.addEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', placeMenu);
+    document.addEventListener('scroll', placeMenu, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', placeMenu);
+      document.removeEventListener('scroll', placeMenu, true);
+    };
+  }, [categoryMenuOpen]);
+
+  const handleCategorySaved = (category: ExpenseCategoryRecord, previousName: string | null) => {
+    if (previousName && expenseData.category === previousName) {
+      setExpenseData((current) => ({ ...current, category: category.name }));
+      return;
+    }
+    if (!previousName && !expenseData.category) {
+      setExpenseData((current) => ({ ...current, category: category.name }));
+    }
+  };
+
+  const handleCategoryDeleted = (category: ExpenseCategoryRecord) => {
+    if (expenseData.category === category.name) {
+      setExpenseData((current) => ({ ...current, category: '' }));
+    }
+  };
 
   const resetForm = () => {
     setExpenseData({
@@ -128,9 +175,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
       amount: '',
       description: '',
     });
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
+    setCategoryMenuOpen(false);
   };
 
   useEffect(() => {
@@ -143,7 +188,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
     e.preventDefault();
 
     if (!expenseData.category || !expenseData.amount) {
-      showWarning('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกประเภทและจำนวนเงินให้ครบถ้วน');
+      showWarning('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกประเภทและกรอกจำนวนเงินให้ครบถ้วน');
       return;
     }
 
@@ -172,6 +217,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
+    <>
     <div className="fixed inset-0 z-[1100] overflow-y-auto">
       <div className="fixed inset-0 bg-black/50" onClick={handleCancel} aria-hidden="true" />
       <div className="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
@@ -214,46 +260,87 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
         </div>
 
         {/* Category */}
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            🏷️ ประเภท
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={expenseData.category}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => {
-              handleCategoryChange(expenseData.category);
-            }}
-            className="h-11 w-full min-w-0 rounded-xl border border-gray-300 px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-            placeholder="ระบุประเภท (เช่น ค่าน้ำมัน, ค่าซ่อมรถ)"
-            required
-          />
-          
-          {/* Autocomplete Suggestions */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div
-              ref={suggestionsRef}
-              className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <label id="expense-category-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              🏷️ ประเภท
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setCategoryMenuOpen(false);
+                setCategoryModalOpen(true);
+              }}
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline dark:text-violet-300"
             >
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => selectSuggestion(suggestion)}
-                  className={`min-h-11 w-full px-4 py-3 text-left text-sm transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl ${
-                    selectedIndex === index
-                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {suggestion}
-                </button>
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              จัดการประเภทค่าใช้จ่าย
+            </button>
+          </div>
+          <div className="relative" ref={categoryFieldRef}>
+            <button
+              ref={categoryButtonRef}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={categoryMenuOpen}
+              aria-labelledby="expense-category-label"
+              disabled={submitting || categoriesLoading}
+              onClick={() => setCategoryMenuOpen((open) => !open)}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  setCategoryMenuOpen(true);
+                }
+              }}
+              className="flex h-11 w-full items-center rounded-xl border border-gray-300 bg-white px-3 pr-10 text-left text-base outline-none transition focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 lg:hidden"
+            >
+              <span className={expenseData.category ? 'truncate text-gray-900 dark:text-white' : 'truncate text-gray-500 dark:text-gray-400'}>
+                {expenseData.category || (categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...')}
+              </span>
+            </button>
+            <svg
+              className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform lg:hidden ${categoryMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            <select
+              ref={categoryInputRef}
+              id="expense-category"
+              name="category"
+              aria-labelledby="expense-category-label"
+              value={expenseData.category}
+              onChange={(e) => setExpenseData({ ...expenseData, category: e.target.value })}
+              className="hidden h-11 w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm lg:block"
+              required
+              disabled={submitting || categoriesLoading}
+            >
+              <option value="">
+                {categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...'}
+              </option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
               ))}
-            </div>
-          )}
+              {selectedCategoryMissing ? (
+                <option value={expenseData.category}>{expenseData.category}</option>
+              ) : null}
+            </select>
+          </div>
+          {categoriesError ? (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{categoriesError}</p>
+          ) : null}
         </div>
 
         {/* Amount */}
@@ -274,7 +361,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
               }
               if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                inputRef.current?.focus();
+                focusCategoryField();
               }
             }}
             className="h-11 w-full min-w-0 rounded-xl border border-gray-300 px-3 text-base text-gray-900 outline-none transition focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
@@ -331,6 +418,74 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
         </div>
       </div>
     </div>
+    {categoryMenuOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <ul
+            ref={categoryMenuRef}
+            role="listbox"
+            aria-labelledby="expense-category-label"
+            style={categoryMenuStyle}
+            className="overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-700"
+          >
+            <li role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={expenseData.category === ''}
+                onClick={() => chooseCategory('')}
+                className="flex min-h-11 w-full items-center px-3 text-left text-base text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600"
+              >
+                เลือกประเภท...
+              </button>
+            </li>
+            {categories.map((category) => (
+              <li key={category.id} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={expenseData.category === category.name}
+                  onClick={() => chooseCategory(category.name)}
+                  className={`flex min-h-11 w-full items-center px-3 text-left text-base hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                    expenseData.category === category.name
+                      ? 'bg-orange-50 font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
+                      : 'text-gray-900 dark:text-gray-100'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              </li>
+            ))}
+            {selectedCategoryMissing ? (
+              <li role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected
+                  onClick={() => chooseCategory(expenseData.category)}
+                  className="flex min-h-11 w-full items-center bg-orange-50 px-3 text-left text-base font-medium text-orange-700 hover:bg-gray-100 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-gray-600"
+                >
+                  {expenseData.category}
+                </button>
+              </li>
+            ) : null}
+          </ul>,
+          document.body,
+        )
+      : null}
+    <ExpenseCategoryModal
+      isOpen={categoryModalOpen}
+      onClose={() => setCategoryModalOpen(false)}
+      categories={categories}
+      loading={categoriesLoading}
+      saving={categoriesSaving}
+      onCreateCategory={createCategory}
+      onUpdateCategory={updateCategory}
+      onDeleteCategory={deleteCategory}
+      onRefresh={loadCategories}
+      onSaved={handleCategorySaved}
+      onDeleted={handleCategoryDeleted}
+    />
+    </>
   );
 };
 

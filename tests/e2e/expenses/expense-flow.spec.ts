@@ -52,7 +52,9 @@ async function submitExpense(
 ): Promise<string | null> {
   await openExpenseForm(page)
   const form = expenseForm(page)
-  await form.getByPlaceholder(/ระบุประเภท/i).fill(data.category)
+  const categorySelect = form.locator('select[name="category"]')
+  await expect(categorySelect).toBeEnabled()
+  await categorySelect.selectOption({ label: data.category })
   await form.getByPlaceholder('0.00').fill(data.amount)
   if (data.description) {
     await form.locator('textarea[data-expense-description]').fill(data.description)
@@ -167,16 +169,19 @@ test.describe('Expense flow', () => {
     await gotoExpensesPage(page)
     await openExpenseForm(page)
 
-    const categoryInput = expenseForm(page).getByPlaceholder(/ระบุประเภท/i)
-    await categoryInput.focus()
+    const categorySelect = expenseForm(page).locator('select[name="category"]')
+    await expect(categorySelect).toBeEnabled()
 
     for (const category of DEFAULT_CATEGORIES) {
-      await expect(expenseForm(page).getByRole('button', { name: category, exact: true })).toBeVisible()
+      await expect(categorySelect.getByRole('option', { name: category, exact: true })).toHaveCount(1)
     }
 
-    await categoryInput.fill('ค่าน้ำ')
-    await expect(expenseForm(page).getByRole('button', { name: 'ค่าน้ำมัน', exact: true })).toBeVisible()
-    await expenseForm(page).getByRole('button', { name: 'ค่าน้ำมัน', exact: true }).click()
-    await expect(categoryInput).toHaveValue('ค่าน้ำมัน')
+    await categorySelect.selectOption({ label: 'ค่าน้ำมัน' })
+    await expect(categorySelect).toHaveValue('ค่าน้ำมัน')
+
+    await expenseForm(page).getByRole('button', { name: 'จัดการประเภทค่าใช้จ่าย' }).click()
+    const manager = page.getByRole('dialog', { name: 'จัดการประเภทค่าใช้จ่าย' })
+    await expect(manager.getByText('ค่าน้ำมัน', { exact: true })).toBeVisible()
+    await expect(manager.getByRole('button', { name: 'เพิ่มประเภท' })).toBeVisible()
   })
 })
