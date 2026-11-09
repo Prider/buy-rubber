@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { invalidatePurchaseCaches } from '@/lib/cache';
 import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { deductMoisture, purchaseUnitCostPerKg, readMoistureAmount } from '@/lib/purchases/moisture';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 import { diffFields } from '@/lib/activityLogShared';
 import {
@@ -76,6 +77,14 @@ export async function PUT(
 
     const netWeight = data.netWeight || calculateNetWeight(data.grossWeight, data.containerWeight || 0);
 
+    const moistureResult = readMoistureAmount(
+      data.moisturePercent !== undefined ? data.moisturePercent : existing.moisturePercent,
+    );
+    if (typeof moistureResult !== 'number') {
+      return NextResponse.json({ error: moistureResult.error }, { status: 400 });
+    }
+    const moistureAmount = moistureResult;
+
     let dryWeight = netWeight;
     if (data.rubberPercent) {
       dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
@@ -110,7 +119,11 @@ export async function PUT(
 
     const adjustedPrice = calculateAdjustedPrice(basePrice, data.rubberPercent);
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
-    const totalAmount = netWeight * finalPrice;
+    const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
+    if ('error' in moistureDeduction) {
+      return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+    }
+    const totalAmount = moistureDeduction.totalAmount;
 
     if (!member) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลสมาชิก' }, { status: 404 });
@@ -136,10 +149,17 @@ export async function PUT(
 
     const purchaseDate = resolvePurchaseDate(data.date);
 
+    const nextUnitCost = purchaseUnitCostPerKg(netWeight, finalPrice, totalAmount, moistureAmount);
+    const previousUnitCost = purchaseUnitCostPerKg(
+      existing.netWeight,
+      existing.finalPrice,
+      existing.totalAmount,
+      existing.moisturePercent,
+    );
     const stockRelevantChanged =
       existing.productTypeId !== data.productTypeId ||
       Math.abs(existing.netWeight - netWeight) > EPS ||
-      Math.abs(existing.finalPrice - finalPrice) > EPS;
+      Math.abs(previousUnitCost - nextUnitCost) > EPS;
 
     const updated = await prisma.$transaction(async (tx) => {
       if (stockRelevantChanged) {
@@ -148,7 +168,7 @@ export async function PUT(
           productTypeId: existing.productTypeId,
           purchaseNo: existing.purchaseNo,
           netWeight: existing.netWeight,
-          unitCostPerKg: existing.finalPrice,
+          unitCostPerKg: previousUnitCost,
           date: new Date(),
           notes: `ย้อนก่อนแก้ไขรับซื้อ ${existing.purchaseNo}`,
         });
@@ -166,6 +186,7 @@ export async function PUT(
           netWeight,
           rubberPercent: data.rubberPercent ?? null,
           dryWeight,
+          moisturePercent: moistureAmount,
           basePrice,
           adjustedPrice,
           bonusPrice: data.bonusPrice || 0,
@@ -187,7 +208,7 @@ export async function PUT(
         await applyPurchaseToStock(tx, {
           productTypeId: row.productTypeId,
           qtyKg: row.netWeight,
-          unitCostPerKg: row.finalPrice,
+          unitCostPerKg: nextUnitCost,
           refNo: row.purchaseNo,
           date: row.date,
           notes: row.notes,
@@ -208,6 +229,7 @@ export async function PUT(
         netWeight: existing.netWeight,
         rubberPercent: existing.rubberPercent,
         dryWeight: existing.dryWeight,
+        moisturePercent: existing.moisturePercent,
         basePrice: existing.basePrice,
         adjustedPrice: existing.adjustedPrice,
         bonusPrice: existing.bonusPrice,
@@ -227,6 +249,7 @@ export async function PUT(
         netWeight,
         rubberPercent: data.rubberPercent ?? null,
         dryWeight,
+        moisturePercent: moistureAmount,
         basePrice,
         adjustedPrice,
         bonusPrice: data.bonusPrice || 0,
@@ -246,6 +269,7 @@ export async function PUT(
         'netWeight',
         'rubberPercent',
         'dryWeight',
+        'moisturePercent',
         'basePrice',
         'adjustedPrice',
         'bonusPrice',
@@ -315,7 +339,12 @@ export async function DELETE(
         productTypeId: purchase.productTypeId,
         purchaseNo: purchase.purchaseNo,
         netWeight: purchase.netWeight,
-        unitCostPerKg: purchase.finalPrice,
+        unitCostPerKg: purchaseUnitCostPerKg(
+          purchase.netWeight,
+          purchase.finalPrice,
+          purchase.totalAmount,
+          purchase.moisturePercent,
+        ),
         date: new Date(),
         notes: `คืนสต็อกจากการลบรับซื้อ ${purchase.purchaseNo}`,
       });

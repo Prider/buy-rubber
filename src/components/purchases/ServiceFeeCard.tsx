@@ -36,7 +36,11 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   submitting = false,
 }) => {
   const categoryInputRef = useRef<HTMLSelectElement>(null);
+  const categoryFieldRef = useRef<HTMLDivElement>(null);
+  const categoryButtonRef = useRef<HTMLButtonElement>(null);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [categoryMenuOpensUp, setCategoryMenuOpensUp] = useState(false);
   const {
     categories,
     loading: categoriesLoading,
@@ -51,6 +55,50 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   useEffect(() => {
     void loadCategories();
   }, [loadCategories]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+
+    const placeMenu = () => {
+      const field = categoryButtonRef.current?.getBoundingClientRect();
+      if (!field) return;
+      const spaceBelow = window.innerHeight - field.bottom;
+      setCategoryMenuOpensUp(spaceBelow < 240 && field.top > spaceBelow);
+    };
+
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!categoryFieldRef.current?.contains(event.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCategoryMenuOpen(false);
+    };
+
+    placeMenu();
+    document.addEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', placeMenu);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', placeMenu);
+    };
+  }, [categoryMenuOpen]);
+
+  const focusCategoryField = () => {
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      categoryButtonRef.current?.focus();
+      return;
+    }
+    categoryInputRef.current?.focus();
+  };
+
+  const chooseCategory = (category: string) => {
+    setCategory(category);
+    setCategoryMenuOpen(false);
+  };
 
   const handleCategorySaved = (category: ServiceFeeCategoryRecord, previousName: string | null) => {
     if (previousName && formData.category === previousName) {
@@ -92,7 +140,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
 
   return (
     <>
-    <div className="overflow-hidden bg-[var(--app-bg)] lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
+    <div className="overflow-visible bg-[var(--app-bg)] lg:overflow-hidden lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
       <div className="p-4 space-y-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
@@ -112,10 +160,10 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
           e.preventDefault(); 
           addToCart(); 
           requestAnimationFrame(() => {
-            categoryInputRef.current?.focus();
+            focusCategoryField();
           });
           }}
-          className="space-y-5 max-lg:[&_input]:min-h-12 max-lg:[&_input]:rounded-2xl max-lg:[&_input]:text-base max-lg:[&_label]:text-sm max-lg:[&_label]:font-semibold lg:space-y-4"
+          className="space-y-5 max-lg:[&_:is(input,select)]:h-12 max-lg:[&_:is(input,select)]:rounded-2xl max-lg:[&_:is(input,select)]:text-base max-lg:[&_label]:text-sm max-lg:[&_label]:font-semibold lg:space-y-4"
         >
           <div className="space-y-3">
             <div className="hidden items-center space-x-2 lg:flex">
@@ -124,7 +172,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">บันทึกค่าบริการ</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">หักค่าบริการ</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -147,31 +195,113 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                       />
                     </svg>
                     <span className="lg:hidden">จัดการประเภท</span>
-                    <span className="hidden lg:inline">จัดการประเภทค่าบริการ</span>
+                    <span className="hidden lg:inline">จัดการประเภทค่าหักค่าบริการ</span>
                   </button>
                 </div>
-                <select
-                  ref={categoryInputRef}
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => handleKeyDown(e, amountInputRef)}
-                  className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  required
-                  disabled={submitting || categoriesLoading}
-                >
-                  <option value="">
-                    {categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...'}
-                  </option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.name}>
-                      {category.name}
-                    </option>
-                  ))}
-                  {selectedCategoryMissing ? (
-                    <option value={formData.category}>{formData.category}</option>
+                <div className="relative" ref={categoryFieldRef}>
+                  <button
+                    ref={categoryButtonRef}
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={categoryMenuOpen}
+                    disabled={submitting || categoriesLoading}
+                    onClick={() => setCategoryMenuOpen((open) => !open)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setCategoryMenuOpen(true);
+                        return;
+                      }
+                      if (categoryMenuOpen) return;
+                      handleKeyDown(e, amountInputRef);
+                    }}
+                    className="flex h-12 w-full items-center rounded-2xl border border-gray-200 bg-white px-3 pr-10 text-left text-base focus:border-transparent focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 lg:hidden"
+                  >
+                    <span className={formData.category ? 'truncate text-gray-900 dark:text-gray-100' : 'truncate text-gray-500 dark:text-gray-400'}>
+                      {formData.category || (categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...')}
+                    </span>
+                  </button>
+                  <svg
+                    className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform lg:hidden ${categoryMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  {categoryMenuOpen ? (
+                    <ul
+                      role="listbox"
+                      aria-label="ประเภท"
+                      className={`absolute left-0 right-0 z-50 max-h-60 overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-700 lg:hidden ${categoryMenuOpensUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+                    >
+                      <li role="presentation">
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={formData.category === ''}
+                          onClick={() => chooseCategory('')}
+                          className="flex min-h-11 w-full items-center px-3 text-left text-base text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600"
+                        >
+                          เลือกประเภท...
+                        </button>
+                      </li>
+                      {categories.map((category) => (
+                        <li key={category.id} role="presentation">
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={formData.category === category.name}
+                            onClick={() => chooseCategory(category.name)}
+                            className={`flex min-h-11 w-full items-center px-3 text-left text-base hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                              formData.category === category.name
+                                ? 'bg-orange-50 font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
+                                : 'text-gray-900 dark:text-gray-100'
+                            }`}
+                          >
+                            {category.name}
+                          </button>
+                        </li>
+                      ))}
+                      {selectedCategoryMissing ? (
+                        <li role="presentation">
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected
+                            onClick={() => chooseCategory(formData.category)}
+                            className="flex min-h-11 w-full items-center bg-orange-50 px-3 text-left text-base font-medium text-orange-700 hover:bg-gray-100 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-gray-600"
+                          >
+                            {formData.category}
+                          </button>
+                        </li>
+                      ) : null}
+                    </ul>
                   ) : null}
-                </select>
+                  <select
+                    ref={categoryInputRef}
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => handleKeyDown(e, amountInputRef)}
+                    className="hidden w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 lg:block"
+                    required
+                    disabled={submitting || categoriesLoading}
+                  >
+                    <option value="">
+                      {categoriesLoading ? 'กำลังโหลด...' : 'เลือกประเภท...'}
+                    </option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                    {selectedCategoryMissing ? (
+                      <option value={formData.category}>{formData.category}</option>
+                    ) : null}
+                  </select>
+                </div>
                 {categoriesError ? (
                   <p className="text-xs text-red-600 dark:text-red-400">{categoriesError}</p>
                 ) : null}
@@ -195,7 +325,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                       }
                       if (e.key === 'ArrowLeft') {
                         e.preventDefault();
-                        categoryInputRef.current?.focus();
+                        focusCategoryField();
                       }
                     }}
                     required

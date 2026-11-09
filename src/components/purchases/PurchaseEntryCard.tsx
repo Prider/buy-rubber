@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { normalizeMoistureAmount } from '@/lib/purchases/moisture';
 
 interface Member {
   id: string;
@@ -26,6 +27,7 @@ interface PurchaseFormData {
   containerWeight: string; // น้ำหนักภาชนะ (container weight)
   netWeight: string; // น้ำหนักสุทธิ (net weight - calculated)
   pricePerUnit: string;
+  moisturePercent: string; // หักความชื้น (บาท)
   bonusPrice: string;
   notes: string;
 }
@@ -99,6 +101,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   const grossWeightRef = React.useRef<HTMLInputElement>(null);
   const containerWeightRef = React.useRef<HTMLInputElement>(null);
   const pricePerUnitRef = React.useRef<HTMLInputElement>(null);
+  const moistureRef = React.useRef<HTMLInputElement>(null);
   const submitButtonRef = React.useRef<HTMLButtonElement>(null);
   const memberDropdownRef = React.useRef<HTMLDivElement>(null);
   const productTypeDropdownRef = React.useRef<HTMLDivElement>(null);
@@ -314,6 +317,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     });
   };
 
+  const moistureDeduction = normalizeMoistureAmount(formData.moisturePercent);
+  const amountBeforeMoisture =
+    (parseFloat(formData.netWeight) || 0) *
+    ((parseFloat(formData.pricePerUnit) || 0) + (parseFloat(formData.bonusPrice) || 0));
+  const moistureExceedsTotal = amountBeforeMoisture > 0 && moistureDeduction > amountBeforeMoisture;
 
   return (
     <div className="flex flex-col overflow-visible bg-[var(--app-bg)] lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
@@ -743,16 +751,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="pricePerUnit"
                     value={formData.pricePerUnit || ''}
                     onChange={handleInputChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        submitButtonRef.current?.focus();
-                      }
-                      if (e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        containerWeightRef.current?.focus();
-                      }
-                    }}
+                    onKeyDown={(e) => handleKeyDown(e, moistureRef, containerWeightRef)}
                     required
                     disabled={submitting}
                     className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -764,6 +763,38 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 </div>
               </div>
               <div className="space-y-1">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                  หักความชื้น
+                </label>
+                <div className="relative">
+                  <input
+                    ref={moistureRef}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="moisturePercent"
+                    value={formData.moisturePercent || ''}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submitButtonRef.current?.focus();
+                      }
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        pricePerUnitRef.current?.focus();
+                      }
+                    }}
+                    disabled={submitting}
+                    className="w-full px-3 py-1.5 text-sm pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">บาท</span>
+                  </div>
+                </div>
+              </div>
+              <div className="col-span-2 space-y-1">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                   ยอดเงินรวม <span className="text-red-500">*</span>
                 </label>
@@ -781,9 +812,11 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">บาท</span>
                   </div>
                 </div>
-                {/* <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                  คำนวณอัตโนมัติ: น้ำหนักสุทธิ x ราคาต่อหน่วย
-                </p> */}
+                {moistureExceedsTotal && (
+                  <p className="text-[10px] font-medium text-red-600 dark:text-red-400">
+                    หักความชื้นต้องไม่เกินยอดเงินรวม
+                  </p>
+                )}
               </div>
             </div>
           </div>

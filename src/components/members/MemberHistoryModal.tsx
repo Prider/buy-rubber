@@ -1,21 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useMemberPurchaseHistory } from '@/hooks/useMemberPurchaseHistory';
-import { PurchaseSummary, QuickFilter } from '@/types/memberHistory';
+import { useMemberHistory } from '@/hooks/useMemberHistory';
+import { MemberHistorySummary, QuickFilter } from '@/types/memberHistory';
 import { HeaderIcon } from '@/components/members/history/HeaderIcon';
 import { SummaryCard, SUMMARY_CARD_CONFIG } from '@/components/members/history/SummaryCard';
 import { QuickFilters } from '@/components/members/history/QuickFilters';
 import { DateInput } from '@/components/members/history/DateInput';
 import { LoadingState } from '@/components/members/history/LoadingState';
 import { EmptyState } from '@/components/members/history/EmptyState';
-import { PurchasesTable } from '@/components/members/history/PurchasesTable';
+import { HistoryTable } from '@/components/members/history/HistoryTable';
 import { PaginationControls } from '@/components/members/history/PaginationControls';
 import { CloseButton } from '@/components/common/CloseButton';
 
-interface MemberPurchaseHistoryModalProps {
+interface MemberHistoryModalProps {
   isOpen: boolean;
-  member: any;
+  member: { id: string; name: string; code: string } | null;
   onClose: () => void;
 }
 
@@ -26,7 +26,7 @@ const QUICK_FILTERS: QuickFilter[] = [
   { label: 'ทั้งหมด', value: null },
 ];
 
-export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProps> = ({
+export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
   isOpen,
   member,
   onClose,
@@ -36,8 +36,8 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const { loading, purchases, summary, totalPages } = useMemberPurchaseHistory({
-    memberId: member?.id,
+  const { loading, rows, summary, totalPages } = useMemberHistory({
+    memberId: isOpen ? member?.id : undefined,
     currentPage,
     startDate,
     endDate,
@@ -68,17 +68,14 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
     setCurrentPage(1);
   };
 
-  const hasPurchases = purchases.length > 0;
-
-
   const summaryCards = useMemo(
     () =>
       SUMMARY_CARD_CONFIG.map((card) => ({
         ...card,
-        value: card.formatter(summary as PurchaseSummary),
-        subText: card.subText(summary as PurchaseSummary),
+        value: card.formatter(summary as MemberHistorySummary),
+        subText: card.subText(summary as MemberHistorySummary),
       })),
-    [summary]
+    [summary],
   );
 
   if (!isOpen) return null;
@@ -94,8 +91,10 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
               <div className="flex items-center gap-2.5">
                 <HeaderIcon />
                 <div>
-                  <h2 className="text-lg font-bold leading-tight text-gray-900 dark:text-white">ประวัติการรับซื้อ</h2>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">{member?.name} ({member?.code})</p>
+                  <h2 className="text-lg font-bold leading-tight text-gray-900 dark:text-white">ประวัติ</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {member?.name} ({member?.code})
+                  </p>
                 </div>
               </div>
               <CloseButton onClick={onClose} />
@@ -136,11 +135,11 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
 
             {loading ? (
               <LoadingState />
-            ) : !hasPurchases ? (
+            ) : rows.length === 0 ? (
               <EmptyState />
             ) : (
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                <PurchasesTable purchases={purchases} totalCount={summary?.totalPurchases ?? purchases.length} />
+                <HistoryTable rows={rows} totalCount={summary.totalRecords} />
                 {totalPages > 1 && (
                   <PaginationControls
                     embedded
@@ -157,4 +156,3 @@ export const MemberPurchaseHistoryModal: React.FC<MemberPurchaseHistoryModalProp
     </div>
   );
 };
-

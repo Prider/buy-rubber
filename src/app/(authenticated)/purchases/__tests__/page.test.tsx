@@ -168,6 +168,24 @@ describe('PurchasesPage UI integration', () => {
     expect(priceInput.value).toBe('');
   });
 
+  it('reduces the total by a moisture deduction in baht', async () => {
+    render(<PurchasesPage />);
+    const user = userEvent.setup();
+
+    await fillValidPurchaseForm(user, '100', '0');
+
+    const total = document.querySelector('input[name="totalAmount"]') as HTMLInputElement;
+    expect(total.value).toBe('5000.00');
+
+    const moisture = document.querySelector('input[name="moisturePercent"]') as HTMLInputElement;
+    await user.clear(moisture);
+    await user.type(moisture, '10');
+
+    await waitFor(() => {
+      expect(total.value).toBe('4990.00');
+    });
+  });
+
   it('shows validation error when container weight is invalid', async () => {
     render(<PurchasesPage />);
     const user = userEvent.setup();

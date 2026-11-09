@@ -19,6 +19,7 @@ export interface PurchaseTransaction {
       code: string;
     };
     netWeight: number;
+    moisturePercent?: number | null;
     finalPrice: number;
     totalAmount: number;
   }>;
@@ -52,6 +53,7 @@ export interface CartItem {
   memberCode?: string;
   productTypeName?: string;
   netWeight?: number;
+  moisturePercent?: number;
   finalPrice?: number;
   totalAmount: number;
   category?: string;

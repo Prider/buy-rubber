@@ -19,6 +19,7 @@ interface CartItem {
   containerWeight?: number; // น้ำหนักภาชนะ
   netWeight?: number; // น้ำหนักสุทธิ
   dryWeight?: number;
+  moisturePercent?: number;
   pricePerUnit?: number;
   bonusPrice?: number;
   basePrice?: number;
@@ -37,18 +38,20 @@ function CartCell({
   label,
   wide = false,
   className,
+  labelClassName = 'text-gray-500 dark:text-gray-400',
   children,
 }: {
   label: string;
   wide?: boolean;
   className: string;
+  labelClassName?: string;
   children: React.ReactNode;
 }) {
   return (
     <td
       className={`${className} max-lg:flex max-lg:items-center max-lg:justify-between max-lg:gap-2 max-lg:px-0 max-lg:py-0 lg:table-cell ${wide ? 'max-lg:col-span-2' : ''}`}
     >
-      <span className="shrink-0 text-[10px] font-medium leading-none text-gray-500 dark:text-gray-400 lg:hidden">
+      <span className={`shrink-0 text-[10px] font-medium leading-none lg:hidden ${labelClassName}`}>
         {label}
       </span>
       <div className="min-w-0 max-lg:text-right max-lg:text-sm lg:contents">
@@ -199,6 +202,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักภาชนะ (กก.)</th>
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักสุทธิ (กก.)</th>
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ราคา/กก.</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-red-600 dark:text-red-400 bg-gray-50 dark:bg-gray-700">หักความชื้น (บาท)</th>
                 <th className="px-6 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จำนวนเงิน</th>
                 <th className="px-6 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จัดการ</th>
               </tr>
@@ -245,6 +249,9 @@ export const CartTable: React.FC<CartTableProps> = ({
                   <CartCell label="ราคา" className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
                   </CartCell>
+                  <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-3 py-2 text-sm text-right font-medium text-red-600 dark:text-red-400 max-lg:text-left">
+                    {item.type === 'purchase' ? formatNumber(item.moisturePercent || 0) : '-'}
+                  </CartCell>
                   <CartCell
                     label="จำนวนเงิน"
                     wide
@@ -268,7 +275,7 @@ export const CartTable: React.FC<CartTableProps> = ({
               ))
             ) : (
               <tr className="max-lg:block">
-                <td colSpan={8} className="px-6 py-8 text-center max-lg:block">
+                <td colSpan={9} className="px-6 py-8 text-center max-lg:block">
                   <div className="flex flex-col items-center space-y-2">
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                       <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,8 +295,8 @@ export const CartTable: React.FC<CartTableProps> = ({
         </div>
         <div className={`flex-shrink-0 border-t-2 border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:grid lg:grid-cols-8 lg:gap-0 lg:px-0">
-              <div className="text-base font-bold text-gray-900 dark:text-white lg:col-span-6 lg:px-4 lg:text-right">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:grid lg:grid-cols-9 lg:gap-0 lg:px-0">
+              <div className="text-base font-bold text-gray-900 dark:text-white lg:col-span-7 lg:px-4 lg:text-right">
                 รวมทั้งหมด
               </div>
               <div className={`text-base font-bold lg:col-span-1 lg:px-4 lg:text-right ${

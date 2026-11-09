@@ -22,7 +22,6 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
   onDelete,
   onReactivate,
   onViewHistory,
-  onViewServiceFees,
   isLoading,
 }) => {
   if (isLoading) {
@@ -57,7 +56,6 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
             onDelete={onDelete}
             onReactivate={onReactivate}
             onViewHistory={onViewHistory}
-            onViewServiceFees={onViewServiceFees}
           />
         ))}
       </div>
@@ -73,7 +71,6 @@ interface MemberTableRowProps {
   onDelete: (member: Member) => void;
   onReactivate?: (member: Member) => void;
   onViewHistory: (member: Member) => void;
-  onViewServiceFees?: (member: Member) => void;
 }
 
 const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
@@ -82,7 +79,6 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   onDelete,
   onReactivate,
   onViewHistory,
-  onViewServiceFees,
 }) => {
   const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
@@ -92,7 +88,6 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   const handleDelete = useCallback(() => onDelete(member), [member, onDelete]);
   const handleReactivate = useCallback(() => onReactivate?.(member), [member, onReactivate]);
   const handleViewHistory = useCallback(() => onViewHistory(member), [member, onViewHistory]);
-  const handleViewServiceFees = useCallback(() => onViewServiceFees?.(member), [member, onViewServiceFees]);
 
   const phoneDisplay = useMemo(() => member.phone || '–', [member.phone]);
   const idCardDisplay = useMemo(() => formatThaiNationalId(member.idCard) || '–', [member.idCard]);
@@ -162,9 +157,6 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
       <div role="cell" className="col-span-2 mt-2.5 lg:col-span-1 lg:col-start-7 lg:row-start-1 lg:mt-0 lg:px-3 lg:py-2">
         <div className="flex flex-wrap gap-1 lg:flex-nowrap lg:justify-end">
           <ActionButton onClick={handleViewHistory} tone="primary">ประวัติ</ActionButton>
-          {onViewServiceFees ? (
-            <ActionButton onClick={handleViewServiceFees} tone="violet">ค่าบริการ</ActionButton>
-          ) : null}
           {member.isActive && canEdit ? (
             <ActionButton onClick={handleEdit} tone="neutral">แก้ไข</ActionButton>
           ) : null}
@@ -189,11 +181,10 @@ function ActionButton({
 }: {
   children: React.ReactNode;
   onClick: () => void;
-  tone: 'primary' | 'violet' | 'neutral' | 'green' | 'danger';
+  tone: 'primary' | 'neutral' | 'green' | 'danger';
 }) {
   const tones = {
     primary: 'text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30',
-    violet: 'text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/30',
     neutral: 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
     green: 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30',
     danger: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30',

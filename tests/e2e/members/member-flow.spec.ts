@@ -300,20 +300,21 @@ test.describe('Member flow', () => {
 
     const row = page.getByRole('row').filter({ hasText: memberName })
     const historyReq = page.waitForResponse(
-      (r) => r.url().includes(`/api/members/${created.id}/purchases`) && r.ok()
+      (r) => r.url().includes(`/api/members/${created.id}/history`) && r.ok()
     )
-    await row.getByRole('button', { name: /ประวัติ/i }).click()
+    await row.getByRole('button', { name: 'ประวัติ', exact: true }).click()
     await historyReq
 
     const historyModal = page
       .locator('.fixed.inset-0')
-      .filter({ has: page.getByRole('heading', { name: 'ประวัติการรับซื้อ' }) })
+      .filter({ has: page.getByRole('heading', { name: 'ประวัติ', exact: true }) })
 
     await expect(historyModal).toBeVisible()
     await expect(historyModal.getByText(`${memberName} (${created.code})`)).toBeVisible()
-    await expect(historyModal.getByText('ยอดรวมทั้งหมด')).toBeVisible()
-    await expect(historyModal.getByText('จำนวนครั้ง')).toBeVisible()
+    await expect(historyModal.getByText('ยอดรับซื้อ')).toBeVisible()
+    await expect(historyModal.getByText('ยอดค่าบริการ')).toBeVisible()
     await expect(historyModal.getByText('น้ำหนักรวม')).toBeVisible()
+    await expect(historyModal.getByText('รับซื้อ', { exact: true })).toBeVisible()
 
     await expect(historyModal.getByRole('cell', { name: transaction.purchaseNo })).toBeVisible()
     await expect(historyModal.getByRole('cell', { name: productType.name })).toBeVisible()

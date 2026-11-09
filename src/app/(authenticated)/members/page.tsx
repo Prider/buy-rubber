@@ -21,18 +21,10 @@ const MemberForm = dynamic(
   { ssr: false, loading: () => null },
 );
 
-const MemberPurchaseHistoryModal = dynamic(
+const MemberHistoryModal = dynamic(
   () =>
-    import('@/components/members/MemberPurchaseHistoryModal').then(
-      (mod) => mod.MemberPurchaseHistoryModal
-    ),
-  { ssr: false, loading: () => null }
-);
-
-const MemberServiceFeeModal = dynamic(
-  () =>
-    import('@/components/members/MemberServiceFeeModal').then(
-      (mod) => mod.MemberServiceFeeModal
+    import('@/components/members/MemberHistoryModal').then(
+      (mod) => mod.MemberHistoryModal
     ),
   { ssr: false, loading: () => null }
 );
@@ -79,10 +71,7 @@ export default function MembersPage() {
   } = useMemberForm(members);
 
   // Modal state management
-  const {
-    historyModal,
-    serviceFeeModal,
-  } = useMemberModals();
+  const { historyModal } = useMemberModals();
 
   // Action handlers
   const {
@@ -153,7 +142,6 @@ export default function MembersPage() {
                 onDelete={handleDelete}
                 onReactivate={handleReactivate}
                 onViewHistory={historyModal.open}
-                onViewServiceFees={serviceFeeModal.open}
                 isLoading={membersLoading}
               />
             </div>
@@ -180,18 +168,10 @@ export default function MembersPage() {
         isLoading={membersLoading}
       />
 
-      {/* Purchase History Modal */}
-      <MemberPurchaseHistoryModal
+      <MemberHistoryModal
         isOpen={historyModal.isOpen}
         member={historyModal.member}
         onClose={historyModal.close}
-      />
-
-      {/* Service Fee Modal */}
-      <MemberServiceFeeModal
-        isOpen={serviceFeeModal.isOpen}
-        member={serviceFeeModal.member}
-        onClose={serviceFeeModal.close}
       />
     </>
   );

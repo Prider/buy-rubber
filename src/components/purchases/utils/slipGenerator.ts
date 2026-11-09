@@ -81,6 +81,7 @@ export function transactionToCartItems(transaction: PurchaseTransaction): CartIt
       memberCode: purchase.member.code,
       productTypeName: purchase.productType.name,
       netWeight: purchase.netWeight,
+      moisturePercent: purchase.moisturePercent ?? 0,
       finalPrice: purchase.finalPrice,
       totalAmount: purchase.totalAmount,
     });
@@ -298,7 +299,11 @@ export function generateSlipHTMLFromItems(
                       ${item.productTypeName || item.category || 'ค่าใช้จ่าย'}
                       ${
                         item.type === 'purchase'
-                          ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.`
+                          ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${
+                              item.moisturePercent
+                                ? `<br/>หักความชื้น: ${formatNumber(item.moisturePercent)} บาท`
+                                : ''
+                            }`
                           : ''
                       }
                     </div>
@@ -365,7 +370,11 @@ function buildA4SlipHtml(args: {
   const rows = items
     .map((item) => {
       const name = escapeHtml(item.productTypeName || item.category || 'ค่าใช้จ่าย');
-      const weight = item.type === 'purchase' ? `${formatNumber(item.netWeight || 0)} กก.` : '—';
+      const weight = item.type === 'purchase'
+        ? `${formatNumber(item.netWeight || 0)} กก.${
+            item.moisturePercent ? `<br/>หักความชื้น ${formatNumber(item.moisturePercent)} บาท` : ''
+          }`
+        : '—';
       const price = item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '—';
       return `<tr>
         <td>${name}</td>

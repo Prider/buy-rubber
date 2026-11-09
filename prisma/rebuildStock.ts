@@ -46,6 +46,8 @@ async function main() {
       productTypeId: true,
       netWeight: true,
       finalPrice: true,
+      totalAmount: true,
+      moisturePercent: true,
       date: true,
       createdAt: true,
       notes: true,
@@ -92,7 +94,8 @@ async function main() {
       type: 'PURCHASE',
       productTypeId: p.productTypeId,
       qtyKg: p.netWeight,
-      unitCostPerKg: p.finalPrice,
+      unitCostPerKg:
+        p.moisturePercent > 0 && p.netWeight > 0 ? p.totalAmount / p.netWeight : p.finalPrice,
       refNo: p.purchaseNo,
       date: p.date,
       notes: p.notes,

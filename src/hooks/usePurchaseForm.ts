@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { logger } from '@/lib/logger';
+import { normalizeMoistureAmount, totalAfterMoisture } from '@/lib/purchases/moisture';
 
 interface Member {
   id: string;
@@ -23,6 +24,7 @@ interface PurchaseFormData {
   containerWeight: string; // น้ำหนักภาชนะ (container weight)
   netWeight: string; // น้ำหนักสุทธิ (net weight - calculated)
   pricePerUnit: string;
+  moisturePercent: string; // หักความชื้น (บาท)
   bonusPrice: string;
   notes: string;
 }
@@ -63,6 +65,7 @@ export const usePurchaseForm = ({
     containerWeight: '',
     netWeight: '',
     pricePerUnit: '',
+    moisturePercent: '',
     bonusPrice: '',
     notes: '',
   });
@@ -282,6 +285,12 @@ export const usePurchaseForm = ({
           netWeight: netWeight > 0 ? netWeight.toFixed(2) : '',
         };
       });
+    } else if (name === 'moisturePercent') {
+      const numValue = parseFloat(value);
+      if (value !== '' && !Number.isNaN(numValue) && numValue < 0) {
+        return;
+      }
+      setFormData(prev => ({ ...prev, moisturePercent: value }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -295,10 +304,12 @@ export const usePurchaseForm = ({
     const netWeight = parseFloat(formData.netWeight) || 0;
     const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
+    const moistureAmount = normalizeMoistureAmount(formData.moisturePercent);
     const finalPrice = pricePerUnit + bonusPrice;
-    const totalAmount = netWeight * finalPrice;
-    return totalAmount > 0 ? totalAmount.toFixed(2) : '';
-  }, [formData.netWeight, formData.pricePerUnit, formData.bonusPrice]);
+    if (netWeight <= 0 || finalPrice <= 0) return '';
+    const totalAmount = Math.max(0, totalAfterMoisture(netWeight * finalPrice, moistureAmount));
+    return totalAmount.toFixed(2);
+  }, [formData.netWeight, formData.pricePerUnit, formData.bonusPrice, formData.moisturePercent]);
 
   // Check if form is valid
   const isFormValid = useCallback(() => {
@@ -307,6 +318,13 @@ export const usePurchaseForm = ({
     const containerWeight = formData.containerWeight === '' ? 0 : (parseFloat(formData.containerWeight) || 0);
     // Allow containerWeight to be 0, but it must be less than grossWeight when both are set
     const isWeightValid = grossWeight > 0 && containerWeight >= 0 && containerWeight < grossWeight;
+    const moistureValue = formData.moisturePercent === '' ? 0 : parseFloat(formData.moisturePercent);
+    const netForMoisture = parseFloat(formData.netWeight) || 0;
+    const priceForMoisture = (parseFloat(formData.pricePerUnit) || 0) + (parseFloat(formData.bonusPrice) || 0);
+    const grossForMoisture = netForMoisture * priceForMoisture;
+    const isMoistureValid = (formData.moisturePercent === '' || (
+      !Number.isNaN(moistureValue) && moistureValue >= 0
+    )) && (grossForMoisture <= 0 || moistureValue <= grossForMoisture + 1e-6);
     
     return !!(
       formData.memberId && 
@@ -315,6 +333,7 @@ export const usePurchaseForm = ({
       formData.netWeight && 
       formData.pricePerUnit &&
       isWeightValid &&
+      isMoistureValid &&
       !error
     );
   }, [
@@ -324,6 +343,8 @@ export const usePurchaseForm = ({
     formData.containerWeight, 
     formData.netWeight, 
     formData.pricePerUnit,
+    formData.bonusPrice,
+    formData.moisturePercent,
     error
   ]);
 
@@ -337,6 +358,7 @@ export const usePurchaseForm = ({
       containerWeight: '',
       netWeight: '',
       pricePerUnit: '',
+      moisturePercent: '',
       bonusPrice: '',
       notes: '',
     }));
@@ -359,6 +381,7 @@ export const usePurchaseForm = ({
       containerWeight: '',
       netWeight: '',
       pricePerUnit: '',
+      moisturePercent: '',
       bonusPrice: '',
       notes: '',
     });

@@ -11,6 +11,7 @@ import {
   getUserFromToken
 } from '@/lib/utils';
 import { applyPurchaseToStock } from '@/lib/stock/stockService';
+import { deductMoisture, purchaseUnitCostPerKg, readMoistureAmount } from '@/lib/purchases/moisture';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
@@ -143,7 +144,12 @@ export async function POST(request: NextRequest) {
     // คำนวณน้ำหนักสุทธิ (ใช้ค่าที่ส่งมา หรือคำนวณใหม่)
     const netWeight = data.netWeight || calculateNetWeight(data.grossWeight, data.containerWeight || 0);
 
-    // คำนวณน้ำหนักแห้ง
+    const moistureResult = readMoistureAmount(data.moisturePercent);
+    if (typeof moistureResult !== 'number') {
+      return NextResponse.json({ error: moistureResult.error }, { status: 400 });
+    }
+    const moistureAmount = moistureResult;
+
     let dryWeight = netWeight;
     if (data.rubberPercent) {
       dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
@@ -195,7 +201,11 @@ export async function POST(request: NextRequest) {
 
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
-    const totalAmount = netWeight * finalPrice;
+    const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
+    if ('error' in moistureDeduction) {
+      return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+    }
+    const totalAmount = moistureDeduction.totalAmount;
 
     if (!member) {
       return NextResponse.json(
@@ -283,6 +293,7 @@ export async function POST(request: NextRequest) {
           netWeight,
           rubberPercent: data.rubberPercent,
           dryWeight,
+          moisturePercent: moistureAmount,
           basePrice,
           adjustedPrice,
           bonusPrice: data.bonusPrice || 0,
@@ -302,7 +313,12 @@ export async function POST(request: NextRequest) {
       await applyPurchaseToStock(tx, {
         productTypeId: created.productTypeId,
         qtyKg: created.netWeight,
-        unitCostPerKg: created.finalPrice,
+        unitCostPerKg: purchaseUnitCostPerKg(
+          created.netWeight,
+          created.finalPrice,
+          created.totalAmount,
+          created.moisturePercent,
+        ),
         refNo: created.purchaseNo,
         date: created.date,
         notes: created.notes,
@@ -444,14 +460,19 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     // Validate all items and prepare purchase data
     const purchaseDataList: {
       purchaseNo: string;
-      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
+      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; moisturePercent: number; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
     }[] = [];
 
     for (const item of items) {
       // Calculate net weight
       const netWeight = item.netWeight || calculateNetWeight(item.grossWeight, item.containerWeight || 0);
 
-      // Calculate dry weight
+      const moistureResult = readMoistureAmount(item.moisturePercent);
+      if (typeof moistureResult !== 'number') {
+        return NextResponse.json({ error: moistureResult.error }, { status: 400 });
+      }
+      const moistureAmount = moistureResult;
+
       let dryWeight = netWeight;
       if (item.rubberPercent) {
         dryWeight = calculateDryWeight(netWeight, item.rubberPercent);
@@ -495,7 +516,11 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       // ปรับราคาต่อกก. ตาม %ยาง (DRC) — หากไม่มี %ยาง ใช้ราคากลางตามเดิม
       const adjustedPrice = calculateAdjustedPrice(basePrice, item.rubberPercent);
       const finalPrice = adjustedPrice + (item.bonusPrice || 0);
-      const totalAmount = netWeight * finalPrice;
+      const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
+      if ('error' in moistureDeduction) {
+        return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+      }
+      const totalAmount = moistureDeduction.totalAmount;
 
       // Calculate split
       const { ownerAmount, tapperAmount } = calculateSplit(
@@ -537,6 +562,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         netWeight,
         rubberPercent: item.rubberPercent || null,
         dryWeight,
+        moisturePercent: moistureAmount,
         basePrice,
         adjustedPrice,
         bonusPrice: item.bonusPrice || 0,
@@ -564,7 +590,12 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         await applyPurchaseToStock(tx, {
           productTypeId: created.productTypeId,
           qtyKg: created.netWeight,
-          unitCostPerKg: created.finalPrice,
+          unitCostPerKg: purchaseUnitCostPerKg(
+            created.netWeight,
+            created.finalPrice,
+            created.totalAmount,
+            created.moisturePercent,
+          ),
           refNo: created.purchaseNo,
           date: created.date,
           notes: created.notes,

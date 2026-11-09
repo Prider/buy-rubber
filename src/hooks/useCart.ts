@@ -4,6 +4,7 @@ import { useAlert } from '@/hooks/useAlert';
 import { logger } from '@/lib/logger';
 import { generatePDFFromHTML, printHTML } from '@/components/purchases/utils/pdfGenerator';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
+import { normalizeMoistureAmount, totalAfterMoisture } from '@/lib/purchases/moisture';
 
 interface CartItem {
   id: string;
@@ -20,6 +21,7 @@ interface CartItem {
   containerWeight?: number; // น้ำหนักภาชนะ
   netWeight?: number; // น้ำหนักสุทธิ
   dryWeight?: number;
+  moisturePercent?: number;
   pricePerUnit?: number;
   bonusPrice?: number;
   basePrice?: number;
@@ -56,6 +58,7 @@ interface PurchaseFormData {
   containerWeight: string; // น้ำหนักภาชนะ
   netWeight: string; // น้ำหนักสุทธิ (calculated)
   pricePerUnit: string;
+  moisturePercent: string;
   bonusPrice: string;
   notes: string;
 }
@@ -88,13 +91,14 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     const grossWeight = parseFloat(formData.grossWeight) || 0; // น้ำหนักรวมภาชนะ
     const containerWeight = parseFloat(formData.containerWeight) || 0; // น้ำหนักภาชนะ
     const netWeight = parseFloat(formData.netWeight) || 0; // น้ำหนักสุทธิ
-    const dryWeight = netWeight; // For now, dry weight equals net weight
+    const moisturePercent = normalizeMoistureAmount(formData.moisturePercent);
+    const dryWeight = netWeight;
     const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
     const basePrice = pricePerUnit;
     const adjustedPrice = basePrice + bonusPrice;
     const finalPrice = adjustedPrice;
-    const totalAmount = netWeight * finalPrice; // Use netWeight for calculation
+    const totalAmount = totalAfterMoisture(netWeight * finalPrice, moisturePercent);
     
     const item: CartItem = {
       id: Date.now().toString(),
@@ -110,6 +114,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       containerWeight,
       netWeight,
       dryWeight,
+      moisturePercent,
       pricePerUnit,
       bonusPrice,
       basePrice,
@@ -199,6 +204,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           containerWeight: item.containerWeight, // น้ำหนักภาชนะ
           netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
           rubberPercent: null, // Set to null since we removed rubber percent from UI
+          moisturePercent: item.moisturePercent || 0,
           pricePerUnit: item.pricePerUnit, // Include the price per unit
           bonusPrice: item.bonusPrice,
           notes: item.notes,

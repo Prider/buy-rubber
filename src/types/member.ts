@@ -45,7 +45,6 @@ export interface MemberTableProps {
   onDelete: (member: Member) => void;
   onReactivate?: (member: Member) => void;
   onViewHistory: (member: Member) => void;
-  onViewServiceFees?: (member: Member) => void;
   isLoading: boolean;
 }
 

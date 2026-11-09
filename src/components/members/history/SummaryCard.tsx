@@ -1,6 +1,6 @@
 'use client';
 
-import { PurchaseSummary } from '@/types/memberHistory';
+import { MemberHistorySummary } from '@/types/memberHistory';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
 type SummaryIconType = 'currency' | 'clipboard' | 'weight';
@@ -64,25 +64,25 @@ export const SummaryCard = ({ title, icon, bg, value, subText }: SummaryCardProp
 
 export const SUMMARY_CARD_CONFIG = [
   {
-    title: 'ยอดรวมทั้งหมด',
+    title: 'ยอดรับซื้อ',
     icon: 'currency' as SummaryIconType,
     bg: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100',
-    formatter: (summary: PurchaseSummary) => formatCurrency(summary.totalAmount),
-    subText: (summary: PurchaseSummary) => `${summary.totalPurchases} รายการ`,
+    formatter: (summary: MemberHistorySummary) => formatCurrency(summary.purchaseAmount),
+    subText: (summary: MemberHistorySummary) => `${summary.purchaseCount} รายการ`,
   },
   {
-    title: 'จำนวนครั้ง',
+    title: 'ยอดค่าบริการ',
     icon: 'clipboard' as SummaryIconType,
-    bg: 'border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100',
-    formatter: (summary: PurchaseSummary) => formatNumber(summary.totalPurchases),
-    subText: () => 'รายการรับซื้อ',
+    bg: 'border-purple-200 bg-purple-50 text-purple-950 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-100',
+    formatter: (summary: MemberHistorySummary) => formatCurrency(summary.serviceFeeAmount),
+    subText: (summary: MemberHistorySummary) => `${summary.serviceFeeCount} รายการ`,
   },
   {
     title: 'น้ำหนักรวม',
     icon: 'weight' as SummaryIconType,
-    bg: 'border-purple-200 bg-purple-50 text-purple-950 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-100',
-    formatter: (summary: PurchaseSummary) => `${formatNumber(summary.totalWeight)} กก.`,
-    subText: (summary: PurchaseSummary) => `ราคาเฉลี่ย ${formatNumber(summary.avgPrice)} บ./กก.`,
+    bg: 'border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100',
+    formatter: (summary: MemberHistorySummary) => `${formatNumber(summary.totalWeight)} กก.`,
+    subText: (summary: MemberHistorySummary) => `ราคาเฉลี่ย ${formatNumber(summary.avgPrice)} บ./กก.`,
   },
 ];
 

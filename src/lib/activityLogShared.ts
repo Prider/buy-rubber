@@ -47,6 +47,7 @@ export const ACTIVITY_FIELD_LABELS: Record<string, string> = {
   netWeight: 'น้ำหนักสุทธิ',
   rubberPercent: '%ยาง',
   dryWeight: 'น้ำหนักแห้ง',
+  moisturePercent: 'หักความชื้น (บาท)',
   basePrice: 'ราคาพื้นฐาน',
   adjustedPrice: 'ราคาหลังปรับ',
   bonusPrice: 'ราคาบวก',

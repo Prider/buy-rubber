@@ -377,6 +377,7 @@ function MobilePurchaseScreen() {
           <PhoneField label="น้ำหนักภาชนะ" value="0.00" suffix="กก." />
           <PhoneField label="น้ำหนักสุทธิ" required value="0.00" suffix="กก." tone="bg-gray-50 font-semibold dark:bg-gray-600" />
           <PhoneField label="ราคาต่อหน่วย" required placeholder="0.00" suffix="บาท/กก." />
+          <PhoneField label="หักความชื้น" value="0.00" suffix="บาท" />
           <PhoneField label="ยอดเงินรวม" required value="0.00" suffix="บาท" tone="bg-amber-50 font-bold dark:bg-amber-900/20" />
         </div>
       </div>
@@ -522,6 +523,7 @@ function TabletPurchaseScreen() {
             <PreviewField label="น้ำหนักภาชนะ" value="0.00" suffix="กก." {...field} />
             <PreviewField label="น้ำหนักสุทธิ" required value="0.00" suffix="กก." tone="bg-gray-50 font-semibold dark:bg-gray-600" {...field} />
             <PreviewField label="ราคาต่อหน่วย" required placeholder="0.00" suffix="บาท/กก." {...field} />
+            <PreviewField label="หักความชื้น" value="0.00" suffix="บาท" {...field} />
             <PreviewField label="ยอดเงินรวม" required value="0.00" suffix="บาท" tone="bg-amber-50 font-bold dark:bg-amber-900/20" {...field} />
           </div>
         </div>
@@ -545,7 +547,7 @@ function DesktopPurchaseScreen() {
     boxSize: 'h-[4.4cqw] rounded-[0.7cqw] px-[0.8cqw]',
     textSize: 'text-[2cqw]',
   };
-  const cartHeads = ['ประเภท', 'รายละเอียด', 'น้ำหนักรวมภาชนะ (กก.)', 'น้ำหนักภาชนะ (กก.)', 'น้ำหนักสุทธิ (กก.)', 'ราคา/กก.', 'จำนวนเงิน'];
+  const cartHeads = ['ประเภท', 'รายละเอียด', 'น้ำหนักรวมภาชนะ (กก.)', 'น้ำหนักภาชนะ (กก.)', 'น้ำหนักสุทธิ (กก.)', 'ราคา/กก.', 'หักความชื้น (บาท)', 'จำนวนเงิน'];
   return (
     <div className="flex h-full bg-gray-50 text-gray-900 [container-type:size] dark:bg-gray-900 dark:text-gray-100">
       <aside className="flex w-[9cqw] shrink-0 flex-col items-center border-r border-gray-200 bg-white py-[1.4cqw] dark:border-gray-700 dark:bg-gray-800">
@@ -596,6 +598,7 @@ function DesktopPurchaseScreen() {
               <PreviewField label="น้ำหนักภาชนะ" value="0.00" suffix="กก." {...field} />
               <PreviewField label="น้ำหนักสุทธิ" required value="0.00" suffix="กก." tone="bg-gray-50 font-semibold dark:bg-gray-600" {...field} />
               <PreviewField label="ราคาต่อหน่วย" required placeholder="0.00" suffix="บาท/กก." {...field} />
+              <PreviewField label="หักความชื้น" value="0.00" suffix="บาท" {...field} />
               <PreviewField label="ยอดเงินรวม" required value="0.00" suffix="บาท" tone="bg-amber-50 font-bold dark:bg-amber-900/20" {...field} />
             </div>
             <div className="flex shrink-0 justify-end gap-[0.8cqw] px-[1cqw] pb-[0.8cqw]">
@@ -620,9 +623,9 @@ function DesktopPurchaseScreen() {
                 <p className="truncate text-[1.35cqw] text-gray-600 dark:text-gray-300">ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
               </div>
             </div>
-            <div className="grid shrink-0 grid-cols-7 gap-[0.3cqw] border-b border-gray-200 bg-gray-50 px-[0.8cqw] py-[0.6cqw] text-center text-[1.15cqw] font-semibold leading-tight text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+            <div className="grid shrink-0 grid-cols-8 gap-[0.3cqw] border-b border-gray-200 bg-gray-50 px-[0.8cqw] py-[0.6cqw] text-center text-[1.15cqw] font-semibold leading-tight text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
               {cartHeads.map((head) => (
-                <p key={head}>{head}</p>
+                <p key={head} className={head.startsWith('หักความชื้น') ? 'text-red-600 dark:text-red-400' : undefined}>{head}</p>
               ))}
             </div>
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[0.6cqw] text-center text-gray-500 dark:text-gray-400">
