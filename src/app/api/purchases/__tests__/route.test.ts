@@ -881,9 +881,49 @@ describe('POST /api/purchases', () => {
             data: expect.objectContaining({
               netWeight: 100,
               moisturePercent: 10,
+              moistureUnit: 'baht',
               dryWeight: 100,
               finalPrice: 50,
               totalAmount: 4990,
+            }),
+          })
+        );
+      });
+
+      it('deducts moisture kilograms from net weight', async () => {
+        vi.mocked(prisma.member.findUnique).mockResolvedValue(mockMember);
+        vi.mocked(prisma.productType.findUnique).mockResolvedValue(mockProductType);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        vi.mocked(prisma.productPrice.findFirst).mockResolvedValue(null);
+        vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase);
+
+        const request = new NextRequest('http://localhost:3000/api/purchases', {
+          method: 'POST',
+          body: JSON.stringify({
+            memberId: 'member-1',
+            productTypeId: 'product-1',
+            userId: 'user-1',
+            date: '2024-01-15',
+            grossWeight: 100,
+            containerWeight: 0,
+            netWeight: 100,
+            pricePerUnit: 50,
+            moisturePercent: 2,
+            moistureUnit: 'kg',
+          }),
+        });
+
+        await POST(request);
+
+        expect(vi.mocked(prisma.purchase.create)).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              netWeight: 98,
+              moisturePercent: 2,
+              moistureUnit: 'kg',
+              dryWeight: 98,
+              finalPrice: 50,
+              totalAmount: 4900,
             }),
           })
         );

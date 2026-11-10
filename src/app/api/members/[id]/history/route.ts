@@ -16,6 +16,7 @@ interface HistoryItem {
   netWeight: number | null;
   unitPrice: number | null;
   moisturePercent: number | null;
+  moistureUnit: string | null;
   amount: number;
   notes: string | null;
 }
@@ -122,6 +123,7 @@ export async function GET(
           netWeight: true,
           basePrice: true,
           moisturePercent: true,
+          moistureUnit: true,
           totalAmount: true,
           notes: true,
           productType: { select: { name: true } },
@@ -150,6 +152,7 @@ export async function GET(
         netWeight: purchase.netWeight,
         unitPrice: purchase.basePrice,
         moisturePercent: purchase.moisturePercent,
+        moistureUnit: purchase.moistureUnit,
         amount: purchase.totalAmount,
         notes: purchase.notes,
       })),
@@ -163,6 +166,7 @@ export async function GET(
         netWeight: null,
         unitPrice: null,
         moisturePercent: null,
+        moistureUnit: null,
         amount: fee.amount,
         notes: fee.notes,
       })),

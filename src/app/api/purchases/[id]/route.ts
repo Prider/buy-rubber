@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { invalidatePurchaseCaches } from '@/lib/cache';
-import { calculateNetWeight, calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
-import { deductMoisture, purchaseUnitCostPerKg, readMoistureAmount } from '@/lib/purchases/moisture';
+import { calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { purchaseUnitCostPerKg, readMoistureAmount, readMoistureUnit, settlePurchaseMoisture } from '@/lib/purchases/moisture';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 import { diffFields } from '@/lib/activityLogShared';
 import {
@@ -75,8 +75,6 @@ export async function PUT(
       return NextResponse.json({ error: 'กรุณาระบุน้ำหนักรวมภาชนะ' }, { status: 400 });
     }
 
-    const netWeight = data.netWeight || calculateNetWeight(data.grossWeight, data.containerWeight || 0);
-
     const moistureResult = readMoistureAmount(
       data.moisturePercent !== undefined ? data.moisturePercent : existing.moisturePercent,
     );
@@ -84,11 +82,9 @@ export async function PUT(
       return NextResponse.json({ error: moistureResult.error }, { status: 400 });
     }
     const moistureAmount = moistureResult;
-
-    let dryWeight = netWeight;
-    if (data.rubberPercent) {
-      dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
-    }
+    const moistureUnit = data.moistureUnit !== undefined
+      ? readMoistureUnit(data.moistureUnit)
+      : readMoistureUnit(existing.moistureUnit);
 
     const priceDateStr =
       typeof data.date === 'string'
@@ -119,11 +115,23 @@ export async function PUT(
 
     const adjustedPrice = calculateAdjustedPrice(basePrice, data.rubberPercent);
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
-    const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
-    if ('error' in moistureDeduction) {
-      return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+    const settled = settlePurchaseMoisture({
+      grossWeight: data.grossWeight,
+      containerWeight: data.containerWeight || 0,
+      netWeight: data.netWeight,
+      finalPrice,
+      moistureAmount,
+      moistureUnit,
+    });
+    if ('error' in settled) {
+      return NextResponse.json({ error: settled.error }, { status: 400 });
     }
-    const totalAmount = moistureDeduction.totalAmount;
+    const netWeight = settled.netWeight;
+    const totalAmount = settled.totalAmount;
+    let dryWeight = netWeight;
+    if (data.rubberPercent) {
+      dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
+    }
 
     if (!member) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลสมาชิก' }, { status: 404 });
@@ -187,6 +195,7 @@ export async function PUT(
           rubberPercent: data.rubberPercent ?? null,
           dryWeight,
           moisturePercent: moistureAmount,
+          moistureUnit: settled.moistureUnit,
           basePrice,
           adjustedPrice,
           bonusPrice: data.bonusPrice || 0,
@@ -230,6 +239,7 @@ export async function PUT(
         rubberPercent: existing.rubberPercent,
         dryWeight: existing.dryWeight,
         moisturePercent: existing.moisturePercent,
+        moistureUnit: existing.moistureUnit,
         basePrice: existing.basePrice,
         adjustedPrice: existing.adjustedPrice,
         bonusPrice: existing.bonusPrice,
@@ -250,6 +260,7 @@ export async function PUT(
         rubberPercent: data.rubberPercent ?? null,
         dryWeight,
         moisturePercent: moistureAmount,
+        moistureUnit: settled.moistureUnit,
         basePrice,
         adjustedPrice,
         bonusPrice: data.bonusPrice || 0,
@@ -270,6 +281,7 @@ export async function PUT(
         'rubberPercent',
         'dryWeight',
         'moisturePercent',
+        'moistureUnit',
         'basePrice',
         'adjustedPrice',
         'bonusPrice',

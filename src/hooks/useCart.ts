@@ -4,7 +4,12 @@ import { useAlert } from '@/hooks/useAlert';
 import { logger } from '@/lib/logger';
 import { generatePDFFromHTML, printHTML } from '@/components/purchases/utils/pdfGenerator';
 import { generateSlipHTMLFromItems } from '@/components/purchases/utils/slipGenerator';
-import { normalizeMoistureAmount, totalAfterMoisture } from '@/lib/purchases/moisture';
+import {
+  type MoistureUnit,
+  normalizeMoistureAmount,
+  readMoistureAmount,
+  settlePurchaseMoisture,
+} from '@/lib/purchases/moisture';
 
 interface CartItem {
   id: string;
@@ -22,6 +27,7 @@ interface CartItem {
   netWeight?: number; // น้ำหนักสุทธิ
   dryWeight?: number;
   moisturePercent?: number;
+  moistureUnit?: MoistureUnit;
   pricePerUnit?: number;
   bonusPrice?: number;
   basePrice?: number;
@@ -59,6 +65,7 @@ interface PurchaseFormData {
   netWeight: string; // น้ำหนักสุทธิ (calculated)
   pricePerUnit: string;
   moisturePercent: string;
+  moistureUnit?: MoistureUnit;
   bonusPrice: string;
   notes: string;
 }
@@ -90,15 +97,27 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     const productType = productTypes.find(pt => pt.id === formData.productTypeId);
     const grossWeight = parseFloat(formData.grossWeight) || 0; // น้ำหนักรวมภาชนะ
     const containerWeight = parseFloat(formData.containerWeight) || 0; // น้ำหนักภาชนะ
-    const netWeight = parseFloat(formData.netWeight) || 0; // น้ำหนักสุทธิ
-    const moisturePercent = normalizeMoistureAmount(formData.moisturePercent);
-    const dryWeight = netWeight;
+    const moistureRead = readMoistureAmount(formData.moisturePercent);
+    const moisturePercent = typeof moistureRead === 'number'
+      ? moistureRead
+      : normalizeMoistureAmount(formData.moisturePercent);
     const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
     const bonusPrice = parseFloat(formData.bonusPrice) || 0;
     const basePrice = pricePerUnit;
     const adjustedPrice = basePrice + bonusPrice;
     const finalPrice = adjustedPrice;
-    const totalAmount = totalAfterMoisture(netWeight * finalPrice, moisturePercent);
+    const settled = settlePurchaseMoisture({
+      grossWeight,
+      containerWeight,
+      netWeight: parseFloat(formData.netWeight) || 0,
+      finalPrice,
+      moistureAmount: moisturePercent,
+      moistureUnit: formData.moistureUnit,
+    });
+    const netWeight = 'error' in settled ? (parseFloat(formData.netWeight) || 0) : settled.netWeight;
+    const moistureUnit: MoistureUnit = 'error' in settled ? 'baht' : settled.moistureUnit;
+    const dryWeight = netWeight;
+    const totalAmount = 'error' in settled ? 0 : settled.totalAmount;
     
     const item: CartItem = {
       id: Date.now().toString(),
@@ -115,6 +134,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
       netWeight,
       dryWeight,
       moisturePercent,
+      moistureUnit,
       pricePerUnit,
       bonusPrice,
       basePrice,
@@ -205,6 +225,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
           netWeight: item.netWeight, // น้ำหนักสุทธิ (already calculated)
           rubberPercent: null, // Set to null since we removed rubber percent from UI
           moisturePercent: item.moisturePercent || 0,
+          moistureUnit: item.moistureUnit || 'baht',
           pricePerUnit: item.pricePerUnit, // Include the price per unit
           bonusPrice: item.bonusPrice,
           notes: item.notes,

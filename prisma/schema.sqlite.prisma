@@ -107,7 +107,8 @@ model Purchase {
   // สำหรับน้ำยางสด
   rubberPercent Float? // %ยาง (DRC)
   dryWeight     Float // น้ำหนักแห้ง (กก.)
-  moisturePercent Float @default(0) // หักความชื้น (บาท)
+  moisturePercent Float  @default(0) // หักความชื้น
+  moistureUnit    String @default("baht") // baht | kg
 
   // ราคา
   basePrice     Float // ราคาพื้นฐาน (บาท/กก.)

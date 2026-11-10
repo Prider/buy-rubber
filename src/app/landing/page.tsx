@@ -547,7 +547,7 @@ function DesktopPurchaseScreen() {
     boxSize: 'h-[4.4cqw] rounded-[0.7cqw] px-[0.8cqw]',
     textSize: 'text-[2cqw]',
   };
-  const cartHeads = ['ประเภท', 'รายละเอียด', 'น้ำหนักรวมภาชนะ (กก.)', 'น้ำหนักภาชนะ (กก.)', 'น้ำหนักสุทธิ (กก.)', 'ราคา/กก.', 'หักความชื้น (บาท)', 'จำนวนเงิน'];
+  const cartHeads = ['ประเภท', 'รายละเอียด', 'น้ำหนักรวมภาชนะ (กก.)', 'น้ำหนักภาชนะ (กก.)', 'น้ำหนักสุทธิ (กก.)', 'ราคา/กก.', 'หักความชื้น', 'จำนวนเงิน'];
   return (
     <div className="flex h-full bg-gray-50 text-gray-900 [container-type:size] dark:bg-gray-900 dark:text-gray-100">
       <aside className="flex w-[9cqw] shrink-0 flex-col items-center border-r border-gray-200 bg-white py-[1.4cqw] dark:border-gray-700 dark:bg-gray-800">
@@ -620,7 +620,6 @@ function DesktopPurchaseScreen() {
               <span className="flex h-[2.8cqw] w-[2.8cqw] items-center justify-center rounded-[0.5cqw] bg-gradient-to-br from-green-500 to-emerald-600 text-[1.5cqw] text-white">🛒</span>
               <div className="min-w-0">
                 <p className="text-[2cqw] font-bold leading-tight text-gray-900 dark:text-white">ตะกร้า</p>
-                <p className="truncate text-[1.35cqw] text-gray-600 dark:text-gray-300">ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
               </div>
             </div>
             <div className="grid shrink-0 grid-cols-8 gap-[0.3cqw] border-b border-gray-200 bg-gray-50 px-[0.8cqw] py-[0.6cqw] text-center text-[1.15cqw] font-semibold leading-tight text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">

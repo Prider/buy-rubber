@@ -11,6 +11,7 @@ import {
   normalizeSlipTemplate,
   type SlipTemplateId,
 } from '@/lib/slipTemplate';
+import { moistureUnitLabel } from '@/lib/purchases/moisture';
 import { PurchaseTransaction, CartItem } from '../types';
 
 const DEFAULT_COMPANY_NAME = 'ร้านของฉัน';
@@ -22,6 +23,12 @@ const SLIP_COMPANY_NAME_KEY = 'slip_companyName';
 const SLIP_COMPANY_ADDRESS_KEY = 'slip_companyAddress';
 const SLIP_TAX_ID_KEY = 'slip_taxId';
 const SLIP_FOOTER_TEXT_KEY = 'slip_footerText';
+
+function moistureNote(item: CartItem, withColon: boolean): string {
+  if (item.type !== 'purchase' || !item.moisturePercent) return '';
+  const label = withColon ? 'หักความชื้น: ' : 'หักความชื้น ';
+  return `<br/>${label}${formatNumber(item.moisturePercent)} ${moistureUnitLabel(item.moistureUnit)}`;
+}
 
 function escapeHtml(input: string): string {
   return input
@@ -82,6 +89,7 @@ export function transactionToCartItems(transaction: PurchaseTransaction): CartIt
       productTypeName: purchase.productType.name,
       netWeight: purchase.netWeight,
       moisturePercent: purchase.moisturePercent ?? 0,
+      moistureUnit: purchase.moistureUnit,
       finalPrice: purchase.finalPrice,
       totalAmount: purchase.totalAmount,
     });
@@ -299,11 +307,7 @@ export function generateSlipHTMLFromItems(
                       ${item.productTypeName || item.category || 'ค่าใช้จ่าย'}
                       ${
                         item.type === 'purchase'
-                          ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${
-                              item.moisturePercent
-                                ? `<br/>หักความชื้น: ${formatNumber(item.moisturePercent)} บาท`
-                                : ''
-                            }`
+                          ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, true)}`
                           : ''
                       }
                     </div>
@@ -371,9 +375,7 @@ function buildA4SlipHtml(args: {
     .map((item) => {
       const name = escapeHtml(item.productTypeName || item.category || 'ค่าใช้จ่าย');
       const weight = item.type === 'purchase'
-        ? `${formatNumber(item.netWeight || 0)} กก.${
-            item.moisturePercent ? `<br/>หักความชื้น ${formatNumber(item.moisturePercent)} บาท` : ''
-          }`
+        ? `${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, false)}`
         : '—';
       const price = item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '—';
       return `<tr>

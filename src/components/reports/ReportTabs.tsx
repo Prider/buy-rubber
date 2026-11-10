@@ -2,6 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 
+/** Flip to true to show the หักค่าบริการ report tab again. */
+export const SHOW_SERVICE_FEE_REPORT = false;
+
 export const REPORT_TABS = [
   { id: 'daily_purchase', label: 'รับซื้อ' },
   { id: 'service_fee', label: 'หักค่าบริการ' },
@@ -12,6 +15,10 @@ export const REPORT_TABS = [
 ] as const;
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];
+
+export function isVisibleReportTab(tab: ReportTabId): boolean {
+  return SHOW_SERVICE_FEE_REPORT || tab !== 'service_fee';
+}
 
 export function parseReportTab(value: string | null): ReportTabId | null {
   if (!value) return null;
@@ -46,7 +53,7 @@ export default function ReportTabs({ activeTab, onTabChange }: ReportTabsProps) 
       aria-label="ประเภทรายงาน"
     >
       <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap md:gap-1 lg:justify-end">
-      {REPORT_TABS.map((tab) => {
+      {REPORT_TABS.filter((tab) => isVisibleReportTab(tab.id)).map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button

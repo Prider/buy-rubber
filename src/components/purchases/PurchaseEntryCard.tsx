@@ -2,7 +2,14 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { normalizeMoistureAmount } from '@/lib/purchases/moisture';
+import {
+  MOISTURE_EXCEEDS_ERROR,
+  MOISTURE_EXCEEDS_WEIGHT_ERROR,
+  type MoistureUnit,
+  moistureUnitLabel,
+  normalizeMoistureAmount,
+  scaleNetWeight,
+} from '@/lib/purchases/moisture';
 
 interface Member {
   id: string;
@@ -27,7 +34,8 @@ interface PurchaseFormData {
   containerWeight: string; // น้ำหนักภาชนะ (container weight)
   netWeight: string; // น้ำหนักสุทธิ (net weight - calculated)
   pricePerUnit: string;
-  moisturePercent: string; // หักความชื้น (บาท)
+  moisturePercent: string; // หักความชื้น
+  moistureUnit: MoistureUnit;
   bonusPrice: string;
   notes: string;
 }
@@ -45,6 +53,7 @@ interface PurchaseEntryCardProps {
   isFormValid: boolean;
   calculateTotalAmount: () => string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  setMoistureUnit: (unit: MoistureUnit) => void;
   handleMemberSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleMemberSelect: (member: Member) => void;
   clearMemberSearch: () => void;
@@ -74,6 +83,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   isFormValid,
   calculateTotalAmount,
   handleInputChange,
+  setMoistureUnit,
   handleMemberSearchChange,
   handleMemberSelect,
   clearMemberSearch,
@@ -317,14 +327,21 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     });
   };
 
+  const moistureUnit: MoistureUnit = formData.moistureUnit === 'kg' ? 'kg' : 'baht';
   const moistureDeduction = normalizeMoistureAmount(formData.moisturePercent);
+  const weighedNet = scaleNetWeight(
+    parseFloat(formData.grossWeight) || 0,
+    parseFloat(formData.containerWeight) || 0,
+  );
   const amountBeforeMoisture =
-    (parseFloat(formData.netWeight) || 0) *
+    weighedNet *
     ((parseFloat(formData.pricePerUnit) || 0) + (parseFloat(formData.bonusPrice) || 0));
-  const moistureExceedsTotal = amountBeforeMoisture > 0 && moistureDeduction > amountBeforeMoisture;
+  const moistureExceeds = moistureUnit === 'kg'
+    ? weighedNet > 0 && moistureDeduction > weighedNet
+    : amountBeforeMoisture > 0 && moistureDeduction > amountBeforeMoisture;
 
   return (
-    <div className="flex flex-col overflow-visible bg-[var(--app-bg)] lg:h-full lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
+    <div className="flex flex-col overflow-visible bg-[var(--app-bg)] lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
       {/* Header */}
       <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-2 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-4 lg:py-2.5">
         <div className="flex items-center gap-2">
@@ -375,27 +392,27 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
       )}
 
       {/* Content */}
-      <div className={`px-3 py-3 max-lg:pb-32 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:p-4 ${entryTab === 'fee' ? 'max-lg:hidden' : ''}`}>
-        {error && (
-          <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <div className="flex items-center space-x-1.5">
-              <div className="w-5 h-5 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <p className="text-red-700 dark:text-red-300 font-medium text-xs leading-5">{error}</p>
-            </div>
-          </div>
-        )}
-
+      <div className={`px-3 py-3 max-lg:pb-32 lg:p-0 ${entryTab === 'fee' ? 'max-lg:hidden' : ''}`}>
         <form onSubmit={(e) => { 
           e.preventDefault(); 
           addToCart(); 
           requestAnimationFrame(() => {
             productTypeRef.current?.focus();
           });
-        }} className="space-y-2 max-lg:[&_input]:min-h-11 max-lg:[&_input]:rounded-xl max-lg:[&_input]:text-base max-lg:[&_label]:whitespace-nowrap max-lg:[&_label]:text-[11px] max-lg:[&_label]:font-semibold max-lg:[&_label]:leading-4 lg:space-y-4 lg:[&_input]:min-h-0 lg:[&_input]:rounded-lg lg:[&_input]:text-sm lg:[&_label]:whitespace-normal lg:[&_label]:text-xs lg:[&_label]:font-medium">
+        }} className="max-lg:[&_input]:min-h-11 max-lg:[&_input]:rounded-xl max-lg:[&_input]:text-base max-lg:[&_label]:whitespace-nowrap max-lg:[&_label]:text-[11px] max-lg:[&_label]:font-semibold max-lg:[&_label]:leading-4 lg:[&_input]:min-h-0 lg:[&_input]:rounded-lg lg:[&_input]:text-sm lg:[&_label]:whitespace-normal lg:[&_label]:text-xs lg:[&_label]:font-medium">
+          <div className="flex flex-col gap-3 lg:gap-4 lg:p-4">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-900/20">
+              <div className="flex items-center space-x-1.5">
+                <div className="w-5 h-5 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-red-700 dark:text-red-300 font-medium text-xs leading-5">{error}</p>
+              </div>
+            </div>
+          )}
           {/* Basic Information */}
           <div className="space-y-3">
             
@@ -521,7 +538,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
 
           {/* Weight Information */}
-          <div className="space-y-3 pt-0.5">
+          <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 lg:gap-3">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -738,35 +755,59 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-2 lg:gap-3">
-              <div className="space-y-1">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                  ราคาต่อหน่วย <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    ref={pricePerUnitRef}
-                    type="number"
-                    step="0.01"
-                    name="pricePerUnit"
-                    value={formData.pricePerUnit || ''}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => handleKeyDown(e, moistureRef, containerWeightRef)}
-                    required
-                    disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder={formData.pricePerUnit}
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">บาท/กก.</span>
-                  </div>
+            <div className="grid grid-cols-2 items-end gap-x-2 gap-y-1 lg:gap-x-3">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                ราคาต่อหน่วย <span className="text-red-500">*</span>
+              </label>
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                หักความชื้น
+              </label>
+              <div className="relative">
+                <input
+                  ref={pricePerUnitRef}
+                  type="number"
+                  step="0.01"
+                  name="pricePerUnit"
+                  value={formData.pricePerUnit || ''}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => handleKeyDown(e, moistureRef, containerWeightRef)}
+                  required
+                  disabled={submitting}
+                  className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder={formData.pricePerUnit}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">บาท/กก.</span>
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                  หักความชื้น
-                </label>
-                <div className="relative">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="inline-flex h-[34px] shrink-0 items-center rounded-md border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-600 dark:bg-gray-900"
+                  role="radiogroup"
+                  aria-label="หน่วยหักความชื้น"
+                >
+                  {(['baht', 'kg'] as const).map((unit) => {
+                    const selected = moistureUnit === unit;
+                    return (
+                      <button
+                        key={unit}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        disabled={submitting}
+                        onClick={() => setMoistureUnit(unit)}
+                        className={`h-full rounded px-2 text-xs font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          selected
+                            ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                            : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        {moistureUnitLabel(unit)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="relative min-w-0 flex-1">
                   <input
                     ref={moistureRef}
                     type="number"
@@ -786,18 +827,25 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                       }
                     }}
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 pr-10 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="0.00"
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">บาท</span>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{moistureUnitLabel(moistureUnit)}</span>
                   </div>
                 </div>
               </div>
               <div className="col-span-2 space-y-1">
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  ยอดเงินรวม <span className="text-red-500">*</span>
-                </label>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    ยอดเงินรวม <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    {moistureUnit === 'kg'
+                      ? '(น้ำหนักสุทธิ − หักความชื้น) × ราคาต่อหน่วย'
+                      : '(น้ำหนักสุทธิ × ราคาต่อหน่วย) − หักความชื้น'}
+                  </p>
+                </div>
                 <div className="relative">
                   <input
                     type="number"
@@ -805,29 +853,29 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     name="totalAmount"
                     value={calculateTotalAmount()}
                     readOnly
-                    className="w-full px-3 py-1.5 text-sm pr-14 border border-gray-200 dark:border-gray-600 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-gray-900 dark:text-gray-100 font-bold transition-[border-color,box-shadow] duration-150 ease-out shadow-sm cursor-not-allowed"
+                    className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-amber-50 px-3 py-3 pr-16 !text-xl font-bold text-gray-900 shadow-sm transition-[border-color,box-shadow] duration-150 ease-out dark:border-gray-600 dark:bg-amber-900/20 dark:text-gray-100 max-lg:!min-h-14 lg:!min-h-12 lg:!text-2xl"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">บาท</span>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 lg:text-base">บาท</span>
                   </div>
                 </div>
-                {moistureExceedsTotal && (
+                {moistureExceeds && (
                   <p className="text-[10px] font-medium text-red-600 dark:text-red-400">
-                    หักความชื้นต้องไม่เกินยอดเงินรวม
+                    {moistureUnit === 'kg' ? MOISTURE_EXCEEDS_WEIGHT_ERROR : MOISTURE_EXCEEDS_ERROR}
                   </p>
                 )}
-              </div>
             </div>
+          </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:fixed max-lg:inset-x-0 max-lg:z-[35] max-lg:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center max-lg:[&_button]:rounded-2xl max-lg:[&_button]:text-sm md:left-16 lg:static lg:inset-auto lg:z-auto lg:justify-end lg:border-gray-100 lg:bg-transparent lg:px-0 lg:py-0 lg:pt-3 dark:lg:border-gray-600 dark:lg:bg-transparent">
+          <div className="flex shrink-0 gap-3 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:fixed max-lg:inset-x-0 max-lg:z-[35] max-lg:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center max-lg:[&_button]:rounded-2xl max-lg:[&_button]:text-sm md:left-16 lg:static lg:inset-auto lg:z-auto lg:justify-end lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 dark:lg:border-0 dark:lg:bg-transparent">
             <button
               type="button"
               onClick={resetForm}
               disabled={submitting}
-              className="max-lg:min-h-11 px-4 py-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-150 ease-out font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-12 rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150 ease-out hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
             >
               รีเซ็ต
             </button>
@@ -835,15 +883,16 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
               ref={submitButtonRef}
               type="submit"
               disabled={!isFormValid || submitting}
-              className="max-lg:min-h-11 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-[box-shadow,transform] duration-150 ease-out font-medium text-xs shadow-lg hover:shadow-xl motion-safe:hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="min-h-12 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg transition-[box-shadow,transform] duration-150 ease-out hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 motion-safe:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:transform-none dark:from-blue-500 dark:to-indigo-500 dark:hover:from-blue-600 dark:hover:to-indigo-600"
             >
-              <div className="flex items-center space-x-1.5">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center space-x-2">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
                 </svg>
                 <span>เพิ่มลงตะกร้า</span>
               </div>
             </button>
+          </div>
           </div>
         </form>
       </div>

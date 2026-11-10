@@ -15,6 +15,9 @@ import GamerLoader from '@/components/GamerLoader';
 import { formatCurrency } from '@/lib/utils';
 import { CloseButton } from '@/components/common/CloseButton';
 
+/** Flip to true to show the หักค่าบริการ box again. */
+const SHOW_SERVICE_FEE_CARD = false;
+
 export default function PurchasesPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -59,6 +62,7 @@ export default function PurchasesPage() {
     handleMemberSelect,
     handleMemberSearchChange,
     handleInputChange,
+    setMoistureUnit,
     calculateTotalAmount,
     isFormValid,
     resetForm,
@@ -193,11 +197,11 @@ export default function PurchasesPage() {
 
   return (
     <>
-      <div className="flex flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 dark:max-lg:bg-gray-900 lg:h-[calc(100vh-120px)] lg:overflow-hidden">
+      <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
         {/* Form fills the screen below desktop. Cart stays beside it from lg up. */}
         <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:overflow-hidden">
           {/* Left Side - Purchase Entry Card */}
-          <div className="flex min-w-0 flex-col lg:col-span-2 lg:h-full lg:overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-col lg:col-span-2 lg:h-full lg:overflow-hidden">
             <PurchaseEntryCard
               formData={formData}
               error={formError}
@@ -211,6 +215,7 @@ export default function PurchasesPage() {
               isFormValid={isFormValid()}
               calculateTotalAmount={calculateTotalAmount}
               handleInputChange={handleInputChange}
+              setMoistureUnit={setMoistureUnit}
               handleMemberSearchChange={handleMemberSearchChange}
               handleMemberSelect={handleMemberSelect}
               clearMemberSearch={clearMemberSearch}
@@ -228,16 +233,18 @@ export default function PurchasesPage() {
               setShowProductTypeDropdown={setShowProductTypeDropdown}
               submitting={submitting}
               serviceFeeCard={
-                <ServiceFeeCard
-                  formData={serviceFeeFormData}
-                  error={serviceFeeFormError}
-                  handleInputChange={handleServiceFeeInputChange}
-                  setCategory={setServiceFeeCategory}
-                  isFormValid={isServiceFeeFormValid()}
-                  resetForm={resetServiceFeeForm}
-                  addToCart={handleAddServiceFeeToCart}
-                  submitting={submitting}
-                />
+                SHOW_SERVICE_FEE_CARD ? (
+                  <ServiceFeeCard
+                    formData={serviceFeeFormData}
+                    error={serviceFeeFormError}
+                    handleInputChange={handleServiceFeeInputChange}
+                    setCategory={setServiceFeeCategory}
+                    isFormValid={isServiceFeeFormValid()}
+                    resetForm={resetServiceFeeForm}
+                    addToCart={handleAddServiceFeeToCart}
+                    submitting={submitting}
+                  />
+                ) : undefined
               }
             />
           </div>

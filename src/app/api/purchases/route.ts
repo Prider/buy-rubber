@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { invalidatePurchaseCaches } from '@/lib/cache';
 import { 
-  calculateNetWeight,
   calculateDryWeight,
   calculateAdjustedPrice,
   calculateSplit,
@@ -11,7 +10,7 @@ import {
   getUserFromToken
 } from '@/lib/utils';
 import { applyPurchaseToStock } from '@/lib/stock/stockService';
-import { deductMoisture, purchaseUnitCostPerKg, readMoistureAmount } from '@/lib/purchases/moisture';
+import { purchaseUnitCostPerKg, readMoistureAmount, settlePurchaseMoisture } from '@/lib/purchases/moisture';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // Force Node.js runtime for Prisma support
@@ -141,19 +140,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // คำนวณน้ำหนักสุทธิ (ใช้ค่าที่ส่งมา หรือคำนวณใหม่)
-    const netWeight = data.netWeight || calculateNetWeight(data.grossWeight, data.containerWeight || 0);
-
     const moistureResult = readMoistureAmount(data.moisturePercent);
     if (typeof moistureResult !== 'number') {
       return NextResponse.json({ error: moistureResult.error }, { status: 400 });
     }
     const moistureAmount = moistureResult;
-
-    let dryWeight = netWeight;
-    if (data.rubberPercent) {
-      dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
-    }
 
     // ดึงราคาประกาศและตรวจสอบ foreign keys แบบ parallel เพื่อลดเวลา
     logger.debug('Looking for product price and validating foreign keys', {
@@ -201,11 +192,23 @@ export async function POST(request: NextRequest) {
 
     // ราคาสุดท้าย
     const finalPrice = adjustedPrice + (data.bonusPrice || 0);
-    const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
-    if ('error' in moistureDeduction) {
-      return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+    const settled = settlePurchaseMoisture({
+      grossWeight: data.grossWeight,
+      containerWeight: data.containerWeight || 0,
+      netWeight: data.netWeight,
+      finalPrice,
+      moistureAmount,
+      moistureUnit: data.moistureUnit,
+    });
+    if ('error' in settled) {
+      return NextResponse.json({ error: settled.error }, { status: 400 });
     }
-    const totalAmount = moistureDeduction.totalAmount;
+    const netWeight = settled.netWeight;
+    const totalAmount = settled.totalAmount;
+    let dryWeight = netWeight;
+    if (data.rubberPercent) {
+      dryWeight = calculateDryWeight(netWeight, data.rubberPercent);
+    }
 
     if (!member) {
       return NextResponse.json(
@@ -294,6 +297,7 @@ export async function POST(request: NextRequest) {
           rubberPercent: data.rubberPercent,
           dryWeight,
           moisturePercent: moistureAmount,
+          moistureUnit: settled.moistureUnit,
           basePrice,
           adjustedPrice,
           bonusPrice: data.bonusPrice || 0,
@@ -460,23 +464,15 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
     // Validate all items and prepare purchase data
     const purchaseDataList: {
       purchaseNo: string;
-      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; moisturePercent: number; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
+      date: Date; memberId: any; productTypeId: any; userId: string; grossWeight: any; containerWeight: any; netWeight: any; rubberPercent: any; dryWeight: any; moisturePercent: number; moistureUnit: string; basePrice: any; adjustedPrice: any; bonusPrice: any; finalPrice: any; totalAmount: number; ownerAmount: number; tapperAmount: number; notes: any;
     }[] = [];
 
     for (const item of items) {
-      // Calculate net weight
-      const netWeight = item.netWeight || calculateNetWeight(item.grossWeight, item.containerWeight || 0);
-
       const moistureResult = readMoistureAmount(item.moisturePercent);
       if (typeof moistureResult !== 'number') {
         return NextResponse.json({ error: moistureResult.error }, { status: 400 });
       }
       const moistureAmount = moistureResult;
-
-      let dryWeight = netWeight;
-      if (item.rubberPercent) {
-        dryWeight = calculateDryWeight(netWeight, item.rubberPercent);
-      }
 
       const member = memberMap.get(item.memberId);
       const productType = productTypeMap.get(item.productTypeId);
@@ -516,11 +512,23 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
       // ปรับราคาต่อกก. ตาม %ยาง (DRC) — หากไม่มี %ยาง ใช้ราคากลางตามเดิม
       const adjustedPrice = calculateAdjustedPrice(basePrice, item.rubberPercent);
       const finalPrice = adjustedPrice + (item.bonusPrice || 0);
-      const moistureDeduction = deductMoisture(netWeight * finalPrice, moistureAmount);
-      if ('error' in moistureDeduction) {
-        return NextResponse.json({ error: moistureDeduction.error }, { status: 400 });
+      const settled = settlePurchaseMoisture({
+        grossWeight: item.grossWeight,
+        containerWeight: item.containerWeight || 0,
+        netWeight: item.netWeight,
+        finalPrice,
+        moistureAmount,
+        moistureUnit: item.moistureUnit,
+      });
+      if ('error' in settled) {
+        return NextResponse.json({ error: settled.error }, { status: 400 });
       }
-      const totalAmount = moistureDeduction.totalAmount;
+      const netWeight = settled.netWeight;
+      const totalAmount = settled.totalAmount;
+      let dryWeight = netWeight;
+      if (item.rubberPercent) {
+        dryWeight = calculateDryWeight(netWeight, item.rubberPercent);
+      }
 
       // Calculate split
       const { ownerAmount, tapperAmount } = calculateSplit(
@@ -563,6 +571,7 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         rubberPercent: item.rubberPercent || null,
         dryWeight,
         moisturePercent: moistureAmount,
+        moistureUnit: settled.moistureUnit,
         basePrice,
         adjustedPrice,
         bonusPrice: item.bonusPrice || 0,

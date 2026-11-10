@@ -68,6 +68,7 @@ export interface Purchase {
   rubberPercent?: number;
   dryWeight: number;
   moisturePercent?: number;
+  moistureUnit?: string;
   basePrice: number;
   adjustedPrice: number;
   bonusPrice: number;

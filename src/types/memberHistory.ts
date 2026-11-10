@@ -10,6 +10,7 @@ export interface MemberHistoryRow {
   netWeight: number | null;
   unitPrice: number | null;
   moisturePercent: number | null;
+  moistureUnit: string | null;
   amount: number;
   notes: string | null;
 }

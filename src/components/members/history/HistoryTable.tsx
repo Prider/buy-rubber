@@ -1,6 +1,7 @@
 'use client';
 
 import { MemberHistoryRow } from '@/types/memberHistory';
+import { moistureUnitLabel } from '@/lib/purchases/moisture';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
 interface HistoryTableProps {
@@ -141,7 +142,9 @@ export const HistoryTable = ({ rows, totalCount }: HistoryTableProps) => {
                   {row.unitPrice == null ? '–' : formatNumber(row.unitPrice)}
                 </td>
                 <td className="px-3 py-2 text-right text-sm font-medium tabular-nums text-red-600 dark:text-red-400">
-                  {row.moisturePercent == null ? '–' : formatNumber(row.moisturePercent)}
+                  {row.moisturePercent == null
+                    ? '–'
+                    : `${formatNumber(row.moisturePercent)} ${moistureUnitLabel(row.moistureUnit)}`}
                 </td>
                 <td
                   className={`px-3 py-2 text-right text-sm font-bold tabular-nums ${

@@ -10,7 +10,7 @@ import { useAlert } from '@/hooks/useAlert';
 import GamerLoader from '@/components/GamerLoader';
 import { generatePrintPreviewHTML } from '@/lib/reportPrintUtils';
 import ReportFilterCard from '@/components/reports/ReportFilterCard';
-import ReportTabs, { parseReportTab, type ReportTabId } from '@/components/reports/ReportTabs';
+import ReportTabs, { isVisibleReportTab, parseReportTab, type ReportTabId } from '@/components/reports/ReportTabs';
 import { useReportGroupManagementModal } from '@/hooks/useReportGroupManagementModal';
 import { getSelectedGroupId, isDailyPurchaseReport, isSellSummaryReport } from '@/lib/reportProductTypeGroups';
 import ReportSummaryCards from '@/components/reports/ReportSummaryCards';
@@ -70,7 +70,8 @@ export default function ReportsPage() {
     deleteGroup: deleteSellGroup,
   } = saleGroupManager;
   const groupModal = useReportGroupManagementModal();
-  const requestedTab = parseReportTab(searchParams.get('tab'));
+  const parsedTab = parseReportTab(searchParams.get('tab'));
+  const requestedTab = parsedTab && isVisibleReportTab(parsedTab) ? parsedTab : null;
   const {
     loading,
     paging,
@@ -102,12 +103,19 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportTabId>(requestedTab ?? 'daily_purchase');
 
   useEffect(() => {
-    const tab = parseReportTab(searchParams.get('tab')) ?? 'daily_purchase';
+    const parsed = parseReportTab(searchParams.get('tab'));
+    if (parsed && !isVisibleReportTab(parsed)) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', 'daily_purchase');
+      router.replace(`/reports?${params.toString()}`, { scroll: false });
+      return;
+    }
+    const tab = parsed ?? 'daily_purchase';
     setActiveTab(tab);
     if (isEmbeddedTab(tab) || tabFromReportType(reportType) === tab) return;
     setTablePage(1);
     setReportType(tab);
-  }, [reportType, searchParams, setReportType]);
+  }, [reportType, router, searchParams, setReportType]);
 
   useEffect(() => {
     void loadGroups();

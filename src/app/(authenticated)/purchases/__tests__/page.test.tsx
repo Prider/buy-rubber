@@ -174,6 +174,8 @@ describe('PurchasesPage UI integration', () => {
 
     await fillValidPurchaseForm(user, '100', '0');
 
+    expect(screen.getByText('น้ำหนักสุทธิ × ราคาต่อหน่วย − หักความชื้น')).toBeInTheDocument();
+
     const total = document.querySelector('input[name="totalAmount"]') as HTMLInputElement;
     expect(total.value).toBe('5000.00');
 
@@ -183,6 +185,26 @@ describe('PurchasesPage UI integration', () => {
 
     await waitFor(() => {
       expect(total.value).toBe('4990.00');
+    });
+  });
+
+  it('deducts moisture kilograms from net weight', async () => {
+    render(<PurchasesPage />);
+    const user = userEvent.setup();
+
+    await fillValidPurchaseForm(user, '100', '0');
+    await user.click(screen.getByRole('radio', { name: 'กก.' }));
+    expect(screen.getByText('(น้ำหนักสุทธิ − หักความชื้น) × ราคาต่อหน่วย')).toBeInTheDocument();
+
+    const moisture = document.querySelector('input[name="moisturePercent"]') as HTMLInputElement;
+    await user.clear(moisture);
+    await user.type(moisture, '2');
+
+    const netWeight = document.querySelector('input[name="netWeight"]') as HTMLInputElement;
+    const total = document.querySelector('input[name="totalAmount"]') as HTMLInputElement;
+    await waitFor(() => {
+      expect(netWeight.value).toBe('98.00');
+      expect(total.value).toBe('4900.00');
     });
   });
 

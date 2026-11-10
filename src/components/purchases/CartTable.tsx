@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAlert } from '@/hooks/useAlert';
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
+import { formatCurrency, formatNumber } from '@/lib/utils';
+import { moistureUnitLabel, type MoistureUnit } from '@/lib/purchases/moisture';
 import { logger } from '@/lib/logger';
 import { CloseButton } from '@/components/common/CloseButton';
 
@@ -20,6 +21,7 @@ interface CartItem {
   netWeight?: number; // น้ำหนักสุทธิ
   dryWeight?: number;
   moisturePercent?: number;
+  moistureUnit?: MoistureUnit;
   pricePerUnit?: number;
   bonusPrice?: number;
   basePrice?: number;
@@ -126,29 +128,13 @@ export const CartTable: React.FC<CartTableProps> = ({
               <p className="hidden text-xs leading-tight text-gray-600 dark:text-gray-300 lg:block lg:text-sm">
                 {cart.length > 0 
                   ? `รายการรับซื้อที่รอการบันทึก (${cart.length} รายการ)`
-                  : 'ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น'
+                  : ''
                 }
               </p>
             </div>
           </div>
-          {/* Date Display - Only show when cart has items */}
-          {(cart.length > 0 || onClose) && (
-          <div className="flex items-center gap-2 sm:ml-auto">
-          {cart.length > 0 && (
-            <div className="flex w-fit items-center space-x-2 rounded-lg border border-gray-200 bg-white/60 px-3 py-1.5 dark:border-gray-600 dark:bg-gray-700/60">
-              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                <span className="text-gray-500 dark:text-gray-400 mr-1.5">วันที่:</span>
-                {formatDate(cart[0].date)}
-              </div>
-            </div>
-          )}
           {onClose && (
             <CloseButton onClick={onClose} className="lg:hidden" />
-          )}
-          </div>
           )}
         </div>
       </div>
@@ -202,7 +188,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักภาชนะ (กก.)</th>
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักสุทธิ (กก.)</th>
                 <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ราคา/กก.</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-red-600 dark:text-red-400 bg-gray-50 dark:bg-gray-700">หักความชื้น (บาท)</th>
+                <th className="px-4 py-2 text-right text-sm font-semibold text-red-600 dark:text-red-400 bg-gray-50 dark:bg-gray-700">หักความชื้น</th>
                 <th className="px-6 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จำนวนเงิน</th>
                 <th className="px-6 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จัดการ</th>
               </tr>
@@ -250,7 +236,9 @@ export const CartTable: React.FC<CartTableProps> = ({
                     {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
                   </CartCell>
                   <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-3 py-2 text-sm text-right font-medium text-red-600 dark:text-red-400 max-lg:text-left">
-                    {item.type === 'purchase' ? formatNumber(item.moisturePercent || 0) : '-'}
+                    {item.type === 'purchase'
+                      ? `${formatNumber(item.moisturePercent || 0)} ${moistureUnitLabel(item.moistureUnit)}`
+                      : '-'}
                   </CartCell>
                   <CartCell
                     label="จำนวนเงิน"
