@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
@@ -9,6 +9,7 @@ import { usePurchaseForm } from '@/hooks/usePurchaseForm';
 import { useExpenseForm as useServiceFeeForm } from '@/hooks/useExpenseForm';
 import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
+import { PurchasesList, type PurchasesListRef } from '@/components/purchases/PurchasesList';
 import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
 import { CartTable } from '@/components/purchases/CartTable';
 import GamerLoader from '@/components/GamerLoader';
@@ -23,6 +24,8 @@ export default function PurchasesPage() {
   const { user, isLoading } = useAuth();
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(false);
+  const historyRef = useRef<PurchasesListRef>(null);
   
   // Data loading hook
   const { loading: _loading, members, productTypes, loadData, loadPurchases } = usePurchaseData();
@@ -123,6 +126,7 @@ export default function PurchasesPage() {
       // Reset all form fields including member selection after successful save
       // Note: Modal is shown by CartTable's handleSaveAndAskPrint on success
       resetAllFields();
+      historyRef.current?.refresh();
     } catch (error) {
       // Error is already handled by useCart hook (setError)
       // Don't show modal on error
@@ -141,7 +145,7 @@ export default function PurchasesPage() {
       return;
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !entryOpen) {
         setCartSheetOpen(false);
       }
     };
@@ -157,7 +161,25 @@ export default function PurchasesPage() {
         main.style.overflow = previousOverflow;
       }
     };
-  }, [cartSheetOpen]);
+  }, [cartSheetOpen, entryOpen]);
+
+  const openPurchaseEntry = () => {
+    setCartSheetOpen(false);
+    setEntryOpen(true);
+  };
+
+  useEffect(() => {
+    if (!entryOpen) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setEntryOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [entryOpen]);
 
   const handlePreview = () => {
     previewCart();
@@ -197,11 +219,99 @@ export default function PurchasesPage() {
 
   return (
     <>
-      <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
-        {/* Form fills the screen below desktop. Cart stays beside it from lg up. */}
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:overflow-hidden">
-          {/* Left Side - Purchase Entry Card */}
-          <div className="flex min-h-0 min-w-0 flex-col lg:col-span-2 lg:h-full lg:overflow-hidden">
+      <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 max-lg:pb-20 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(440px,1fr)_minmax(0,1fr)] lg:overflow-hidden">
+          <div className="hidden min-w-0 lg:flex lg:h-full lg:flex-col lg:overflow-hidden">
+            <CartTable
+              cart={cart}
+              submitting={submitting}
+              totalAmount={totalAmount}
+              printCart={printCart}
+              saveCartToDb={handleSaveCart}
+              removeFromCart={removeFromCart}
+              onShowPrintModal={handleShowPrintModal}
+              clearCart={clearCart}
+              error={cartError}
+              setError={setCartError}
+              onRecordPurchase={openPurchaseEntry}
+            />
+          </div>
+
+          <div className="flex min-h-0 min-w-0 flex-col lg:h-full lg:overflow-hidden">
+            <PurchasesList ref={historyRef} />
+          </div>
+        </div>
+      </div>
+
+      {!cartSheetOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 flex min-h-[calc(3.5rem+env(safe-area-inset-bottom))] items-stretch border-t border-green-700 bg-green-600 pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:left-16 lg:hidden">
+        <button
+          type="button"
+          onClick={openPurchaseEntry}
+          className="flex shrink-0 items-center border-r border-green-700 px-4 text-sm font-semibold"
+        >
+          บันทึกการรับซื้อ
+        </button>
+        <button
+          type="button"
+          onClick={() => setCartSheetOpen(true)}
+          className="flex min-w-0 flex-1 items-center gap-3 px-4 text-white"
+        >
+          <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white/20 px-2 text-sm font-bold">
+            {cart.length}
+          </span>
+          <span className="min-w-0 flex-1 text-left text-sm font-semibold">
+            {cart.length > 0 ? 'ดูตะกร้า' : 'ตะกร้าว่าง'}
+          </span>
+          <span className="shrink-0 text-sm font-bold">{formatCurrency(totalAmount)}</span>
+        </button>
+        </div>
+      )}
+
+      {cartSheetOpen && (
+        <div className="fixed inset-0 z-50 md:left-16 lg:hidden" role="dialog" aria-modal="true" aria-label="ตะกร้า">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="ปิดตะกร้า"
+            onClick={() => setCartSheetOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 flex h-[min(88dvh,100%)] min-h-0 flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl dark:bg-gray-900 md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[min(32rem,100%)] md:rounded-none md:rounded-l-3xl">
+            <div className="flex justify-center pt-2 md:hidden" aria-hidden="true">
+              <span className="h-1.5 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+            </div>
+            <CartTable
+              cart={cart}
+              submitting={submitting}
+              totalAmount={totalAmount}
+              printCart={printCart}
+              saveCartToDb={handleSaveCart}
+              removeFromCart={removeFromCart}
+              onShowPrintModal={handleShowPrintModal}
+              clearCart={clearCart}
+              error={cartError}
+              setError={setCartError}
+              onClose={() => setCartSheetOpen(false)}
+              onRecordPurchase={openPurchaseEntry}
+            />
+          </div>
+        </div>
+      )}
+
+      {entryOpen && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="ปิดบันทึกการรับซื้อ"
+            onClick={() => setEntryOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="purchase-entry-title"
+            className="relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl"
+          >
             <PurchaseEntryCard
               formData={formData}
               error={formError}
@@ -232,6 +342,7 @@ export default function PurchasesPage() {
               clearProductTypeSearch={clearProductTypeSearch}
               setShowProductTypeDropdown={setShowProductTypeDropdown}
               submitting={submitting}
+              onClose={() => setEntryOpen(false)}
               serviceFeeCard={
                 SHOW_SERVICE_FEE_CARD ? (
                   <ServiceFeeCard
@@ -246,67 +357,6 @@ export default function PurchasesPage() {
                   />
                 ) : undefined
               }
-            />
-          </div>
-
-          {/* Desktop cart stays beside the form */}
-          <div className="hidden min-w-0 lg:col-span-3 lg:flex lg:h-full lg:flex-col lg:overflow-hidden">
-            <CartTable
-              cart={cart}
-              submitting={submitting}
-              totalAmount={totalAmount}
-              printCart={printCart}
-              saveCartToDb={handleSaveCart}
-              removeFromCart={removeFromCart}
-              onShowPrintModal={handleShowPrintModal}
-              clearCart={clearCart}
-              error={cartError}
-              setError={setCartError}
-            />
-          </div>
-        </div>
-      </div>
-
-      {!cartSheetOpen && (
-        <button
-          type="button"
-          onClick={() => setCartSheetOpen(true)}
-          className="fixed bottom-0 left-0 right-0 z-30 flex min-h-[calc(3.5rem+env(safe-area-inset-bottom))] items-center gap-3 border-t border-green-700 bg-green-600 px-4 pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:left-16 lg:hidden"
-        >
-          <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white/20 px-2 text-sm font-bold">
-            {cart.length}
-          </span>
-          <span className="min-w-0 flex-1 text-left text-sm font-semibold">
-            {cart.length > 0 ? 'ดูตะกร้า' : 'ตะกร้าว่าง'}
-          </span>
-          <span className="shrink-0 text-sm font-bold">{formatCurrency(totalAmount)}</span>
-        </button>
-      )}
-
-      {cartSheetOpen && (
-        <div className="fixed inset-0 z-50 md:left-16 lg:hidden" role="dialog" aria-modal="true" aria-label="ตะกร้า">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/50"
-            aria-label="ปิดตะกร้า"
-            onClick={() => setCartSheetOpen(false)}
-          />
-          <div className="absolute inset-x-0 bottom-0 flex h-[min(88dvh,100%)] min-h-0 flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl dark:bg-gray-900 md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[min(32rem,100%)] md:rounded-none md:rounded-l-3xl">
-            <div className="flex justify-center pt-2 md:hidden" aria-hidden="true">
-              <span className="h-1.5 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
-            </div>
-            <CartTable
-              cart={cart}
-              submitting={submitting}
-              totalAmount={totalAmount}
-              printCart={printCart}
-              saveCartToDb={handleSaveCart}
-              removeFromCart={removeFromCart}
-              onShowPrintModal={handleShowPrintModal}
-              clearCart={clearCart}
-              error={cartError}
-              setError={setCartError}
-              onClose={() => setCartSheetOpen(false)}
             />
           </div>
         </div>

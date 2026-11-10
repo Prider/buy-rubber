@@ -75,6 +75,7 @@ interface CartTableProps {
   error?: string;
   setError?: (error: string) => void;
   onClose?: () => void;
+  onRecordPurchase?: () => void;
 }
 
 export const CartTable: React.FC<CartTableProps> = ({
@@ -88,6 +89,7 @@ export const CartTable: React.FC<CartTableProps> = ({
   error,
   setError,
   onClose,
+  onRecordPurchase,
 }) => {
   const { showConfirm } = useAlert();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -133,9 +135,23 @@ export const CartTable: React.FC<CartTableProps> = ({
               </p>
             </div>
           </div>
-          {onClose && (
-            <CloseButton onClick={onClose} className="lg:hidden" />
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {onRecordPurchase && (
+              <button
+                type="button"
+                onClick={onRecordPurchase}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition-colors duration-150 ease-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                บันทึกการรับซื้อ
+              </button>
+            )}
+            {onClose && (
+              <CloseButton onClick={onClose} className="lg:hidden" />
+            )}
+          </div>
         </div>
       </div>
 
@@ -179,36 +195,36 @@ export const CartTable: React.FC<CartTableProps> = ({
           ref={scrollContainerRef}
           className="min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain max-lg:p-2"
         >
-          <table className="w-full max-lg:block">
-            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 max-lg:hidden">
+          <table className="w-full max-lg:block lg:table-fixed">
+            <thead className={cart.length === 0 ? 'hidden' : 'sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 max-lg:hidden'}>
               <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ประเภท</th>
-                <th className="px-6 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">รายละเอียด</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักรวมภาชนะ (กก.)</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักภาชนะ (กก.)</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">น้ำหนักสุทธิ (กก.)</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">ราคา/กก.</th>
-                <th className="px-4 py-2 text-right text-sm font-semibold text-red-600 dark:text-red-400 bg-gray-50 dark:bg-gray-700">หักความชื้น</th>
-                <th className="px-6 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จำนวนเงิน</th>
-                <th className="px-6 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">จัดการ</th>
+                <th className="w-[7%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ประเภท</th>
+                <th className="w-[10%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">รายละเอียด</th>
+                <th className="w-[13%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนักรวม<br />ภาชนะ (กก.)</th>
+                <th className="w-[9%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />ภาชนะ (กก.)</th>
+                <th className="w-[13%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />สุทธิ (กก.)</th>
+                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ราคา/กก.</th>
+                <th className="w-[9%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-red-600 dark:bg-gray-700 dark:text-red-400">หัก<br />ความชื้น</th>
+                <th className="w-[21%] bg-gray-50 px-1.5 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จำนวนเงิน</th>
+                <th className="w-[10%] bg-gray-50 px-1 py-1.5 text-center align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-600 max-lg:block max-lg:space-y-2 max-lg:divide-y-0">
             {cart.length > 0 ? (
               cart.map((item, index) => (
                 <tr key={item.id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-2 max-lg:gap-y-1 max-lg:rounded-lg max-lg:border max-lg:border-gray-200 max-lg:p-2 dark:max-lg:border-gray-600 lg:table-row ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
-                  <CartCell label="ประเภท" wide className="px-4 py-2 text-sm">
+                  <CartCell label="ประเภท" wide className="px-1.5 py-1.5 text-xs">
                     {item.type === 'purchase' ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 whitespace-nowrap">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
                         รับซื้อ
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 whitespace-nowrap">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900 dark:text-red-200">
                         ค่าบริการ
                       </span>
                     )}
                   </CartCell>
-                  <CartCell label="รายละเอียด" wide className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
+                  <CartCell label="รายละเอียด" wide className="break-words px-1.5 py-1.5 text-xs text-gray-900 dark:text-gray-100">
                     {item.type === 'purchase' ? (
                       <div>
                         <div className="font-medium">{item.memberName}</div>
@@ -223,27 +239,32 @@ export const CartTable: React.FC<CartTableProps> = ({
                       </div>
                     )}
                   </CartCell>
-                  <CartCell label="รวมภาชนะ" className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="รวมภาชนะ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.grossWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="ภาชนะ" className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="ภาชนะ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.containerWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="สุทธิ" className="px-3 py-2 text-sm text-right font-semibold text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="สุทธิ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.netWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="ราคา" className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="ราคา" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
                   </CartCell>
-                  <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-3 py-2 text-sm text-right font-medium text-red-600 dark:text-red-400 max-lg:text-left">
-                    {item.type === 'purchase'
-                      ? `${formatNumber(item.moisturePercent || 0)} ${moistureUnitLabel(item.moistureUnit)}`
-                      : '-'}
+                  <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-1 py-1.5 text-right text-xs font-medium leading-tight text-red-600 dark:text-red-400 max-lg:text-left">
+                    {item.type === 'purchase' ? (
+                      <>
+                        <span className="tabular-nums">{formatNumber(item.moisturePercent || 0)}</span>
+                        <span className="mt-0.5 block text-[10px]">{moistureUnitLabel(item.moistureUnit)}</span>
+                      </>
+                    ) : (
+                      '-'
+                    )}
                   </CartCell>
                   <CartCell
                     label="จำนวนเงิน"
                     wide
-                    className={`px-4 py-2 text-right text-sm font-semibold max-lg:text-left ${
+                    className={`whitespace-nowrap px-1 py-1.5 text-right text-xs font-semibold tabular-nums max-lg:text-left ${
                     item.totalAmount >= 0 
                       ? 'text-green-600 dark:text-green-400' 
                       : 'text-red-600 dark:text-red-400'
@@ -251,10 +272,10 @@ export const CartTable: React.FC<CartTableProps> = ({
                   >
                     {formatCurrency(item.totalAmount)}
                   </CartCell>
-                  <CartCell label="จัดการ" wide className="px-4 py-2 text-center max-lg:text-left">
+                  <CartCell label="จัดการ" wide className="whitespace-nowrap px-1 py-1.5 text-center max-lg:text-left">
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-600 transition-colors duration-150 ease-out hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:px-2.5 max-lg:py-1"
+                      className="rounded-md bg-red-50 px-1.5 py-1 text-[11px] font-medium text-red-600 transition-colors duration-150 ease-out hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:px-2.5 max-lg:py-1"
                     >
                       ลบ
                     </button>
@@ -283,24 +304,23 @@ export const CartTable: React.FC<CartTableProps> = ({
         </div>
         <div className={`flex-shrink-0 border-t-2 border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:grid lg:grid-cols-9 lg:gap-0 lg:px-0">
-              <div className="text-base font-bold text-gray-900 dark:text-white lg:col-span-7 lg:px-4 lg:text-right">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:justify-end lg:gap-3 lg:px-1.5 lg:pr-[10%]">
+              <div className="text-sm font-bold text-gray-900 dark:text-white">
                 รวมทั้งหมด
               </div>
-              <div className={`text-base font-bold lg:col-span-1 lg:px-4 lg:text-right ${
+              <div className={`text-sm font-bold tabular-nums ${
                 totalAmount >= 0 
                   ? 'text-green-600 dark:text-green-400' 
                   : 'text-red-600 dark:text-red-400'
               }`}>
                 {formatCurrency(totalAmount)}
               </div>
-              <div className="hidden lg:col-span-1 lg:block lg:px-4 lg:py-2"></div>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800">
             <div className="px-4 py-3">
               <div className="flex flex-col lg:flex-row gap-2 lg:items-start lg:justify-between">
-                <div className="flex w-full items-center justify-end gap-2 max-lg:[&_button]:relative max-lg:[&_button]:flex max-lg:[&_button]:min-h-11 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center">
+                <div className="flex w-full items-center justify-end gap-3 max-lg:[&_button]:relative max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center">
                   <button
                     type="button"
                     onClick={async () => {
@@ -319,20 +339,20 @@ export const CartTable: React.FC<CartTableProps> = ({
                       }
                     }}
                     disabled={submitting || cart.length === 0}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="min-h-12 rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                   >
                     รีเซ็ตตะกร้า
                   </button>
                   <button
                     onClick={handleSaveAndAskPrint}
                     disabled={submitting || cart.length === 0}
-                    className="px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-150 ease-out font-medium text-xs shadow-md hover:shadow-lg disabled:shadow-none motion-safe:hover:-translate-y-0.5 disabled:transform-none"
+                    className="min-h-12 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-[box-shadow,transform] duration-150 ease-out hover:from-green-700 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none motion-safe:hover:-translate-y-0.5 dark:from-green-500 dark:to-emerald-500 dark:hover:from-green-600 dark:hover:to-emerald-600"
                   >
                     {submitting ? (
                       <span>กำลังบันทึก...</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 max-lg:w-full max-lg:justify-center">
-                        <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="inline-flex items-center gap-1.5 max-lg:w-full max-lg:justify-center">
+                        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <span>บันทึกข้อมูล</span>

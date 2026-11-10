@@ -104,13 +104,13 @@ test.describe('Purchase history', () => {
 
     await gotoPurchaseHistory(page)
 
-    await expect(page.getByRole('columnheader', { name: 'เลขที่รับซื้อ' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'เลขที่รับซื้อ' })).toHaveCount(0)
     await expect(page.getByRole('columnheader', { name: 'วันที่' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'สมาชิก' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'รายการ' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'ยอดรวม' })).toBeVisible()
 
-    const row = page.getByRole('row').filter({ hasText: transaction.purchaseNo })
+    const row = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(row).toBeVisible()
     await expect(row).toContainText(`${testMember.name} (${testMember.code})`)
     await expect(row).toContainText('รับซื้อ: 1 รายการ')
@@ -149,9 +149,8 @@ test.describe('Purchase history', () => {
 
     await searchTransactions(page, testMember.code)
 
-    const memberRows = page.getByRole('row').filter({ hasText: testMember.name })
-    await expect(memberRows.filter({ hasText: todayTransaction.purchaseNo })).toBeVisible()
-    await expect(memberRows.filter({ hasText: otherMemberTransaction.purchaseNo })).toHaveCount(0)
+    await expect(page.locator(`tr[data-purchase-no="${todayTransaction.purchaseNo}"]`)).toBeVisible()
+    await expect(page.locator(`tr[data-purchase-no="${otherMemberTransaction.purchaseNo}"]`)).toHaveCount(0)
 
     const defaultList = await getPurchaseTransactions(request, adminToken)
     const defaultPurchaseNos = defaultList.transactions.map((tx) => tx.purchaseNo)
@@ -193,7 +192,7 @@ test.describe('Purchase history', () => {
 
     await gotoPurchaseHistory(page)
 
-    const row = page.getByRole('row').filter({ hasText: transaction.purchaseNo })
+    const row = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(row).toBeVisible()
     await expect(row.getByRole('button', { name: 'ลบ' })).toBeVisible()
 
@@ -212,7 +211,7 @@ test.describe('Purchase history', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'ลบ' }).click()
     await deleteReq
 
-    await expect(page.getByRole('row').filter({ hasText: transaction.purchaseNo })).toHaveCount(0)
+    await expect(page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)).toHaveCount(0)
     await expect(page.getByText(`ลบรายการ ${transaction.purchaseNo} เรียบร้อยแล้ว`)).toBeVisible()
 
     const index = createdPurchaseIds.indexOf(purchase.id)
@@ -235,7 +234,7 @@ test.describe('Purchase history', () => {
     await loginAs(page, 'demo', 'demo@123')
     await gotoPurchaseHistory(page)
 
-    const row = page.getByRole('row').filter({ hasText: transaction.purchaseNo })
+    const row = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(row).toBeVisible()
     await expect(row.getByRole('button', { name: 'ลบ' })).toHaveCount(0)
     await expect(row.getByRole('button', { name: 'พิมพ์' })).toBeVisible()
@@ -273,7 +272,7 @@ test.describe('Purchase history', () => {
     await gotoPurchaseHistory(page)
     await searchTransactions(page, transaction.purchaseNo)
 
-    const rows = page.getByRole('row').filter({ hasText: transaction.purchaseNo })
+    const rows = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(rows).toHaveCount(1)
 
     const row = rows.first()

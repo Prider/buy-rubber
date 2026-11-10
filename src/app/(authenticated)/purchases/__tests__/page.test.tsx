@@ -84,9 +84,24 @@ vi.mock('@/hooks/useCart', () => ({
   },
 }));
 
+vi.mock('@/components/purchases/PurchasesList', () => ({
+  PurchasesList: React.forwardRef(() => <div>ประวัติการรับซื้อทั้งหมด</div>),
+}));
+
 vi.mock('@/components/purchases/CartTable', () => ({
-  CartTable: ({ cart, saveCartToDb }: { cart: any[]; saveCartToDb: () => Promise<void> }) => (
+  CartTable: ({
+    cart,
+    saveCartToDb,
+    onRecordPurchase,
+  }: {
+    cart: any[];
+    saveCartToDb: () => Promise<void>;
+    onRecordPurchase?: () => void;
+  }) => (
     <div data-testid="cart-table">
+      <button type="button" onClick={onRecordPurchase}>
+        บันทึกการรับซื้อ
+      </button>
       <p>cart-count:{cart.length}</p>
       <button type="button" onClick={saveCartToDb}>
         บันทึกตะกร้า
@@ -113,7 +128,15 @@ describe('PurchasesPage UI integration', () => {
     );
   });
 
+  const openPurchaseEntry = async (user: ReturnType<typeof userEvent.setup>) => {
+    if (screen.queryByPlaceholderText('ค้นหาสมาชิกตามชื่อหรือรหัส')) {
+      return;
+    }
+    await user.click(screen.getAllByRole('button', { name: 'บันทึกการรับซื้อ' })[0]);
+  };
+
   const fillValidPurchaseForm = async (user: ReturnType<typeof userEvent.setup>, gross: string, container: string) => {
+    await openPurchaseEntry(user);
     const memberSearch = screen.getByPlaceholderText('ค้นหาสมาชิกตามชื่อหรือรหัส');
     await user.click(memberSearch);
     await user.clear(memberSearch);
@@ -142,6 +165,7 @@ describe('PurchasesPage UI integration', () => {
   it('auto-calculates netWeight from gross minus container', async () => {
     render(<PurchasesPage />);
     const user = userEvent.setup();
+    await openPurchaseEntry(user);
 
     const grossWeightInput = document.querySelector('input[name="grossWeight"]') as HTMLInputElement;
     const containerWeightInput = document.querySelector('input[name="containerWeight"]') as HTMLInputElement;
@@ -158,6 +182,7 @@ describe('PurchasesPage UI integration', () => {
   it('leaves unit price empty until the user enters it', async () => {
     render(<PurchasesPage />);
     const user = userEvent.setup();
+    await openPurchaseEntry(user);
 
     const productSearch = screen.getByPlaceholderText('ค้นหาตามชื่อหรือรหัส...');
     await user.click(productSearch);
@@ -174,7 +199,7 @@ describe('PurchasesPage UI integration', () => {
 
     await fillValidPurchaseForm(user, '100', '0');
 
-    expect(screen.getByText('น้ำหนักสุทธิ × ราคาต่อหน่วย − หักความชื้น')).toBeInTheDocument();
+    expect(screen.getByText('(น้ำหนักสุทธิ × ราคาต่อหน่วย) − หักความชื้น')).toBeInTheDocument();
 
     const total = document.querySelector('input[name="totalAmount"]') as HTMLInputElement;
     expect(total.value).toBe('5000.00');
@@ -211,6 +236,7 @@ describe('PurchasesPage UI integration', () => {
   it('shows validation error when container weight is invalid', async () => {
     render(<PurchasesPage />);
     const user = userEvent.setup();
+    await openPurchaseEntry(user);
 
     const grossWeightInput = document.querySelector('input[name="grossWeight"]') as HTMLInputElement;
     const containerWeightInput = document.querySelector('input[name="containerWeight"]') as HTMLInputElement;

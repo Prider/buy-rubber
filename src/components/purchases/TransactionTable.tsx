@@ -1,9 +1,37 @@
 'use client';
 
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useState } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { PurchaseTransaction } from './types';
 import { TransactionActionButtons } from './TransactionActionButtons';
+
+function PurchaseNoToggle({ pressed, onClick }: { pressed: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={pressed}
+      title={pressed ? 'ซ่อนเลขที่' : 'แสดงเลขที่'}
+      className={`inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-semibold transition-colors ${
+        pressed
+          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
+          : 'text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600'
+      }`}
+    >
+      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        {pressed ? (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        ) : (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        )}
+        {!pressed && (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        )}
+      </svg>
+      เลขที่
+    </button>
+  );
+}
 
 function formatCompactDateTime(value: string) {
   const date = new Date(value);
@@ -33,6 +61,7 @@ interface TransactionRowProps {
   transaction: PurchaseTransaction;
   index: number;
   isAdmin: boolean;
+  showPurchaseNo: boolean;
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
   onDelete: (transaction: PurchaseTransaction) => void;
@@ -42,6 +71,7 @@ const TransactionRow = memo<TransactionRowProps>(({
   transaction,
   index,
   isAdmin,
+  showPurchaseNo,
   onPrint,
   onDownloadPDF,
   onDelete,
@@ -99,27 +129,27 @@ const TransactionRow = memo<TransactionRowProps>(({
   }, [transaction, onDelete]);
 
   return (
-    <tr className={rowClassName}>
-      <td className="px-3 py-3 text-sm font-medium text-blue-600 break-all dark:text-blue-400 xl:px-4">
-        {transaction.purchaseNo}
+    <tr className={rowClassName} data-purchase-no={transaction.purchaseNo}>
+      <td className={showPurchaseNo ? 'whitespace-nowrap px-3 py-3 text-xs font-medium text-blue-600 dark:text-blue-400 xl:px-4 xl:text-sm' : 'w-0 p-0'}>
+        {showPurchaseNo ? transaction.purchaseNo : null}
       </td>
-      <td className="px-3 py-3 text-sm text-gray-900 dark:text-gray-100 xl:px-4">
+      <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-900 dark:text-gray-100">
         <div className="leading-tight">{formattedDate.date}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400">{formattedDate.time}</div>
       </td>
-      <td className="px-3 py-3 text-sm text-gray-900 break-words dark:text-gray-100 xl:px-4">
+      <td className="px-3 py-3 text-sm text-gray-900 dark:text-gray-100 xl:px-4">
         {memberDisplay}
       </td>
-      <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-400 xl:px-4">
+      <td className="px-2 py-3 text-xs text-gray-600 dark:text-gray-400">
         <div className="space-y-1">
           <div>{purchaseCountText}</div>
           {serviceFeeText && <div>{serviceFeeText}</div>}
         </div>
       </td>
-      <td className="px-3 py-3 text-right text-xs font-semibold tabular-nums text-purple-600 break-words dark:text-purple-400 xl:px-4 xl:text-sm">
+      <td className="whitespace-nowrap px-1.5 py-3 text-left text-xs font-semibold tabular-nums text-purple-600 dark:text-purple-400">
         {formattedAmount}
       </td>
-      <td className="px-2 py-2 text-sm xl:px-3">
+      <td className="px-1 py-2 text-sm">
         <TransactionActionButtons
           transaction={transaction}
           isAdmin={isAdmin}
@@ -137,6 +167,7 @@ TransactionRow.displayName = 'TransactionRow';
 const TransactionCard = memo<TransactionRowProps>(({
   transaction,
   isAdmin,
+  showPurchaseNo,
   onPrint,
   onDownloadPDF,
   onDelete,
@@ -168,13 +199,18 @@ const TransactionCard = memo<TransactionRowProps>(({
   const handleDelete = useCallback(() => onDelete(transaction), [transaction, onDelete]);
 
   return (
-    <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <article
+      className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      data-purchase-no={transaction.purchaseNo}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="break-all text-sm font-semibold text-blue-600 dark:text-blue-400">
-            {transaction.purchaseNo}
-          </p>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          {showPurchaseNo && (
+            <p className="break-all text-sm font-semibold text-blue-600 dark:text-blue-400">
+              {transaction.purchaseNo}
+            </p>
+          )}
+          <p className={showPurchaseNo ? 'mt-0.5 text-xs text-gray-500 dark:text-gray-400' : 'text-sm font-medium text-gray-900 dark:text-gray-100'}>
             {formattedDate.date} · {formattedDate.time}
           </p>
         </div>
@@ -216,6 +252,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
 }) => {
   // Data is already sorted by the API; keep the incoming order
   const sortedTransactions = useMemo(() => transactions, [transactions]);
+  const [showPurchaseNo, setShowPurchaseNo] = useState(false);
+  const togglePurchaseNo = useCallback(() => setShowPurchaseNo((open) => !open), []);
 
   // Memoize empty state
   const emptyState = useMemo(() => (
@@ -229,12 +267,16 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
   return (
     <>
       <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 md:p-4 lg:hidden">
+        <div className="md:col-span-2">
+          <PurchaseNoToggle pressed={showPurchaseNo} onClick={togglePurchaseNo} />
+        </div>
         {sortedTransactions.map((transaction, index) => (
           <TransactionCard
             key={transaction.purchaseNo}
             transaction={transaction}
             index={index}
             isAdmin={isAdmin}
+            showPurchaseNo={showPurchaseNo}
             onPrint={onPrint}
             onDownloadPDF={onDownloadPDF}
             onDelete={onDelete}
@@ -243,25 +285,25 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
       </div>
 
       <div className="hidden lg:block">
-        <table className="w-full table-fixed">
+        <table className={showPurchaseNo ? 'w-full min-w-[960px]' : 'w-full table-fixed'}>
           <thead className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 dark:border-gray-600 dark:from-gray-700 dark:to-gray-600">
             <tr>
-              <th className="w-[16%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
-                เลขที่
+              <th className="w-14 whitespace-nowrap px-1.5 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+                <PurchaseNoToggle pressed={showPurchaseNo} onClick={togglePurchaseNo} />
               </th>
-              <th className="w-[14%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
+              <th className="w-[4.75rem] whitespace-nowrap px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
                 วันที่
               </th>
-              <th className="w-[22%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
+              <th className="w-[5.5rem] px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
                 สมาชิก
               </th>
-              <th className="w-[16%] px-3 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
+              <th className="w-[7.5rem] px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
                 รายการ
               </th>
-              <th className="w-[14%] px-3 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-4">
+              <th className="w-[8.5rem] whitespace-nowrap px-1.5 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
                 ยอดรวม
               </th>
-              <th className="w-[18%] px-2 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 xl:px-3">
+              <th className="px-1 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200">
                 การจัดการ
               </th>
             </tr>
@@ -273,6 +315,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
                 transaction={transaction}
                 index={index}
                 isAdmin={isAdmin}
+                showPurchaseNo={showPurchaseNo}
                 onPrint={onPrint}
                 onDownloadPDF={onDownloadPDF}
                 onDelete={onDelete}

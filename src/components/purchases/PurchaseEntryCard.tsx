@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { CloseButton } from '@/components/common/CloseButton';
 import {
   MOISTURE_EXCEEDS_ERROR,
   MOISTURE_EXCEEDS_WEIGHT_ERROR,
@@ -71,6 +72,7 @@ interface PurchaseEntryCardProps {
   setShowProductTypeDropdown: (show: boolean) => void;
   submitting?: boolean;
   serviceFeeCard?: React.ReactNode;
+  onClose?: () => void;
 }
 
 export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
@@ -100,6 +102,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   setShowProductTypeDropdown,
   submitting = false,
   serviceFeeCard,
+  onClose,
 }) => {
   const router = useRouter();
   const [entryTab, setEntryTab] = React.useState<'purchase' | 'fee'>('purchase');
@@ -341,23 +344,21 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
     : amountBeforeMoisture > 0 && moistureDeduction > amountBeforeMoisture;
 
   return (
-    <div className="flex flex-col overflow-visible bg-[var(--app-bg)] lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-lg lg:backdrop-blur-sm dark:lg:border-gray-700 dark:lg:bg-gray-800">
-      {/* Header */}
-      <div className="hidden border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-2 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 lg:block lg:px-4 lg:py-2.5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
-            <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold leading-tight lg:text-xl">
-              <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-                บันทึกการรับซื้อ
-              </span>
-            </h2>
-          </div>
+    <div className="flex flex-col bg-white dark:bg-gray-800">
+      <div className="flex shrink-0 items-center gap-2 border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-3 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
+          <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
         </div>
+        <div className="min-w-0 flex-1">
+          <h2 id="purchase-entry-title" className="text-lg font-bold leading-tight lg:text-xl">
+            <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
+              บันทึกการรับซื้อ
+            </span>
+          </h2>
+        </div>
+        {onClose ? <CloseButton onClick={onClose} disabled={submitting} /> : null}
       </div>
 
       {serviceFeeCard && (
@@ -392,7 +393,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
       )}
 
       {/* Content */}
-      <div className={`px-3 py-3 max-lg:pb-32 lg:p-0 ${entryTab === 'fee' ? 'max-lg:hidden' : ''}`}>
+      <div className={entryTab === 'fee' ? 'max-lg:hidden' : ''}>
         <form onSubmit={(e) => { 
           e.preventDefault(); 
           addToCart(); 
@@ -400,7 +401,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             productTypeRef.current?.focus();
           });
         }} className="max-lg:[&_input]:min-h-11 max-lg:[&_input]:rounded-xl max-lg:[&_input]:text-base max-lg:[&_label]:whitespace-nowrap max-lg:[&_label]:text-[11px] max-lg:[&_label]:font-semibold max-lg:[&_label]:leading-4 lg:[&_input]:min-h-0 lg:[&_input]:rounded-lg lg:[&_input]:text-sm lg:[&_label]:whitespace-normal lg:[&_label]:text-xs lg:[&_label]:font-medium">
-          <div className="flex flex-col gap-3 lg:gap-4 lg:p-4">
+          <div className="flex flex-col gap-3 px-3 py-3 lg:gap-4 lg:p-4">
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-900/20">
               <div className="flex items-center space-x-1.5">
@@ -868,9 +869,10 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             </div>
           </div>
           </div>
+          </div>
 
           {/* Actions */}
-          <div className="flex shrink-0 gap-3 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:fixed max-lg:inset-x-0 max-lg:z-[35] max-lg:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:[&_button]:flex max-lg:[&_button]:min-h-12 max-lg:[&_button]:flex-1 max-lg:[&_button]:items-center max-lg:[&_button]:justify-center max-lg:[&_button]:rounded-2xl max-lg:[&_button]:text-sm md:left-16 lg:static lg:inset-auto lg:z-auto lg:justify-end lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 dark:lg:border-0 dark:lg:bg-transparent">
+          <div className="flex shrink-0 justify-end gap-3 border-t border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 max-lg:[&_button]:min-h-12">
             <button
               type="button"
               onClick={resetForm}
@@ -892,7 +894,6 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                 <span>เพิ่มลงตะกร้า</span>
               </div>
             </button>
-          </div>
           </div>
         </form>
       </div>

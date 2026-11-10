@@ -68,7 +68,8 @@ test.describe('Purchase flow', () => {
     const productTypesReq = page.waitForResponse((r) => r.url().includes('/api/product-types'))
 
     await page.goto('/purchases')
-    await expect(page.getByText('บันทึกการรับซื้อ')).toBeVisible()
+    await page.getByRole('button', { name: 'บันทึกการรับซื้อ' }).first().click()
+    await expect(page.getByRole('heading', { name: 'บันทึกการรับซื้อ' })).toBeVisible()
     await Promise.all([membersReq, productTypesReq])
   }
 
