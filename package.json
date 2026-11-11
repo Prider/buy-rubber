@@ -26,6 +26,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seedDemoLook.ts",
     "db:seed:customer": "tsx prisma/seedCustomer.ts",
     "db:migrate:old": "node scripts/migrate-old-db.js",
     "db:seed:sales:for:test": "tsx prisma/seedSale.ts",
