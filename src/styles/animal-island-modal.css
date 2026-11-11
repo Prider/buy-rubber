@@ -139,21 +139,27 @@ html.dark body .animal-modalClipped-7IuAw {
 @media (max-width: 1023px) {
   .report-group-modal,
   .service-fee-category-modal,
-  .expense-category-modal {
+  .expense-category-modal,
+  .selling-type-modal,
+  .sale-expense-type-modal {
     max-width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
   }
 
   .report-group-modal.app-island-modal .animal-title-s6pv3,
   .service-fee-category-modal.app-island-modal .animal-title-s6pv3,
-  .expense-category-modal.app-island-modal .animal-title-s6pv3 {
+  .expense-category-modal.app-island-modal .animal-title-s6pv3,
+  .selling-type-modal.app-island-modal .animal-title-s6pv3,
+  .sale-expense-type-modal.app-island-modal .animal-title-s6pv3 {
     font-size: 22px;
     line-height: 1.3;
   }
 
   .report-group-modal .animal-header-udOSi,
   .service-fee-category-modal .animal-header-udOSi,
-  .expense-category-modal .animal-header-udOSi {
+  .expense-category-modal .animal-header-udOSi,
+  .selling-type-modal .animal-header-udOSi,
+  .sale-expense-type-modal .animal-header-udOSi {
     padding-bottom: 8px;
   }
 }
@@ -161,13 +167,17 @@ html.dark body .animal-modalClipped-7IuAw {
 @media (max-width: 767px) {
   .report-group-modal .animal-modalClipped-7IuAw,
   .service-fee-category-modal .animal-modalClipped-7IuAw,
-  .expense-category-modal .animal-modalClipped-7IuAw {
+  .expense-category-modal .animal-modalClipped-7IuAw,
+  .selling-type-modal .animal-modalClipped-7IuAw,
+  .sale-expense-type-modal .animal-modalClipped-7IuAw {
     padding: 64px 48px 24px;
   }
 
   .report-group-modal.app-island-modal .animal-title-s6pv3,
   .service-fee-category-modal.app-island-modal .animal-title-s6pv3,
-  .expense-category-modal.app-island-modal .animal-title-s6pv3 {
+  .expense-category-modal.app-island-modal .animal-title-s6pv3,
+  .selling-type-modal.app-island-modal .animal-title-s6pv3,
+  .sale-expense-type-modal.app-island-modal .animal-title-s6pv3 {
     width: auto;
     max-width: 15rem;
     margin-right: auto;
@@ -178,7 +188,9 @@ html.dark body .animal-modalClipped-7IuAw {
 
   .report-group-modal .report-group-modal-footer .animal-btn-QoKe1,
   .service-fee-category-modal .service-fee-category-modal-footer .animal-btn-QoKe1,
-  .expense-category-modal .expense-category-modal-footer .animal-btn-QoKe1 {
+  .expense-category-modal .expense-category-modal-footer .animal-btn-QoKe1,
+  .selling-type-modal .selling-type-modal-footer .animal-btn-QoKe1,
+  .sale-expense-type-modal .sale-expense-type-modal-footer .animal-btn-QoKe1 {
     width: 100%;
   }
 }
@@ -203,7 +215,9 @@ html .app-island-modal .animal-title-s6pv3 button {
   .admin-user-modal.app-island-modal .animal-title-s6pv3,
   .report-group-modal.app-island-modal .animal-title-s6pv3,
   .service-fee-category-modal.app-island-modal .animal-title-s6pv3,
-  .expense-category-modal.app-island-modal .animal-title-s6pv3 {
+  .expense-category-modal.app-island-modal .animal-title-s6pv3,
+  .selling-type-modal.app-island-modal .animal-title-s6pv3,
+  .sale-expense-type-modal.app-island-modal .animal-title-s6pv3 {
     width: 100%;
     max-width: none;
     margin-right: 0;

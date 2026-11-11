@@ -158,7 +158,7 @@ function StockRowActions({
             onClick={onSuspend}
             className={`${buttonClass} text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/30`}
           >
-            กำลังนำส่ง
+            ปิดรับซื้อ
           </button>
           {canDeleteProductType ? (
             <button
@@ -339,7 +339,7 @@ export default function StockPositionsPanel({
       'ยืนยันการปิดรับซื้อชั่วคราว',
       `ประเภทสินค้า "${productType.name}" (${productType.code}) จะไม่สามารถรับซื้อเพิ่มได้จนกว่าจะเปิดใช้งานอีกครั้ง\n\nประวัติรับซื้อเดิมยังอยู่`,
       {
-        confirmText: 'กำลังนำส่ง',
+        confirmText: 'ปิดรับซื้อ',
         cancelText: 'ยกเลิก',
         variant: 'warning',
       }
@@ -512,7 +512,7 @@ export default function StockPositionsPanel({
                         </span>
                         {isInactive ? (
                           <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                            กำลังนำส่ง
+                            ปิดรับซื้อ/กำลังนำส่ง
                           </span>
                         ) : null}
                       </button>
@@ -611,7 +611,7 @@ export default function StockPositionsPanel({
                           </span>
                           {isInactive ? (
                             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                              กำลังนำส่ง
+                              ปิดรับซื้อ/กำลังนำส่ง
                             </span>
                           ) : null}
                         </span>

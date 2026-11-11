@@ -1,3 +1,5 @@
+import { DEFAULT_SELLING_TYPE_NAMES } from '@/lib/sellingTypes';
+
 export interface ProductType {
   id: string;
   code: string;
@@ -71,7 +73,7 @@ export interface SalesPagination {
   hasMore: boolean;
 }
 
-export const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'];
+export const SELLING_TYPES: string[] = [...DEFAULT_SELLING_TYPE_NAMES];
 
 export function createEmptyExpenseLine(): SaleExpenseLine {
   return {

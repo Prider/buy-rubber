@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'animal-island-ui';
 import { formatNumber } from '@/lib/utils';
@@ -12,6 +13,10 @@ import {
   type SaleFormData,
 } from '@/app/(authenticated)/sales/page.utils';
 import { EXPENSE_TYPES, MAX_SALE_EXPENSES, SELLING_TYPES } from '@/components/sales/salesFormCard.constants';
+import { useSaleExpenseTypes } from '@/hooks/useSaleExpenseTypes';
+import { useSellingTypes } from '@/hooks/useSellingTypes';
+import type { SaleExpenseTypeRecord } from '@/lib/saleExpenseTypes';
+import type { SellingTypeRecord } from '@/lib/sellingTypes';
 import {
   getSalesFormCardBorderClass,
   getSalesFormCardTitle,
@@ -21,6 +26,13 @@ import {
 } from '@/components/sales/salesFormCardUi';
 import type { DestinationCompany } from '@/types/destinationCompany';
 import { CloseButton } from '@/components/common/CloseButton';
+
+const SellingTypeModal = dynamic(
+  () => import(/* webpackPrefetch: true */ '@/components/sales/SellingTypeModal'),
+);
+const SaleExpenseTypeModal = dynamic(
+  () => import(/* webpackPrefetch: true */ '@/components/sales/SaleExpenseTypeModal'),
+);
 
 interface ProductType {
   id: string;
@@ -175,6 +187,30 @@ export default function SalesFormCard({
   onCancelEdit,
 }: SalesFormCardProps) {
   const router = useRouter();
+  const {
+    sellingTypes,
+    loading: sellingTypesLoading,
+    loaded: sellingTypesLoaded,
+    saving: sellingTypesSaving,
+    error: sellingTypesError,
+    loadSellingTypes,
+    createSellingType,
+    updateSellingType,
+    deleteSellingType,
+  } = useSellingTypes();
+  const {
+    saleExpenseTypes,
+    loading: saleExpenseTypesLoading,
+    loaded: saleExpenseTypesLoaded,
+    saving: saleExpenseTypesSaving,
+    error: saleExpenseTypesError,
+    loadSaleExpenseTypes,
+    createSaleExpenseType,
+    updateSaleExpenseType,
+    deleteSaleExpenseType,
+  } = useSaleExpenseTypes();
+  const [sellingTypeModalOpen, setSellingTypeModalOpen] = useState(false);
+  const [saleExpenseTypeModalOpen, setSaleExpenseTypeModalOpen] = useState(false);
   const hideDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const companySearchRef = useRef<HTMLInputElement>(null);
   const companyDropdownRef = useRef<HTMLDivElement>(null);
@@ -287,6 +323,62 @@ export default function SalesFormCard({
     onShowCompanyDropdown(false);
   };
 
+  useEffect(() => {
+    void loadSellingTypes();
+    void loadSaleExpenseTypes();
+  }, [loadSaleExpenseTypes, loadSellingTypes]);
+
+  const sellingTypeOptions = useMemo(() => {
+    const useFallback = !sellingTypesLoaded || (sellingTypes.length === 0 && Boolean(sellingTypesError));
+    return useFallback ? [...SELLING_TYPES] : sellingTypes.map((type) => type.name);
+  }, [sellingTypes, sellingTypesError, sellingTypesLoaded]);
+
+  const selectedSellingTypeMissing =
+    Boolean(formData.sellingType) && !sellingTypeOptions.includes(formData.sellingType);
+
+  const setSellingType = (value: string) => {
+    onInputChange({
+      target: { name: 'sellingType', value },
+    } as React.ChangeEvent<HTMLSelectElement>);
+  };
+
+  const handleSellingTypeSaved = (type: SellingTypeRecord, previousName: string | null) => {
+    if (isEditing) return;
+    if (previousName && formData.sellingType === previousName) {
+      setSellingType(type.name);
+    }
+  };
+
+  const handleSellingTypeDeleted = (type: SellingTypeRecord) => {
+    if (isEditing || formData.sellingType !== type.name) return;
+    const remaining = sellingTypes.filter((item) => item.id !== type.id);
+    setSellingType(remaining[0]?.name ?? '');
+  };
+
+  const expenseTypeOptions = useMemo(() => {
+    const useFallback =
+      !saleExpenseTypesLoaded || (saleExpenseTypes.length === 0 && Boolean(saleExpenseTypesError));
+    return useFallback ? [...EXPENSE_TYPES] : saleExpenseTypes.map((type) => type.name);
+  }, [saleExpenseTypes, saleExpenseTypesError, saleExpenseTypesLoaded]);
+
+  const replaceExpenseType = (previousName: string, nextName: string) => {
+    for (const line of formData.expenses) {
+      if (line.type === previousName) {
+        onExpenseChange(line.id, 'type', nextName);
+      }
+    }
+  };
+
+  const handleSaleExpenseTypeSaved = (type: SaleExpenseTypeRecord, previousName: string | null) => {
+    if (previousName && previousName !== type.name) {
+      replaceExpenseType(previousName, type.name);
+    }
+  };
+
+  const handleSaleExpenseTypeDeleted = (type: SaleExpenseTypeRecord) => {
+    replaceExpenseType(type.name, '');
+  };
+
   const fillField = (name: 'weight' | 'pricePerUnit', value: number) => {
     onInputChange({
       target: { name, value: Number(value).toFixed(2) },
@@ -308,6 +400,7 @@ export default function SalesFormCard({
   const btnClass = compact ? 'px-3.5 py-2 text-sm' : 'px-4 py-2.5 text-sm';
 
   return (
+    <>
     <div
       data-testid="sales-form-card"
       className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-white shadow-sm dark:bg-gray-800 max-lg:rounded-none lg:h-auto lg:overflow-visible lg:rounded-2xl lg:border ${cardBorderClass}`}
@@ -452,20 +545,54 @@ export default function SalesFormCard({
                   ) : null}
                 </div>
               </Field>
-              <Field label="รูปแบบการขาย" className="order-2 col-span-1 w-full min-w-0 md:order-3 md:col-span-3">
+              <Field
+                label="รูปแบบการขาย"
+                className="order-2 col-span-1 w-full min-w-0 md:order-3 md:col-span-3"
+                action={
+                  <button
+                    type="button"
+                    data-testid="sales-manage-selling-types"
+                    aria-label="จัดการรูปแบบการขาย"
+                    title="จัดการรูปแบบการขาย"
+                    onClick={() => setSellingTypeModalOpen(true)}
+                    disabled={saving}
+                    className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-violet-700 underline-offset-2 transition hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-violet-300"
+                  >
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    จัดการรูปแบบการขาย
+                  </button>
+                }
+              >
                 <select
                   name="sellingType"
+                  aria-label="รูปแบบการขาย"
                   value={formData.sellingType}
                   onChange={onInputChange}
-                  disabled={isFieldDisabled('sellingType')}
+                  disabled={isFieldDisabled('sellingType') || sellingTypesLoading}
                   className={getInputClass('sellingType')}
                 >
-                  {SELLING_TYPES.map((type) => (
+                  {sellingTypeOptions.length === 0 ? (
+                    <option value="">เลือกรูปแบบการขาย</option>
+                  ) : null}
+                  {sellingTypeOptions.map((type) => (
                     <option key={type} value={type}>
                       {type}
                     </option>
                   ))}
+                  {selectedSellingTypeMissing ? (
+                    <option value={formData.sellingType}>{formData.sellingType}</option>
+                  ) : null}
                 </select>
+                {sellingTypesError ? (
+                  <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{sellingTypesError}</p>
+                ) : null}
               </Field>
               <Field label="ประเภทสินค้า" className="order-5 col-span-2 w-full min-w-0 md:order-4 md:col-span-4">
                 <select
@@ -590,6 +717,25 @@ export default function SalesFormCard({
                 </button>
                 <button
                   type="button"
+                  data-testid="sales-manage-expense-types"
+                  aria-label="จัดการชนิดค่าใช้จ่าย"
+                  title="จัดการชนิดค่าใช้จ่าย"
+                  onClick={() => setSaleExpenseTypeModalOpen(true)}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-violet-300 max-lg:min-h-11"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  จัดการชนิดค่าใช้จ่าย
+                </button>
+                <button
+                  type="button"
                   data-testid="sales-clear-expenses"
                   onClick={onClearExpenses}
                   disabled={saving || formData.expenses.length === 0}
@@ -624,11 +770,14 @@ export default function SalesFormCard({
                           }`}
                         >
                           <option value="">เลือกชนิด</option>
-                          {EXPENSE_TYPES.map((type) => (
+                          {expenseTypeOptions.map((type) => (
                             <option key={type} value={type}>
                               {type}
                             </option>
                           ))}
+                          {line.type && !expenseTypeOptions.includes(line.type) ? (
+                            <option value={line.type}>{line.type}</option>
+                          ) : null}
                         </select>
                       </Field>
                       <Field label="จำนวนเงิน (บาท)" headerClassName={index === 0 ? '' : 'lg:hidden'}>
@@ -728,5 +877,32 @@ export default function SalesFormCard({
             </div>
           </div>
     </div>
+    <SellingTypeModal
+      isOpen={sellingTypeModalOpen}
+      onClose={() => setSellingTypeModalOpen(false)}
+      sellingTypes={sellingTypes}
+      loading={sellingTypesLoading}
+      saving={sellingTypesSaving}
+      onCreateType={createSellingType}
+      onUpdateType={updateSellingType}
+      onDeleteType={deleteSellingType}
+      onRefresh={loadSellingTypes}
+      onSaved={handleSellingTypeSaved}
+      onDeleted={handleSellingTypeDeleted}
+    />
+    <SaleExpenseTypeModal
+      isOpen={saleExpenseTypeModalOpen}
+      onClose={() => setSaleExpenseTypeModalOpen(false)}
+      saleExpenseTypes={saleExpenseTypes}
+      loading={saleExpenseTypesLoading}
+      saving={saleExpenseTypesSaving}
+      onCreateType={createSaleExpenseType}
+      onUpdateType={updateSaleExpenseType}
+      onDeleteType={deleteSaleExpenseType}
+      onRefresh={loadSaleExpenseTypes}
+      onSaved={handleSaleExpenseTypeSaved}
+      onDeleted={handleSaleExpenseTypeDeleted}
+    />
+    </>
   );
 }

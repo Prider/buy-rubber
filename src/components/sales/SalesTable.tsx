@@ -230,7 +230,7 @@ export default function SalesTable({
                 onClick={onRecordDelivery}
                 className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-3 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50 sm:w-auto md:min-h-10"
               >
-                บันทึกการนำส่ง
+                บันทึกปิดรับซื้อ/นำส่ง
               </button>
             ) : null}
             {onAddSale ? (

@@ -1,3 +1,3 @@
-export const SELLING_TYPES = ['จ่ายสด', 'ขายล่วง', 'ฝาก'] as const;
-export const EXPENSE_TYPES = ['ค่าขนส่ง', 'ค่าแรง', 'ค่าบริการ', 'ภาษี', 'อื่นๆ'] as const;
+export { DEFAULT_SELLING_TYPE_NAMES as SELLING_TYPES } from '@/lib/sellingTypes';
+export { DEFAULT_SALE_EXPENSE_TYPE_NAMES as EXPENSE_TYPES } from '@/lib/saleExpenseTypes';
 export const MAX_SALE_EXPENSES = 4;

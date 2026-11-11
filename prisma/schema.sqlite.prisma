@@ -333,6 +333,30 @@ model ExpenseCategory {
   @@index([isActive, sortOrder])
 }
 
+// รูปแบบการขายที่ผู้ใช้กำหนดเอง สำหรับบันทึกการขาย
+model SellingType {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// ชนิดค่าใช้จ่ายของการขายที่ผู้ใช้กำหนดเอง
+model SaleExpenseType {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
 // ประวัติการสร้าง แก้ไข และลบ เก็บ 90 วัน
 model ActivityLog {
   id          String   @id @default(uuid())

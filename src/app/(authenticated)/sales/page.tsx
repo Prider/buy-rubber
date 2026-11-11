@@ -84,6 +84,7 @@ export default function SalesPage() {
     if (!isFormOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || showCompanyDropdown || saving) return;
+      if (document.querySelector('[role="alertdialog"], .animal-mask-hAWeP, .selling-type-modal, .sale-expense-type-modal')) return;
       resetForm();
       setIsFormOpen(false);
     };

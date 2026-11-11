@@ -284,8 +284,8 @@ try {
   await ring(historyButton);
   await page.waitForTimeout(1200);
 
-  await caption('⏸', 'ปิดรับชั่วคราวได้ที่ปุ่มกำลังนำส่ง ประวัติเดิมยังอยู่ และเปิดกลับมาได้');
-  const suspendButton = createdRow.getByRole('button', { name: 'กำลังนำส่ง' });
+  await caption('⏸', 'ปิดรับชั่วคราวได้ที่ปุ่มปิดรับซื้อ ประวัติเดิมยังอยู่ และเปิดกลับมาได้');
+  const suspendButton = createdRow.getByRole('button', { name: 'ปิดรับซื้อ' });
   await point(suspendButton);
   await ring(suspendButton);
   await page.waitForTimeout(1400);

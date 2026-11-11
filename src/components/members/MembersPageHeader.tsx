@@ -75,7 +75,7 @@ export const MembersPageHeader = ({
           <button
             type="button"
             onClick={() => router.push('/purchases')}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 sm:w-auto md:min-h-10"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary-600 px-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 sm:w-auto md:min-h-10"
           >
             กลับไปหน้ารับซื้อ
           </button>
