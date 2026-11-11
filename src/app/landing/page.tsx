@@ -185,8 +185,8 @@ const SHOTS: Array<{
     detail: 'ขนาดตัวอักษรและพื้นหลัง',
   },
   {
-    src: '/guide/settings-users.jpg?v=2',
-    darkSrc: '/guide/dark/settings-users.jpg',
+    src: '/guide/settings-users.jpg?v=3',
+    darkSrc: '/guide/dark/settings-users.jpg?v=3',
     alt: 'แท็บผู้ใช้งานสำหรับกำหนดบทบาท',
     caption: 'ผู้ใช้งาน',
     detail: 'กำหนดบทบาท',
