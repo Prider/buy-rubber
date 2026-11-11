@@ -14,8 +14,8 @@ import {
 import { moistureUnitLabel } from '@/lib/purchases/moisture';
 import { PurchaseTransaction, CartItem } from '../types';
 
-const DEFAULT_COMPANY_NAME = 'ร้านของฉัน';
-const DEFAULT_COMPANY_ADDRESS = '22/1 อ.ทุ่งสง จ.นครศรีฯ';
+const DEFAULT_COMPANY_NAME = 'บริษัทของฉัน';
+const DEFAULT_COMPANY_ADDRESS = 'xxxxx';
 const DEFAULT_FOOTER_TEXT =
   'กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ';
 

@@ -99,8 +99,8 @@ export default function AdminSettingsPage() {
 
   const slipDefaults = useMemo(() => {
     return {
-      companyName: 'สินทวี',
-      companyAddress: '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ',
+      companyName: 'บริษัทของฉัน',
+      companyAddress: 'xxxxx',
       footerText:
         'กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ',
     };

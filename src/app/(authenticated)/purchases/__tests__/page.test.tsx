@@ -10,6 +10,22 @@ const mockLoadPurchases = vi.fn();
 const mockAddToCart = vi.fn();
 const mockSaveCartToDb = vi.fn();
 
+type PurchaseFormInput = {
+  date?: string;
+  memberId?: string;
+  productTypeId?: string;
+  grossWeight?: string;
+  containerWeight?: string;
+  netWeight?: string;
+  pricePerUnit?: string;
+  moisturePercent?: string;
+  moistureUnit?: string;
+  bonusPrice?: string;
+  notes?: string;
+};
+
+type MockCartItem = PurchaseFormInput & { id: string };
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
@@ -57,8 +73,8 @@ vi.mock('@/hooks/useExpenseForm', () => ({
 
 vi.mock('@/hooks/useCart', () => ({
   useCart: () => {
-    const [cart, setCart] = React.useState<any[]>([]);
-    const addToCart = (formData: any) => {
+    const [cart, setCart] = React.useState<MockCartItem[]>([]);
+    const addToCart = (formData: PurchaseFormInput) => {
       mockAddToCart(formData);
       setCart((prev) => [...prev, { id: `${prev.length + 1}`, ...formData }]);
     };
@@ -84,9 +100,12 @@ vi.mock('@/hooks/useCart', () => ({
   },
 }));
 
-vi.mock('@/components/purchases/PurchasesList', () => ({
-  PurchasesList: React.forwardRef(() => <div>ประวัติการรับซื้อทั้งหมด</div>),
-}));
+vi.mock('@/components/purchases/PurchasesList', () => {
+  const PurchasesList = React.forwardRef(function PurchasesList() {
+    return <div>ประวัติการรับซื้อทั้งหมด</div>;
+  });
+  return { PurchasesList };
+});
 
 vi.mock('@/components/purchases/CartTable', () => ({
   CartTable: ({
@@ -94,7 +113,7 @@ vi.mock('@/components/purchases/CartTable', () => ({
     saveCartToDb,
     onRecordPurchase,
   }: {
-    cart: any[];
+    cart: MockCartItem[];
     saveCartToDb: () => Promise<void>;
     onRecordPurchase?: () => void;
   }) => (
@@ -198,6 +217,7 @@ describe('PurchasesPage UI integration', () => {
     const user = userEvent.setup();
 
     await fillValidPurchaseForm(user, '100', '0');
+    await user.click(screen.getByRole('radio', { name: 'บาท' }));
 
     expect(screen.getByText('(น้ำหนักสุทธิ × ราคาต่อหน่วย) − หักความชื้น')).toBeInTheDocument();
 

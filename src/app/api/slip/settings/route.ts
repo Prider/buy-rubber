@@ -9,8 +9,8 @@ import {
   type SlipTemplateId,
 } from '@/lib/slipTemplate';
 
-const DEFAULT_COMPANY_NAME = 'สินทวี';
-const DEFAULT_COMPANY_ADDRESS = '171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ';
+const DEFAULT_COMPANY_NAME = 'บริษัทของฉัน';
+const DEFAULT_COMPANY_ADDRESS = 'xxxxx';
 const DEFAULT_FOOTER_TEXT =
   'กรุณาตรวจสอบนับเงินให้ตรงกับใบเสร็จรับเงินทุกครั้งก่อนมิฉะนั้นจะไม่รับผิดชอบใดๆทั้งสิ้นขอบคุณที่ใช้บริการค่ะ';
 

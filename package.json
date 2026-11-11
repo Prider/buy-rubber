@@ -17,7 +17,7 @@
     "web:build": "cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build",
     "web:start": "next start -H 0.0.0.0 -p 3000",
     "electron": "electron .",
-    "electron:build:win": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --win",
+    "electron:build:win": "node scripts/clean-dist.js && node scripts/electron-build-win.js",
     "electron:build:mac": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder --mac",
     "setup:postgres": "bash scripts/setup-postgres-db.sh",
     "setup:sqlite": "node scripts/setup-sqlite-local.js",

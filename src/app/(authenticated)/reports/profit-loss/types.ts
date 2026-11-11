@@ -33,8 +33,8 @@ export const EMPTY_TOTALS: ProfitLossTotals = {
 };
 
 export const CHART_SERIES = [
-  { key: 'expenses', label: 'Expenses', color: '#2563eb', axis: 'amount' },
-  { key: 'serviceFees', label: 'Service fees', color: '#d97706', axis: 'amount' },
-  { key: 'purchasePricePerKg', label: 'Purchase price/kg', color: '#dc2626', axis: 'price' },
-  { key: 'salePricePerKg', label: 'Sale price/kg', color: '#16a34a', axis: 'price' },
+  { key: 'expenses', label: 'ค่าใช้จ่าย', color: '#2563eb', axis: 'amount' },
+  { key: 'serviceFees', label: 'ค่าบริการ', color: '#d97706', axis: 'amount' },
+  { key: 'purchases', label: 'ยอดรับซื้อ', color: '#dc2626', axis: 'amount' },
+  { key: 'sales', label: 'ยอดขาย', color: '#16a34a', axis: 'amount' },
 ] as const;

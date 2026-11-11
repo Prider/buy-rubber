@@ -95,7 +95,7 @@ export const usePurchaseForm = ({
     netWeight: '',
     pricePerUnit: '',
     moisturePercent: '',
-    moistureUnit: 'baht',
+    moistureUnit: 'kg',
     bonusPrice: '',
     notes: '',
   });
@@ -412,7 +412,7 @@ export const usePurchaseForm = ({
       netWeight: '',
       pricePerUnit: '',
       moisturePercent: '',
-      moistureUnit: 'baht',
+      moistureUnit: 'kg',
       bonusPrice: '',
       notes: '',
     }));
@@ -436,7 +436,7 @@ export const usePurchaseForm = ({
       netWeight: '',
       pricePerUnit: '',
       moisturePercent: '',
-      moistureUnit: 'baht',
+      moistureUnit: 'kg',
       bonusPrice: '',
       notes: '',
     });

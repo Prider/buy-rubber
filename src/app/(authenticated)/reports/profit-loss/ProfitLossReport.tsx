@@ -203,7 +203,7 @@ export default function ProfitLossReport() {
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">กำไร / ขาดทุน</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            ตามช่วงเวลา · (ขาย + ค่าบริการ) − รับซื้อ − ค่าใช้จ่าย 
+            ตามช่วงเวลา · ขาย − รับซื้อ − ค่าใช้จ่าย 
           </p>
         </div>
 

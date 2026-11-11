@@ -56,17 +56,8 @@ function ChartTooltip({
   );
 }
 
-function priceOrNull(value: number): number | null {
-  return value > 0 ? value : null;
-}
-
 export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
   const hasRows = data.length > 0;
-  const points = data.map((row) => ({
-    ...row,
-    purchasePricePerKg: priceOrNull(row.purchasePricePerKg),
-    salePricePerKg: priceOrNull(row.salePricePerKg),
-  }));
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -74,7 +65,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">แนวโน้ม</h2>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            ค่าใช้จ่าย · ค่าบริการ · ราคาซื้อ/กก. · ราคาขาย/กก.
+            {CHART_SERIES.map((series) => series.label).join(' · ')}
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -90,7 +81,7 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
       <div className="h-[280px]">
         {hasRows ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={points} margin={{ top: 12, right: 8, left: 4, bottom: 8 }} barGap={4} barCategoryGap="22%">
+            <BarChart data={data} margin={{ top: 12, right: 8, left: 4, bottom: 8 }} barGap={4} barCategoryGap="22%">
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="4 8" vertical={false} />
               <XAxis
                 dataKey="periodLabel"
@@ -106,16 +97,6 @@ export function ProfitLossChart({ data }: { data: ChartPoint[] }) {
                 tick={{ fill: '#64748b', fontSize: 12 }}
                 tickFormatter={formatAxisAmount}
                 width={64}
-              />
-              <YAxis
-                yAxisId="price"
-                orientation="right"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#64748b', fontSize: 12 }}
-                tickFormatter={(value: number) => formatCurrency(value)}
-                domain={[(min: number) => Math.floor(min - 2), (max: number) => Math.ceil(max + 2)]}
-                width={72}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} />
               {CHART_SERIES.map((series) => (

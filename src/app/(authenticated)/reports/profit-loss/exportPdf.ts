@@ -131,18 +131,13 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
 
   const width = 720;
   const height = 210;
-  const pad = { top: 8, right: 68, bottom: 36, left: 68 };
+  const pad = { top: 8, right: 16, bottom: 36, left: 68 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
   const amountMax = niceCeiling(
-    Math.max(...rows.flatMap((row) => [row.expenses, row.serviceFees]), 0),
+    Math.max(...rows.flatMap((row) => [row.sales, row.expenses, row.serviceFees, row.purchases]), 0),
   );
-  const prices = rows.flatMap((row) =>
-    [row.purchasePricePerKg, row.salePricePerKg].filter((value) => value > 0),
-  );
-  const priceMin = prices.length > 0 ? Math.floor(Math.min(...prices) - 2) : 0;
-  const priceMax = prices.length > 0 ? Math.ceil(Math.max(...prices) + 2) : 1;
 
   const groupW = plotW / rows.length;
   const innerGap = 3;
@@ -161,19 +156,17 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
     const ratio = tick / 4;
     const y = pad.top + plotH * (1 - ratio);
     const amountLabel = compactAmount.format(amountMax * ratio);
-    const priceLabel = formatCurrency(priceMin + (priceMax - priceMin) * ratio);
     grid.push(
       `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4 6" />`,
       `<text x="${pad.left - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="#64748b">${escapeXml(amountLabel)}</text>`,
-      `<text x="${width - pad.right + 8}" y="${y + 3}" text-anchor="start" font-size="10" fill="#64748b">${escapeXml(priceLabel)}</text>`,
     );
   }
 
   const series = CHART_SERIES.map((item) => ({
     key: item.key,
     color: item.color,
-    min: item.axis === 'amount' ? 0 : priceMin,
-    max: item.axis === 'amount' ? amountMax : priceMax,
+    min: 0,
+    max: amountMax,
   }));
 
   const bars: string[] = [];
@@ -210,7 +203,7 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
   return `
     <div class="chart">
       <p class="section-title">แนวโน้ม</p>
-      <p class="chart-subtitle">ค่าใช้จ่าย · ค่าบริการ · ราคาซื้อ/กก. · ราคาขาย/กก.</p>
+      <p class="chart-subtitle">${escapeXml(CHART_SERIES.map((item) => item.label).join(' · '))}</p>
       <div class="legend">${legend}</div>
       <svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="แนวโน้ม">
         ${grid.join('')}

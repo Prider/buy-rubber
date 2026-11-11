@@ -205,8 +205,8 @@ describe('slipGenerator', () => {
       const result = generateSlipHTMLFromItems(items);
 
       expect(result).toContain('<html>');
-      expect(result).toContain('สินทวี');
-      expect(result).toContain('171/5 ม.8 ต.ชะมาย อ.ทุ่งสง จ.นครศรีฯ');
+      expect(result).toContain('บริษัทของฉัน');
+      expect(result).toContain('xxxxx');
       expect(result).not.toContain('หมายเลขผู้เสียภาษี');
       expect(result).toContain('น้ำยางสด');
       expect(result).toContain('100');

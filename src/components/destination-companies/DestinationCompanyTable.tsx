@@ -5,7 +5,7 @@ import { DestinationCompanyTableProps, DestinationCompany } from '@/types/destin
 import { useAuth } from '@/contexts/AuthContext';
 import GamerLoader from '@/components/GamerLoader';
 
-const desktopCols = 'lg:grid-cols-[6rem_minmax(0,1fr)_8.5rem_max-content]';
+const desktopCols = 'lg:grid-cols-[6rem_minmax(0,1fr)_8.5rem_7.5rem]';
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -38,7 +38,7 @@ export const DestinationCompanyTable: React.FC<DestinationCompanyTableProps> = m
         <div role="columnheader" className="px-4 py-3 text-left">รหัส</div>
         <div role="columnheader" className="px-4 py-3 text-left">ชื่อบริษัท</div>
         <div role="columnheader" className="px-4 py-3 text-left">เบอร์โทร</div>
-        <div role="columnheader" className="px-4 py-3 text-right">จัดการ</div>
+        <div role="columnheader" className="px-3 py-3 text-right">จัดการ</div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 lg:block lg:p-0">

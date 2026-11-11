@@ -7,7 +7,7 @@ import GamerLoader from '@/components/GamerLoader';
 import { formatThaiNationalId } from '@/lib/memberUtils';
 
 const desktopCols =
-  'lg:grid-cols-[4.5rem_minmax(0,1.15fr)_6.25rem_9.25rem_minmax(0,0.9fr)_7.5rem_max-content]';
+  'lg:grid-cols-[4.5rem_minmax(0,1.15fr)_8rem_10rem_minmax(0,0.9fr)_9rem_10.5rem]';
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -44,7 +44,7 @@ export const MemberTable: React.FC<MemberTableProps> = memo(({
         <div role="columnheader" className="px-4 py-3 text-left">เลขบัตรประชาชน</div>
         <div role="columnheader" className="px-4 py-3 text-left">ธนาคาร</div>
         <div role="columnheader" className="px-4 py-3 text-left">เลขบัญชี</div>
-        <div role="columnheader" className="px-4 py-3 text-right">จัดการ</div>
+        <div role="columnheader" className="px-3 py-3 text-right">จัดการ</div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 lg:block lg:p-0">
