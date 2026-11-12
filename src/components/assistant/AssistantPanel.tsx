@@ -379,6 +379,7 @@ export default function AssistantPanel({ open, onClose }: { open: boolean; onClo
           <QueryList
             empty="ยังไม่มีประวัติ"
             items={history}
+            savedQueries={savedQueries.map((item) => item.query)}
             onUse={(query) => void ask(query)}
             onSave={saveQuery}
             onDelete={(id) => setHistory((current) => current.filter((item) => item.id !== id))}
@@ -390,9 +391,13 @@ export default function AssistantPanel({ open, onClose }: { open: boolean; onClo
   );
 }
 
+const actionPress =
+  'min-h-11 rounded-lg px-2 motion-safe:transition-[transform,color,background-color] motion-safe:duration-150 motion-safe:ease-out motion-safe:active:scale-[0.96]';
+
 function QueryList({
   empty,
   items,
+  savedQueries = [],
   onUse,
   onSave,
   onDelete,
@@ -400,13 +405,23 @@ function QueryList({
 }: {
   empty: string;
   items: { id: string; query: string; timestamp?: string }[];
+  savedQueries?: string[];
   onUse: (query: string) => void;
   onSave?: (query: string) => void;
   onDelete: (id: string) => void;
   onClear: () => void;
 }) {
+  const saved = new Set(savedQueries);
+  const [notice, setNotice] = useState<{ tone: 'saved' | 'deleted'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto px-4 py-2">
+    <div className="flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-2">
       {items.length > 0 && (
         <div className="flex justify-end">
           <button type="button" onClick={onClear} className="min-h-11 px-1 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
@@ -414,27 +429,62 @@ function QueryList({
           </button>
         </div>
       )}
+      <div aria-live="polite" className={notice ? undefined : 'sr-only'}>
+        {notice && (
+          <p
+            role="status"
+            className={`rounded-xl px-3 py-2 text-xs font-medium ${
+              notice.tone === 'saved'
+                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
+                : 'bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200'
+            }`}
+          >
+            {notice.text}
+          </p>
+        )}
+      </div>
       {items.length === 0 ? (
         <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">{empty}</p>
       ) : (
-        items.map((item) => (
-          <div key={item.id} className="rounded-2xl bg-gray-50 px-3.5 py-3 dark:bg-gray-800">
-            <p className="text-sm text-gray-800 dark:text-gray-100">{item.query}</p>
-            <div className="mt-2 flex gap-3 text-xs">
-              <button type="button" onClick={() => onUse(item.query)} className="min-h-11 font-medium text-blue-600">
-                ถามอีกครั้ง
-              </button>
-              {onSave && (
-                <button type="button" onClick={() => onSave(item.query)} className="min-h-11 text-gray-500">
-                  บันทึก
+        items.map((item) => {
+          const alreadySaved = saved.has(item.query);
+          return (
+            <div key={item.id} className="rounded-2xl bg-gray-50 px-3.5 py-3 dark:bg-gray-800">
+              <p className="text-sm text-gray-800 dark:text-gray-100">{item.query}</p>
+              <div className="mt-2 flex gap-1 text-xs">
+                <button type="button" onClick={() => onUse(item.query)} className="min-h-11 px-2 font-medium text-blue-600">
+                  ถามอีกครั้ง
                 </button>
-              )}
-              <button type="button" onClick={() => onDelete(item.id)} className="min-h-11 text-gray-500">
-                ลบ
-              </button>
+                {onSave && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSave(item.query);
+                      setNotice({ tone: 'saved', text: 'บันทึกคำถามแล้ว' });
+                    }}
+                    className={`${actionPress} ${
+                      alreadySaved
+                        ? 'bg-emerald-100 font-medium text-emerald-800 active:bg-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-200 dark:active:bg-emerald-900'
+                        : 'text-gray-500 active:bg-emerald-100 active:text-emerald-800 dark:active:bg-emerald-950/50 dark:active:text-emerald-200'
+                    }`}
+                  >
+                    {alreadySaved ? 'บันทึกแล้ว' : 'บันทึก'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDelete(item.id);
+                    setNotice({ tone: 'deleted', text: 'ลบรายการแล้ว' });
+                  }}
+                  className={`${actionPress} text-gray-500 active:bg-rose-100 active:font-medium active:text-rose-800 dark:active:bg-rose-950/50 dark:active:text-rose-200`}
+                >
+                  ลบ
+                </button>
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
       {!onSave && (
         <div className="space-y-2 pt-2">
