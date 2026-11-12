@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminLike } from '@/types/user';
 import { useBackup, Backup } from '@/hooks/useBackup';
 import { useAlert } from '@/hooks/useAlert';
 import { showRestoreSuccessMessage, showResetSuccessMessage } from './utils';
@@ -90,7 +91,7 @@ export function BackupPanel() {
   };
 
   const handleResetToInitial = async () => {
-    if (user?.role !== 'root') {
+    if (!isAdminLike(user?.role)) {
       return;
     }
 
@@ -171,7 +172,7 @@ export function BackupPanel() {
       <BackupHeader
         onCreateBackup={handleCreateBackup}
         onResetToInitial={handleResetToInitial}
-        canResetToInitial={user?.role === 'root'}
+        canResetToInitial={isAdminLike(user?.role)}
         loading={actionLoading}
       />
       <BackupList

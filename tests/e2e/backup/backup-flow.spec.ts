@@ -97,7 +97,7 @@ test.describe.serial('Backup flow', () => {
 
     await gotoBackupPage(electronPage)
     await expect(electronPage.getByRole('button', { name: 'สำรองข้อมูลตอนนี้' })).toBeVisible()
-    await expect(electronPage.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' })).toHaveCount(0)
+    await expect(electronPage.getByRole('button', { name: 'รีเซ็ตข้อมูลเริ่มต้น' })).toBeVisible()
     await electronPage.close()
 
     await ensureViewerUser(page.request)
@@ -314,7 +314,7 @@ test.describe.serial('Backup flow', () => {
     if (idx >= 0) createdBackupIds.splice(idx, 1)
   })
 
-  test('REQ-BKP-09: reset to initial data is root-only and requires confirmation', async ({
+  test('REQ-BKP-09: reset to initial data requires confirmation', async ({
     browser,
   }) => {
     const context = await browser.newContext()
