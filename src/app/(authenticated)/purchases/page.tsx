@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
@@ -25,7 +25,9 @@ export default function PurchasesPage() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
   const [entryOpen, setEntryOpen] = useState(false);
+  const [entryDocked, setEntryDocked] = useState(false);
   const historyRef = useRef<PurchasesListRef>(null);
+  const historyPaneRef = useRef<HTMLDivElement>(null);
   
   // Data loading hook
   const { loading: _loading, members, productTypes, loadData, loadPurchases } = usePurchaseData();
@@ -37,7 +39,9 @@ export default function PurchasesPage() {
     error: cartError,
     setError: setCartError,
     addToCart,
+    updateCartItem,
     addServiceFeeToCart,
+    updateServiceFeeInCart,
     removeFromCart,
     saveCartToDb,
     printCart,
@@ -70,6 +74,7 @@ export default function PurchasesPage() {
     isFormValid,
     resetForm,
     resetAllFields,
+    loadCartItem,
     clearMemberSearch,
     applySuggestedPrice,
     setShowMemberDropdown,
@@ -93,14 +98,57 @@ export default function PurchasesPage() {
     setError: setServiceFeeFormError,
     handleInputChange: handleServiceFeeInputChange,
     setCategory: setServiceFeeCategory,
+    loadForm: loadServiceFeeForm,
     isFormValid: isServiceFeeFormValid,
     resetForm: resetServiceFeeForm,
   } = useServiceFeeForm();
+
+  const [editingCartItemId, setEditingCartItemId] = useState<string | null>(null);
+  const editingCartItemIdRef = useRef<string | null>(null);
+  editingCartItemIdRef.current = editingCartItemId;
+  const editingCartItem = cart.find((item) => item.id === editingCartItemId) ?? null;
+
+  const closeEntry = useCallback(() => {
+    const wasEditing = editingCartItemIdRef.current != null;
+    if (wasEditing) {
+      resetForm();
+      resetServiceFeeForm();
+      editingCartItemIdRef.current = null;
+      setEditingCartItemId(null);
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        setCartSheetOpen(true);
+      }
+    }
+    setEntryOpen(false);
+  }, [resetForm, resetServiceFeeForm]);
+
+  const handleEditCartItem = (id: string) => {
+    const item = cart.find((entry) => entry.id === id);
+    if (!item) return;
+    if (item.type === 'serviceFee') {
+      loadServiceFeeForm({
+        category: item.category ?? '',
+        amount: item.amount == null ? '' : String(item.amount),
+      });
+    } else {
+      loadCartItem(item);
+    }
+    editingCartItemIdRef.current = id;
+    setEditingCartItemId(id);
+    setCartSheetOpen(false);
+    setEntryOpen(true);
+  };
 
   // Handle adding purchase item to cart
   const handleAddToCart = () => {
     if (!isFormValid()) {
       setFormError('กรุณากรอกข้อมูลที่จำเป็น');
+      return;
+    }
+
+    if (editingCartItemId && editingCartItem?.type !== 'serviceFee') {
+      updateCartItem(editingCartItemId, formData);
+      closeEntry();
       return;
     }
     
@@ -112,6 +160,12 @@ export default function PurchasesPage() {
   const handleAddServiceFeeToCart = () => {
     if (!isServiceFeeFormValid()) {
       setServiceFeeFormError('กรุณากรอกข้อมูลที่จำเป็น');
+      return;
+    }
+
+    if (editingCartItem?.type === 'serviceFee') {
+      updateServiceFeeInCart(editingCartItem.id, serviceFeeFormData);
+      closeEntry();
       return;
     }
     
@@ -164,6 +218,12 @@ export default function PurchasesPage() {
   }, [cartSheetOpen, entryOpen]);
 
   const openPurchaseEntry = () => {
+    if (editingCartItemIdRef.current) {
+      resetForm();
+      resetServiceFeeForm();
+      editingCartItemIdRef.current = null;
+      setEditingCartItemId(null);
+    }
     setCartSheetOpen(false);
     setEntryOpen(true);
   };
@@ -174,12 +234,34 @@ export default function PurchasesPage() {
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setEntryOpen(false);
+        closeEntry();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [entryOpen]);
+  }, [entryOpen, closeEntry]);
+
+  useEffect(() => {
+    const pane = historyPaneRef.current;
+    if (!pane) return;
+    const docked =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(min-width: 1024px)').matches;
+    if (entryOpen && !docked) {
+      pane.setAttribute('inert', '');
+    } else {
+      pane.removeAttribute('inert');
+    }
+  }, [entryOpen, entryDocked]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 1024px)');
+    const sync = () => setEntryDocked(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
 
   const handlePreview = () => {
     previewCart();
@@ -229,6 +311,7 @@ export default function PurchasesPage() {
               printCart={printCart}
               saveCartToDb={handleSaveCart}
               removeFromCart={removeFromCart}
+              onEditCartItem={handleEditCartItem}
               onShowPrintModal={handleShowPrintModal}
               clearCart={clearCart}
               error={cartError}
@@ -237,8 +320,101 @@ export default function PurchasesPage() {
             />
           </div>
 
-          <div className="flex min-h-0 min-w-0 flex-col lg:h-full lg:overflow-hidden">
-            <PurchasesList ref={historyRef} />
+          <div className="relative flex min-h-0 min-w-0 flex-col lg:h-full lg:overflow-hidden">
+            <div ref={historyPaneRef} className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <PurchasesList ref={historyRef} />
+            </div>
+            {entryOpen && (
+              <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:pointer-events-none lg:absolute lg:inset-0 lg:z-20 lg:items-start lg:justify-end lg:bg-white/5 lg:p-0 lg:backdrop-blur-[2px] dark:lg:bg-white/5">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-black/50 lg:hidden"
+                  aria-label={editingCartItem ? 'ปิดการแก้ไข' : 'ปิดบันทึกการรับซื้อ'}
+                  onClick={closeEntry}
+                />
+                <div
+                  role="dialog"
+                  aria-modal={entryDocked ? undefined : true}
+                  aria-labelledby={editingCartItem?.type === 'serviceFee' ? 'service-fee-entry-title' : 'purchase-entry-title'}
+                  className={`relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain border-2 bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl lg:pointer-events-auto lg:h-auto lg:max-h-full lg:min-h-0 lg:w-full lg:max-w-none ${
+                    editingCartItem?.type === 'serviceFee'
+                      ? 'border-orange-500 dark:border-orange-400'
+                      : editingCartItem
+                        ? 'border-blue-600 dark:border-blue-400'
+                        : 'border-transparent lg:border-gray-100 dark:lg:border-gray-700'
+                  }`}
+                >
+                  {editingCartItem?.type === 'serviceFee' ? (
+                    <ServiceFeeCard
+                      formData={serviceFeeFormData}
+                      error={serviceFeeFormError}
+                      handleInputChange={handleServiceFeeInputChange}
+                      setCategory={setServiceFeeCategory}
+                      isFormValid={isServiceFeeFormValid()}
+                      resetForm={resetServiceFeeForm}
+                      addToCart={handleAddServiceFeeToCart}
+                      submitting={submitting}
+                      editing
+                      onClose={closeEntry}
+                    />
+                  ) : (
+                  <PurchaseEntryCard
+                    formData={formData}
+                    error={formError}
+                    members={members}
+                    productTypes={productTypes}
+                    memberSearchTerm={memberSearchTerm}
+                    showMemberDropdown={showMemberDropdown}
+                    selectedMember={selectedMember}
+                    filteredMembers={filteredMembers}
+                    recentPurchases={recentPurchases}
+                    isFormValid={isFormValid()}
+                    calculateTotalAmount={calculateTotalAmount}
+                    handleInputChange={handleInputChange}
+                    setMoistureUnit={setMoistureUnit}
+                    handleMemberSearchChange={handleMemberSearchChange}
+                    handleMemberSelect={handleMemberSelect}
+                    clearMemberSearch={clearMemberSearch}
+                    applySuggestedPrice={applySuggestedPrice}
+                    setShowMemberDropdown={setShowMemberDropdown}
+                    resetForm={() => {
+                      if (editingCartItemIdRef.current) {
+                        editingCartItemIdRef.current = null;
+                        setEditingCartItemId(null);
+                      }
+                      resetAllFields();
+                    }}
+                    addToCart={handleAddToCart}
+                    productTypeSearchTerm={productTypeSearchTerm}
+                    showProductTypeDropdown={showProductTypeDropdown}
+                    selectedProductType={selectedProductType}
+                    filteredProductTypes={filteredProductTypes}
+                    handleProductTypeSelect={handleProductTypeSelect}
+                    handleProductTypeSearchChange={handleProductTypeSearchChange}
+                    clearProductTypeSearch={clearProductTypeSearch}
+                    setShowProductTypeDropdown={setShowProductTypeDropdown}
+                    submitting={submitting}
+                    editing={Boolean(editingCartItem)}
+                    onClose={closeEntry}
+                    serviceFeeCard={
+                      SHOW_SERVICE_FEE_CARD ? (
+                        <ServiceFeeCard
+                          formData={serviceFeeFormData}
+                          error={serviceFeeFormError}
+                          handleInputChange={handleServiceFeeInputChange}
+                          setCategory={setServiceFeeCategory}
+                          isFormValid={isServiceFeeFormValid()}
+                          resetForm={resetServiceFeeForm}
+                          addToCart={handleAddServiceFeeToCart}
+                          submitting={submitting}
+                        />
+                      ) : undefined
+                    }
+                  />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -287,76 +463,13 @@ export default function PurchasesPage() {
               printCart={printCart}
               saveCartToDb={handleSaveCart}
               removeFromCart={removeFromCart}
+              onEditCartItem={handleEditCartItem}
               onShowPrintModal={handleShowPrintModal}
               clearCart={clearCart}
               error={cartError}
               setError={setCartError}
               onClose={() => setCartSheetOpen(false)}
               onRecordPurchase={openPurchaseEntry}
-            />
-          </div>
-        </div>
-      )}
-
-      {entryOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/50"
-            aria-label="ปิดบันทึกการรับซื้อ"
-            onClick={() => setEntryOpen(false)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="purchase-entry-title"
-            className="relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl"
-          >
-            <PurchaseEntryCard
-              formData={formData}
-              error={formError}
-              members={members}
-              productTypes={productTypes}
-              memberSearchTerm={memberSearchTerm}
-              showMemberDropdown={showMemberDropdown}
-              selectedMember={selectedMember}
-              filteredMembers={filteredMembers}
-              recentPurchases={recentPurchases}
-              isFormValid={isFormValid()}
-              calculateTotalAmount={calculateTotalAmount}
-              handleInputChange={handleInputChange}
-              setMoistureUnit={setMoistureUnit}
-              handleMemberSearchChange={handleMemberSearchChange}
-              handleMemberSelect={handleMemberSelect}
-              clearMemberSearch={clearMemberSearch}
-              applySuggestedPrice={applySuggestedPrice}
-              setShowMemberDropdown={setShowMemberDropdown}
-              resetForm={resetAllFields}
-              addToCart={handleAddToCart}
-              productTypeSearchTerm={productTypeSearchTerm}
-              showProductTypeDropdown={showProductTypeDropdown}
-              selectedProductType={selectedProductType}
-              filteredProductTypes={filteredProductTypes}
-              handleProductTypeSelect={handleProductTypeSelect}
-              handleProductTypeSearchChange={handleProductTypeSearchChange}
-              clearProductTypeSearch={clearProductTypeSearch}
-              setShowProductTypeDropdown={setShowProductTypeDropdown}
-              submitting={submitting}
-              onClose={() => setEntryOpen(false)}
-              serviceFeeCard={
-                SHOW_SERVICE_FEE_CARD ? (
-                  <ServiceFeeCard
-                    formData={serviceFeeFormData}
-                    error={serviceFeeFormError}
-                    handleInputChange={handleServiceFeeInputChange}
-                    setCategory={setServiceFeeCategory}
-                    isFormValid={isServiceFeeFormValid()}
-                    resetForm={resetServiceFeeForm}
-                    addToCart={handleAddServiceFeeToCart}
-                    submitting={submitting}
-                  />
-                ) : undefined
-              }
             />
           </div>
         </div>

@@ -38,6 +38,25 @@ interface PurchaseFormData {
 
 const EMPTY_DAILY_PRICES: any[] = [];
 
+export interface PurchaseCartFormSource {
+  date?: string;
+  memberId?: string;
+  productTypeId?: string;
+  grossWeight?: number;
+  containerWeight?: number;
+  pricePerUnit?: number;
+  moisturePercent?: number;
+  moistureUnit?: MoistureUnit | string | null;
+  bonusPrice?: number;
+  notes?: string;
+}
+
+function formNumber(value: number | undefined | null): string {
+  if (value == null || !Number.isFinite(value)) return '';
+  const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+  return rounded.toFixed(2).replace(/\.?0+$/, '');
+}
+
 function withPayableNetWeight<T extends {
   grossWeight: string;
   containerWeight: string;
@@ -457,6 +476,40 @@ export const usePurchaseForm = ({
     setFormData(prev => ({ ...prev, memberId: '' }));
   }, []);
 
+  const loadCartItem = useCallback((item: PurchaseCartFormSource) => {
+    const member = members.find(entry => entry.id === item.memberId) ?? null;
+    const productType = productTypes.find(entry => entry.id === item.productTypeId) ?? null;
+    const moistureUnit: MoistureUnit = item.moistureUnit === 'baht' ? 'baht' : 'kg';
+    const date = item.date || todayDate;
+
+    setFormData(withPayableNetWeight({
+      date,
+      memberId: member?.id ?? '',
+      productTypeId: productType?.id ?? '',
+      grossWeight: formNumber(item.grossWeight),
+      containerWeight: formNumber(item.containerWeight),
+      netWeight: '',
+      pricePerUnit: formNumber(item.pricePerUnit),
+      moisturePercent: formNumber(item.moisturePercent),
+      moistureUnit,
+      bonusPrice: formNumber(item.bonusPrice),
+      notes: item.notes ?? '',
+    }));
+    setError('');
+    setSelectedMember(member);
+    setMemberSearchTerm(member ? `${member.code} - ${member.name}` : '');
+    setShowMemberDropdown(false);
+    setSelectedProductType(productType);
+    setProductTypeSearchTerm(productType ? `${productType.code} - ${productType.name}` : '');
+    setShowProductTypeDropdown(false);
+
+    if (productType && member) {
+      fetchRecentPurchases(productType.id, member.id);
+    } else {
+      setRecentPurchases([]);
+    }
+  }, [fetchRecentPurchases, members, productTypes, todayDate]);
+
   // Apply suggested price from recent purchase
   const applySuggestedPrice = useCallback((price: number) => {
     setFormData(prev => ({
@@ -482,6 +535,7 @@ export const usePurchaseForm = ({
     isFormValid,
     resetForm,
     resetAllFields,
+    loadCartItem,
     clearMemberSearch,
     applySuggestedPrice,
     setShowMemberDropdown,

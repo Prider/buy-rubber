@@ -82,6 +82,64 @@ interface UseCartProps {
   loadPurchases: () => Promise<void>;
 }
 
+function formToPurchaseCartItem(
+  formData: PurchaseFormData,
+  members: Member[],
+  productTypes: ProductType[],
+  id: string,
+): CartItem {
+  const member = members.find(m => m.id === formData.memberId);
+  const productType = productTypes.find(pt => pt.id === formData.productTypeId);
+  const grossWeight = parseFloat(formData.grossWeight) || 0; // น้ำหนักรวมภาชนะ
+  const containerWeight = parseFloat(formData.containerWeight) || 0; // น้ำหนักภาชนะ
+  const moistureRead = readMoistureAmount(formData.moisturePercent);
+  const moisturePercent = typeof moistureRead === 'number'
+    ? moistureRead
+    : normalizeMoistureAmount(formData.moisturePercent);
+  const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
+  const bonusPrice = parseFloat(formData.bonusPrice) || 0;
+  const basePrice = pricePerUnit;
+  const adjustedPrice = basePrice + bonusPrice;
+  const finalPrice = adjustedPrice;
+  const settled = settlePurchaseMoisture({
+    grossWeight,
+    containerWeight,
+    netWeight: parseFloat(formData.netWeight) || 0,
+    finalPrice,
+    moistureAmount: moisturePercent,
+    moistureUnit: formData.moistureUnit,
+  });
+  const netWeight = 'error' in settled ? (parseFloat(formData.netWeight) || 0) : settled.netWeight;
+  const moistureUnit: MoistureUnit = 'error' in settled ? 'baht' : settled.moistureUnit;
+  const dryWeight = netWeight;
+  const totalAmount = 'error' in settled ? 0 : settled.totalAmount;
+
+  return {
+    id,
+    type: 'purchase',
+    date: formData.date,
+    memberId: formData.memberId,
+    memberName: member?.name || '',
+    memberCode: member?.code || '',
+    productTypeId: formData.productTypeId,
+    productTypeName: productType?.name || '',
+    productTypeCode: productType?.code || '',
+    grossWeight,
+    containerWeight,
+    netWeight,
+    dryWeight,
+    moisturePercent,
+    moistureUnit,
+    pricePerUnit,
+    bonusPrice,
+    basePrice,
+    adjustedPrice,
+    finalPrice,
+    totalAmount,
+    notes: formData.notes,
+  };
+}
+
 export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartProps) => {
   const router = useRouter();
   const { showWarning } = useAlert();
@@ -93,58 +151,13 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
 
   // Add purchase item to cart
   const addToCart = useCallback((formData: PurchaseFormData) => {
-    const member = members.find(m => m.id === formData.memberId);
-    const productType = productTypes.find(pt => pt.id === formData.productTypeId);
-    const grossWeight = parseFloat(formData.grossWeight) || 0; // น้ำหนักรวมภาชนะ
-    const containerWeight = parseFloat(formData.containerWeight) || 0; // น้ำหนักภาชนะ
-    const moistureRead = readMoistureAmount(formData.moisturePercent);
-    const moisturePercent = typeof moistureRead === 'number'
-      ? moistureRead
-      : normalizeMoistureAmount(formData.moisturePercent);
-    const pricePerUnit = parseFloat(formData.pricePerUnit) || 0;
-    const bonusPrice = parseFloat(formData.bonusPrice) || 0;
-    const basePrice = pricePerUnit;
-    const adjustedPrice = basePrice + bonusPrice;
-    const finalPrice = adjustedPrice;
-    const settled = settlePurchaseMoisture({
-      grossWeight,
-      containerWeight,
-      netWeight: parseFloat(formData.netWeight) || 0,
-      finalPrice,
-      moistureAmount: moisturePercent,
-      moistureUnit: formData.moistureUnit,
-    });
-    const netWeight = 'error' in settled ? (parseFloat(formData.netWeight) || 0) : settled.netWeight;
-    const moistureUnit: MoistureUnit = 'error' in settled ? 'baht' : settled.moistureUnit;
-    const dryWeight = netWeight;
-    const totalAmount = 'error' in settled ? 0 : settled.totalAmount;
-    
-    const item: CartItem = {
-      id: Date.now().toString(),
-      type: 'purchase',
-      date: formData.date,
-      memberId: formData.memberId,
-      memberName: member?.name || '',
-      memberCode: member?.code || '',
-      productTypeId: formData.productTypeId,
-      productTypeName: productType?.name || '',
-      productTypeCode: productType?.code || '',
-      grossWeight,
-      containerWeight,
-      netWeight,
-      dryWeight,
-      moisturePercent,
-      moistureUnit,
-      pricePerUnit,
-      bonusPrice,
-      basePrice,
-      adjustedPrice,
-      finalPrice,
-      totalAmount,
-      notes: formData.notes,
-    };
-    
-    setCart(prev => [...prev, item]);
+    setCart(prev => [...prev, formToPurchaseCartItem(formData, members, productTypes, Date.now().toString())]);
+  }, [members, productTypes]);
+
+  const updateCartItem = useCallback((id: string, formData: PurchaseFormData) => {
+    setCart(prev => prev.map(item => (
+      item.id === id ? formToPurchaseCartItem(formData, members, productTypes, id) : item
+    )));
   }, [members, productTypes]);
 
   // Add service fee item to cart
@@ -162,6 +175,20 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     };
     
     setCart(prev => [...prev, item]);
+  }, []);
+
+  const updateServiceFeeInCart = useCallback((id: string, formData: ServiceFeeFormData) => {
+    const amount = parseFloat(formData.amount) || 0;
+    setCart(prev => prev.map(item => {
+      if (item.id !== id) return item;
+      return {
+        ...item,
+        type: 'serviceFee',
+        category: formData.category,
+        amount,
+        totalAmount: -Math.abs(amount),
+      };
+    }));
   }, []);
 
   // Remove item from cart
@@ -403,7 +430,9 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     error,
     setError,
     addToCart,
+    updateCartItem,
     addServiceFeeToCart,
+    updateServiceFeeInCart,
     removeFromCart,
     clearCart,
     saveCartToDb,

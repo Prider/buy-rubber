@@ -25,6 +25,14 @@ export const useExpenseForm = () => {
     setError('');
   }, []);
 
+  const loadForm = useCallback((data: ExpenseFormData) => {
+    setFormData({
+      category: data.category,
+      amount: data.amount,
+    });
+    setError('');
+  }, []);
+
   // Validate form
   const isFormValid = useCallback(() => {
     return !!(
@@ -49,6 +57,7 @@ export const useExpenseForm = () => {
     setError,
     handleInputChange,
     setCategory,
+    loadForm,
     isFormValid,
     resetForm,
   };

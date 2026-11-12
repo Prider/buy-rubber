@@ -71,6 +71,7 @@ interface PurchaseEntryCardProps {
   clearProductTypeSearch: () => void;
   setShowProductTypeDropdown: (show: boolean) => void;
   submitting?: boolean;
+  editing?: boolean;
   serviceFeeCard?: React.ReactNode;
   onClose?: () => void;
 }
@@ -101,6 +102,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   clearProductTypeSearch,
   setShowProductTypeDropdown,
   submitting = false,
+  editing = false,
   serviceFeeCard,
   onClose,
 }) => {
@@ -345,7 +347,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800">
-      <div className="flex shrink-0 items-center gap-2 border-b border-gray-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-3 dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
+      <div className={`sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-3 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 ${editing ? 'border-blue-300 dark:border-blue-500' : 'border-gray-100 dark:border-gray-600'}`}>
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm">
           <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -354,7 +356,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
         <div className="min-w-0 flex-1">
           <h2 id="purchase-entry-title" className="text-lg font-bold leading-tight lg:text-xl">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              บันทึกการรับซื้อ
+              {editing ? 'แก้ไขรายการในตะกร้า' : 'บันทึกการรับซื้อ'}
             </span>
           </h2>
         </div>
@@ -919,9 +921,13 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
             >
               <div className="flex items-center space-x-2">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                  {editing ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                  )}
                 </svg>
-                <span>เพิ่มลงตะกร้า</span>
+                <span>{editing ? 'บันทึกการแก้ไข' : 'เพิ่มลงตะกร้า'}</span>
               </div>
             </button>
           </div>

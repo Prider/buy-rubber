@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { CloseButton } from '@/components/common/CloseButton';
 import { ServiceFeeCategoryRecord } from '@/lib/serviceFeeCategories';
 import { useServiceFeeCategories } from '@/hooks/useServiceFeeCategories';
 
@@ -23,6 +24,8 @@ interface ServiceFeeCardProps {
   resetForm: () => void;
   addToCart: () => void;
   submitting?: boolean;
+  editing?: boolean;
+  onClose?: () => void;
 }
 
 export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
@@ -34,6 +37,8 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   resetForm,
   addToCart,
   submitting = false,
+  editing = false,
+  onClose,
 }) => {
   const categoryInputRef = useRef<HTMLSelectElement>(null);
   const categoryFieldRef = useRef<HTMLDivElement>(null);
@@ -141,6 +146,14 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
   return (
     <>
     <div className="overflow-visible bg-[var(--app-bg)] lg:overflow-hidden lg:rounded-xl lg:bg-white lg:shadow-md dark:lg:bg-gray-800">
+      {onClose && (
+        <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+          <h2 id="service-fee-entry-title" className="text-lg font-bold text-gray-900 dark:text-white">
+            {editing ? 'แก้ไขค่าบริการในตะกร้า' : 'หักค่าบริการ'}
+          </h2>
+          <CloseButton onClick={onClose} disabled={submitting} />
+        </div>
+      )}
       <div className="p-4 space-y-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
@@ -360,7 +373,7 @@ export const ServiceFeeCard: React.FC<ServiceFeeCardProps> = ({
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
                 </svg>
-                <span>เพิ่มลงตะกร้า</span>
+                <span>{editing ? 'บันทึกการแก้ไข' : 'เพิ่มลงตะกร้า'}</span>
               </div>
             </button>
           </div>

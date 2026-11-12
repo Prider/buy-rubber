@@ -70,6 +70,7 @@ interface CartTableProps {
   printCart: () => void;
   saveCartToDb: () => Promise<void>;
   removeFromCart: (id: string) => void;
+  onEditCartItem: (id: string) => void;
   onShowPrintModal: () => void;
   clearCart: () => void;
   error?: string;
@@ -84,6 +85,7 @@ export const CartTable: React.FC<CartTableProps> = ({
   totalAmount,
   saveCartToDb,
   removeFromCart,
+  onEditCartItem,
   onShowPrintModal,
   clearCart,
   error,
@@ -198,15 +200,15 @@ export const CartTable: React.FC<CartTableProps> = ({
           <table className="w-full max-lg:block lg:table-fixed">
             <thead className={cart.length === 0 ? 'hidden' : 'sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 max-lg:hidden'}>
               <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="w-[7%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ประเภท</th>
-                <th className="w-[10%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">รายละเอียด</th>
-                <th className="w-[13%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนักรวม<br />ภาชนะ (กก.)</th>
-                <th className="w-[9%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />ภาชนะ (กก.)</th>
-                <th className="w-[13%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />สุทธิ (กก.)</th>
+                <th className="w-[6%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ประเภท</th>
+                <th className="w-[9%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">รายละเอียด</th>
+                <th className="w-[12%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนักรวม<br />ภาชนะ (กก.)</th>
+                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />ภาชนะ (กก.)</th>
+                <th className="w-[12%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />สุทธิ (กก.)</th>
                 <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ราคา/กก.</th>
-                <th className="w-[9%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-red-600 dark:bg-gray-700 dark:text-red-400">หัก<br />ความชื้น</th>
-                <th className="w-[21%] bg-gray-50 px-1.5 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จำนวนเงิน</th>
-                <th className="w-[10%] bg-gray-50 px-1 py-1.5 text-center align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จัดการ</th>
+                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-red-600 dark:bg-gray-700 dark:text-red-400">หัก<br />ความชื้น</th>
+                <th className="w-[15%] bg-gray-50 px-1.5 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จำนวนเงิน</th>
+                <th className="w-[22%] bg-gray-50 px-1 py-1.5 text-center align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-600 max-lg:block max-lg:space-y-2 max-lg:divide-y-0">
@@ -273,12 +275,24 @@ export const CartTable: React.FC<CartTableProps> = ({
                     {formatCurrency(item.totalAmount)}
                   </CartCell>
                   <CartCell label="จัดการ" wide className="whitespace-nowrap px-1 py-1.5 text-center max-lg:text-left">
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="rounded-md bg-red-50 px-1.5 py-1 text-[11px] font-medium text-red-600 transition-colors duration-150 ease-out hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:px-2.5 max-lg:py-1"
-                    >
-                      ลบ
-                    </button>
+                    <div className="flex flex-nowrap items-center justify-center gap-1 max-lg:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => onEditCartItem(item.id)}
+                        disabled={submitting}
+                        className="rounded-md bg-blue-50 px-1.5 py-1 text-[11px] font-medium text-blue-700 transition-colors duration-150 ease-out hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 max-lg:min-h-9 max-lg:px-2.5"
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFromCart(item.id)}
+                        disabled={submitting}
+                        className="rounded-md bg-red-50 px-1.5 py-1 text-[11px] font-medium text-red-600 transition-colors duration-150 ease-out hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 max-lg:min-h-9 max-lg:px-2.5"
+                      >
+                        ลบ
+                      </button>
+                    </div>
                   </CartCell>
                 </tr>
               ))
@@ -304,7 +318,7 @@ export const CartTable: React.FC<CartTableProps> = ({
         </div>
         <div className={`flex-shrink-0 border-t-2 border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:justify-end lg:gap-3 lg:px-1.5 lg:pr-[10%]">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:justify-end lg:gap-3 lg:px-1.5 lg:pr-[22%]">
               <div className="text-sm font-bold text-gray-900 dark:text-white">
                 รวมทั้งหมด
               </div>

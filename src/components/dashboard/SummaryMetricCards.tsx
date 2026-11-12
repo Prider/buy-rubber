@@ -4,6 +4,9 @@ import type { DashboardStats } from '@/hooks/useDashboardData';
 
 export type DashboardMetric = 'purchases' | 'sales' | 'serviceFees' | 'expenses';
 
+/** Flip to true to show the ค่าบริการ box again. */
+const SHOW_DASHBOARD_SERVICE_FEE = false;
+
 interface SummaryMetricCardsProps {
   stats: DashboardStats;
   period: DashboardPeriod;
@@ -61,14 +64,15 @@ const METRICS: Array<{
 ];
 
 export default function SummaryMetricCards({ stats, period, metric, onSelect }: SummaryMetricCardsProps) {
+  const metrics = METRICS.filter((item) => SHOW_DASHBOARD_SERVICE_FEE || item.id !== 'serviceFees');
+
   return (
-    <div className="grid shrink-0 grid-cols-2 gap-2 md:grid-cols-4">
-      {METRICS.map((item) => {
+    <div className={`grid shrink-0 gap-2 ${metrics.length > 3 ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'}`}>
+      {metrics.map((item) => {
         const selected = metric === item.id;
         const count = Number(period === 'today' ? stats[item.todayCount] : stats[item.monthCount]) || 0;
         const amount = Number(period === 'today' ? stats[item.todayAmount] : stats[item.monthAmount]) || 0;
-        const secondaryAmount = Number(period === 'today' ? stats[item.monthAmount] : stats[item.todayAmount]) || 0;
-        const secondaryLabel = period === 'today' ? 'เดือนนี้' : 'วันนี้';
+        const periodLabel = period === 'today' ? 'วันนี้' : 'เดือนนี้';
 
         return (
           <button
@@ -86,8 +90,8 @@ export default function SummaryMetricCards({ stats, period, metric, onSelect }: 
               <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ${item.iconClass}`}>
                 {item.title}
               </span>
-              <span className="truncate text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
-                {secondaryLabel} {formatCurrency(secondaryAmount)}
+              <span className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
+                {periodLabel}
               </span>
             </div>
             <p className="mt-1 text-4xl font-bold leading-none tabular-nums tracking-tight text-gray-950 dark:text-white">
