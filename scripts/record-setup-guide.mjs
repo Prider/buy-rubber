@@ -10,16 +10,13 @@
  */
 import { chromium } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, rename } from 'node:fs/promises';
+import { mkdir, rename } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
 const baseURL = process.env.GUIDE_BASE_URL ?? 'http://localhost:3000';
-const licensePath = process.env.GUIDE_LICENSE_FILE
-  ?? path.join(process.env.HOME ?? '', 'Library/Application Support/pos.punsook.innotech/license.lkey');
 const outDir = path.join(process.cwd(), 'public/guide');
 const workDir = path.join(os.tmpdir(), 'guide-video-setup');
-const licenseFile = await readFile(licensePath, 'utf8');
 
 const blank = '\u200b';
 
@@ -380,8 +377,8 @@ async function installDemoRoutes(context) {
     if (request.method() === 'POST') {
       const created = {
         id: 'demo-backup',
-        fileName: 'backup-2569-10-27.db',
-        filePath: '/demo/backup-2569-10-27.db',
+        fileName: 'backup-2569-11-12.db',
+        filePath: '/demo/backup-2569-11-12.db',
         fileSize: 262144,
         backupType: 'manual',
         createdAt: new Date().toISOString(),
@@ -427,11 +424,14 @@ const probe = await browser.newContext({
   colorScheme: 'light',
 });
 await allowLocalLicense(probe);
-await probe.addInitScript((file) => {
-  localStorage.setItem('license_file', file);
+await probe.addInitScript(() => {
+  localStorage.setItem('license_key', 'GUIDE-SHOT-0000-0000');
   localStorage.setItem('license_status', 'valid');
+  localStorage.setItem('license_expires_at', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_renewal_date', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_message', 'ใบอนุญาตถูกต้อง');
   localStorage.setItem('theme', 'light');
-}, licenseFile);
+});
 const probePage = await probe.newPage();
 await login(probePage);
 const storagePath = path.join(workDir, 'storage-setup.json');
@@ -447,15 +447,18 @@ const context = await browser.newContext({
 });
 await allowLocalLicense(context);
 await installDemoRoutes(context);
-await context.addInitScript((file) => {
-  localStorage.setItem('license_file', file);
+await context.addInitScript(() => {
+  localStorage.setItem('license_key', 'GUIDE-SHOT-0000-0000');
   localStorage.setItem('license_status', 'valid');
+  localStorage.setItem('license_expires_at', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_renewal_date', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_message', 'ใบอนุญาตถูกต้อง');
   localStorage.setItem('theme', 'light');
   localStorage.removeItem('slip_companyName');
   localStorage.removeItem('slip_companyAddress');
   localStorage.removeItem('slip_taxId');
   localStorage.removeItem('slip_footerText');
-}, licenseFile);
+});
 
 const page = await context.newPage();
 const recordingStarted = Date.now();
@@ -479,7 +482,7 @@ try {
     bar.id = 'demo-caption';
     bar.style.cssText = [
       'position:fixed',
-      'left:208px',
+      'left:80px',
       'right:16px',
       'bottom:16px',
       'z-index:100003',
@@ -502,7 +505,7 @@ try {
     document.body.appendChild(cursor);
 
     const style = document.createElement('style');
-    style.textContent = '[class*="animal-mask"]{align-items:flex-start !important;padding:72px 16px 120px !important;}';
+    style.textContent = '[class*="animal-mask"]{align-items:flex-start !important;padding:72px 16px 120px !important;}nextjs-portal{display:none !important;}';
     document.head.appendChild(style);
   });
   const leadIn = Math.max(0, (Date.now() - recordingStarted) / 1000);
@@ -717,7 +720,7 @@ try {
   await ring(backupButton);
   await page.waitForTimeout(400);
   await backupButton.click();
-  const backupFile = page.getByText('backup-2569-10-27.db');
+  const backupFile = page.getByText('backup-2569-11-12.db');
   await backupFile.waitFor({ timeout: 8_000 });
   await acknowledge();
   await point(backupFile);

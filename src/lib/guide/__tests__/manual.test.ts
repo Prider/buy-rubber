@@ -76,8 +76,8 @@ describe('user guide topics', () => {
     const video = setup?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/setup-entry.mp4',
-      poster: '/guide/setup-entry.jpg',
+      src: '/guide/setup-entry.mp4?v=4',
+      poster: '/guide/setup-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/setup-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/setup-entry.jpg')).toBe(true);

@@ -11,16 +11,13 @@
  */
 import { chromium } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, rename } from 'node:fs/promises';
+import { mkdir, rename } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
 const baseURL = process.env.GUIDE_BASE_URL ?? 'http://localhost:3000';
-const licensePath = process.env.GUIDE_LICENSE_FILE
-  ?? path.join(process.env.HOME ?? '', 'Library/Application Support/pos.punsook.innotech/license.lkey');
 const outDir = path.join(process.cwd(), 'public/guide');
 const workDir = path.join(os.tmpdir(), 'guide-video');
-const licenseFile = await readFile(licensePath, 'utf8');
 
 function even(value) {
   const rounded = Math.max(2, Math.round(value));
@@ -170,11 +167,14 @@ const probe = await browser.newContext({
   colorScheme: 'light',
 });
 await allowLocalLicense(probe);
-await probe.addInitScript((file) => {
-  localStorage.setItem('license_file', file);
+await probe.addInitScript(() => {
+  localStorage.setItem('license_key', 'GUIDE-SHOT-0000-0000');
   localStorage.setItem('license_status', 'valid');
+  localStorage.setItem('license_expires_at', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_renewal_date', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_message', 'ใบอนุญาตถูกต้อง');
   localStorage.setItem('theme', 'light');
-}, licenseFile);
+});
 const probePage = await probe.newPage();
 await login(probePage);
 const storagePath = path.join(workDir, 'storage-history.json');
@@ -190,9 +190,12 @@ const context = await browser.newContext({
 });
 await allowLocalLicense(context);
 await installHistoryRoutes(context);
-await context.addInitScript((file) => {
-  localStorage.setItem('license_file', file);
+await context.addInitScript(() => {
+  localStorage.setItem('license_key', 'GUIDE-SHOT-0000-0000');
   localStorage.setItem('license_status', 'valid');
+  localStorage.setItem('license_expires_at', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_renewal_date', '2027-12-31T00:00:00.000Z');
+  localStorage.setItem('license_message', 'ใบอนุญาตถูกต้อง');
   localStorage.setItem('theme', 'light');
 
   window.open = () => {
@@ -227,7 +230,7 @@ await context.addInitScript((file) => {
       },
     };
   };
-}, licenseFile);
+});
 
 const page = await context.newPage();
 const recordingStarted = Date.now();

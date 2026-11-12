@@ -1,11 +1,15 @@
 /**
  * Capture the screens shown in /guide.
- * Run while `yarn dev` is already serving http://localhost:3000.
+ * Run while `yarn dev` is already serving the app.
  *
- * Pass a JSON file of localStorage entries (license_key, license_file, …)
- * so the capture can open the app. The script masks license keys, API key
- * hints, and long numbers before it writes the images.
+ *   GUIDE_BASE_URL=http://localhost:3000 node scripts/capture-guide-screenshots.mjs
+ *   GUIDE_THEME=dark node scripts/capture-guide-screenshots.mjs
  *
+ * The license check is stubbed with a placeholder key so an expired local
+ * license cannot block the shots. License keys, API key hints, and long
+ * numbers are masked before each image is written.
+ *
+ * Pass extra localStorage entries when a shot needs them:
  *   GUIDE_STORAGE_FILE=/tmp/guide-storage.json node scripts/capture-guide-screenshots.mjs
  */
 import { chromium } from '@playwright/test';
@@ -13,7 +17,9 @@ import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const baseURL = process.env.GUIDE_BASE_URL ?? 'http://localhost:3000';
-const outDir = path.join(process.cwd(), 'public/guide');
+const theme = process.env.GUIDE_THEME === 'dark' ? 'dark' : 'light';
+const outDir = path.join(process.cwd(), theme === 'dark' ? 'public/guide/dark' : 'public/guide');
+const PLACEHOLDER_KEY = 'GUIDE-SHOT-0000-0000';
 
 const pages = [
   { file: 'dashboard.jpg', path: '/dashboard' },
@@ -75,6 +81,7 @@ async function maskSecrets(page) {
 }
 
 async function shoot(page, file) {
+  await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' }).catch(() => {});
   await maskSecrets(page);
   await page.screenshot({
     path: path.join(outDir, file),
@@ -82,7 +89,44 @@ async function shoot(page, file) {
     quality: 72,
     animations: 'disabled',
   });
-  console.log('saved', file);
+  console.log('saved', path.join(theme === 'dark' ? 'dark' : '', file));
+}
+
+async function settle(page) {
+  await page.locator('main').waitFor({ timeout: 20_000 }).catch(() => {});
+  await page.waitForFunction(() => {
+    const text = document.body?.innerText || '';
+    return !text.includes('กำลังโหลด') && !text.includes('กำลังตรวจสอบใบอนุญาต');
+  }, { timeout: 20_000 }).catch(() => {});
+  await page.waitForTimeout(400);
+}
+
+async function allowLicense(context) {
+  await context.route('**/api/license/validate', async (route) => {
+    let body = {};
+    try {
+      body = route.request().postDataJSON() || {};
+    } catch {
+      body = {};
+    }
+    if (body.licenseKey === '__skip_license_check__' && !body.licenseFile) {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        valid: true,
+        expired: false,
+        renewalRequired: false,
+        message: 'ใบอนุญาตถูกต้อง',
+        expiresAt: '2027-11-12T00:00:00.000Z',
+        renewalDate: '2027-05-12T00:00:00.000Z',
+        licenseFile: null,
+      }),
+    });
+  });
 }
 
 await mkdir(outDir, { recursive: true });
@@ -92,19 +136,29 @@ const stored = storageFile
   ? JSON.parse(await readFile(storageFile, 'utf8'))
   : {};
 
+const licenseEntries = {
+  license_key: PLACEHOLDER_KEY,
+  license_status: 'valid',
+  license_expires_at: '2027-11-12T00:00:00.000Z',
+  license_renewal_date: '2027-05-12T00:00:00.000Z',
+  license_message: 'ใบอนุญาตถูกต้อง',
+  ...stored,
+  theme,
+};
+
 const browser = await chromium.launch();
 const context = await browser.newContext({
   viewport: { width: 1280, height: 800 },
   deviceScaleFactor: 1,
   locale: 'th-TH',
-  colorScheme: 'light',
+  colorScheme: theme,
 });
+await allowLicense(context);
 await context.addInitScript((entries) => {
   for (const [key, value] of Object.entries(entries)) {
     if (typeof value === 'string') localStorage.setItem(key, value);
   }
-  localStorage.setItem('theme', 'light');
-}, stored);
+}, licenseEntries);
 
 const page = await context.newPage();
 await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
@@ -112,47 +166,70 @@ await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFo
 await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
 await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
 await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-await page.waitForURL('**/dashboard', { timeout: 20_000 });
+await page.waitForURL('**/dashboard', { timeout: 30_000 });
 await page.getByRole('link', { name: 'แดชบอร์ด' }).first().waitFor();
 
 for (const shot of pages) {
   await page.goto(`${baseURL}${shot.path}`, { waitUntil: 'domcontentloaded' });
-  await page.locator('main').waitFor();
-  await page.waitForTimeout(900);
+  await settle(page);
+  if (shot.path === '/reports') {
+    const generate = page.getByRole('button', { name: 'สร้างรายงาน' });
+    if (await generate.isVisible().catch(() => false)) {
+      await generate.click();
+      await page.getByText('กำลังสร้าง').waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
+      await settle(page);
+    }
+  }
   await shoot(page, shot.file);
 }
 
 await page.goto(`${baseURL}/dashboard`, { waitUntil: 'domcontentloaded' });
+await settle(page);
 await page.getByRole('button', { name: 'ผู้ช่วยอัจฉริยะ' }).click();
-await page.getByRole('heading', { name: 'ถามข้อมูลร้าน' }).waitFor();
+await page.getByRole('heading', { name: 'ถามข้อมูลร้าน' }).waitFor({ timeout: 15_000 });
 await page.waitForTimeout(400);
 await shoot(page, 'assistant.jpg');
 
-const licensedOnly = Object.fromEntries(
-  Object.entries(stored).filter(([key]) => key.startsWith('license_')),
-);
-
 await context.close();
 
-const publicContext = await browser.newContext({
-  viewport: { width: 1280, height: 800 },
-  deviceScaleFactor: 1,
-  locale: 'th-TH',
-  colorScheme: 'light',
-});
-await publicContext.addInitScript((entries) => {
-  for (const [key, value] of Object.entries(entries)) {
-    if (typeof value === 'string') localStorage.setItem(key, value);
-  }
-  localStorage.setItem('theme', 'light');
-}, licensedOnly);
-const loginPage = await publicContext.newPage();
-await loginPage.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
-await loginPage.getByRole('button', { name: 'เข้าสู่ระบบ' }).waitFor();
-await loginPage.getByPlaceholder('กรอกชื่อผู้ใช้').fill('');
-await loginPage.getByPlaceholder('กรอกรหัสผ่าน').fill('');
-await loginPage.waitForTimeout(300);
-await shoot(loginPage, 'login.jpg');
+if (theme === 'light') {
+  const loginContext = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    locale: 'th-TH',
+    colorScheme: 'light',
+  });
+  await allowLicense(loginContext);
+  await loginContext.addInitScript((entries) => {
+    for (const [key, value] of Object.entries(entries)) {
+      if (typeof value === 'string') localStorage.setItem(key, value);
+    }
+  }, licenseEntries);
+  const loginPage = await loginContext.newPage();
+  await loginPage.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
+  await loginPage.getByRole('button', { name: 'เข้าสู่ระบบ' }).waitFor();
+  await loginPage.getByPlaceholder('กรอกชื่อผู้ใช้').fill('');
+  await loginPage.getByPlaceholder('กรอกรหัสผ่าน').fill('');
+  await loginPage.waitForTimeout(300);
+  await shoot(loginPage, 'login.jpg');
+  await loginContext.close();
+
+  const activateContext = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    locale: 'th-TH',
+    colorScheme: 'light',
+  });
+  await activateContext.addInitScript(() => {
+    localStorage.setItem('theme', 'light');
+  });
+  const activatePage = await activateContext.newPage();
+  await activatePage.goto(`${baseURL}/activate`, { waitUntil: 'domcontentloaded' });
+  await activatePage.getByRole('button', { name: 'เปิดใช้งาน', exact: true }).waitFor({ timeout: 20_000 });
+  await activatePage.waitForTimeout(400);
+  await shoot(activatePage, 'activate.jpg');
+  await activateContext.close();
+}
 
 await browser.close();
 console.log('done', outDir);

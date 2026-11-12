@@ -671,7 +671,7 @@ export default function UserGuide() {
               <h2 className="mt-8 text-lg font-bold text-gray-900 dark:text-white">หน้าตาโปรแกรม</h2>
               <div className="mt-3">
                 <GuideFigure
-                  src="/guide/dashboard.jpg"
+                  src="/guide/dashboard.jpg?v=4"
                   alt="แดชบอร์ดของ Yang Dee พร้อมเมนูด้านซ้าย"
                   caption="เมนูอยู่แถบซ้าย แดชบอร์ดคือหน้าแรกหลังเข้าสู่ระบบ"
                 />
