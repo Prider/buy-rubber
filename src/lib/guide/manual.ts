@@ -32,7 +32,14 @@ function shot(file: string, alt: string, caption: string): GuideBlock {
 }
 
 function clip(file: string, poster: string, caption: string): GuideBlock {
-  return { kind: 'video', src: `/guide/${file}`, poster: `/guide/${poster}`, caption };
+  const src = file.split('?')[0];
+  const posterName = poster.split('?')[0];
+  return {
+    kind: 'video',
+    src: `/guide/${src}?v=4`,
+    poster: `/guide/${posterName}?v=4`,
+    caption,
+  };
 }
 
 export type GuideTopic = {
@@ -251,8 +258,8 @@ export const GUIDE_TOPICS: GuideTopic[] = [
         text: 'ทำหกอย่างนี้ก่อนเปิดรับซื้อวันแรก',
       },
       clip(
-        'setup-entry.mp4?v=4',
-        'setup-entry.jpg?v=4',
+        'setup-entry.mp4',
+        'setup-entry.jpg',
         'สาธิตการตั้งค่าวันแรก ตั้งแต่ใบรับซื้อจนถึงสำรองข้อมูล ชื่อในคลิปเป็นตัวอย่าง',
       ),
       {

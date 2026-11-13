@@ -126,11 +126,11 @@ async function installDemoRoutes(context, sample) {
 
 async function login(page) {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 20_000 });
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 45_000 });
   await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
   await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await page.waitForURL('**/dashboard', { timeout: 20_000 });
+  await page.waitForURL('**/dashboard', { timeout: 45_000 });
 }
 
 function even(value) {
@@ -218,6 +218,9 @@ const page = await context.newPage();
 const recordingStarted = Date.now();
 try {
   await page.goto(`${baseURL}/purchases`, { waitUntil: 'domcontentloaded' });
+  const openEntry = page.getByRole('button', { name: 'บันทึกการรับซื้อ' }).first();
+  await openEntry.waitFor({ timeout: 60_000 });
+  await openEntry.click();
   await page.locator('input[name="date"]').waitFor({ timeout: 20_000 });
   await page.waitForTimeout(500);
 
@@ -389,7 +392,7 @@ try {
   await caption('✓', 'กดเพิ่มลงตะกร้า ฟอร์มพร้อมรายการถัดไปของคนเดิม');
   await point(addButton);
   await addButton.click();
-  await page.getByText('บันทึกการรับซื้อ').click();
+  await page.locator('#purchase-entry-title').click();
   await page.waitForTimeout(1600);
 
   await caption('↺', 'กรอกผิด กดรีเซ็ตเพื่อเริ่มแถวนั้นใหม่');

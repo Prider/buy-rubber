@@ -150,11 +150,11 @@ async function installHistoryRoutes(context) {
 
 async function login(page) {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 20_000 });
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 45_000 });
   await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
   await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await page.waitForURL('**/dashboard', { timeout: 20_000 });
+  await page.waitForURL('**/dashboard', { timeout: 45_000 });
 }
 
 await mkdir(workDir, { recursive: true });
@@ -238,9 +238,11 @@ const marks = {};
 try {
   await page.goto(`${baseURL}/purchases-list`, { waitUntil: 'domcontentloaded' });
   const search = page.getByPlaceholder('ค้นหารายการตามเลขที่รับซื้อ, ชื่อสมาชิก หรือรหัสสมาชิก...');
-  await search.waitFor({ timeout: 20_000 });
+  await search.waitFor({ timeout: 60_000 });
   const table = page.locator('table');
-  await table.getByText('PUR-2569-0108').waitFor({ timeout: 20_000 });
+  await table.getByText('สมชาย ตัวอย่าง').first().waitFor({ timeout: 20_000 });
+  await page.getByRole('button', { name: 'เลขที่' }).click();
+  await table.getByText('PUR-2569-0108').waitFor({ timeout: 10_000 });
   await page.waitForTimeout(400);
 
   await page.evaluate(() => {

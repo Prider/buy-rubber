@@ -28,8 +28,8 @@ describe('user guide topics', () => {
     const video = members?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/member-entry.mp4',
-      poster: '/guide/member-entry.jpg',
+      src: '/guide/member-entry.mp4?v=4',
+      poster: '/guide/member-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/member-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/member-entry.jpg')).toBe(true);
@@ -40,8 +40,8 @@ describe('user guide topics', () => {
     const video = purchase?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/purchase-entry.mp4',
-      poster: '/guide/purchase-entry.jpg',
+      src: '/guide/purchase-entry.mp4?v=4',
+      poster: '/guide/purchase-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/purchase-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/purchase-entry.jpg')).toBe(true);
@@ -52,8 +52,8 @@ describe('user guide topics', () => {
     const video = stock?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/stock-entry.mp4',
-      poster: '/guide/stock-entry.jpg',
+      src: '/guide/stock-entry.mp4?v=4',
+      poster: '/guide/stock-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/stock-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/stock-entry.jpg')).toBe(true);
@@ -64,8 +64,8 @@ describe('user guide topics', () => {
     const video = history?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/history-entry.mp4',
-      poster: '/guide/history-entry.jpg',
+      src: '/guide/history-entry.mp4?v=4',
+      poster: '/guide/history-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/history-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/history-entry.jpg')).toBe(true);
@@ -88,8 +88,8 @@ describe('user guide topics', () => {
     const video = sales?.blocks.find((block) => block.kind === 'video');
     expect(video).toMatchObject({
       kind: 'video',
-      src: '/guide/sales-entry.mp4',
-      poster: '/guide/sales-entry.jpg',
+      src: '/guide/sales-entry.mp4?v=4',
+      poster: '/guide/sales-entry.jpg?v=4',
     });
     expect(existsSync('public/guide/sales-entry.mp4')).toBe(true);
     expect(existsSync('public/guide/sales-entry.jpg')).toBe(true);

@@ -141,6 +141,38 @@ async function installSalesRoutes(context) {
     });
   });
 
+  await context.route('**/api/selling-types**', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.abort();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'sell-cash', name: 'จ่ายสด', sortOrder: 1, isActive: true },
+        { id: 'sell-credit', name: 'ขายล่วง', sortOrder: 2, isActive: true },
+        { id: 'sell-keep', name: 'ฝาก', sortOrder: 3, isActive: true },
+      ]),
+    });
+  });
+
+  await context.route('**/api/sale-expense-types**', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.abort();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'exp-transport', name: 'ค่าขนส่ง', sortOrder: 1, isActive: true },
+        { id: 'exp-labor', name: 'ค่าแรง', sortOrder: 2, isActive: true },
+        { id: 'exp-service', name: 'ค่าบริการ', sortOrder: 3, isActive: true },
+      ]),
+    });
+  });
+
   await context.route('**/api/stock/positions**', async (route) => {
     if (route.request().method() !== 'GET') {
       await route.abort();
@@ -160,11 +192,11 @@ async function installSalesRoutes(context) {
 
 async function login(page) {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 20_000 });
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 45_000 });
   await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
   await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await page.waitForURL('**/dashboard', { timeout: 20_000 });
+  await page.waitForURL('**/dashboard', { timeout: 45_000 });
 }
 
 await mkdir(workDir, { recursive: true });
@@ -216,7 +248,7 @@ const marks = {};
 try {
   await page.goto(`${baseURL}/sales`, { waitUntil: 'domcontentloaded' });
   const openForm = page.getByTestId('sales-open-form');
-  await openForm.waitFor({ timeout: 20_000 });
+  await openForm.waitFor({ timeout: 60_000 });
   await page.locator('table').getByText('SAL-2569-0042').waitFor({ timeout: 20_000 });
   await page.waitForTimeout(400);
 

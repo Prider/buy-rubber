@@ -101,11 +101,11 @@ function installStockRoutes(context) {
 
 async function login(page) {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 20_000 });
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 45_000 });
   await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
   await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await page.waitForURL('**/dashboard', { timeout: 20_000 });
+  await page.waitForURL('**/dashboard', { timeout: 45_000 });
 }
 
 await mkdir(workDir, { recursive: true });
