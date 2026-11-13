@@ -5,6 +5,7 @@ import { cache, CACHE_KEYS } from '@/lib/cache';
 import { getUserFromToken } from '@/lib/utils';
 import { Prisma } from '@prisma/client';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { parseExpenseDate, validateExpenseData, type ParsedExpenseDate } from '@/lib/expenseInput';
 
 // Force Node.js runtime for Prisma support
 export const runtime = 'nodejs';
@@ -19,13 +20,6 @@ interface ExpenseCreateData {
   userName?: string;
 }
 
-interface ParsedDate {
-  date: Date;
-  year: number;
-  month: string;
-  day: string;
-}
-
 interface ExpenseSummary {
   todayTotal: number;
   todayCount: number;
@@ -38,7 +32,6 @@ interface ExpenseSummary {
 // Constants
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 50;
-const THAI_TIMEZONE_OFFSET = '+07:00';
 const RANDOM_SUFFIX_LENGTH = 6;
 const MAX_RETRY_ATTEMPTS = 5;
 const RANDOM_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -192,54 +185,6 @@ async function calculateExpenseSummary(): Promise<ExpenseSummary> {
 }
 
 /**
- * Parses date string and extracts date components
- * Handles timezone conversion for datetime-local values (assumes Thailand timezone UTC+7)
- */
-function parseExpenseDate(dateString?: string): ParsedDate {
-  let date: Date;
-  let year: number;
-  let month: string;
-  let day: string;
-
-  if (dateString) {
-    // Extract date parts from original string BEFORE timezone conversion
-    const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    
-    // Check if date string has timezone info
-    const hasTimezone = dateString.includes('Z') || /[+-]\d{2}:?\d{2}$/.test(dateString);
-    
-    if (hasTimezone) {
-      date = new Date(dateString);
-    } else {
-      // No timezone - assume Thailand timezone (UTC+7) for datetime-local values
-      date = new Date(dateString + THAI_TIMEZONE_OFFSET);
-    }
-    
-    // Use date parts from original string if available, otherwise extract from Date object
-    if (dateMatch) {
-      year = parseInt(dateMatch[1], 10);
-      month = dateMatch[2];
-      day = dateMatch[3];
-    } else {
-      year = date.getFullYear();
-      month = String(date.getMonth() + 1).padStart(2, '0');
-      day = String(date.getDate()).padStart(2, '0');
-    }
-  } else {
-    date = new Date();
-    year = date.getFullYear();
-    month = String(date.getMonth() + 1).padStart(2, '0');
-    day = String(date.getDate()).padStart(2, '0');
-  }
-
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date: ${dateString}`);
-  }
-
-  return { date, year, month, day };
-}
-
-/**
  * Generates a random alphanumeric suffix for expense numbers
  */
 function generateRandomSuffix(): string {
@@ -256,41 +201,6 @@ function generateRandomSuffix(): string {
  */
 function generateExpenseNumber(prefix: string): string {
   return prefix + generateRandomSuffix();
-}
-
-/**
- * Validates expense creation data
- */
-function validateExpenseData(data: ExpenseCreateData): {
-  category: string;
-  amount: number;
-  description?: string | null;
-} {
-  const category = data.category?.trim();
-  if (!category) {
-    throw new Error('Category is required');
-  }
-
-  // Check if amount is missing or undefined
-  if (data.amount === undefined || data.amount === null) {
-    throw new Error('Amount is required and must be greater than 0');
-  }
-
-  // Check if amount is 0
-  if (data.amount === 0) {
-    throw new Error('Amount is required and must be greater than 0');
-  }
-
-  const parsedAmount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
-  if (isNaN(parsedAmount) || parsedAmount <= 0) {
-    throw new Error(`Invalid amount: ${data.amount}`);
-  }
-
-  return {
-    category,
-    amount: Math.abs(parsedAmount),
-    description: data.description?.trim() || null,
-  };
 }
 
 /**
@@ -420,7 +330,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse and validate date
-    let parsedDate: ParsedDate;
+    let parsedDate: ParsedExpenseDate;
     try {
       parsedDate = parseExpenseDate(data.date);
     } catch (dateError) {

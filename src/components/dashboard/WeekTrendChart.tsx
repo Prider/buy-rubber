@@ -69,7 +69,7 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
     <section className="flex min-h-[16rem] min-w-0 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:h-full lg:min-h-0">
       <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <DashboardHeading tone="trend">แนวโน้ม 7 วัน</DashboardHeading>
-        <div className="flex gap-3 text-xs font-medium text-gray-700 dark:text-gray-200">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-gray-700 dark:text-gray-200">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-[3px] bg-sky-600" />
             รับซื้อ
@@ -77,6 +77,10 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-[3px] bg-emerald-600" />
             ขาย
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-[3px] bg-rose-600" />
+            ค่าใช้จ่าย
           </span>
         </div>
       </div>
@@ -104,8 +108,9 @@ export default function WeekTrendChart({ points }: { points: TrendPoint[] }) {
                 width={48}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} />
-              <Bar dataKey="purchaseAmount" name="รับซื้อ" fill="#0284c7" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              <Bar dataKey="saleAmount" name="ขาย" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="purchaseAmount" name="รับซื้อ" fill="#0284c7" radius={[4, 4, 0, 0]} maxBarSize={22} />
+              <Bar dataKey="saleAmount" name="ขาย" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={22} />
+              <Bar dataKey="expenseAmount" name="ค่าใช้จ่าย" fill="#e11d48" radius={[4, 4, 0, 0]} maxBarSize={22} />
             </BarChart>
           </ResponsiveContainer>
           </div>

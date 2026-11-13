@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ExpenseListTable } from '@/components/expenses/ExpenseListTable';
 import { MembersPagination } from '@/components/members/MembersPagination';
-import { useExpenses } from '@/hooks/useExpenses';
+import { Expense, useExpenses } from '@/hooks/useExpenses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { useRouter } from 'next/navigation';
@@ -19,8 +19,9 @@ export default function ExpensesPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { showConfirm } = useAlert();
-  const { expenses, summary, loading, loadExpenses, createExpense, deleteExpense, pagination, changePage } = useExpenses();
+  const { expenses, summary, loading, loadExpenses, createExpense, updateExpense, deleteExpense, pagination, changePage } = useExpenses();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -45,6 +46,18 @@ export default function ExpensesPage() {
     } else {
       throw new Error('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบอีกครั้ง');
     }
+  };
+
+  const handleUpdateExpense = async (expenseData: { date: string; category: string; amount: number; description?: string }) => {
+    if (!editingExpense) {
+      throw new Error('ไม่พบค่าใช้จ่ายที่ต้องการแก้ไข');
+    }
+    await updateExpense(editingExpense.id, expenseData);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingExpense(null);
   };
 
   const handleDeleteExpense = async (id: string) => {
@@ -95,7 +108,10 @@ export default function ExpensesPage() {
             </div>
             <button
               type="button"
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => {
+                setEditingExpense(null);
+                setIsFormOpen(true);
+              }}
               className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-3 text-sm font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 md:min-h-10 md:shrink-0"
             >
               <span aria-hidden="true">+</span>
@@ -148,6 +164,7 @@ export default function ExpensesPage() {
             <ExpenseListTable
               expenses={expenses}
               loading={loading}
+              onEdit={setEditingExpense}
               onDelete={handleDeleteExpense}
             />
           </div>
@@ -168,11 +185,12 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {isFormOpen ? (
+      {isFormOpen || editingExpense ? (
         <ExpenseEntryCard
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSubmit={handleAddExpense}
+          isOpen
+          editingExpense={editingExpense}
+          onClose={closeForm}
+          onSubmit={editingExpense ? handleUpdateExpense : handleAddExpense}
         />
       ) : null}
     </>

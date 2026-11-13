@@ -39,6 +39,8 @@ vi.mock('@/contexts/AuthContext', () => ({
     login: vi.fn(),
     logout: vi.fn(),
     loading: false,
+    isLoading: false,
+    hasAnyRole: (roles: string[]) => roles.includes(mockUser.role),
   }),
 }));
 

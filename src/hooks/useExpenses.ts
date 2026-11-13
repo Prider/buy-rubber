@@ -167,6 +167,21 @@ export const useExpenses = () => {
     }
   }, [loadExpenses, pageSize]);
 
+  const updateExpense = useCallback(async (
+    id: string,
+    expenseData: { date: string; category: string; amount: number; description?: string },
+  ) => {
+    try {
+      setError(null);
+      await axios.put(`/api/expenses/${id}`, expenseData);
+      await loadExpenses({ page: currentPage, pageSize });
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'เกิดข้อผิดพลาดในการแก้ไขค่าใช้จ่าย';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, [loadExpenses, currentPage, pageSize]);
+
   const deleteExpense = useCallback(async (id: string) => {
     try {
       setError(null);
@@ -195,6 +210,7 @@ export const useExpenses = () => {
     pagination,
     loadExpenses,
     createExpense,
+    updateExpense,
     deleteExpense,
     changePage,
     changePageSize,

@@ -8,17 +8,21 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ExpenseListTableProps {
   expenses: Expense[];
   loading: boolean;
+  onEdit: (expense: Expense) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
 export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   expenses,
   loading,
+  onEdit,
   onDelete,
 }) => {
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
-  const desktopCols = isAdmin
+  const canEdit = hasAnyRole(['admin', 'user']);
+  const showActions = canEdit || isAdmin;
+  const desktopCols = showActions
     ? 'lg:grid-cols-[6.25rem_11rem_minmax(6.5rem,0.8fr)_minmax(0,1.1fr)_6.5rem_6.25rem_max-content]'
     : 'lg:grid-cols-[6.25rem_11rem_minmax(6.5rem,0.8fr)_minmax(0,1.1fr)_6.5rem_6.25rem]';
   // Memoize category icon function
@@ -90,10 +94,12 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
     expense: Expense;
     index: number;
     isAdmin: boolean;
+    canEdit: boolean;
+    onEdit: (expense: Expense) => void;
     onDelete: (id: string) => Promise<void>;
   }
 
-  const ExpenseRow = memo<ExpenseRowProps>(({ expense, index, isAdmin, onDelete }) => {
+  const ExpenseRow = memo<ExpenseRowProps>(({ expense, index, isAdmin, canEdit, onEdit, onDelete }) => {
     // Memoize formatted values
     const formattedDate = useMemo(
       () => formatDateMemo(expense.date),
@@ -119,6 +125,10 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
       () => expense.userName || '-',
       [expense.userName]
     );
+
+    const handleEdit = useCallback(() => {
+      onEdit(expense);
+    }, [expense, onEdit]);
 
     const handleDelete = useCallback(() => {
       onDelete(expense.id);
@@ -163,17 +173,29 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
           {userName}
         </div>
 
-        {isAdmin ? (
+        {canEdit || isAdmin ? (
           <div role="cell" className="col-span-3 row-start-6 mt-2 lg:col-span-1 lg:col-start-7 lg:row-start-1 lg:mt-0 lg:px-2 lg:py-2">
-            <div className="flex flex-wrap justify-end">
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 lg:min-h-8 lg:px-2"
-                title="ลบ"
-              >
-                ลบ
-              </button>
+            <div className="flex flex-wrap justify-end gap-1">
+              {canEdit ? (
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-200 dark:hover:bg-gray-700 lg:min-h-8 lg:px-2"
+                  title="แก้ไข"
+                >
+                  แก้ไข
+                </button>
+              ) : null}
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 lg:min-h-8 lg:px-2"
+                  title="ลบ"
+                >
+                  ลบ
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -213,7 +235,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
           <div role="columnheader" className="px-3 py-3 text-left">รายละเอียด</div>
           <div role="columnheader" className="px-3 py-3 text-left">บันทึกโดย</div>
           <div role="columnheader" className="px-3 py-3 text-right">จำนวนเงิน</div>
-          {isAdmin ? (
+          {showActions ? (
             <div role="columnheader" className="px-2 py-3 text-right">จัดการ</div>
           ) : null}
         </div>
@@ -225,6 +247,8 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
               expense={expense}
               index={index}
               isAdmin={isAdmin}
+              canEdit={canEdit}
+              onEdit={onEdit}
               onDelete={onDelete}
             />
           ))}

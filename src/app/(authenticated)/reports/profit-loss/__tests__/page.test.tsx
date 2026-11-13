@@ -90,7 +90,7 @@ describe('ProfitLossReport', () => {
       expect(axios.get).toHaveBeenCalledWith('/api/reports/profit-loss', expect.any(Object));
     });
 
-    expect(await screen.findByText(/Profit:/)).toBeInTheDocument();
+    expect(await screen.findByText(/กำไร:/)).toBeInTheDocument();
     expect(screen.getByTestId('profit-loss-chart')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ดูตัวอย่าง' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled();

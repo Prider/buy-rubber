@@ -109,6 +109,7 @@ export async function GET(_request: NextRequest) {
       monthSalesByProductType,
       trendPurchases,
       trendSales,
+      trendExpenses,
       recentServiceFees,
     ] = await Promise.all([
       // รายการรับซื้อวันนี้
@@ -335,6 +336,10 @@ export async function GET(_request: NextRequest) {
         where: { date: { gte: sevenDaysStart, lt: tomorrow } },
         select: { date: true, totalAmount: true },
       }),
+      prisma.expense.findMany({
+        where: { date: { gte: sevenDaysStart, lt: tomorrow } },
+        select: { date: true, amount: true },
+      }),
       prisma.serviceFee.findMany({
         where: { date: monthDateRange },
         take: 10,
@@ -423,7 +428,7 @@ export async function GET(_request: NextRequest) {
         monthStart: thailandMonthStart.toISOString(),
         nextMonth: firstDayOfNextMonth.toISOString(),
       },
-      trend: buildSevenDayTrend(today, trendPurchases, trendSales),
+      trend: buildSevenDayTrend(today, trendPurchases, trendSales, trendExpenses),
       recentPurchases,
       topMembers: topMembersWithDetails,
       todayPrices,

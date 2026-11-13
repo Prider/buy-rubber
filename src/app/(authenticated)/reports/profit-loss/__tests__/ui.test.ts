@@ -55,13 +55,13 @@ describe('profit-loss ui helpers', () => {
   });
 
   describe('getNetResultLabel', () => {
-    it('returns Profit for zero or positive net', () => {
-      expect(getNetResultLabel(0)).toBe('Profit');
-      expect(getNetResultLabel(120)).toBe('Profit');
+    it('returns กำไร for zero or positive net', () => {
+      expect(getNetResultLabel(0)).toBe('กำไร');
+      expect(getNetResultLabel(120)).toBe('กำไร');
     });
 
-    it('returns Loss for negative net', () => {
-      expect(getNetResultLabel(-1)).toBe('Loss');
+    it('returns ขาดทุน for negative net', () => {
+      expect(getNetResultLabel(-1)).toBe('ขาดทุน');
     });
   });
 });

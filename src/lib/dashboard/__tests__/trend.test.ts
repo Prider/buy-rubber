@@ -13,7 +13,7 @@ describe('buildSevenDayTrend', () => {
     expect(points.map((point) => point.label)).toEqual(['ส', 'อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ']);
   });
 
-  it('sums purchases and sales that fall on the same Thailand day', () => {
+  it('sums purchases, sales, and expenses that fall on the same Thailand day', () => {
     const points = buildSevenDayTrend(
       todayStart,
       [
@@ -21,11 +21,16 @@ describe('buildSevenDayTrend', () => {
         { date: '2026-10-15T18:00:00.000Z', totalAmount: 40 },
       ],
       [{ date: '2026-10-16T10:00:00.000Z', totalAmount: 25 }],
+      [
+        { date: '2026-10-16T03:00:00.000Z', amount: 12 },
+        { date: '2026-10-15T20:00:00.000Z', amount: 8 },
+      ],
     );
 
     const today = points.find((point) => point.date === '2026-10-16');
     expect(today?.purchaseAmount).toBe(140);
     expect(today?.saleAmount).toBe(25);
+    expect(today?.expenseAmount).toBe(20);
   });
 
   it('ignores rows outside the seven day window', () => {
@@ -33,9 +38,10 @@ describe('buildSevenDayTrend', () => {
       todayStart,
       [{ date: '2026-10-01T00:00:00.000Z', totalAmount: 999 }],
       [],
+      [{ date: '2026-10-01T00:00:00.000Z', amount: 50 }],
     );
 
-    expect(points.every((point) => point.purchaseAmount === 0)).toBe(true);
+    expect(points.every((point) => point.purchaseAmount === 0 && point.expenseAmount === 0)).toBe(true);
   });
 });
 

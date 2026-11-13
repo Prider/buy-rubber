@@ -26,6 +26,6 @@ export function isExportDisabled({
   return !hasRows || loading || exportBusy;
 }
 
-export function getNetResultLabel(net: number): 'Profit' | 'Loss' {
-  return net >= 0 ? 'Profit' : 'Loss';
+export function getNetResultLabel(net: number): 'กำไร' | 'ขาดทุน' {
+  return net >= 0 ? 'กำไร' : 'ขาดทุน';
 }

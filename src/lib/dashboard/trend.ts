@@ -4,7 +4,8 @@ const WEEKDAY_TH = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as co
 
 export interface TrendAmountRow {
   date: Date | string;
-  totalAmount: number | null;
+  totalAmount?: number | null;
+  amount?: number | null;
 }
 
 export interface TrendPoint {
@@ -12,6 +13,11 @@ export interface TrendPoint {
   label: string;
   purchaseAmount: number;
   saleAmount: number;
+  expenseAmount: number;
+}
+
+function rowAmount(row: TrendAmountRow): number {
+  return Number(row.totalAmount ?? row.amount) || 0;
 }
 
 export function thailandDateKey(date: Date): string {
@@ -26,6 +32,7 @@ export function buildSevenDayTrend(
   todayStartUtc: Date,
   purchases: TrendAmountRow[],
   sales: TrendAmountRow[],
+  expenses: TrendAmountRow[] = [],
 ): TrendPoint[] {
   const points: TrendPoint[] = [];
 
@@ -37,6 +44,7 @@ export function buildSevenDayTrend(
       label: WEEKDAY_TH[shifted.getUTCDay()],
       purchaseAmount: 0,
       saleAmount: 0,
+      expenseAmount: 0,
     });
   }
 
@@ -44,12 +52,17 @@ export function buildSevenDayTrend(
 
   for (const row of purchases) {
     const point = byDate.get(thailandDateKey(new Date(row.date)));
-    if (point) point.purchaseAmount += Number(row.totalAmount) || 0;
+    if (point) point.purchaseAmount += rowAmount(row);
   }
 
   for (const row of sales) {
     const point = byDate.get(thailandDateKey(new Date(row.date)));
-    if (point) point.saleAmount += Number(row.totalAmount) || 0;
+    if (point) point.saleAmount += rowAmount(row);
+  }
+
+  for (const row of expenses) {
+    const point = byDate.get(thailandDateKey(new Date(row.date)));
+    if (point) point.expenseAmount += rowAmount(row);
   }
 
   return points;

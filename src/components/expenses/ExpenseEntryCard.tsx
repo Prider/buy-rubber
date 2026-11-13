@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useAlert } from '@/hooks/useAlert';
 import { CloseButton } from '@/components/common/CloseButton';
 import { ExpenseCategoryRecord } from '@/lib/expenseCategories';
+import { toDateTimeLocalValue } from '@/lib/expenseInput';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 
 const ExpenseCategoryModal = dynamic(
@@ -21,13 +22,28 @@ interface ExpenseFormData {
   description?: string;
 }
 
+export interface EditableExpense {
+  expenseNo: string;
+  date: string;
+  category: string;
+  amount: number;
+  description?: string | null;
+}
+
 interface ExpenseEntryCardProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: ExpenseFormData) => Promise<void>;
+  editingExpense?: EditableExpense | null;
 }
 
-export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onClose, onSubmit }) => {
+export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  editingExpense = null,
+}) => {
+  const isEditing = Boolean(editingExpense);
   const { showWarning, showError } = useAlert();
   const {
     categories,
@@ -179,10 +195,25 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
   };
 
   useEffect(() => {
-    if (isOpen) {
-      resetForm();
+    if (!isOpen) return;
+    if (editingExpense) {
+      setExpenseData({
+        date: toDateTimeLocalValue(editingExpense.date),
+        category: editingExpense.category,
+        amount: String(editingExpense.amount),
+        description: editingExpense.description ?? '',
+      });
+      setCategoryMenuOpen(false);
+      return;
     }
-  }, [isOpen]);
+    setExpenseData({
+      date: getCurrentDateTimeLocal(),
+      category: '',
+      amount: '',
+      description: '',
+    });
+    setCategoryMenuOpen(false);
+  }, [isOpen, editingExpense]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +232,11 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
       resetForm();
       onClose();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
+      const errorMessage = error instanceof Error
+        ? error.message
+        : isEditing
+          ? 'เกิดข้อผิดพลาดในการแก้ไขค่าใช้จ่าย'
+          : 'เกิดข้อผิดพลาดในการบันทึกค่าใช้จ่าย';
       showError('เกิดข้อผิดพลาด', errorMessage);
     } finally {
       setSubmitting(false);
@@ -225,15 +260,24 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
           role="dialog"
           aria-modal="true"
           aria-labelledby="expense-form-title"
-          className="relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl"
+          className={`relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl ${
+            isEditing
+              ? 'border-2 border-violet-400 ring-1 ring-violet-200 dark:border-violet-400 dark:ring-violet-500/40'
+              : ''
+          }`}
         >
           <div className="relative border-b border-gray-200 px-4 py-4 dark:border-gray-700 sm:px-6">
             <h2
               id="expense-form-title"
               className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text px-16 text-center text-xl font-bold text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 sm:text-2xl"
             >
-              บันทึกค่าใช้จ่าย
+              {isEditing ? 'แก้ไขค่าใช้จ่าย' : 'บันทึกค่าใช้จ่าย'}
             </h2>
+            {editingExpense ? (
+              <p className="mt-1 px-16 text-center font-mono text-sm text-gray-500 dark:text-gray-400">
+                {editingExpense.expenseNo}
+              </p>
+            ) : null}
             <span className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6">
               <CloseButton onClick={handleCancel} disabled={submitting} />
             </span>
@@ -242,7 +286,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
           <div
             className="overflow-y-auto p-4 sm:p-6"
             role="region"
-            aria-label="แบบฟอร์มบันทึกค่าใช้จ่าย"
+            aria-label={isEditing ? 'แบบฟอร์มแก้ไขค่าใช้จ่าย' : 'แบบฟอร์มบันทึกค่าใช้จ่าย'}
           >
         <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4">
         {/* Date and Time */}
@@ -412,7 +456,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({ isOpen, onCl
               disabled={submitting}
               className="min-h-11 w-full rounded-xl bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 px-6 py-3 font-medium text-white shadow-md transition hover:from-primary-700 hover:via-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:from-primary-500 dark:via-purple-500 dark:to-blue-500 sm:w-auto"
             >
-              {submitting ? 'กำลังบันทึก...' : 'บันทึกค่าใช้จ่าย'}
+              {submitting ? 'กำลังบันทึก...' : isEditing ? 'บันทึกการแก้ไข' : 'บันทึกค่าใช้จ่าย'}
             </button>
           </div>
         </div>
