@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button, Modal } from 'animal-island-ui';
 import { IslandModalTitle } from '@/components/common/IslandModalTitle';
 import { MemberFormProps, MemberFormData } from '@/types/member';
-import { THAI_BANKS } from '@/lib/memberUtils';
+import { THAI_BANKS, getThaiPhoneError } from '@/lib/memberUtils';
 
 const FORM_ID = 'member-form';
 
@@ -22,6 +22,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
 }) => {
   const [localFormData, setLocalFormData] = useState<MemberFormData>(formData);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const initialEditingDataRef = useRef<MemberFormData | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -34,6 +35,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     setLocalFormData(formData);
     setValidationError(null);
   }, [formData, isOpen]);
+
+  useEffect(() => {
+    setPhoneTouched(false);
+  }, [isOpen, editingMember]);
 
   useEffect(() => {
     if (editingMember) {
@@ -76,8 +81,17 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     setValidationError(null);
   };
 
+  const phoneError = phoneTouched ? getThaiPhoneError(localFormData.phone) : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPhoneTouched(true);
+    const nextPhoneError = getThaiPhoneError(localFormData.phone);
+    if (nextPhoneError) {
+      setValidationError(null);
+      phoneRef.current?.focus();
+      return;
+    }
     try {
       await onSubmit(localFormData);
     } catch (error: unknown) {
@@ -183,19 +197,27 @@ export const MemberForm: React.FC<MemberFormProps> = ({
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">เบอร์โทรศัพท์</label>
               <input
                 ref={phoneRef}
-                type="text"
+                type="tel"
                 value={localFormData.phone}
                 onChange={(e) => {
-                  const numericValue = e.target.value.replace(/\D/g, '');
+                  const numericValue = e.target.value.replace(/\D/g, '').slice(0, 10);
                   handleInputChange('phone', numericValue);
                 }}
+                onBlur={() => setPhoneTouched(true)}
                 onKeyDown={(e) => handleKeyDown(e, idCardRef, nameRef)}
-                className={fieldClassName}
+                className={`${fieldClassName}${phoneError ? ' !border-red-500 focus:!ring-red-500' : ''}`}
                 disabled={isLoading}
-                placeholder="กรอกเบอร์โทรศัพท์"
+                placeholder="เช่น 0812345678"
                 inputMode="tel"
-                pattern="[0-9]*"
+                autoComplete="tel"
+                aria-invalid={phoneError ? true : undefined}
+                aria-describedby={phoneError ? 'member-phone-error' : undefined}
               />
+              {phoneError ? (
+                <p id="member-phone-error" className="text-sm font-medium text-red-600 dark:text-red-400">
+                  {phoneError}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">

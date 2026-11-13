@@ -18,6 +18,21 @@ export const THAI_BANKS = [
   'ธนาคารไอซีบีซี (ไทย)',
 ] as const;
 
+export const THAI_PHONE_ERROR =
+  'เบอร์โทรศัพท์ไม่ถูกต้อง (มือถือ 10 หลัก หรือเบอร์บ้าน 9 หลัก)';
+
+/** Thai mobile (06/08/09, 10 digits) or landline (02/03/04/05/07, 9 digits). */
+export const isValidThaiPhone = (phone: string): boolean => {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[689]\d{8}$/.test(digits) || /^0[23457]\d{7}$/.test(digits);
+};
+
+export const getThaiPhoneError = (phone: string): string | null => {
+  const raw = phone.trim();
+  if (!raw) return null;
+  return isValidThaiPhone(raw) ? null : THAI_PHONE_ERROR;
+};
+
 export const isValidThaiNationalId = (id: string): boolean => {
   if (!/^\d{13}$/.test(id)) return false;
   let sum = 0;
@@ -42,12 +57,17 @@ export const generateMemberCode = (): string => {
 };
 
 export const validateMemberData = (
-  data: { name: string; idCard?: string; bankAccount?: string },
+  data: { name: string; phone?: string; idCard?: string; bankAccount?: string },
   members: Member[],
   editingMember?: Member | null
 ): string | null => {
   if (!data.name.trim()) {
     return 'กรุณากรอกชื่อ-นามสกุล';
+  }
+
+  const phoneError = getThaiPhoneError(data.phone ?? '');
+  if (phoneError) {
+    return phoneError;
   }
 
   const idCard = data.idCard?.trim() ?? '';

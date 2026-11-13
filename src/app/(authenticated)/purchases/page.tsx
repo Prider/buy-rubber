@@ -181,6 +181,7 @@ export default function PurchasesPage() {
       // Note: Modal is shown by CartTable's handleSaveAndAskPrint on success
       resetAllFields();
       historyRef.current?.refresh();
+      closeEntry();
     } catch (error) {
       // Error is already handled by useCart hook (setError)
       // Don't show modal on error
@@ -302,8 +303,8 @@ export default function PurchasesPage() {
   return (
     <>
       <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 max-lg:pb-20 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(440px,1fr)_minmax(0,1fr)] lg:overflow-hidden">
-          <div className="hidden min-w-0 lg:flex lg:h-full lg:flex-col lg:overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(440px,1fr)] lg:overflow-hidden">
+          <div className="hidden min-w-0 lg:order-2 lg:flex lg:h-full lg:flex-col lg:overflow-hidden">
             <CartTable
               cart={cart}
               submitting={submitting}
@@ -320,7 +321,7 @@ export default function PurchasesPage() {
             />
           </div>
 
-          <div className="relative flex min-h-0 min-w-0 flex-col lg:h-full lg:overflow-hidden">
+          <div className="relative flex min-h-0 min-w-0 flex-col lg:order-1 lg:h-full lg:overflow-hidden">
             <div ref={historyPaneRef} className="flex min-h-0 min-w-0 flex-1 flex-col">
               <PurchasesList ref={historyRef} />
             </div>

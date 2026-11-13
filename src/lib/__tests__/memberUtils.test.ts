@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatThaiNationalId, generateMemberCode, isValidThaiNationalId, validateMemberData } from '../memberUtils';
+import { formatThaiNationalId, generateMemberCode, getThaiPhoneError, isValidThaiNationalId, isValidThaiPhone, validateMemberData } from '../memberUtils';
 import { Member } from '@/types/member';
 
 describe('generateMemberCode', () => {
@@ -55,6 +55,42 @@ describe('generateMemberCode', () => {
       expect(number).toBeLessThanOrEqual(999);
       expect(numberPart).toBe(number.toString().padStart(3, '0'));
     }
+  });
+});
+
+describe('isValidThaiPhone', () => {
+  it('accepts a 10-digit mobile number', () => {
+    expect(isValidThaiPhone('0812345678')).toBe(true);
+    expect(isValidThaiPhone('0612345678')).toBe(true);
+    expect(isValidThaiPhone('0912345678')).toBe(true);
+  });
+
+  it('accepts a 9-digit landline', () => {
+    expect(isValidThaiPhone('021234567')).toBe(true);
+    expect(isValidThaiPhone('053123456')).toBe(true);
+  });
+
+  it('accepts a formatted number after stripping separators', () => {
+    expect(isValidThaiPhone('081-234-5678')).toBe(true);
+  });
+
+  it('rejects numbers that are not a Thai mobile or landline', () => {
+    expect(isValidThaiPhone('')).toBe(false);
+    expect(isValidThaiPhone('081234567')).toBe(false);
+    expect(isValidThaiPhone('0212345678')).toBe(false);
+    expect(isValidThaiPhone('0112345678')).toBe(false);
+    expect(isValidThaiPhone('1234567890')).toBe(false);
+  });
+});
+
+describe('getThaiPhoneError', () => {
+  it('allows an empty phone', () => {
+    expect(getThaiPhoneError('')).toBeNull();
+    expect(getThaiPhoneError('   ')).toBeNull();
+  });
+
+  it('returns an error for an invalid phone', () => {
+    expect(getThaiPhoneError('12345')).toBe('เบอร์โทรศัพท์ไม่ถูกต้อง (มือถือ 10 หลัก หรือเบอร์บ้าน 9 หลัก)');
   });
 });
 
@@ -132,6 +168,36 @@ describe('validateMemberData', () => {
     it('should reject a national id with a bad checksum', () => {
       const result = validateMemberData({ name: 'New Member', idCard: '1234567890123' }, mockMembers);
       expect(result).toBe('เลขบัตรประชาชนไม่ถูกต้อง');
+    });
+
+    it('should accept a valid mobile phone', () => {
+      const result = validateMemberData({ name: 'New Member', phone: '0812345678' }, mockMembers);
+      expect(result).toBeNull();
+    });
+
+    it('should accept a valid landline', () => {
+      const result = validateMemberData({ name: 'New Member', phone: '021234567' }, mockMembers);
+      expect(result).toBeNull();
+    });
+
+    it('should allow an empty phone', () => {
+      const result = validateMemberData({ name: 'New Member', phone: '' }, mockMembers);
+      expect(result).toBeNull();
+    });
+
+    it('should reject an invalid phone', () => {
+      const result = validateMemberData({ name: 'New Member', phone: '12345' }, mockMembers);
+      expect(result).toBe('เบอร์โทรศัพท์ไม่ถูกต้อง (มือถือ 10 หลัก หรือเบอร์บ้าน 9 หลัก)');
+    });
+
+    it('should reject an invalid phone when editing a member whose name is unchanged', () => {
+      const editingMember = mockMembers[0];
+      const result = validateMemberData(
+        { name: 'John Doe', phone: '08123' },
+        mockMembers,
+        editingMember
+      );
+      expect(result).toBe('เบอร์โทรศัพท์ไม่ถูกต้อง (มือถือ 10 หลัก หรือเบอร์บ้าน 9 หลัก)');
     });
 
     it('should reject a bank account that is too short', () => {

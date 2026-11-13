@@ -330,4 +330,18 @@ describe('PurchasesPage UI integration', () => {
       expect(screen.getByText('cart-count:0')).toBeInTheDocument();
     });
   });
+
+  it('closes the purchase entry after the cart is saved', async () => {
+    render(<PurchasesPage />);
+    const user = userEvent.setup();
+
+    await openPurchaseEntry(user);
+    expect(screen.getByPlaceholderText('ค้นหาสมาชิกตามชื่อหรือรหัส')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /บันทึกตะกร้า/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText('ค้นหาสมาชิกตามชื่อหรือรหัส')).not.toBeInTheDocument();
+    });
+  });
 });
