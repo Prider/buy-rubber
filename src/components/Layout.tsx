@@ -141,6 +141,8 @@ export default function Layout({ children }: LayoutProps) {
     if (typeof window === 'undefined') return;
     const NAME_KEY = 'slip_companyName';
     const ADDRESS_KEY = 'slip_companyAddress';
+    const PHONE_KEY = 'slip_companyPhone';
+    const LOGO_KEY = 'slip_logo';
     const TAX_ID_KEY = 'slip_taxId';
     const FOOTER_KEY = 'slip_footerText';
 
@@ -150,6 +152,8 @@ export default function Layout({ children }: LayoutProps) {
         const data = await apiClient.get<{
           companyName: string;
           companyAddress: string;
+          companyPhone?: string;
+          logo?: string;
           taxId?: string;
           footerText?: string;
           fontSize?: string;
@@ -159,6 +163,8 @@ export default function Layout({ children }: LayoutProps) {
         // Always overwrite with server values so updates done in Electron propagate to Browser.
         if (data?.companyName) window.localStorage.setItem(NAME_KEY, data.companyName);
         if (data?.companyAddress) window.localStorage.setItem(ADDRESS_KEY, data.companyAddress);
+        if (typeof data?.companyPhone === 'string') window.localStorage.setItem(PHONE_KEY, data.companyPhone);
+        if (typeof data?.logo === 'string') window.localStorage.setItem(LOGO_KEY, data.logo);
         if (typeof data?.taxId === 'string') window.localStorage.setItem(TAX_ID_KEY, data.taxId);
         if (data?.footerText) window.localStorage.setItem(FOOTER_KEY, data.footerText);
         window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, normalizeSlipFontSize(data?.fontSize));

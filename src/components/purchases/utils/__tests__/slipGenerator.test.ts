@@ -6,6 +6,7 @@ import {
 } from '../slipGenerator';
 import { PurchaseTransaction, CartItem } from '../../types';
 import { SLIP_PAPER_SIZE_STORAGE_KEY } from '@/lib/slipPaper';
+import { DEFAULT_SLIP_LOGO } from '@/lib/slipLogo';
 
 function useLocalStorageBackingStore() {
   const store: Record<string, string> = {};
@@ -234,6 +235,71 @@ describe('slipGenerator', () => {
       const taxAt = result.indexOf('หมายเลขผู้เสียภาษี : 0105560000000');
       expect(addressAt).toBeGreaterThan(-1);
       expect(taxAt).toBeGreaterThan(addressAt);
+    });
+
+    it('prints the logo before the company name and the phone after the address', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+      const logo = 'data:image/png;base64,iVBORw0KGgo=';
+
+      const result = generateSlipHTMLFromItems(items, {
+        companyName: 'บริษัททดสอบ',
+        companyAddress: '171/5 ม.8',
+        companyPhone: '0812345678',
+        logo,
+        template: 'a4',
+      });
+
+      const logoAt = result.indexOf(`src="${logo}"`);
+      const nameAt = result.indexOf('<h1>บริษัททดสอบ</h1>');
+      const addressAt = result.indexOf('171/5 ม.8');
+      const phoneAt = result.indexOf('โทร. 0812345678');
+      expect(logoAt).toBeGreaterThan(-1);
+      expect(nameAt).toBeGreaterThan(logoAt);
+      expect(phoneAt).toBeGreaterThan(addressAt);
+      expect(result).not.toContain('javascript:');
+    });
+
+    it('prints the app icon when no logo has been saved', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      window.localStorage.removeItem('slip_logo');
+      const result = generateSlipHTMLFromItems(items);
+      const logoAt = result.indexOf(`src="${DEFAULT_SLIP_LOGO}"`);
+      const nameAt = result.indexOf('<h1>');
+
+      expect(logoAt).toBeGreaterThan(-1);
+      expect(nameAt).toBeGreaterThan(logoAt);
+    });
+
+    it('omits an unsafe logo', () => {
+      const items: CartItem[] = [
+        {
+          id: 'p1',
+          type: 'purchase',
+          date: '2024-01-15',
+          totalAmount: 5000,
+        },
+      ];
+
+      const result = generateSlipHTMLFromItems(items, {
+        logo: 'data:image/svg+xml;base64,PHN2Zz4=',
+      });
+
+      expect(result).not.toContain('<img');
     });
 
     it('should use provided purchase number', () => {

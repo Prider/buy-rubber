@@ -669,6 +669,8 @@ export type SlipTemplate = 'signature' | 'slip' | 'a4'
 export type SlipSettings = {
   companyName: string
   companyAddress: string
+  companyPhone: string
+  logo: string
   taxId: string
   footerText: string
   fontSize: SlipFontSize
@@ -702,6 +704,8 @@ export async function setSlipSettings(
     data: {
       companyName: settings.companyName ?? current.companyName,
       companyAddress: settings.companyAddress ?? current.companyAddress,
+      companyPhone: settings.companyPhone ?? current.companyPhone ?? '',
+      logo: settings.logo ?? current.logo ?? '',
       taxId: settings.taxId ?? current.taxId,
       footerText: settings.footerText ?? current.footerText,
       fontSize: settings.fontSize ?? current.fontSize,
@@ -716,6 +720,8 @@ export async function setSlipSettings(
   return {
     companyName: body.companyName ?? settings.companyName ?? current.companyName,
     companyAddress: body.companyAddress ?? settings.companyAddress ?? current.companyAddress,
+    companyPhone: body.companyPhone ?? settings.companyPhone ?? current.companyPhone ?? '',
+    logo: body.logo ?? settings.logo ?? current.logo ?? '',
     taxId: body.taxId ?? settings.taxId ?? current.taxId,
     footerText: body.footerText ?? settings.footerText ?? current.footerText,
     fontSize: (body.fontSize ?? settings.fontSize ?? current.fontSize) as SlipFontSize,

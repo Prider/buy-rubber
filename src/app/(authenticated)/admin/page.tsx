@@ -37,10 +37,14 @@ import {
   resolveStoredSlipTemplate,
   type SlipTemplateId,
 } from '@/lib/slipTemplate';
+import { getThaiPhoneError } from '@/lib/memberUtils';
+import { DEFAULT_SLIP_LOGO, normalizeSlipLogo, resolveSlipLogo } from '@/lib/slipLogo';
 
 interface SavedSlipSettings {
   companyName: string;
   companyAddress: string;
+  companyPhone: string;
+  logo: string;
   taxId: string;
   footerText: string;
   fontSize: SlipFontSizeId;
@@ -52,6 +56,8 @@ function sameSlipSettings(saved: SavedSlipSettings, current: SavedSlipSettings) 
   return (
     saved.companyName === current.companyName &&
     saved.companyAddress === current.companyAddress &&
+    saved.companyPhone === current.companyPhone &&
+    saved.logo === current.logo &&
     saved.taxId === current.taxId &&
     saved.footerText === current.footerText &&
     saved.fontSize === current.fontSize &&
@@ -108,6 +114,8 @@ export default function AdminSettingsPage() {
 
   const [slipCompanyName, setSlipCompanyName] = useState(slipDefaults.companyName);
   const [slipCompanyAddress, setSlipCompanyAddress] = useState(slipDefaults.companyAddress);
+  const [slipCompanyPhone, setSlipCompanyPhone] = useState('');
+  const [slipLogo, setSlipLogo] = useState(DEFAULT_SLIP_LOGO);
   const [slipTaxId, setSlipTaxId] = useState('');
   const [slipFooterText, setSlipFooterText] = useState(slipDefaults.footerText);
   const [slipFontSize, setSlipFontSize] = useState<SlipFontSizeId>('h2');
@@ -188,6 +196,8 @@ export default function AdminSettingsPage() {
         const data = await apiClient.get<{
           companyName: string;
           companyAddress: string;
+          companyPhone?: string;
+          logo?: string;
           taxId?: string;
           footerText: string;
           fontSize?: string;
@@ -197,11 +207,15 @@ export default function AdminSettingsPage() {
 
         const companyName = data?.companyName || slipDefaults.companyName;
         const companyAddress = data?.companyAddress || slipDefaults.companyAddress;
+        const companyPhone = (data?.companyPhone ?? '').replace(/\D/g, '').slice(0, 10);
+        const logo = resolveSlipLogo(data?.logo);
         const taxId = data?.taxId?.trim() || '';
         const footerText = data?.footerText || slipDefaults.footerText;
 
         setSlipCompanyName(companyName);
         setSlipCompanyAddress(companyAddress);
+        setSlipCompanyPhone(companyPhone);
+        setSlipLogo(logo);
         setSlipTaxId(taxId);
         setSlipFooterText(footerText);
         const fontSize = normalizeSlipFontSize(data?.fontSize);
@@ -214,6 +228,8 @@ export default function AdminSettingsPage() {
         setSavedSlip({
           companyName,
           companyAddress,
+          companyPhone,
+          logo,
           taxId,
           footerText,
           fontSize,
@@ -224,6 +240,8 @@ export default function AdminSettingsPage() {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('slip_companyName', companyName);
           window.localStorage.setItem('slip_companyAddress', companyAddress);
+          window.localStorage.setItem('slip_companyPhone', companyPhone);
+          window.localStorage.setItem('slip_logo', logo);
           window.localStorage.setItem('slip_taxId', taxId);
           window.localStorage.setItem('slip_footerText', footerText);
           window.localStorage.setItem(SLIP_FONT_SIZE_STORAGE_KEY, fontSize);
@@ -233,6 +251,8 @@ export default function AdminSettingsPage() {
       } catch (err) {
         setSlipCompanyName(slipDefaults.companyName);
         setSlipCompanyAddress(slipDefaults.companyAddress);
+        setSlipCompanyPhone('');
+        setSlipLogo(DEFAULT_SLIP_LOGO);
         setSlipTaxId('');
         setSlipFooterText(slipDefaults.footerText);
         setSlipFontSize('h2');
@@ -241,6 +261,8 @@ export default function AdminSettingsPage() {
         setSavedSlip({
           companyName: slipDefaults.companyName,
           companyAddress: slipDefaults.companyAddress,
+          companyPhone: '',
+          logo: DEFAULT_SLIP_LOGO,
           taxId: '',
           footerText: slipDefaults.footerText,
           fontSize: 'h2',
@@ -263,6 +285,17 @@ export default function AdminSettingsPage() {
   ]);
 
   const handleSaveSlipSettings = async () => {
+    const phoneError = getThaiPhoneError(slipCompanyPhone);
+    if (phoneError) {
+      showError('บันทึกการตั้งค่าสลิปไม่สำเร็จ', phoneError);
+      return;
+    }
+    const logo = normalizeSlipLogo(slipLogo);
+    if (logo === null) {
+      showError('บันทึกการตั้งค่าสลิปไม่สำเร็จ', 'ไฟล์โลโก้ไม่ถูกต้อง');
+      return;
+    }
+
     try {
       setSlipSaving(true);
       const apiClient = getApiClient();
@@ -270,6 +303,8 @@ export default function AdminSettingsPage() {
       const result = await apiClient.post<{
         companyName: string;
         companyAddress: string;
+        companyPhone?: string;
+        logo?: string;
         taxId?: string;
         footerText: string;
         fontSize?: SlipFontSizeId;
@@ -278,6 +313,8 @@ export default function AdminSettingsPage() {
       }>('/api/slip/settings', {
         companyName: slipCompanyName,
         companyAddress: slipCompanyAddress,
+        companyPhone: slipCompanyPhone,
+        logo,
         taxId: slipTaxId,
         footerText: slipFooterText,
         fontSize: slipFontSize,
@@ -285,9 +322,14 @@ export default function AdminSettingsPage() {
         template: slipTemplate,
       });
 
+      const savedPhone = result?.companyPhone ?? slipCompanyPhone;
+      const savedLogo = result?.logo ?? logo;
+
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('slip_companyName', result?.companyName || slipCompanyName);
         window.localStorage.setItem('slip_companyAddress', result?.companyAddress || slipCompanyAddress);
+        window.localStorage.setItem('slip_companyPhone', savedPhone);
+        window.localStorage.setItem('slip_logo', savedLogo);
         window.localStorage.setItem('slip_taxId', result?.taxId ?? slipTaxId);
         window.localStorage.setItem('slip_footerText', result?.footerText || slipFooterText);
         window.localStorage.setItem(
@@ -298,9 +340,13 @@ export default function AdminSettingsPage() {
         window.localStorage.setItem(SLIP_PAPER_SIZE_STORAGE_KEY, result?.paperSize || slipPaperSize);
       }
 
+      setSlipCompanyPhone(savedPhone);
+      setSlipLogo(savedLogo);
       setSavedSlip({
         companyName: slipCompanyName,
         companyAddress: slipCompanyAddress,
+        companyPhone: savedPhone,
+        logo: savedLogo,
         taxId: slipTaxId,
         footerText: slipFooterText,
         fontSize: slipFontSize,
@@ -322,19 +368,33 @@ export default function AdminSettingsPage() {
       memberCode: 'M-001',
       companyName: slipCompanyName,
       companyAddress: slipCompanyAddress,
+      companyPhone: slipCompanyPhone,
+      logo: slipLogo,
       taxId: slipTaxId,
       footerText: slipFooterText,
       fontSize: slipFontSize,
       paperSize: slipPaperSize,
       template: slipTemplate,
     });
-  }, [slipCompanyAddress, slipCompanyName, slipFontSize, slipFooterText, slipPaperSize, slipTaxId, slipTemplate]);
+  }, [
+    slipCompanyAddress,
+    slipCompanyName,
+    slipCompanyPhone,
+    slipFontSize,
+    slipFooterText,
+    slipLogo,
+    slipPaperSize,
+    slipTaxId,
+    slipTemplate,
+  ]);
 
   const slipDirty =
     savedSlip !== null &&
     !sameSlipSettings(savedSlip, {
       companyName: slipCompanyName,
       companyAddress: slipCompanyAddress,
+      companyPhone: slipCompanyPhone,
+      logo: slipLogo,
       taxId: slipTaxId,
       footerText: slipFooterText,
       fontSize: slipFontSize,
@@ -403,6 +463,8 @@ export default function AdminSettingsPage() {
                 <SlipSettingsPanel
                   companyName={slipCompanyName}
                   companyAddress={slipCompanyAddress}
+                  companyPhone={slipCompanyPhone}
+                  logo={slipLogo}
                   taxId={slipTaxId}
                   footerText={slipFooterText}
                   fontSize={slipFontSize}
@@ -414,6 +476,8 @@ export default function AdminSettingsPage() {
                   previewHtml={slipPreviewHtml}
                   onCompanyNameChange={setSlipCompanyName}
                   onCompanyAddressChange={setSlipCompanyAddress}
+                  onCompanyPhoneChange={setSlipCompanyPhone}
+                  onLogoChange={setSlipLogo}
                   onTaxIdChange={setSlipTaxId}
                   onFooterTextChange={setSlipFooterText}
                   onFontSizeChange={handleSlipFontSizeChange}

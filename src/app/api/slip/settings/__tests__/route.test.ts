@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
+import { DEFAULT_SLIP_LOGO } from '@/lib/slipLogo';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -49,6 +50,8 @@ describe('/api/slip/settings', () => {
       expect(data.footerText).toContain('กรุณาตรวจสอบนับเงิน');
       expect(data.fontSize).toBe('h2');
       expect(data.taxId).toBe('');
+      expect(data.companyPhone).toBe('');
+      expect(data.logo).toBe(DEFAULT_SLIP_LOGO);
       expect(data.template).toBe('slip');
     });
 
@@ -334,6 +337,122 @@ describe('/api/slip/settings', () => {
       const data = await response.json();
 
       expect(data.footerText).toBe('ข้อความเดิม');
+    });
+
+    it('persists a phone number and allows clearing it', async () => {
+      const saveRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyPhone: '081-234-5678' }),
+      });
+
+      const saveResponse = await POST(saveRequest);
+      const saved = await saveResponse.json();
+
+      expect(saveResponse.status).toBe(200);
+      expect(saved.companyPhone).toBe('0812345678');
+      expect(prisma.setting.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { key: 'slip_companyPhone' },
+          update: { value: '0812345678' },
+        })
+      );
+
+      const clearRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyPhone: '   ' }),
+      });
+      const cleared = await (await POST(clearRequest)).json();
+      expect(cleared.companyPhone).toBe('');
+    });
+
+    it('rejects an invalid phone number', async () => {
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyPhone: '12345' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('เบอร์โทรศัพท์ไม่ถูกต้อง');
+      expect(prisma.setting.upsert).not.toHaveBeenCalled();
+    });
+
+    it('keeps the stored phone number when omitted from the request body', async () => {
+      vi.mocked(prisma.setting.findUnique).mockImplementation(async (args: { where: { key: string } }) => {
+        if (args.where.key === 'slip_companyPhone') {
+          return { key: 'slip_companyPhone', value: '021234567' };
+        }
+        return null;
+      });
+
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ companyName: 'Test Co' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.companyPhone).toBe('021234567');
+    });
+
+    it('persists a logo and allows clearing it', async () => {
+      const logo = 'data:image/png;base64,iVBORw0KGgo=';
+      const saveRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ logo }),
+      });
+
+      const saveResponse = await POST(saveRequest);
+      const saved = await saveResponse.json();
+
+      expect(saveResponse.status).toBe(200);
+      expect(saved.logo).toBe(logo);
+
+      const clearRequest = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ logo: '' }),
+      });
+      const cleared = await (await POST(clearRequest)).json();
+      expect(cleared.logo).toBe('');
+    });
+
+    it('rejects a logo that is not an image data URL', async () => {
+      const request = new NextRequest('http://localhost/api/slip/settings', {
+        method: 'POST',
+        body: JSON.stringify({ logo: 'https://example.com/logo.png' }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe('ไฟล์โลโก้ไม่ถูกต้อง');
+      expect(prisma.setting.upsert).not.toHaveBeenCalled();
+    });
+
+    it('keeps a removed logo blank', async () => {
+      vi.mocked(prisma.setting.findMany).mockResolvedValue([
+        { key: 'slip_logo', value: '' },
+      ]);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.logo).toBe('');
+    });
+
+    it('drops an invalid stored logo', async () => {
+      vi.mocked(prisma.setting.findMany).mockResolvedValue([
+        { key: 'slip_logo', value: 'not-an-image' },
+      ]);
+
+      const response = await GET();
+      const data = await response.json();
+
+      expect(data.logo).toBe('');
     });
 
     it('persists font size', async () => {

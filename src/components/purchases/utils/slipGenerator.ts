@@ -1,5 +1,6 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { getStoredSlipFontSize, slipFontPx, type SlipFontSizeId } from '@/lib/slipFont';
+import { resolveSlipLogo } from '@/lib/slipLogo';
 import {
   getStoredSlipPaperSize,
   slipPageSizeCss,
@@ -21,6 +22,8 @@ const DEFAULT_FOOTER_TEXT =
 
 const SLIP_COMPANY_NAME_KEY = 'slip_companyName';
 const SLIP_COMPANY_ADDRESS_KEY = 'slip_companyAddress';
+const SLIP_COMPANY_PHONE_KEY = 'slip_companyPhone';
+const SLIP_LOGO_KEY = 'slip_logo';
 const SLIP_TAX_ID_KEY = 'slip_taxId';
 const SLIP_FOOTER_TEXT_KEY = 'slip_footerText';
 
@@ -59,6 +62,43 @@ function getStoredSlipCompanyAddress(): string {
     // ignore
   }
   return DEFAULT_COMPANY_ADDRESS;
+}
+
+function getStoredSlipLogo(): string {
+  if (typeof window === 'undefined') return resolveSlipLogo(null);
+  try {
+    return resolveSlipLogo(window.localStorage.getItem(SLIP_LOGO_KEY));
+  } catch {
+    return resolveSlipLogo(null);
+  }
+}
+
+function getStoredOptionalSlipText(key: string): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(key)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function storeIdentityHtml(args: {
+  logo: string;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  taxId: string;
+}): string {
+  const logoHtml = args.logo
+    ? `<img class="logo" src="${escapeHtml(args.logo)}" alt="" />`
+    : '';
+  const phoneHtml = args.companyPhone
+    ? `<p>โทร. ${escapeHtml(args.companyPhone)}</p>`
+    : '';
+  const taxHtml = args.taxId
+    ? `<p>หมายเลขผู้เสียภาษี : ${escapeHtml(args.taxId)}</p>`
+    : '';
+  return `${logoHtml}<h1>${escapeHtml(args.companyName)}</h1><p>${escapeHtml(args.companyAddress)}</p>${phoneHtml}${taxHtml}`;
 }
 
 function getStoredSlipText(key: string, fallback: string): string {
@@ -121,6 +161,8 @@ export function generateSlipHTMLFromItems(
     memberCode?: string;
     companyName?: string;
     companyAddress?: string;
+    companyPhone?: string;
+    logo?: string;
     taxId?: string;
     footerText?: string;
     /** When omitted, uses `localStorage` (same as print/PDF). */
@@ -153,6 +195,10 @@ export function generateSlipHTMLFromItems(
 
   const companyName = options?.companyName || getStoredSlipCompanyName();
   const companyAddress = options?.companyAddress || getStoredSlipCompanyAddress();
+  const companyPhone = (options?.companyPhone ?? getStoredOptionalSlipText(SLIP_COMPANY_PHONE_KEY))
+    .replace(/\D/g, '')
+    .slice(0, 10);
+  const logo = options?.logo !== undefined ? resolveSlipLogo(options.logo) : getStoredSlipLogo();
   const taxId = (options?.taxId ?? getStoredSlipText(SLIP_TAX_ID_KEY, '')).trim();
   const footerText = options?.footerText || getStoredSlipText(SLIP_FOOTER_TEXT_KEY, DEFAULT_FOOTER_TEXT);
   const fontSizeId = options?.fontSize ?? getStoredSlipFontSize();
@@ -174,6 +220,8 @@ export function generateSlipHTMLFromItems(
       memberCode,
       companyName,
       companyAddress,
+      companyPhone,
+      logo,
       taxId,
       footerText,
       fontSizeId,
@@ -259,6 +307,7 @@ export function generateSlipHTMLFromItems(
             }
           }
           .store { text-align: center; line-height: 1.4; margin-bottom: 10px; }
+          .store .logo { display: block; height: 52px; width: auto; max-width: 72%; margin: 0 auto 6px; object-fit: contain; }
           .store h1 { margin: 0; font-size: ${px(20)}px; letter-spacing: 1px; color: #0f172a; }
           .store p { margin: 4px 0; font-size: ${px(13)}px; color: #475569; }
           .meta { font-size: ${px(12)}px; color: #475569; margin-bottom: 10px; border-bottom: 1px dashed #cbd5f5; padding-bottom: 6px; }
@@ -288,9 +337,7 @@ export function generateSlipHTMLFromItems(
       <body>
         <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="${paperSizeId}" data-slip-template="${templateId}" data-slip-font="${fontSizeId}">
           <div class="store">
-            <h1>${escapeHtml(companyName)}</h1>
-            <p>${escapeHtml(companyAddress)}</p>
-            ${taxId ? `<p>หมายเลขผู้เสียภาษี : ${escapeHtml(taxId)}</p>` : ''}
+            ${storeIdentityHtml({ logo, companyName, companyAddress, companyPhone, taxId })}
           </div>
           <div class="meta">
             เลขที่: ${purchaseNo}<br/>
@@ -349,6 +396,8 @@ function buildA4SlipHtml(args: {
   memberCode: string;
   companyName: string;
   companyAddress: string;
+  companyPhone: string;
+  logo: string;
   taxId: string;
   footerText: string;
   fontSizeId: SlipFontSizeId;
@@ -364,6 +413,8 @@ function buildA4SlipHtml(args: {
     memberCode,
     companyName,
     companyAddress,
+    companyPhone,
+    logo,
     taxId,
     footerText,
     fontSizeId,
@@ -417,6 +468,7 @@ function buildA4SlipHtml(args: {
             @page { size: A4; margin: 14mm; }
           }
           .store { text-align: center; line-height: 1.45; }
+          .store .logo { display: block; height: 72px; width: auto; max-width: 180px; margin: 0 auto 8px; object-fit: contain; }
           .store h1 { margin: 0; font-size: ${px(26)}px; letter-spacing: 0.5px; }
           .store p { margin: 4px 0; font-size: ${px(14)}px; color: #334155; }
           .doc-title {
@@ -470,9 +522,7 @@ function buildA4SlipHtml(args: {
       <body>
         <div class="slip" data-slip-width="${slipWidthPx}" data-slip-paper="a4" data-slip-template="a4" data-slip-font="${fontSizeId}">
           <div class="store">
-            <h1>${escapeHtml(companyName)}</h1>
-            <p>${escapeHtml(companyAddress)}</p>
-            ${taxId ? `<p>หมายเลขผู้เสียภาษี : ${escapeHtml(taxId)}</p>` : ''}
+            ${storeIdentityHtml({ logo, companyName, companyAddress, companyPhone, taxId })}
           </div>
           <div class="doc-title">ใบรับซื้อ</div>
           <div class="meta">

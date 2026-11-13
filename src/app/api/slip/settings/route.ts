@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { getThaiPhoneError, THAI_PHONE_ERROR } from '@/lib/memberUtils';
 import { normalizeSlipFontSize, type SlipFontSizeId } from '@/lib/slipFont';
+import { normalizeSlipLogo, resolveSlipLogo } from '@/lib/slipLogo';
 import { normalizeSlipPaperSize, type SlipPaperSizeId } from '@/lib/slipPaper';
 import {
   paperSizeForTemplate,
@@ -16,21 +18,34 @@ const DEFAULT_FOOTER_TEXT =
 
 const KEY_COMPANY_NAME = 'slip_companyName';
 const KEY_COMPANY_ADDRESS = 'slip_companyAddress';
+const KEY_COMPANY_PHONE = 'slip_companyPhone';
+const KEY_LOGO = 'slip_logo';
 const KEY_TAX_ID = 'slip_taxId';
 const KEY_PAPER_SIZE = 'slip_paperSize';
 const KEY_FOOTER_TEXT = 'slip_footerText';
 const KEY_FONT_SIZE = 'slip_fontSize';
 const KEY_TEMPLATE = 'slip_template';
 
+const SLIP_LOGO_REJECTED = 'ไฟล์โลโก้ไม่ถูกต้อง';
+
 const TEMPLATE_KEYS = [
   KEY_COMPANY_NAME,
   KEY_COMPANY_ADDRESS,
+  KEY_COMPANY_PHONE,
+  KEY_LOGO,
   KEY_TAX_ID,
   KEY_PAPER_SIZE,
   KEY_FOOTER_TEXT,
   KEY_FONT_SIZE,
   KEY_TEMPLATE,
 ];
+
+class SlipSettingsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SlipSettingsError';
+  }
+}
 
 function getString(val: unknown): string | null {
   if (typeof val === 'string') return val;
@@ -44,6 +59,10 @@ function storedOrDefault(value: string | null | undefined, fallback: string): st
 
 function storedTrimmed(value: string | null | undefined): string {
   return value?.trim() ?? '';
+}
+
+function digitsOnlyPhone(value: string): string {
+  return value.replace(/\D/g, '').slice(0, 10);
 }
 
 /** Optional text: a provided string is saved as-is (including blank); otherwise keep the stored value. */
@@ -85,6 +104,8 @@ export async function GET() {
     return NextResponse.json({
       companyName: storedOrDefault(map.get(KEY_COMPANY_NAME), DEFAULT_COMPANY_NAME),
       companyAddress: storedOrDefault(map.get(KEY_COMPANY_ADDRESS), DEFAULT_COMPANY_ADDRESS),
+      companyPhone: digitsOnlyPhone(storedTrimmed(map.get(KEY_COMPANY_PHONE))),
+      logo: resolveSlipLogo(map.has(KEY_LOGO) ? map.get(KEY_LOGO) : null),
       taxId: storedTrimmed(map.get(KEY_TAX_ID)),
       template,
       paperSize,
@@ -106,6 +127,30 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const companyName = getString(data?.companyName)?.trim() || DEFAULT_COMPANY_NAME;
     const companyAddress = getString(data?.companyAddress)?.trim() || DEFAULT_COMPANY_ADDRESS;
+
+    let companyPhone: string;
+    if (typeof data?.companyPhone === 'string') {
+      companyPhone = digitsOnlyPhone(data.companyPhone);
+      if (getThaiPhoneError(companyPhone)) {
+        throw new SlipSettingsError(THAI_PHONE_ERROR);
+      }
+    } else {
+      const existingPhone = await prisma.setting.findUnique({ where: { key: KEY_COMPANY_PHONE } });
+      companyPhone = digitsOnlyPhone(storedTrimmed(existingPhone?.value));
+    }
+
+    let logo: string;
+    if (typeof data?.logo === 'string') {
+      const normalizedLogo = normalizeSlipLogo(data.logo);
+      if (normalizedLogo === null) {
+        throw new SlipSettingsError(SLIP_LOGO_REJECTED);
+      }
+      logo = normalizedLogo;
+    } else {
+      const existingLogo = await prisma.setting.findUnique({ where: { key: KEY_LOGO } });
+      logo = existingLogo ? resolveSlipLogo(existingLogo.value) : resolveSlipLogo(null);
+    }
+
     const taxId = await resolveOptionalText(data?.taxId, KEY_TAX_ID);
 
     let paperSize: SlipPaperSizeId;
@@ -147,6 +192,16 @@ export async function POST(request: NextRequest) {
         create: { key: KEY_COMPANY_ADDRESS, value: companyAddress },
       }),
       prisma.setting.upsert({
+        where: { key: KEY_COMPANY_PHONE },
+        update: { value: companyPhone },
+        create: { key: KEY_COMPANY_PHONE, value: companyPhone },
+      }),
+      prisma.setting.upsert({
+        where: { key: KEY_LOGO },
+        update: { value: logo },
+        create: { key: KEY_LOGO, value: logo },
+      }),
+      prisma.setting.upsert({
         where: { key: KEY_TAX_ID },
         update: { value: taxId },
         create: { key: KEY_TAX_ID, value: taxId },
@@ -178,6 +233,8 @@ export async function POST(request: NextRequest) {
       message: 'บันทึกการตั้งค่าสลิปเรียบร้อยแล้ว',
       companyName,
       companyAddress,
+      companyPhone,
+      logo,
       taxId,
       template,
       paperSize,
@@ -185,6 +242,9 @@ export async function POST(request: NextRequest) {
       fontSize,
     });
   } catch (error: unknown) {
+    if (error instanceof SlipSettingsError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     logger.error('Failed to save slip settings', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า' },

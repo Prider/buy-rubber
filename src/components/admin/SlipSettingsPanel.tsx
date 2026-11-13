@@ -22,6 +22,8 @@ import {
   normalizeSlipTemplate,
   type SlipTemplateId,
 } from '@/lib/slipTemplate';
+import { getThaiPhoneError } from '@/lib/memberUtils';
+import { prepareSlipLogo, SLIP_LOGO_ERROR } from '@/lib/slipLogo';
 
 const PREVIEW_IFRAME_HEIGHT = 560;
 const PREVIEW_STAGE_WIDTH = 420;
@@ -63,6 +65,8 @@ const fieldClass =
 interface SlipSettingsPanelProps {
   companyName: string;
   companyAddress: string;
+  companyPhone: string;
+  logo: string;
   taxId: string;
   footerText: string;
   fontSize: SlipFontSizeId;
@@ -74,6 +78,8 @@ interface SlipSettingsPanelProps {
   previewHtml: string;
   onCompanyNameChange: (value: string) => void;
   onCompanyAddressChange: (value: string) => void;
+  onCompanyPhoneChange: (value: string) => void;
+  onLogoChange: (value: string) => void;
   onTaxIdChange: (value: string) => void;
   onFooterTextChange: (value: string) => void;
   onFontSizeChange: (id: SlipFontSizeId) => void;
@@ -85,6 +91,8 @@ interface SlipSettingsPanelProps {
 export function SlipSettingsPanel({
   companyName,
   companyAddress,
+  companyPhone,
+  logo,
   taxId,
   footerText,
   fontSize,
@@ -96,6 +104,8 @@ export function SlipSettingsPanel({
   previewHtml,
   onCompanyNameChange,
   onCompanyAddressChange,
+  onCompanyPhoneChange,
+  onLogoChange,
   onTaxIdChange,
   onFooterTextChange,
   onFontSizeChange,
@@ -108,7 +118,11 @@ export function SlipSettingsPanel({
   const previewFrameHeight = sheetHeightMm ? cssPxFromMm(sheetHeightMm) : PREVIEW_IFRAME_HEIGHT;
   const stageRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLTextAreaElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [stageWidth, setStageWidth] = useState(0);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [logoReading, setLogoReading] = useState(false);
 
   useEffect(() => {
     const node = footerRef.current;
@@ -141,9 +155,32 @@ export function SlipSettingsPanel({
     stageWidth > 0
       ? Math.min(stageWidth / previewFrameWidth, stageHeight / previewFrameHeight)
       : 1;
-  const busy = loading || saving;
+  const busy = loading || saving || logoReading;
+  const phoneError = phoneTouched ? getThaiPhoneError(companyPhone) : null;
   const templateLabel = SLIP_TEMPLATE_OPTIONS.find((opt) => opt.id === template)?.label ?? '';
   const labelClass = 'block text-xs font-medium text-gray-600 dark:text-gray-400';
+
+  const handleSave = () => {
+    if (getThaiPhoneError(companyPhone)) {
+      setPhoneTouched(true);
+      return;
+    }
+    onSave();
+  };
+
+  const handleLogoFile = async (file: File | undefined) => {
+    if (!file) return;
+    setLogoError(null);
+    setLogoReading(true);
+    try {
+      onLogoChange(await prepareSlipLogo(file));
+    } catch (error) {
+      setLogoError(error instanceof Error ? error.message : SLIP_LOGO_ERROR);
+    } finally {
+      setLogoReading(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
 
   return (
     <div
@@ -168,7 +205,7 @@ export function SlipSettingsPanel({
         </div>
         <button
           type="button"
-          onClick={onSave}
+          onClick={handleSave}
           disabled={busy || !dirty}
           className="min-h-10 w-full shrink-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
@@ -179,8 +216,64 @@ export function SlipSettingsPanel({
       <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
         <div className="order-2 flex w-full min-w-0 flex-col gap-4 p-4 md:order-1 sm:p-5">
           <section className="space-y-3">
-            <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">ข้อมูลบนใบ</p>
             <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1 sm:col-span-2">
+                <label htmlFor="slip-logo" className={labelClass}>
+                  โลโก้
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-50 ring-1 ring-inset ring-gray-200 dark:bg-gray-900/50 dark:ring-gray-700">
+                    {logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logo} alt="โลโก้บริษัท" className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">ไม่มี</span>
+                    )}
+                  </div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={busy}
+                      className="min-h-10 rounded-xl bg-gray-50 px-3 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-200 transition-shadow hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900/50 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-900"
+                    >
+                      {logoReading ? 'กำลังอ่านรูป...' : logo ? 'เปลี่ยนโลโก้' : 'เลือกโลโก้'}
+                    </button>
+                    {logo ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoError(null);
+                          onLogoChange('');
+                        }}
+                        disabled={busy}
+                        className="min-h-10 rounded-xl px-3 text-sm font-medium text-gray-600 transition-colors hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:text-red-400"
+                      >
+                        ลบโลโก้
+                      </button>
+                    ) : null}
+                    <p className="w-full text-xs text-gray-400 dark:text-gray-500">PNG, JPEG หรือ WebP</p>
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    id="slip-logo"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    tabIndex={-1}
+                    className="sr-only"
+                    disabled={busy}
+                    aria-describedby={logoError ? 'slip-logo-error' : undefined}
+                    onChange={(e) => {
+                      void handleLogoFile(e.target.files?.[0]);
+                    }}
+                  />
+                </div>
+                {logoError ? (
+                  <p id="slip-logo-error" className="text-xs font-medium text-red-600 dark:text-red-400">
+                    {logoError}
+                  </p>
+                ) : null}
+              </div>
               <div className="space-y-1">
                 <label htmlFor="slip-company-name" className={labelClass}>
                   ชื่อบริษัท
@@ -220,6 +313,31 @@ export function SlipSettingsPanel({
                   rows={2}
                   className={`${fieldClass} resize-none`}
                 />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <label htmlFor="slip-company-phone" className={labelClass}>
+                  เบอร์โทรศัพท์
+                </label>
+                <input
+                  id="slip-company-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={10}
+                  value={companyPhone}
+                  onChange={(e) => onCompanyPhoneChange(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onBlur={() => setPhoneTouched(true)}
+                  disabled={busy}
+                  placeholder="เช่น 0812345678"
+                  aria-invalid={phoneError ? true : undefined}
+                  aria-describedby={phoneError ? 'slip-company-phone-error' : undefined}
+                  className={`${fieldClass}${phoneError ? ' !ring-red-500 focus:!ring-red-500' : ''}`}
+                />
+                {phoneError ? (
+                  <p id="slip-company-phone-error" className="text-xs font-medium text-red-600 dark:text-red-400">
+                    {phoneError}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <label htmlFor="slip-footer-text" className={labelClass}>
