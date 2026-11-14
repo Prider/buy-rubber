@@ -148,6 +148,14 @@ function drawExpensePieBlock(
   return height;
 }
 
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 function drawPageChrome(doc: jsPDF, reportTitle: string, rangeLabel: string) {
   const width = doc.internal.pageSize.getWidth();
   doc.setFont(FONT_NAME, 'normal');
@@ -173,11 +181,10 @@ export async function downloadReportPDF({
 }: DownloadReportPDFParams) {
   if (!Array.isArray(data) || data.length === 0) return;
 
-  onProgress?.(0, 1);
+  onProgress?.(0, 2);
   const fontBase64 = await loadSarabunBase64();
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
+  await waitForPaint();
+  onProgress?.(1, 2);
 
   const doc = new jsPDF('p', 'mm', 'a4');
   doc.addFileToVFS('Sarabun-Regular.ttf', fontBase64);
@@ -283,7 +290,7 @@ export async function downloadReportPDF({
     doc.text('รายงานจัดทำโดยระบบจัดการรับซื้อยาง', width / 2, pageHeight - 6, { align: 'center' });
   }
 
-  onProgress?.(1, 1);
+  onProgress?.(2, 2);
   const fileName = `${reportTitle}_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
   doc.save(fileName);
 }

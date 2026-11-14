@@ -28,6 +28,9 @@ function isEmbeddedTab(tab: ReportTabId): boolean {
   return tab === 'profit_loss';
 }
 
+/** Keep a fast PDF export on screen long enough to read, matching the profit/loss download. */
+const EXPENSE_DOWNLOAD_OVERLAY_MIN_MS = 800;
+
 const ReportGroupManagementModal = dynamic(
   () => import(/* webpackPrefetch: true */ '@/components/reports/ReportGroupManagementModal'),
   { ssr: false, loading: () => null },
@@ -212,6 +215,8 @@ export default function ReportsPage() {
     if (!hasData || downloadLock.current) return;
 
     downloadLock.current = true;
+    const startedAt = performance.now();
+    let finished = false;
     setDownloadProgress(0);
     try {
       const exported = await fetchExportRows();
@@ -231,7 +236,14 @@ export default function ReportsPage() {
           setDownloadProgress(total > 0 ? Math.round((completed / total) * 100) : 0);
         },
       });
+      finished = true;
     } finally {
+      if (finished && reportType === 'expense_summary') {
+        const remaining = EXPENSE_DOWNLOAD_OVERLAY_MIN_MS - (performance.now() - startedAt);
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
+      }
       downloadLock.current = false;
       setDownloadProgress(null);
     }
