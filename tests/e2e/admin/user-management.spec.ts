@@ -110,7 +110,7 @@ test.describe('Role-based access control', () => {
     await context.close()
   })
 
-  test('viewer cannot open dashboard, stock, reports, sales, or destination companies', async ({ browser }) => {
+  test('viewer cannot open dashboard, stock, reports, sales, destination companies, or expenses', async ({ browser }) => {
     const context = await browser.newContext()
     const page = await context.newPage()
 
@@ -122,9 +122,10 @@ test.describe('Role-based access control', () => {
     await expect(page.locator('[data-nav-link="/reports"]')).toHaveCount(0)
     await expect(page.locator('[data-nav-link="/sales"]')).toHaveCount(0)
     await expect(page.locator('[data-nav-link="/destination-companies"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/expenses"]')).toHaveCount(0)
     await expect(page.locator('[data-nav-link="/purchases"]')).toHaveCount(1)
 
-    for (const path of ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies']) {
+    for (const path of ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies', '/expenses']) {
       await page.goto(path)
       await expect(page).toHaveURL('/purchases')
     }

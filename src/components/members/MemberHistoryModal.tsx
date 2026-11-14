@@ -102,7 +102,7 @@ export const MemberHistoryModal: React.FC<MemberHistoryModalProps> = ({
           </div>
 
           <div className="max-h-[calc(100vh-140px)] overflow-y-auto p-4">
-            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               {summaryCards.map((card) => (
                 <SummaryCard key={card.title} {...card} />
               ))}

@@ -21,7 +21,7 @@ export function isViewerRole(role: string | undefined | null): boolean {
 }
 
 /** Pages a พนักงาน (viewer) account must not open. */
-const VIEWER_HIDDEN_PREFIXES = ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies'] as const;
+const VIEWER_HIDDEN_PREFIXES = ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies', '/expenses'] as const;
 
 function pathMatches(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);

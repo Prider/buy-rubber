@@ -312,7 +312,7 @@ test.describe('Member flow', () => {
     await expect(historyModal).toBeVisible()
     await expect(historyModal.getByText(`${memberName} (${created.code})`)).toBeVisible()
     await expect(historyModal.getByText('ยอดรับซื้อ')).toBeVisible()
-    await expect(historyModal.getByText('ยอดค่าบริการ')).toBeVisible()
+    await expect(historyModal.getByText('ยอดค่าบริการ')).toHaveCount(0)
     await expect(historyModal.getByText('น้ำหนักรวม')).toBeVisible()
     await expect(historyModal.getByText('รับซื้อ', { exact: true })).toBeVisible()
 

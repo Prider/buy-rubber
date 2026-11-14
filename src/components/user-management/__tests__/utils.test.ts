@@ -34,12 +34,12 @@ describe('accountant app access', () => {
 });
 
 describe('viewer app access', () => {
-  it('hides dashboard, stock, reports, sales, and destination companies', () => {
+  it('hides dashboard, stock, reports, sales, destination companies, and expenses', () => {
     expect(homePathForRole('viewer')).toBe('/purchases');
     expect(canAccessAppPath('viewer', '/purchases')).toBe(true);
     expect(canAccessAppPath('viewer', '/members')).toBe(true);
-    expect(canAccessAppPath('viewer', '/expenses')).toBe(true);
     expect(canAccessAppPath('viewer', '/guide')).toBe(true);
+    expect(canAccessAppPath('viewer', '/expenses')).toBe(false);
     expect(canAccessAppPath('viewer', '/dashboard')).toBe(false);
     expect(canAccessAppPath('viewer', '/stock')).toBe(false);
     expect(canAccessAppPath('viewer', '/stock/type-1')).toBe(false);

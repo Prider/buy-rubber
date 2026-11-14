@@ -3,7 +3,7 @@
 import { MemberHistorySummary } from '@/types/memberHistory';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
-type SummaryIconType = 'currency' | 'clipboard' | 'weight';
+type SummaryIconType = 'currency' | 'weight';
 
 interface SummaryCardProps {
   title: string;
@@ -23,17 +23,6 @@ const SummaryIcon = ({ type }: { type: SummaryIconType }) => {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      );
-    case 'clipboard':
-      return (
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
           />
         </svg>
       );
@@ -69,13 +58,6 @@ export const SUMMARY_CARD_CONFIG = [
     bg: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100',
     formatter: (summary: MemberHistorySummary) => formatCurrency(summary.purchaseAmount),
     subText: (summary: MemberHistorySummary) => `${summary.purchaseCount} รายการ`,
-  },
-  {
-    title: 'ยอดค่าบริการ',
-    icon: 'clipboard' as SummaryIconType,
-    bg: 'border-purple-200 bg-purple-50 text-purple-950 dark:border-purple-800 dark:bg-purple-950/50 dark:text-purple-100',
-    formatter: (summary: MemberHistorySummary) => formatCurrency(summary.serviceFeeAmount),
-    subText: (summary: MemberHistorySummary) => `${summary.serviceFeeCount} รายการ`,
   },
   {
     title: 'น้ำหนักรวม',
