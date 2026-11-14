@@ -9,6 +9,7 @@ import { showRestoreSuccessMessage, showResetSuccessMessage } from './utils';
 import { BACKUP_PAGE_SIZE } from './constants';
 import { BackupHeader } from './components/BackupHeader';
 import { BackupList } from './components/BackupList';
+import { ResetInitialDataCard } from './components/ResetInitialDataCard';
 
 export function BackupPanel() {
   const { user } = useAuth();
@@ -171,8 +172,6 @@ export function BackupPanel() {
     >
       <BackupHeader
         onCreateBackup={handleCreateBackup}
-        onResetToInitial={handleResetToInitial}
-        canResetToInitial={isAdminLike(user?.role)}
         loading={actionLoading}
       />
       <BackupList
@@ -186,6 +185,12 @@ export function BackupPanel() {
         onDownload={handleDownload}
         onDelete={handleDelete}
       />
+      {isAdminLike(user?.role) && (
+        <ResetInitialDataCard
+          onReset={handleResetToInitial}
+          loading={actionLoading}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { ReportType } from '@/hooks/useReportData';
+import { expensePieSlices, expensePieSvg, formatExpenseShare } from './expensePieSlices';
 import { formatCurrency } from './utils';
 import {
   categoryBreakdownCopy,
@@ -18,6 +19,34 @@ interface PrintPreviewParams {
   totalWeight: number;
   totalCount: number;
   expenseSummary?: ReportExpenseSummary[];
+}
+
+function renderExpensePie(expenseSummary: ReportExpenseSummary[], totalCount: number): string {
+  const slices = expensePieSlices(expenseSummary);
+  if (slices.length === 0) return '';
+  const total = slices.reduce((sum, slice) => sum + slice.amount, 0);
+  const legend = slices
+    .map(
+      (slice) => `<li>
+        <span class="swatch" style="background:${slice.color}"></span>
+        <span>
+          <strong>${escapeHtml(slice.category)}</strong>
+          <em>${escapeHtml(formatCurrency(slice.amount))} · ${escapeHtml(formatExpenseShare(slice.percent))}</em>
+        </span>
+      </li>`,
+    )
+    .join('');
+
+  return `<section class="pie">
+    <header>
+      <h2>ค่าใช้จ่ายตามหมวด</h2>
+      <p><span>จำนวนรายการ ${totalCount.toLocaleString('th-TH')}</span><strong>${escapeHtml(formatCurrency(total))}</strong></p>
+    </header>
+    <div class="pie-body">
+      ${expensePieSvg(slices)}
+      <ul>${legend}</ul>
+    </div>
+  </section>`;
 }
 
 function escapeHtml(value: string): string {
@@ -61,6 +90,10 @@ export function generatePrintPreviewHTML({
     columns.map((column) => column.align),
     rows.map((row) => columns.map((column) => column.value(row))),
   );
+  const pie =
+    reportType === 'expense_summary'
+      ? renderExpensePie(expenseSummary, totalCount)
+      : '';
   const breakdown = categoryBreakdownCopy(reportType);
   const expenseTable =
     breakdown && expenseSummary.length > 0
@@ -131,6 +164,27 @@ export function generatePrintPreviewHTML({
       font-weight: 600;
     }
     .summary p { margin: 2px 0; font-size: 12px; }
+    .pie {
+      margin: 0 0 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .pie header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 10px;
+    }
+    .pie h2 { margin: 0; font-size: 13px; color: #e11d48; }
+    .pie header p { margin: 0; font-size: 11px; color: #4b5563; }
+    .pie header strong { margin-left: 10px; color: #111827; }
+    .pie-body { display: flex; align-items: center; gap: 16px; padding: 8px 10px; }
+    .pie ul { list-style: none; margin: 0; padding: 0; }
+    .pie li { display: flex; gap: 6px; margin: 4px 0; font-size: 11px; }
+    .pie .swatch { width: 8px; height: 8px; margin-top: 3px; border-radius: 2px; flex: none; }
+    .pie em { display: block; font-style: normal; color: #374151; }
     footer {
       margin-top: 18px;
       text-align: center;
@@ -161,6 +215,7 @@ export function generatePrintPreviewHTML({
   <article class="sheet">
     <h1>${escapeHtml(reportTitle)}</h1>
     <p class="range">${escapeHtml(reportRangeLabel(startDate, endDate))}</p>
+    ${pie}
     ${table}
     <section class="summary">
       <h2>สรุปผลรวม</h2>

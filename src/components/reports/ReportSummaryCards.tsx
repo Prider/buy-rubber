@@ -1,3 +1,5 @@
+import ExpensePieChart from '@/components/dashboard/ExpensePieChart';
+import type { ActivityRow } from '@/components/dashboard/ActivityList';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { ReportType } from '@/hooks/useReportData';
 
@@ -56,17 +58,38 @@ export default function ReportSummaryCards({
   expenseSummary = [],
 }: ReportSummaryCardsProps) {
   const isServiceFee = reportType === 'service_fee';
-  const isCategoryReport = isServiceFee || reportType === 'expense_summary';
-  const averageAmount = isCategoryReport && totalCount > 0 ? totalAmount / totalCount : 0;
-  const topCategory = isCategoryReport && expenseSummary.length > 0 ? expenseSummary[0] : null;
+  const isExpenseSummary = reportType === 'expense_summary';
+  const averageAmount = isServiceFee && totalCount > 0 ? totalAmount / totalCount : 0;
+  const topCategory = isServiceFee && expenseSummary.length > 0 ? expenseSummary[0] : null;
 
-  if (isCategoryReport) {
+  if (isExpenseSummary) {
+    const pieRows: ActivityRow[] = expenseSummary.map((item) => ({
+      id: item.category,
+      title: item.category,
+      detail: '',
+      amount: item.totalAmount,
+      when: '',
+    }));
+
+    return (
+      <div className="no-print h-72 min-h-0">
+        <ExpensePieChart
+          title="ค่าใช้จ่ายตามหมวด"
+          rows={pieRows}
+          emptyLabel="ยังไม่มีค่าใช้จ่าย"
+          detail={`จำนวนรายการ ${totalCount.toLocaleString('th-TH')}`}
+        />
+      </div>
+    );
+  }
+
+  if (isServiceFee) {
     return (
       <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label="จำนวนรายการ"
           value={totalCount.toLocaleString('th-TH')}
-          hint={isServiceFee ? 'รายการค่าบริการ' : 'รายการค่าใช้จ่าย'}
+          hint="รายการค่าบริการ"
         />
         <StatCard
           label="เฉลี่ยต่อรายการ"
@@ -74,7 +97,7 @@ export default function ReportSummaryCards({
           hint={`จาก ${totalCount.toLocaleString('th-TH')} รายการ`}
         />
         <StatCard
-          label={isServiceFee ? 'ประเภทสูงสุด' : 'หมวดสูงสุด'}
+          label="ประเภทสูงสุด"
           value={topCategory ? topCategory.category : '-'}
           hint={
             topCategory

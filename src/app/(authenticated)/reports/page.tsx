@@ -440,7 +440,6 @@ export default function ReportsPage() {
               {reportType === 'expense_summary' && (
                 <ExpenseReportTable
                   data={data ?? []}
-                  categorySummary={expenseSummary}
                   totalAmount={getTotalAmount()}
                 />
               )}

@@ -15,7 +15,6 @@ interface ExpenseReport {
 
 interface ExpenseReportTableProps {
   data: ExpenseReport[];
-  categorySummary: Array<{ category: string; totalAmount: number; count: number }>;
   totalAmount?: number;
 }
 
@@ -69,50 +68,7 @@ const ExpenseRow = memo<ExpenseRowProps>(({ expense }) => {
 
 ExpenseRow.displayName = 'ExpenseRow';
 
-// Memoized category summary card
-interface CategoryCardProps {
-  summary: { category: string; totalAmount: number; count: number };
-}
-
-const CategoryCard = memo<CategoryCardProps>(({ summary }) => {
-  // Memoize formatted values
-  const formattedAmount = useMemo(
-    () => formatCurrency(summary.totalAmount),
-    [summary.totalAmount]
-  );
-
-  const formattedCount = useMemo(
-    () => summary.count.toLocaleString('th-TH'),
-    [summary.count]
-  );
-
-  return (
-    <div className="rounded-2xl border border-emerald-200/60 dark:border-emerald-700/40 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-emerald-900/20 dark:via-gray-900 dark:to-teal-900/20 p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
-            {summary.category}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-            {formattedAmount}
-          </p>
-          <p className="mt-3 text-sm text-emerald-700/80 dark:text-emerald-200/90">
-            {formattedCount} รายการ
-          </p>
-        </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-CategoryCard.displayName = 'CategoryCard';
-
-function ExpenseReportTableComponent({ data, categorySummary, totalAmount }: ExpenseReportTableProps) {
+function ExpenseReportTableComponent({ data, totalAmount }: ExpenseReportTableProps) {
   // Memoize calculations
   const pageTotal = useMemo(
     () => data.reduce((sum, expense) => sum + (expense.amount || 0), 0),
@@ -131,8 +87,7 @@ function ExpenseReportTableComponent({ data, categorySummary, totalAmount }: Exp
   );
 
   return (
-    <div className="space-y-8">
-      <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
@@ -161,15 +116,6 @@ function ExpenseReportTableComponent({ data, categorySummary, totalAmount }: Exp
             </tfoot>
           </table>
         </div>
-      </div>
-
-      {categorySummary.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {categorySummary.map((summary) => (
-            <CategoryCard key={summary.category} summary={summary} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

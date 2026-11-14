@@ -2,6 +2,7 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { expensePieSlices, formatExpenseShare, type ExpensePieSlice } from './expensePieSlices';
 import { formatCurrency } from './utils';
 import { ReportType } from '@/hooks/useReportData';
 import {
@@ -49,6 +50,104 @@ function loadSarabunBase64(): Promise<string> {
   return fontBase64Promise;
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  return [
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function drawPieWedge(
+  doc: jsPDF,
+  cx: number,
+  cy: number,
+  radius: number,
+  start: number,
+  end: number,
+  color: string,
+) {
+  const [red, green, blue] = hexToRgb(color);
+  doc.setFillColor(red, green, blue);
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.4);
+  const sweep = end - start;
+  if (sweep >= Math.PI * 2 - 0.0001) {
+    doc.circle(cx, cy, radius, 'FD');
+    return;
+  }
+
+  const steps = Math.max(12, Math.ceil((sweep * 180) / Math.PI / 8));
+  doc.moveTo(cx, cy);
+  for (let step = 0; step <= steps; step += 1) {
+    const angle = start + (sweep * step) / steps;
+    doc.lineTo(cx + radius * Math.cos(angle), cy - radius * Math.sin(angle));
+  }
+  doc.lineTo(cx, cy);
+  doc.fillStroke();
+}
+
+function drawExpensePieBlock(
+  doc: jsPDF,
+  slices: ExpensePieSlice[],
+  totalCount: number,
+  y: number,
+): number {
+  const width = doc.internal.pageSize.getWidth();
+  const left = 8;
+  const right = width - 8;
+  const total = slices.reduce((sum, slice) => sum + slice.amount, 0);
+  const legendHeight = slices.length * 8;
+  const height = 8 + Math.max(42, legendHeight) + 4;
+
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(left, y, width - 16, height, 2, 2, 'S');
+
+  doc.setFont(FONT_NAME, 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(225, 29, 72);
+  doc.text('ค่าใช้จ่ายตามหมวด', left + 3, y + 6);
+
+  doc.setFontSize(9);
+  const totalLabel = formatCurrency(total);
+  const detail = `จำนวนรายการ ${totalCount.toLocaleString('th-TH')}`;
+  doc.setTextColor(17, 24, 39);
+  doc.text(totalLabel, right - 3, y + 6, { align: 'right' });
+  doc.setTextColor(75, 85, 99);
+  doc.text(detail, right - 3 - doc.getTextWidth(totalLabel) - 4, y + 6, { align: 'right' });
+
+  const radius = 16;
+  const cx = left + 24;
+  const cy = y + 12 + radius;
+  let angle = 0;
+  slices.forEach((slice) => {
+    const sweep = (slice.percent / 100) * Math.PI * 2;
+    drawPieWedge(doc, cx, cy, radius, angle, angle + sweep, slice.color);
+    angle += sweep;
+  });
+
+  let legendY = y + 14;
+  const legendX = cx + radius + 8;
+  slices.forEach((slice) => {
+    const [red, green, blue] = hexToRgb(slice.color);
+    doc.setFillColor(red, green, blue);
+    doc.rect(legendX, legendY - 2.2, 2.4, 2.4, 'F');
+    doc.setFontSize(9);
+    doc.setTextColor(17, 24, 39);
+    doc.text(slice.category, legendX + 4, legendY);
+    doc.setTextColor(55, 65, 81);
+    doc.text(
+      `${formatCurrency(slice.amount)} · ${formatExpenseShare(slice.percent)}`,
+      legendX + 4,
+      legendY + 4,
+    );
+    legendY += 8;
+  });
+
+  return height;
+}
+
 function drawPageChrome(doc: jsPDF, reportTitle: string, rangeLabel: string) {
   const width = doc.internal.pageSize.getWidth();
   doc.setFont(FONT_NAME, 'normal');
@@ -92,10 +191,16 @@ export async function downloadReportPDF({
     if (column.align === 'right') columnStyles[index] = { halign: 'right' };
   });
 
+  const pieSlices = reportType === 'expense_summary' ? expensePieSlices(expenseSummary) : [];
+  const pieHeight =
+    pieSlices.length > 0
+      ? drawExpensePieBlock(doc, pieSlices, totalCount ?? data.length, 20) + 4
+      : 0;
+
   autoTable(doc, {
     head: [columns.map((column) => column.header)],
     body: data.map((row) => columns.map((column) => column.value(row))),
-    startY: 22,
+    startY: 22 + pieHeight,
     margin: { top: 22, left: 8, right: 8, bottom: 12 },
     styles: {
       font: FONT_NAME,

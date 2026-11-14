@@ -136,7 +136,7 @@ function renderProfitLossChart(rows: ProfitLossRow[], viewMode: ViewMode): strin
   const plotH = height - pad.top - pad.bottom;
 
   const amountMax = niceCeiling(
-    Math.max(...rows.flatMap((row) => [row.sales, row.expenses, row.serviceFees, row.purchases]), 0),
+    Math.max(...rows.flatMap((row) => CHART_SERIES.map((series) => row[series.key])), 0),
   );
 
   const groupW = plotW / rows.length;

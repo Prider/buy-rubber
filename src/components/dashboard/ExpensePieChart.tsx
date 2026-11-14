@@ -2,29 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { expensePieSlices, formatExpenseShare, type ExpensePieSlice } from '@/lib/expensePieSlices';
 import { formatCurrency } from '@/lib/utils';
 import DashboardHeading from './DashboardHeading';
 import type { ActivityRow } from './ActivityList';
 
-const SLICE_COLORS = [
-  '#e11d48',
-  '#f59e0b',
-  '#8b5cf6',
-  '#0ea5e9',
-  '#10b981',
-  '#f97316',
-  '#ec4899',
-  '#6366f1',
-];
-
-const percentFormat = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 });
-
-interface ExpenseSlice {
-  category: string;
-  amount: number;
-  percent: number;
-  color: string;
-}
+type ExpenseSlice = ExpensePieSlice;
 
 function slicesFromRows(rows: ActivityRow[]): ExpenseSlice[] {
   const totals = new Map<string, number>();
@@ -34,16 +17,9 @@ function slicesFromRows(rows: ActivityRow[]): ExpenseSlice[] {
     totals.set(category, (totals.get(category) || 0) + row.amount);
   }
 
-  const entries = [...totals.entries()].sort((a, b) => b[1] - a[1]);
-  const total = entries.reduce((sum, [, amount]) => sum + amount, 0);
-  if (total <= 0) return [];
-
-  return entries.map(([category, amount], index) => ({
-    category,
-    amount,
-    percent: (amount / total) * 100,
-    color: SLICE_COLORS[index % SLICE_COLORS.length],
-  }));
+  return expensePieSlices(
+    [...totals.entries()].map(([category, totalAmount]) => ({ category, totalAmount })),
+  );
 }
 
 function PieTooltip({
@@ -63,7 +39,7 @@ function PieTooltip({
         {formatCurrency(slice.amount)}
       </p>
       <p className="text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
-        {percentFormat.format(slice.percent)}%
+        {formatExpenseShare(slice.percent)}
       </p>
     </div>
   );
@@ -73,10 +49,12 @@ export default function ExpensePieChart({
   title,
   rows,
   emptyLabel,
+  detail,
 }: {
   title: string;
   rows: ActivityRow[];
   emptyLabel: string;
+  detail?: string;
 }) {
   const slices = useMemo(() => slicesFromRows(rows), [rows]);
   const total = slices.reduce((sum, slice) => sum + slice.amount, 0);
@@ -107,11 +85,16 @@ export default function ExpensePieChart({
         <DashboardHeading tone="rose" className="min-w-0 truncate">
           {title}
         </DashboardHeading>
-        {slices.length > 0 ? (
-          <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-200">
-            {formatCurrency(total)}
-          </span>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-3">
+          {detail ? (
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{detail}</span>
+          ) : null}
+          {slices.length > 0 ? (
+            <span className="text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-200">
+              {formatCurrency(total)}
+            </span>
+          ) : null}
+        </div>
       </div>
       {slices.length > 0 ? (
         <div className="grid min-h-[14rem] flex-1 grid-cols-[minmax(0,1.15fr)_minmax(7.5rem,1fr)] lg:min-h-0">
@@ -149,7 +132,7 @@ export default function ExpensePieChart({
                   </span>
                 </div>
                 <p className="pl-4 text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
-                  {formatCurrency(slice.amount)} · {percentFormat.format(slice.percent)}%
+                  {formatCurrency(slice.amount)} · {formatExpenseShare(slice.percent)}
                 </p>
               </li>
             ))}

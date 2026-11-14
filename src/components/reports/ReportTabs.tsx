@@ -11,7 +11,7 @@ export const REPORT_TABS = [
   { id: 'sell_summary', label: 'การขาย' },
   { id: 'member_summary', label: 'รายสมาชิก' },
   { id: 'profit_loss', label: 'กำไร/ขาดทุน' },
-  { id: 'expense_summary', label: 'ค่าใช้จ่ายร้าน' },
+  { id: 'expense_summary', label: 'ค่าใช้จ่าย' },
 ] as const;
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];
