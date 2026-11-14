@@ -147,7 +147,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                บันทึกการรับซื้อ
+                รับซื้อ
               </button>
             )}
             {onClose && (
@@ -198,35 +198,33 @@ export const CartTable: React.FC<CartTableProps> = ({
           className="min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain max-lg:p-2"
         >
           <table className="w-full max-lg:block lg:table-fixed">
+            <colgroup className="max-lg:hidden">
+              <col className="w-[16%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[14%]" />
+              <col className="w-[15%]" />
+            </colgroup>
             <thead className={cart.length === 0 ? 'hidden' : 'sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 max-lg:hidden'}>
               <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="w-[6%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ประเภท</th>
-                <th className="w-[9%] bg-gray-50 px-1.5 py-1.5 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">รายละเอียด</th>
-                <th className="w-[12%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนักรวม<br />ภาชนะ (กก.)</th>
-                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />ภาชนะ (กก.)</th>
-                <th className="w-[12%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />สุทธิ (กก.)</th>
-                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ราคา/กก.</th>
-                <th className="w-[8%] bg-gray-50 px-1 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-red-600 dark:bg-gray-700 dark:text-red-400">หัก<br />ความชื้น</th>
-                <th className="w-[15%] bg-gray-50 px-1.5 py-1.5 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จำนวนเงิน</th>
-                <th className="w-[22%] bg-gray-50 px-1 py-1.5 text-center align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จัดการ</th>
+                <th className="bg-gray-50 px-2 py-2 text-left align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">รายละเอียด</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนักรวม<br />ภาชนะ (กก.)</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />ภาชนะ (กก.)</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">น้ำหนัก<br />สุทธิ (กก.)</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">ราคา/กก.</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-red-600 dark:bg-gray-700 dark:text-red-400">หัก<br />ความชื้น</th>
+                <th className="bg-gray-50 px-2 py-2 text-right align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จำนวนเงิน</th>
+                <th className="bg-gray-50 px-2 py-2 text-center align-bottom text-[11px] font-semibold leading-tight text-gray-900 dark:bg-gray-700 dark:text-white">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-600 max-lg:block max-lg:space-y-2 max-lg:divide-y-0">
             {cart.length > 0 ? (
               cart.map((item, index) => (
                 <tr key={item.id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-2 max-lg:gap-y-1 max-lg:rounded-lg max-lg:border max-lg:border-gray-200 max-lg:p-2 dark:max-lg:border-gray-600 lg:table-row ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
-                  <CartCell label="ประเภท" wide className="px-1.5 py-1.5 text-xs">
-                    {item.type === 'purchase' ? (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                        รับซื้อ
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900 dark:text-red-200">
-                        ค่าบริการ
-                      </span>
-                    )}
-                  </CartCell>
-                  <CartCell label="รายละเอียด" wide className="break-words px-1.5 py-1.5 text-xs text-gray-900 dark:text-gray-100">
+                  <CartCell label="รายละเอียด" wide className="break-words px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
                     {item.type === 'purchase' ? (
                       <div>
                         <div className="font-medium">{item.memberName}</div>
@@ -241,19 +239,19 @@ export const CartTable: React.FC<CartTableProps> = ({
                       </div>
                     )}
                   </CartCell>
-                  <CartCell label="รวมภาชนะ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="รวมภาชนะ" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.grossWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="ภาชนะ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="ภาชนะ" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.containerWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="สุทธิ" className="whitespace-nowrap px-1 py-1.5 text-right text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="สุทธิ" className="whitespace-nowrap px-2 py-2 text-right text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.netWeight || 0) : '-'}
                   </CartCell>
-                  <CartCell label="ราคา" className="whitespace-nowrap px-1 py-1.5 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
+                  <CartCell label="ราคา" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
                     {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
                   </CartCell>
-                  <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-1 py-1.5 text-right text-xs font-medium leading-tight text-red-600 dark:text-red-400 max-lg:text-left">
+                  <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-2 py-2 text-right text-xs font-medium leading-tight text-red-600 dark:text-red-400 max-lg:text-left">
                     {item.type === 'purchase' ? (
                       <>
                         <span className="tabular-nums">{formatNumber(item.moisturePercent || 0)}</span>
@@ -266,7 +264,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                   <CartCell
                     label="จำนวนเงิน"
                     wide
-                    className={`whitespace-nowrap px-1 py-1.5 text-right text-xs font-semibold tabular-nums max-lg:text-left ${
+                    className={`whitespace-nowrap px-2 py-2 text-right text-xs font-semibold tabular-nums max-lg:text-left ${
                     item.totalAmount >= 0 
                       ? 'text-green-600 dark:text-green-400' 
                       : 'text-red-600 dark:text-red-400'
@@ -274,7 +272,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                   >
                     {formatCurrency(item.totalAmount)}
                   </CartCell>
-                  <CartCell label="จัดการ" wide className="whitespace-nowrap px-1 py-1.5 text-center max-lg:text-left">
+                  <CartCell label="จัดการ" wide className="whitespace-nowrap px-2 py-2 text-center max-lg:text-left">
                     <div className="flex flex-nowrap items-center justify-center gap-1 max-lg:justify-end">
                       <button
                         type="button"
@@ -298,7 +296,7 @@ export const CartTable: React.FC<CartTableProps> = ({
               ))
             ) : (
               <tr className="max-lg:block">
-                <td colSpan={9} className="px-6 py-8 text-center max-lg:block">
+                <td colSpan={8} className="px-6 py-8 text-center max-lg:block">
                   <div className="flex flex-col items-center space-y-2">
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                       <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,7 +316,7 @@ export const CartTable: React.FC<CartTableProps> = ({
         </div>
         <div className={`flex-shrink-0 border-t-2 border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800 ${cart.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:justify-end lg:gap-3 lg:px-1.5 lg:pr-[22%]">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 lg:justify-end lg:gap-3 lg:px-2 lg:pr-[calc(15%+0.5rem)]">
               <div className="text-sm font-bold text-gray-900 dark:text-white">
                 รวมทั้งหมด
               </div>

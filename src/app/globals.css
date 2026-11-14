@@ -192,6 +192,35 @@
       animation: admin-tab-enter 100ms cubic-bezier(0.2, 0, 0, 1) both;
     }
   }
+
+  @keyframes purchase-entry-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes purchase-entry-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  .purchase-entry-overlay,
+  .purchase-entry-panel {
+    animation: purchase-entry-fade 300ms ease-out both;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .purchase-entry-panel {
+      animation-name: purchase-entry-rise;
+    }
+  }
 }
 
 /* Unlayered so these beat Animal Island's hardcoded faces. */

@@ -130,26 +130,26 @@ const TransactionRow = memo<TransactionRowProps>(({
 
   return (
     <tr className={rowClassName} data-purchase-no={transaction.purchaseNo}>
-      <td className={showPurchaseNo ? 'whitespace-nowrap px-3 py-3 text-xs font-medium text-blue-600 dark:text-blue-400 xl:px-4 xl:text-sm' : 'w-0 p-0'}>
+      <td className={showPurchaseNo ? 'break-all px-2 py-2 text-xs font-medium leading-tight text-blue-600 dark:text-blue-400' : 'px-2 py-2'}>
         {showPurchaseNo ? transaction.purchaseNo : null}
       </td>
-      <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-900 dark:text-gray-100">
+      <td className="px-2 py-2 text-sm text-gray-900 dark:text-gray-100">
         <div className="leading-tight">{formattedDate.date}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400">{formattedDate.time}</div>
       </td>
-      <td className="px-3 py-3 text-sm text-gray-900 dark:text-gray-100 xl:px-4">
+      <td className="break-words px-2 py-2 text-sm text-gray-900 dark:text-gray-100">
         {memberDisplay}
       </td>
-      <td className="px-2 py-3 text-xs text-gray-600 dark:text-gray-400">
+      <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-400">
         <div className="space-y-1">
           <div>{purchaseCountText}</div>
           {serviceFeeText && <div>{serviceFeeText}</div>}
         </div>
       </td>
-      <td className="whitespace-nowrap px-1.5 py-3 text-left text-xs font-semibold tabular-nums text-purple-600 dark:text-purple-400">
+      <td className="whitespace-nowrap px-2 py-2 text-right text-xs font-semibold tabular-nums text-purple-600 dark:text-purple-400">
         {formattedAmount}
       </td>
-      <td className="px-1 py-2 text-sm">
+      <td className="whitespace-nowrap px-1 py-2 text-right text-sm">
         <TransactionActionButtons
           transaction={transaction}
           isAdmin={isAdmin}
@@ -285,25 +285,43 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
       </div>
 
       <div className="hidden lg:block">
-        <table className={showPurchaseNo ? 'w-full min-w-[960px]' : 'w-full table-fixed'}>
+        <table className="w-full table-fixed">
           <thead className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 dark:border-gray-600 dark:from-gray-700 dark:to-gray-600">
             <tr>
-              <th className="w-14 whitespace-nowrap px-1.5 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: showPurchaseNo ? '24%' : '10%' }}
+                className="px-2 py-2 text-left align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 <PurchaseNoToggle pressed={showPurchaseNo} onClick={togglePurchaseNo} />
               </th>
-              <th className="w-[4.75rem] whitespace-nowrap px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: showPurchaseNo ? '12%' : '14%' }}
+                className="px-2 py-2 text-left align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 วันที่
               </th>
-              <th className="w-[5.5rem] px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: showPurchaseNo ? '14%' : '24%' }}
+                className="px-2 py-2 text-left align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 สมาชิก
               </th>
-              <th className="w-[7.5rem] px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: showPurchaseNo ? '14%' : '16%' }}
+                className="px-2 py-2 text-left align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 รายการ
               </th>
-              <th className="w-[8.5rem] whitespace-nowrap px-1.5 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: '7.25rem' }}
+                className="whitespace-nowrap px-2 py-2 text-right align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 ยอดรวม
               </th>
-              <th className="px-1 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200">
+              <th
+                style={{ width: '11.75rem' }}
+                className="px-1 py-2 text-right align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
                 การจัดการ
               </th>
             </tr>

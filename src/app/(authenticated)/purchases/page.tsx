@@ -326,18 +326,22 @@ export default function PurchasesPage() {
               <PurchasesList ref={historyRef} />
             </div>
             {entryOpen && (
-              <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:pointer-events-none lg:absolute lg:inset-0 lg:z-20 lg:items-start lg:justify-end lg:bg-white/5 lg:p-0 lg:backdrop-blur-[2px] dark:lg:bg-white/5">
+              <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:pointer-events-none lg:absolute lg:inset-0 lg:z-20 lg:items-start lg:justify-end lg:p-0">
                 <button
                   type="button"
-                  className="absolute inset-0 bg-black/50 lg:hidden"
+                  className="purchase-entry-overlay absolute inset-0 bg-black/50 lg:hidden"
                   aria-label={editingCartItem ? 'ปิดการแก้ไข' : 'ปิดบันทึกการรับซื้อ'}
                   onClick={closeEntry}
+                />
+                <div
+                  aria-hidden
+                  className="purchase-entry-overlay pointer-events-none absolute inset-0 hidden bg-white/5 backdrop-blur-[2px] lg:block dark:bg-white/5"
                 />
                 <div
                   role="dialog"
                   aria-modal={entryDocked ? undefined : true}
                   aria-labelledby={editingCartItem?.type === 'serviceFee' ? 'service-fee-entry-title' : 'purchase-entry-title'}
-                  className={`relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain border-2 bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl lg:pointer-events-auto lg:h-auto lg:max-h-full lg:min-h-0 lg:w-full lg:max-w-none ${
+                  className={`purchase-entry-panel relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain border-2 bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl lg:pointer-events-auto lg:h-auto lg:max-h-full lg:min-h-0 lg:w-full lg:max-w-none ${
                     editingCartItem?.type === 'serviceFee'
                       ? 'border-orange-500 dark:border-orange-400'
                       : editingCartItem
