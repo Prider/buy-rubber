@@ -104,19 +104,30 @@ test.describe('Role-based access control', () => {
 
     await page.goto('/admin')
 
-    await expect(page).toHaveURL('/dashboard', { timeout: 15_000 })
+    await expect(page).toHaveURL('/purchases', { timeout: 15_000 })
     await expect(page.getByRole('tab', { name: 'ผู้ใช้งาน' })).not.toBeVisible()
 
     await context.close()
   })
 
-  test('viewer can view dashboard', async ({ browser }) => {
+  test('viewer cannot open dashboard, stock, reports, sales, or destination companies', async ({ browser }) => {
     const context = await browser.newContext()
     const page = await context.newPage()
 
     await loginAs(page, 'demo', 'demo@123')
 
-    await expect(page).toHaveURL('/dashboard')
+    await expect(page).toHaveURL('/purchases')
+    await expect(page.locator('[data-nav-link="/dashboard"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/stock"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/reports"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/sales"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/destination-companies"]')).toHaveCount(0)
+    await expect(page.locator('[data-nav-link="/purchases"]')).toHaveCount(1)
+
+    for (const path of ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies']) {
+      await page.goto(path)
+      await expect(page).toHaveURL('/purchases')
+    }
 
     await context.close()
   })

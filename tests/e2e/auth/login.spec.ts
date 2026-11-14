@@ -34,9 +34,9 @@ test.describe('Login page', () => {
     await expect(page).toHaveURL('/dashboard')
   })
 
-  test('successful login as viewer redirects to dashboard', async ({ page }) => {
+  test('successful login as viewer redirects to purchases', async ({ page }) => {
     await loginAs(page, 'demo', 'demo@123')
-    await expect(page).toHaveURL('/dashboard')
+    await expect(page).toHaveURL('/purchases')
   })
 
   test('wrong password shows error message', async ({ page }) => {

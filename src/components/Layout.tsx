@@ -219,13 +219,16 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     if (!isLoading && user && !canAccessAppPath(user.role, pathname)) {
-      router.replace('/reports');
+      router.replace(homePathForRole(user.role));
     }
   }, [isLoading, pathname, router, user]);
 
   const navigation = NAV_ITEMS.filter((item) => {
     if (reportsOnly) {
       return item.accountantVisible === true;
+    }
+    if (!canAccessAppPath(user?.role, item.href)) {
+      return false;
     }
     // Check if item is admin-only and user is not admin
     if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') {

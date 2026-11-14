@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { homePathForRole } from '@/types/user';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
 import { AdminTabs, parseAdminTab, type AdminSettingsTab } from '@/components/admin/AdminTabs';
@@ -174,7 +175,7 @@ export default function AdminSettingsPage() {
       return;
     }
     if (!canAccessAdminPage) {
-      router.replace('/dashboard');
+      router.replace(homePathForRole(user.role));
     }
   }, [user, isLoading, router, canAccessAdminPage]);
 

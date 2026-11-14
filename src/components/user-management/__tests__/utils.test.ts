@@ -32,3 +32,22 @@ describe('accountant app access', () => {
     expect(canAccessAppPath('viewer', '/purchases')).toBe(true);
   });
 });
+
+describe('viewer app access', () => {
+  it('hides dashboard, stock, reports, sales, and destination companies', () => {
+    expect(homePathForRole('viewer')).toBe('/purchases');
+    expect(canAccessAppPath('viewer', '/purchases')).toBe(true);
+    expect(canAccessAppPath('viewer', '/members')).toBe(true);
+    expect(canAccessAppPath('viewer', '/expenses')).toBe(true);
+    expect(canAccessAppPath('viewer', '/guide')).toBe(true);
+    expect(canAccessAppPath('viewer', '/dashboard')).toBe(false);
+    expect(canAccessAppPath('viewer', '/stock')).toBe(false);
+    expect(canAccessAppPath('viewer', '/stock/type-1')).toBe(false);
+    expect(canAccessAppPath('viewer', '/reports')).toBe(false);
+    expect(canAccessAppPath('viewer', '/reports/profit-loss')).toBe(false);
+    expect(canAccessAppPath('viewer', '/sales')).toBe(false);
+    expect(canAccessAppPath('viewer', '/destination-companies')).toBe(false);
+    expect(canAccessAppPath('user', '/sales')).toBe(true);
+    expect(canAccessAppPath('admin', '/dashboard')).toBe(true);
+  });
+});

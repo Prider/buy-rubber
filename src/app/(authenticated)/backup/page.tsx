@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { homePathForRole } from '@/types/user';
 import GamerLoader from '@/components/GamerLoader';
 
 export default function BackupPage() {
@@ -19,7 +20,7 @@ export default function BackupPage() {
       router.replace('/admin?tab=backup');
       return;
     }
-    router.replace('/dashboard');
+    router.replace(homePathForRole(user.role));
   }, [isLoading, router, user]);
 
   return (

@@ -16,14 +16,32 @@ export function isAccountantRole(role: string | undefined | null): boolean {
   return role === 'accountant';
 }
 
-/** Landing page after login. Accountant accounts open reports only. */
+export function isViewerRole(role: string | undefined | null): boolean {
+  return role === 'viewer';
+}
+
+/** Pages a พนักงาน (viewer) account must not open. */
+const VIEWER_HIDDEN_PREFIXES = ['/dashboard', '/stock', '/reports', '/sales', '/destination-companies'] as const;
+
+function pathMatches(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/** Landing page after login. Accountant opens reports; พนักงาน opens purchases. */
 export function homePathForRole(role: string | undefined | null): string {
-  return isAccountantRole(role) ? '/reports' : '/dashboard';
+  if (isAccountantRole(role)) return '/reports';
+  if (isViewerRole(role)) return '/purchases';
+  return '/dashboard';
 }
 
 export function canAccessAppPath(role: string | undefined | null, pathname: string): boolean {
-  if (!isAccountantRole(role)) return true;
-  return pathname === '/reports' || pathname.startsWith('/reports/');
+  if (isAccountantRole(role)) {
+    return pathMatches(pathname, '/reports');
+  }
+  if (isViewerRole(role)) {
+    return !VIEWER_HIDDEN_PREFIXES.some((prefix) => pathMatches(pathname, prefix));
+  }
+  return true;
 }
 
 export interface User {
@@ -114,10 +132,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports.read'
   ],
   viewer: [
-    'dashboard.read',
     'prices.read',
     'locations.read',
-    'reports.read'
   ],
   accountant: [
     'reports.read'

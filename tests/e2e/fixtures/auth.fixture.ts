@@ -77,5 +77,5 @@ export async function loginAs(
   await page.goto('/login')
   const loginRes = await submitLogin(page, username, password)
   expect(loginRes.ok()).toBeTruthy()
-  await page.waitForURL('/dashboard')
+  await page.waitForURL((url) => url.pathname !== '/login')
 }

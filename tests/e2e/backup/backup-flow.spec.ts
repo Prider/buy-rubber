@@ -106,7 +106,7 @@ test.describe.serial('Backup flow', () => {
     await installElectronMock(viewerPage)
     await loginAs(viewerPage, 'demo', 'demo@123')
     await viewerPage.goto('/backup')
-    await expect(viewerPage).toHaveURL('/dashboard')
+    await expect(viewerPage).toHaveURL('/purchases')
     await viewerContext.close()
   })
 
