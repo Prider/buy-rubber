@@ -11,7 +11,7 @@ export const EmptyState = () => (
       />
     </svg>
     <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">📭 ยังไม่มีประวัติ</p>
-    <p className="text-sm text-gray-400 dark:text-gray-500">สมาชิกท่านนี้ยังไม่มีรายการรับซื้อหรือค่าบริการ</p>
+    <p className="text-sm text-gray-400 dark:text-gray-500">สมาชิกท่านนี้ยังไม่มีรายการรับซื้อ</p>
   </div>
 );
 

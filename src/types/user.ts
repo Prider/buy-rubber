@@ -8,6 +8,11 @@ export function isAdminLike(role: string | undefined | null): boolean {
   return role === 'admin' || role === 'root';
 }
 
+/** เจ้าของ and ผู้จัดการ can correct a saved purchase. root inherits owner access. */
+export function canEditPurchases(role: string | undefined | null): boolean {
+  return role === 'user' || isAdminLike(role);
+}
+
 export function isRootRole(role: string | undefined | null): boolean {
   return role === 'root';
 }

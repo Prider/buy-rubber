@@ -194,6 +194,7 @@ test.describe('Purchase history', () => {
 
     const row = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(row).toBeVisible()
+    await expect(row.getByRole('button', { name: 'แก้ไข' })).toBeVisible()
     await expect(row.getByRole('button', { name: 'ลบ' })).toBeVisible()
 
     const formattedAmount = new Intl.NumberFormat('th-TH', {
@@ -236,6 +237,7 @@ test.describe('Purchase history', () => {
 
     const row = page.locator(`tr[data-purchase-no="${transaction.purchaseNo}"]`)
     await expect(row).toBeVisible()
+    await expect(row.getByRole('button', { name: 'แก้ไข' })).toHaveCount(0)
     await expect(row.getByRole('button', { name: 'ลบ' })).toHaveCount(0)
     await expect(row.getByRole('button', { name: 'พิมพ์' })).toBeVisible()
     await expect(row.getByRole('button', { name: 'PDF' })).toBeVisible()

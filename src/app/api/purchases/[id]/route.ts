@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { invalidatePurchaseCaches } from '@/lib/cache';
-import { calculateDryWeight, calculateAdjustedPrice, calculateSplit, getUserFromToken } from '@/lib/utils';
+import { calculateDryWeight, calculateAdjustedPrice, calculateSplit } from '@/lib/utils';
+import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
+import { canEditPurchases } from '@/types/user';
 import { purchaseUnitCostPerKg, readMoistureAmount, readMoistureUnit, settlePurchaseMoisture } from '@/lib/purchases/moisture';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 import { diffFields } from '@/lib/activityLogShared';
@@ -42,16 +44,23 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = await request.json();
-    const tokenUser = getUserFromToken(request);
-    const userId = data.userId || tokenUser?.userId;
-
-    if (!userId) {
+    const token = getBearerToken(request);
+    const tokenUser = token ? getVerifiedUserFromToken(token) : null;
+    if (!tokenUser) {
       return NextResponse.json(
         { error: 'ไม่พบข้อมูลผู้ใช้', details: 'userId is required' },
         { status: 401 }
       );
     }
+    if (!canEditPurchases(tokenUser.role)) {
+      return NextResponse.json(
+        { error: 'เฉพาะเจ้าของและผู้จัดการเท่านั้นที่แก้ไขรายการรับซื้อได้' },
+        { status: 403 }
+      );
+    }
+
+    const data = await request.json();
+    const userId = tokenUser.userId;
 
     const existing = await prisma.purchase.findUnique({
       where: { id: params.id },
@@ -188,7 +197,6 @@ export async function PUT(
           date: purchaseDate,
           memberId: data.memberId,
           productTypeId: data.productTypeId,
-          userId,
           grossWeight: data.grossWeight,
           containerWeight: data.containerWeight || 0,
           netWeight,
@@ -204,6 +212,7 @@ export async function PUT(
           ownerAmount,
           tapperAmount,
           notes: data.notes ?? null,
+          userId: existing.userId,
           ...(typeof data.isPaid === 'boolean' ? { isPaid: data.isPaid } : {}),
         },
         include: {

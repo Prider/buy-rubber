@@ -8,6 +8,8 @@ export interface PurchaseTransaction {
     id: string;
     purchaseNo: string;
     date: string;
+    memberId?: string;
+    productTypeId?: string;
     member: {
       id: string;
       code: string;
@@ -18,9 +20,15 @@ export interface PurchaseTransaction {
       name: string;
       code: string;
     };
+    grossWeight?: number;
+    containerWeight?: number;
     netWeight: number;
+    basePrice?: number;
+    bonusPrice?: number;
+    rubberPercent?: number | null;
     moisturePercent?: number | null;
     moistureUnit?: string | null;
+    notes?: string | null;
     finalPrice: number;
     totalAmount: number;
   }>;
@@ -37,6 +45,8 @@ export interface PurchaseTransaction {
     name: string;
   };
 }
+
+export type PurchaseLine = PurchaseTransaction['purchases'][number];
 
 export interface PaginationInfo {
   page: number;

@@ -53,6 +53,7 @@ interface TransactionTableProps {
   isAdmin: boolean;
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
+  onEdit?: (transaction: PurchaseTransaction) => void;
   onDelete: (transaction: PurchaseTransaction) => void;
 }
 
@@ -64,6 +65,7 @@ interface TransactionRowProps {
   showPurchaseNo: boolean;
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
+  onEdit?: (transaction: PurchaseTransaction) => void;
   onDelete: (transaction: PurchaseTransaction) => void;
 }
 
@@ -74,6 +76,7 @@ const TransactionRow = memo<TransactionRowProps>(({
   showPurchaseNo,
   onPrint,
   onDownloadPDF,
+  onEdit,
   onDelete,
 }) => {
   const formattedDate = useMemo(
@@ -128,6 +131,8 @@ const TransactionRow = memo<TransactionRowProps>(({
     onDelete(transaction);
   }, [transaction, onDelete]);
 
+  const editHandler = onEdit && transaction.purchases.length > 0 ? onEdit : undefined;
+
   return (
     <tr className={rowClassName} data-purchase-no={transaction.purchaseNo}>
       <td className={showPurchaseNo ? 'break-all px-2 py-2 text-xs font-medium leading-tight text-blue-600 dark:text-blue-400' : 'px-2 py-2'}>
@@ -155,6 +160,7 @@ const TransactionRow = memo<TransactionRowProps>(({
           isAdmin={isAdmin}
           onPrint={handlePrint}
           onDownloadPDF={handleDownloadPDF}
+          onEdit={editHandler}
           onDelete={handleDelete}
         />
       </td>
@@ -170,6 +176,7 @@ const TransactionCard = memo<TransactionRowProps>(({
   showPurchaseNo,
   onPrint,
   onDownloadPDF,
+  onEdit,
   onDelete,
 }) => {
   const formattedDate = useMemo(
@@ -197,6 +204,7 @@ const TransactionCard = memo<TransactionRowProps>(({
   const handlePrint = useCallback(() => onPrint(transaction), [transaction, onPrint]);
   const handleDownloadPDF = useCallback(() => onDownloadPDF(transaction), [transaction, onDownloadPDF]);
   const handleDelete = useCallback(() => onDelete(transaction), [transaction, onDelete]);
+  const editHandler = onEdit && transaction.purchases.length > 0 ? onEdit : undefined;
 
   return (
     <article
@@ -235,6 +243,7 @@ const TransactionCard = memo<TransactionRowProps>(({
         layout="card"
         onPrint={handlePrint}
         onDownloadPDF={handleDownloadPDF}
+        onEdit={editHandler}
         onDelete={handleDelete}
       />
     </article>
@@ -248,6 +257,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
   isAdmin,
   onPrint,
   onDownloadPDF,
+  onEdit,
   onDelete,
 }) => {
   // Data is already sorted by the API; keep the incoming order
@@ -279,6 +289,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
             showPurchaseNo={showPurchaseNo}
             onPrint={onPrint}
             onDownloadPDF={onDownloadPDF}
+            onEdit={onEdit}
             onDelete={onDelete}
           />
         ))}
@@ -319,7 +330,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
                 ยอดรวม
               </th>
               <th
-                style={{ width: '11.75rem' }}
+                style={{ width: onEdit ? '13rem' : '11.75rem' }}
                 className="px-1 py-2 text-right align-bottom text-xs font-semibold text-gray-700 dark:text-gray-200"
               >
                 การจัดการ
@@ -336,6 +347,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
                 showPurchaseNo={showPurchaseNo}
                 onPrint={onPrint}
                 onDownloadPDF={onDownloadPDF}
+                onEdit={onEdit}
                 onDelete={onDelete}
               />
             ))}

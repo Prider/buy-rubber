@@ -72,6 +72,8 @@ interface PurchaseEntryCardProps {
   setShowProductTypeDropdown: (show: boolean) => void;
   submitting?: boolean;
   editing?: boolean;
+  heading?: string;
+  subtitle?: string;
   serviceFeeCard?: React.ReactNode;
   onClose?: () => void;
 }
@@ -103,6 +105,8 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   setShowProductTypeDropdown,
   submitting = false,
   editing = false,
+  heading,
+  subtitle,
   serviceFeeCard,
   onClose,
 }) => {
@@ -356,9 +360,12 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
         <div className="min-w-0 flex-1">
           <h2 id="purchase-entry-title" className="text-lg font-bold leading-tight lg:text-xl">
             <span className="bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 dark:from-primary-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient">
-              {editing ? 'แก้ไขรายการในตะกร้า' : 'บันทึกการรับซื้อ'}
+              {heading ?? (editing ? 'แก้ไขรายการในตะกร้า' : 'บันทึกการรับซื้อ')}
             </span>
           </h2>
+          {subtitle ? (
+            <p className="truncate text-xs font-medium text-gray-500 dark:text-gray-400">{subtitle}</p>
+          ) : null}
         </div>
         {onClose ? <CloseButton onClick={onClose} disabled={submitting} /> : null}
       </div>

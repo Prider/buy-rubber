@@ -2,19 +2,27 @@
 
 import { useState, useEffect, useImperativeHandle, forwardRef, useCallback, useMemo } from 'react';
 import { GamerLoader } from '@/components/GamerLoader';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseTransactions } from '@/hooks/usePurchaseTransactions';
+import { canEditPurchases } from '@/types/user';
 import { useTransactionActions } from './hooks/useTransactionActions';
+import { PurchaseLinePicker, PurchaseRecordEditor } from './PurchaseRecordEditor';
 import { TransactionTable } from './TransactionTable';
 import { PurchasesListPagination } from './PurchasesListPagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import type { PurchaseLine, PurchaseTransaction } from './types';
 
 export interface PurchasesListRef {
   refresh: () => void;
 }
 
 export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
+  const { user } = useAuth();
+  const canEdit = canEditPurchases(user?.role);
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
+  const [linePicker, setLinePicker] = useState<PurchaseTransaction | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<PurchaseLine | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   const {
@@ -47,6 +55,20 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
       loadTransactions(currentPage, debouncedSearchTerm || undefined);
     },
   }), [currentPage, debouncedSearchTerm, loadTransactions]);
+
+  const handleEditTransaction = useCallback((transaction: PurchaseTransaction) => {
+    if (transaction.purchases.length === 0) return;
+    if (transaction.purchases.length === 1) {
+      setEditingPurchase(transaction.purchases[0]);
+      return;
+    }
+    setLinePicker(transaction);
+  }, []);
+
+  const handlePurchaseSaved = useCallback(async () => {
+    setEditingPurchase(null);
+    await handleRefresh();
+  }, [handleRefresh]);
 
   // Memoize page change handler
   const handlePageChange = useCallback((page: number) => {
@@ -112,6 +134,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
     return errorComponent;
   }
   return (
+    <>
     <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 lg:min-h-0 lg:flex-1">
       <div className="flex shrink-0 flex-col gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-600 sm:flex-row sm:items-center sm:gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -160,6 +183,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
           isAdmin={isAdmin}
           onPrint={handlePrint}
           onDownloadPDF={handleDownloadPDF}
+          onEdit={canEdit ? handleEditTransaction : undefined}
           onDelete={handleDelete}
         />
       </div>
@@ -171,6 +195,25 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
         embedded
       />
     </div>
+    {linePicker ? (
+      <PurchaseLinePicker
+        transaction={linePicker}
+        onSelect={(purchase) => {
+          setLinePicker(null);
+          setEditingPurchase(purchase);
+        }}
+        onClose={() => setLinePicker(null)}
+      />
+    ) : null}
+    {editingPurchase ? (
+      <PurchaseRecordEditor
+        key={editingPurchase.id}
+        purchase={editingPurchase}
+        onClose={() => setEditingPurchase(null)}
+        onSaved={handlePurchaseSaved}
+      />
+    ) : null}
+    </>
   );
 });
 

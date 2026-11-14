@@ -9,6 +9,7 @@ interface TransactionActionButtonsProps {
   layout?: 'table' | 'card';
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
+  onEdit?: (transaction: PurchaseTransaction) => void;
   onDelete: (transaction: PurchaseTransaction) => void;
 }
 
@@ -18,6 +19,7 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
   layout = 'table',
   onPrint,
   onDownloadPDF,
+  onEdit,
   onDelete,
 }) => {
   // Memoize callbacks to prevent unnecessary re-renders
@@ -32,6 +34,10 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
   const handleDelete = useCallback(() => {
     onDelete(transaction);
   }, [transaction, onDelete]);
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(transaction);
+  }, [transaction, onEdit]);
   const isCard = layout === 'card';
   const buttonClass = isCard
     ? 'inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
@@ -65,6 +71,25 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
       >
         PDF
       </button>
+
+      {onEdit && (
+        <button
+          type="button"
+          onClick={handleEdit}
+          className={`${buttonClass} text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/30`}
+          title="แก้ไข"
+          aria-label="แก้ไข"
+        >
+          <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+        </button>
+      )}
 
       {isAdmin && (
         <button
