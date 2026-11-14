@@ -121,7 +121,7 @@ export default function ExpensesPage() {
 
           <div className="grid shrink-0 grid-cols-1 gap-2 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700 sm:grid-cols-3 sm:px-5">
             <div
-              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-100 px-3 py-2 text-emerald-950 shadow-sm dark:border-emerald-800 dark:from-emerald-950/50 dark:to-green-950/40 dark:text-emerald-100"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายวันนี้"
@@ -134,7 +134,7 @@ export default function ExpensesPage() {
             </div>
 
             <div
-              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-100 px-3 py-2 text-blue-950 shadow-sm dark:border-blue-800 dark:from-blue-950/50 dark:to-indigo-950/40 dark:text-blue-100"
               tabIndex={0}
               role="group"
               aria-label="ค่าใช้จ่ายเดือนนี้"
@@ -147,7 +147,7 @@ export default function ExpensesPage() {
             </div>
 
             <div
-              className="min-w-0 overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 px-3 py-2 text-white shadow-sm"
+              className="min-w-0 overflow-hidden rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-100 px-3 py-2 text-purple-950 shadow-sm dark:border-purple-800 dark:from-purple-950/50 dark:to-pink-950/40 dark:text-purple-100"
               tabIndex={0}
               role="group"
               aria-label="ค่าเฉลี่ยรายวัน"
