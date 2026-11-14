@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { getThaiPhoneError } from '@/lib/memberUtils';
 
 export const runtime = 'nodejs';
 
@@ -98,6 +99,11 @@ export async function POST(request: NextRequest) {
     }
     if (!data.name || !String(data.name).trim()) {
       return NextResponse.json({ error: 'กรุณากรอกชื่อบริษัท' }, { status: 400 });
+    }
+
+    const phoneError = getThaiPhoneError(data.phone == null ? '' : String(data.phone));
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
     }
 
     const code = String(data.code).trim();

@@ -142,7 +142,7 @@ export default function SalesTable({
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
   const titleClass = compact ? 'text-base font-bold' : 'text-xl font-bold';
   const cellPad = compact
-    ? 'px-1.5 py-2 align-top leading-snug xl:px-2'
+    ? 'px-1.5 py-2 align-top leading-snug'
     : 'px-2 py-2.5 align-top leading-snug';
   const textCell = `${cellPad} whitespace-normal break-words`;
   const numCell = `${cellPad} whitespace-nowrap text-right text-[0.6875rem] tabular-nums`;
@@ -336,17 +336,17 @@ export default function SalesTable({
                     </div>
 
                     {(onEdit || onDelete) && (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex flex-wrap gap-1">
                         {onEdit ? (
                           <button
                             type="button"
                             onClick={() => onEdit(row)}
                             disabled={Boolean(deletingSaleId)}
-                            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-3 text-sm font-medium transition-colors ${
+                            className={`inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 ${
                               editing
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
-                                : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
-                            } disabled:opacity-50`}
+                                ? 'text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30'
+                                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                            }`}
                           >
                             {editing ? 'ยกเลิกแก้ไข' : 'แก้ไข'}
                           </button>
@@ -356,7 +356,7 @@ export default function SalesTable({
                             type="button"
                             onClick={() => onDelete(row.id)}
                             disabled={Boolean(deletingSaleId)}
-                            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-red-100 px-3 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/60"
+                            className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
                           >
                             {deletingSaleId === row.id ? 'กำลังลบ...' : 'ลบ'}
                           </button>
@@ -374,22 +374,22 @@ export default function SalesTable({
         <table className={`w-full table-fixed ${tableText}`}>
           <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
             <tr>
-            <th className={`${textCell} w-[7%] text-left`}>เลขที่</th>
+            <th className={`${textCell} w-[10%] text-left`}>เลขที่</th>
               <th className={`${textCell} w-[7%] text-left`}>วันที่ / เวลา</th>
-              <th className={`${textCell} w-[7.5%] text-left`}>บริษัท</th>
-              <th className={`${textCell} w-[7%] text-left`}>ประเภทสินค้า</th>
-              <th className={`${textCell} w-[8%] text-right`}>น้ำหนัก</th>
-              <th className={`${textCell} w-[4.5%] text-right`}>%ยาง</th>
-              <th className={`${textCell} w-[6.5%] text-right`}>ราคา</th>
-              <th className={`${textCell} w-[7%] text-left`}>ชนิดค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[7%] text-right`}>ค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[7%] text-left`}>หมายเหตุค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[5.5%] text-left`}>รูปแบบขาย</th>
-              <th className={`${textCell} w-[9%] text-right`}>ยอดรวม</th>
-              <th className={`${textCell} w-[9.5%] text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
+              <th className={`${textCell} w-[12%] text-left`}>บริษัท</th>
+              <th className={`${textCell} w-[8%] text-left`}>ประเภทสินค้า</th>
+              <th className={`${textCell} w-[5.5%] text-right`}>น้ำหนัก</th>
+              <th className={`${textCell} w-[4%] text-right`}>%ยาง</th>
+              <th className={`${textCell} w-[5%] text-right`}>ราคา</th>
+              <th className={`${textCell} w-[8%] text-left`}>ชนิดค่าใช้จ่าย</th>
+              <th className={`${textCell} w-[6%] text-right`}>ค่าใช้จ่าย</th>
+              <th className={`${textCell} w-[8%] text-left`}>หมายเหตุค่าใช้จ่าย</th>
+              <th className={`${textCell} w-[6%] text-left`}>รูปแบบขาย</th>
+              <th className={`${textCell} w-[7%] text-right`}>ยอดรวม</th>
+              <th className={`${textCell} w-[6.5%] text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
                 กำไร/ขาดทุน
               </th>
-              {(onEdit || onDelete) && <th className={`${textCell} w-[5.5%] text-center`}>จัดการ</th>}
+                  {(onEdit || onDelete) && <th className={`${textCell} w-[7%] text-center`}>จัดการ</th>}
             </tr>
           </thead>
           <tbody>
@@ -434,17 +434,17 @@ export default function SalesTable({
                   </td>
                   {(onEdit || onDelete) && (
                     <td className={`${textCell} text-center`}>
-                      <div className="flex flex-col items-stretch gap-1">
+                      <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
                         {onEdit ? (
                           <button
                             type="button"
                             onClick={() => onEdit(row)}
                             disabled={Boolean(deletingSaleId)}
-                            className={`w-full whitespace-normal rounded-md px-1 py-1 text-xs font-medium leading-tight transition-colors ${
+                            className={`whitespace-nowrap rounded px-1 py-0.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 ${
                               editingSaleId === row.id
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                            } disabled:opacity-50`}
+                                ? 'text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30'
+                                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                            }`}
                           >
                             {editingSaleId === row.id ? 'ยกเลิกแก้ไข' : 'แก้ไข'}
                           </button>
@@ -454,7 +454,7 @@ export default function SalesTable({
                             type="button"
                             onClick={() => onDelete(row.id)}
                             disabled={Boolean(deletingSaleId)}
-                            className="w-full whitespace-normal rounded-md bg-red-100 px-1 py-1 text-xs font-medium leading-tight text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/60"
+                            className="whitespace-nowrap rounded px-1 py-0.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
                           >
                             {deletingSaleId === row.id ? 'กำลังลบ...' : 'ลบ'}
                           </button>

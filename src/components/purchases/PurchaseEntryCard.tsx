@@ -661,7 +661,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onKeyDown={(e) => handleKeyDown(e, containerWeightRef, productTypeRef)}
                     required
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -685,7 +685,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                     onChange={handleInputChange}
                     onKeyDown={(e) => handleKeyDown(e, pricePerUnitRef, grossWeightRef)}
                     disabled={submitting}
-                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-1.5 text-sm pr-10 border border-gray-200 dark:border-gray-600 rounded-lg [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition-[border-color,box-shadow] duration-150 ease-out shadow-sm disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     placeholder="0.00"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -782,7 +782,7 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
                   onKeyDown={(e) => handleKeyDown(e, moistureRef, containerWeightRef)}
                   required
                   disabled={submitting}
-                  className="!h-14 w-full rounded-lg border border-gray-200 px-3 pr-16 !text-lg !font-semibold text-gray-900 shadow-sm transition-[border-color,box-shadow] duration-150 ease-out focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  className="!h-14 w-full rounded-lg border border-gray-200 px-3 pr-16 !text-lg !font-semibold text-gray-900 shadow-sm transition-[border-color,box-shadow] duration-150 ease-out [appearance:textfield] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   placeholder={formData.pricePerUnit}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">

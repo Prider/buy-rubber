@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { cache } from '@/lib/cache';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 import { diffFields } from '@/lib/activityLogShared';
+import { getThaiPhoneError } from '@/lib/memberUtils';
 
 const COMPANY_DIFF_KEYS = ['name', 'phone', 'address', 'isActive'];
 
@@ -61,6 +62,11 @@ export async function PUT(
 
     if (!data.name || !String(data.name).trim()) {
       return NextResponse.json({ error: 'กรุณากรอกชื่อบริษัท' }, { status: 400 });
+    }
+
+    const phoneError = getThaiPhoneError(data.phone == null ? '' : String(data.phone));
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
     }
 
     const name = String(data.name).trim();

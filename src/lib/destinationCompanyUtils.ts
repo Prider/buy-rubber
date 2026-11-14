@@ -1,4 +1,5 @@
 import { DestinationCompany } from '@/types/destinationCompany';
+import { getThaiPhoneError } from '@/lib/memberUtils';
 
 export const generateDestinationCompanyCode = (): string => {
   const randomNumber = Math.floor(Math.random() * 999) + 1;
@@ -6,12 +7,17 @@ export const generateDestinationCompanyCode = (): string => {
 };
 
 export const validateDestinationCompanyData = (
-  data: { name: string },
+  data: { name: string; phone?: string | null },
   companies: DestinationCompany[],
   editingCompany?: DestinationCompany | null,
 ): string | null => {
   if (!data.name.trim()) {
     return 'กรุณากรอกชื่อบริษัท';
+  }
+
+  const phoneError = getThaiPhoneError(data.phone ?? '');
+  if (phoneError) {
+    return phoneError;
   }
 
   if (editingCompany && editingCompany.name.toLowerCase() === data.name.toLowerCase()) {

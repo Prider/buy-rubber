@@ -315,6 +315,7 @@ export function generateSlipHTMLFromItems(
           .item:last-child { border-bottom: none; }
           .item-name { font-size: ${px(13)}px; color: #0f172a; font-weight: bold; }
           .item-meta { font-size: 16px; color: #0f172a; font-weight: bold; }
+          .item-weight { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; }
           .item-amount { text-align: right; font-size: ${px(13)}px; color: #0f172a; font-weight: bold; }
           .item-amount .price { font-size: ${px(11)}px; color: #475569; font-weight: bold; display: block; }
           .total { margin-top: 12px; padding-top: 8px; border-top: 2px solid #0f172a; font-size: ${px(14)}px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; }
@@ -354,7 +355,7 @@ export function generateSlipHTMLFromItems(
                       ${item.productTypeName || item.category || 'ค่าใช้จ่าย'}
                       ${
                         item.type === 'purchase'
-                          ? `<br/>น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, true)}`
+                          ? `<span class="item-weight">น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, true)}</span>`
                           : ''
                       }
                     </div>

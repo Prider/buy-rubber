@@ -77,14 +77,7 @@ const SLIP_PREVIEW_ITEMS: CartItem[] = [
     netWeight: 125.5,
     finalPrice: 52,
     totalAmount: 6526,
-  },
-  {
-    id: 'preview-2',
-    type: 'serviceFee',
-    date: '2026-01-01',
-    category: 'ค่าเข้าแหล่ง',
-    totalAmount: -150,
-  },
+  }
 ];
 
 export default function AdminSettingsPage() {

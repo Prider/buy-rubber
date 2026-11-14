@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type WheelEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'animal-island-ui';
@@ -26,6 +26,19 @@ import {
 } from '@/components/sales/salesFormCardUi';
 import type { DestinationCompany } from '@/types/destinationCompany';
 import { CloseButton } from '@/components/common/CloseButton';
+
+const plainNumberClass =
+  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+
+const blockNumberStep = (event: KeyboardEvent<HTMLInputElement>) => {
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault();
+  }
+};
+
+const blockNumberWheel = (event: WheelEvent<HTMLInputElement>) => {
+  event.currentTarget.blur();
+};
 
 const SellingTypeModal = dynamic(
   () => import(/* webpackPrefetch: true */ '@/components/sales/SellingTypeModal'),
@@ -613,12 +626,15 @@ export default function SalesFormCard({
               <Field label="%ยาง" className="order-3 col-span-1 w-full min-w-0 md:order-5 md:col-span-2">
                 <input
                   type="number"
-                  step="0.01"
+                  inputMode="decimal"
+                  step="any"
                   name="rubberPercent"
                   value={formData.rubberPercent}
                   onChange={onInputChange}
+                  onKeyDown={blockNumberStep}
+                  onWheel={blockNumberWheel}
                   disabled={isFieldDisabled('rubberPercent')}
-                  className={getInputClass('rubberPercent')}
+                  className={`${getInputClass('rubberPercent')} ${plainNumberClass}`}
                 />
               </Field>
               <Field
@@ -644,13 +660,16 @@ export default function SalesFormCard({
                 ) : null}
                 <input
                   type="number"
-                  step="0.01"
+                  inputMode="decimal"
+                  step="any"
                   name="weight"
                   value={formData.weight}
                   onChange={onInputChange}
                   onBlur={() => formatFieldToTwoDecimals('weight')}
+                  onKeyDown={blockNumberStep}
+                  onWheel={blockNumberWheel}
                   disabled={isFieldDisabled('weight')}
-                  className={getInputClass('weight')}
+                  className={`${getInputClass('weight')} ${plainNumberClass}`}
                 />
               </Field>
               <Field
@@ -683,21 +702,24 @@ export default function SalesFormCard({
                 ) : null}
                 <input
                   type="number"
-                  step="0.01"
+                  inputMode="decimal"
+                  step="any"
                   min="0"
                   name="pricePerUnit"
                   value={formData.pricePerUnit}
                   onChange={onInputChange}
                   onBlur={() => formatFieldToTwoDecimals('pricePerUnit')}
+                  onKeyDown={blockNumberStep}
+                  onWheel={blockNumberWheel}
                   disabled={isFieldDisabled('pricePerUnit')}
-                  className={getInputClass('pricePerUnit')}
+                  className={`${getInputClass('pricePerUnit')} ${plainNumberClass}`}
                 />
               </Field>
             </div>
 
             <div className={`relative z-0 flex flex-col ${layout.rowGap} w-full min-w-0 border-t border-gray-100 pt-3 dark:border-gray-700`}>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   ค่าใช้จ่าย
                   {formData.expenses.length > 0 ? (
                     <span className="ml-1 font-normal text-gray-400 dark:text-gray-500">
@@ -711,28 +733,9 @@ export default function SalesFormCard({
                   onClick={onAddExpense}
                   disabled={saving || atExpenseLimit}
                   title={atExpenseLimit ? `จำกัดค่าใช้จ่ายสูงสุด ${MAX_SALE_EXPENSES} รายการ` : undefined}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 max-lg:min-h-11"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 max-lg:min-h-11"
                 >
                   {atExpenseLimit ? 'ครบจำนวนสูงสุด' : '+ เพิ่มค่าใช้จ่าย'}
-                </button>
-                <button
-                  type="button"
-                  data-testid="sales-manage-expense-types"
-                  aria-label="จัดการชนิดค่าใช้จ่าย"
-                  title="จัดการชนิดค่าใช้จ่าย"
-                  onClick={() => setSaleExpenseTypeModalOpen(true)}
-                  disabled={saving}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-violet-300 max-lg:min-h-11"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  จัดการชนิดค่าใช้จ่าย
                 </button>
                 <button
                   type="button"
@@ -740,11 +743,31 @@ export default function SalesFormCard({
                   onClick={onClearExpenses}
                   disabled={saving || formData.expenses.length === 0}
                   title="ล้างค่าใช้จ่ายทั้งหมด"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300 max-lg:min-h-11"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300 max-lg:min-h-11"
                 >
-                  ล้างค่าใช้จ่ายทั้งหมด
+                  - รีเซ็ต
                 </button>
               </div>
+
+              <button
+                type="button"
+                data-testid="sales-manage-expense-types"
+                aria-label="จัดการชนิดค่าใช้จ่าย"
+                title="จัดการชนิดค่าใช้จ่าย"
+                onClick={() => setSaleExpenseTypeModalOpen(true)}
+                disabled={saving}
+                className="inline-flex w-fit items-center gap-1 self-start text-xs font-medium text-violet-700 underline-offset-2 transition hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-violet-300 max-lg:min-h-11"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                จัดการชนิดค่าใช้จ่าย
+              </button>
 
               {formData.expenses.length === 0 ? (
                 <p className="text-xs text-gray-400 dark:text-gray-500">
