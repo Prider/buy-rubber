@@ -136,13 +136,13 @@ export default function SalesPage() {
 
       {isFormOpen ? (
         <div className="fixed inset-0 z-[1100] overflow-hidden lg:overflow-y-auto">
-          <div className="fixed inset-0 bg-black/50" onClick={closeForm} aria-hidden="true" />
+          <div className="purchase-entry-overlay fixed inset-0 bg-black/50" onClick={closeForm} aria-hidden="true" />
           <div className="flex h-full min-h-0 w-full min-w-0 items-stretch justify-center lg:min-h-full lg:items-center lg:p-6">
             <div
               role="dialog"
               aria-modal="true"
               aria-labelledby="sales-form-title"
-              className="relative flex h-full min-h-0 w-full min-w-0 flex-col lg:h-auto lg:max-w-[840px]"
+              className="purchase-entry-panel relative flex h-full min-h-0 w-full min-w-0 flex-col lg:h-auto lg:max-w-[840px]"
             >
               <SalesFormCard
                 compact
@@ -178,13 +178,13 @@ export default function SalesPage() {
 
       {isDeliveryOpen ? (
         <div className="fixed inset-0 z-[900] overflow-y-auto">
-          <div className="fixed inset-0 bg-black/50" onClick={closeDelivery} aria-hidden="true" />
+          <div className="purchase-entry-overlay fixed inset-0 bg-black/50" onClick={closeDelivery} aria-hidden="true" />
           <div className="flex min-h-full items-center justify-center p-4 lg:p-6">
             <div
               role="dialog"
               aria-modal="true"
               aria-labelledby="delivery-stock-title"
-              className="relative w-full lg:w-[min(96vw,1400px)]"
+              className="purchase-entry-panel relative w-full lg:w-[min(96vw,1400px)]"
             >
               <StockPositionsPanel
                 embedded

@@ -254,13 +254,13 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
   return (
     <>
     <div className="fixed inset-0 z-[1100] overflow-y-auto">
-      <div className="fixed inset-0 bg-black/50" onClick={handleCancel} aria-hidden="true" />
+      <div className="purchase-entry-overlay fixed inset-0 bg-black/50" onClick={handleCancel} aria-hidden="true" />
       <div className="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="expense-form-title"
-          className={`relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl ${
+          className={`purchase-entry-panel relative flex max-h-[100dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[640px] sm:rounded-2xl ${
             isEditing
               ? 'border-2 border-violet-400 ring-1 ring-violet-200 dark:border-violet-400 dark:ring-violet-500/40'
               : ''
