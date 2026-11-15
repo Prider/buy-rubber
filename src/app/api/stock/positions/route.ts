@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockPosition } from '@/lib/prismaStock';
+import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
+import { canSeeProfitLoss } from '@/types/user';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +18,10 @@ type SaleAgg = { productTypeId: string; soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
   try {
+    const token = getBearerToken(request);
+    const tokenUser = token ? getVerifiedUserFromToken(token) : null;
+    const includeProfitLoss = canSeeProfitLoss(tokenUser?.role);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.trim() ?? '';
     const pageParam = searchParams.get('page');
@@ -102,7 +108,7 @@ export async function GET(request: NextRequest) {
         quantityKg: pos?.quantityKg ?? 0,
         avgCostPerKg: pos?.avgCostPerKg ?? 0,
         avgSellingPricePerKg,
-        soldKg,
+        ...(includeProfitLoss ? { soldKg } : {}),
       };
     });
 

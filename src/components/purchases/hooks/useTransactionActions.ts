@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import axios from 'axios';
+import { canDeletePurchases } from '@/types/user';
 import { PurchaseTransaction } from '../types';
 import { printTransactionSlip, generateTransactionPDF } from '../utils/pdfGenerator';
 
@@ -12,7 +13,7 @@ interface UseTransactionActionsProps {
 export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps) => {
   const { user } = useAuth();
   const { showWarning, showSuccess, showError, showConfirm } = useAlert();
-  const isAdmin = user?.role === 'admin' || user?.role === 'root';
+  const canDelete = canDeletePurchases(user?.role);
 
   const handlePrint = useCallback((transaction: PurchaseTransaction) => {
     printTransactionSlip(transaction);
@@ -23,8 +24,8 @@ export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps)
   }, []);
 
   const handleDelete = useCallback(async (transaction: PurchaseTransaction) => {
-    if (!isAdmin) {
-      showWarning('ไม่มีสิทธิ์', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบข้อมูลได้');
+    if (!canDelete) {
+      showWarning('ไม่มีสิทธิ์', 'เฉพาะเจ้าของและผู้จัดการเท่านั้นที่สามารถลบข้อมูลได้');
       return;
     }
 
@@ -62,10 +63,10 @@ export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps)
       showError('เกิดข้อผิดพลาด', errorMessage);
       console.error('Failed to delete transaction:', err);
     }
-  }, [isAdmin, onRefresh, showWarning, showSuccess, showError, showConfirm]);
+  }, [canDelete, onRefresh, showWarning, showSuccess, showError, showConfirm]);
 
   return {
-    isAdmin,
+    canDelete,
     handlePrint,
     handleDownloadPDF,
     handleDelete,

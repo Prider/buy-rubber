@@ -6,6 +6,8 @@ import { resolveBusinessDate } from '@/lib/resolveBusinessDate';
 import { applySaleToStock, StockInsufficientError } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
+import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
+import { canSeeProfitLoss } from '@/types/user';
 
 export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 50;
@@ -74,6 +76,10 @@ const saleListSelect = {
   productType: { select: { id: true, code: true, name: true } },
 };
 
+function withoutSaleProfit(sales: SaleRecord[]): Omit<SaleRecord, 'unitCostPerKg' | 'costOfGoods'>[] {
+  return sales.map(({ unitCostPerKg: _unitCostPerKg, costOfGoods: _costOfGoods, ...sale }) => sale);
+}
+
 /** Derive P/L from denormalized Sale COGS columns (no ledger join). */
 function withSaleProfitLoss(sales: SaleRecord[]): SaleWithProfit[] {
   return sales.map((sale) => {
@@ -99,6 +105,10 @@ function withSaleProfitLoss(sales: SaleRecord[]): SaleWithProfit[] {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = getBearerToken(request);
+    const tokenUser = token ? getVerifiedUserFromToken(token) : null;
+    const includeProfitLoss = canSeeProfitLoss(tokenUser?.role);
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -190,7 +200,7 @@ export async function GET(request: NextRequest) {
         asSale.sale.count({ where }),
       ]);
 
-      const data = withSaleProfitLoss(sales);
+      const data = includeProfitLoss ? withSaleProfitLoss(sales) : withoutSaleProfit(sales);
 
       return NextResponse.json({
         data,
@@ -211,7 +221,7 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
-    return NextResponse.json(withSaleProfitLoss(sales));
+    return NextResponse.json(includeProfitLoss ? withSaleProfitLoss(sales) : withoutSaleProfit(sales));
   } catch (error) {
     logger.error('GET /api/sales failed', error);
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลการขาย' }, { status: 500 });

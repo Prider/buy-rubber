@@ -21,6 +21,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
   const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
   const canEdit = hasAnyRole(['admin', 'user']);
+  const canDelete = hasAnyRole(['admin', 'user']);
   const showActions = canEdit || isAdmin;
   const desktopCols = showActions
     ? 'lg:grid-cols-[6.25rem_11rem_minmax(6.5rem,0.8fr)_minmax(0,1.1fr)_6.5rem_6.25rem_max-content]'
@@ -95,11 +96,12 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
     index: number;
     isAdmin: boolean;
     canEdit: boolean;
+    canDelete: boolean;
     onEdit: (expense: Expense) => void;
     onDelete: (id: string) => Promise<void>;
   }
 
-  const ExpenseRow = memo<ExpenseRowProps>(({ expense, index, isAdmin, canEdit, onEdit, onDelete }) => {
+  const ExpenseRow = memo<ExpenseRowProps>(({ expense, index, isAdmin, canEdit, canDelete, onEdit, onDelete }) => {
     // Memoize formatted values
     const formattedDate = useMemo(
       () => formatDateMemo(expense.date),
@@ -186,7 +188,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
                   แก้ไข
                 </button>
               ) : null}
-              {isAdmin ? (
+              {canDelete ? (
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -248,6 +250,7 @@ export const ExpenseListTable: React.FC<ExpenseListTableProps> = memo(({
               index={index}
               isAdmin={isAdmin}
               canEdit={canEdit}
+              canDelete={canDelete}
               onEdit={onEdit}
               onDelete={onDelete}
             />

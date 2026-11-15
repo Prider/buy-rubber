@@ -11,7 +11,7 @@ import { useSalesPageController } from './useSalesPageController';
 export default function SalesPage() {
   const { hasAnyRole } = useAuth();
   const canEditSales = hasAnyRole(['admin', 'user']);
-  const canDeleteSales = hasAnyRole(['admin']);
+  const canDeleteSales = hasAnyRole(['admin', 'user']);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const {

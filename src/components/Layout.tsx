@@ -453,6 +453,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Top bar */}
         <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80">
           <div className="relative flex h-12 items-center justify-between gap-2 px-3 sm:px-4 lg:px-6">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             <button
                 onClick={toggleSidebar}
                 className="group relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
@@ -490,6 +491,37 @@ export default function Layout({ children }: LayoutProps) {
                   </svg>
                 )}
               </button>
+              {!sidebarExpanded && (
+                <Link
+                  href="/admin"
+                  onClick={() => setOverlayOpen(false)}
+                  aria-label="ไปที่หน้าตั้งค่าระบบ"
+                  aria-current={isAdminPage ? 'page' : undefined}
+                  className={`group/header-user flex min-w-0 items-center rounded-lg px-1.5 py-0.5 transition-colors duration-150 ${
+                    isAdminPage
+                      ? 'text-blue-700 dark:text-blue-300'
+                      : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/40'
+                  }`}
+                >
+                  <div className="min-w-0 leading-tight">
+                    <p className="max-w-[6.5rem] truncate text-xs font-semibold sm:max-w-[9rem] sm:text-sm lg:max-w-[12rem]">
+                      <span className="animate-gradient bg-gradient-to-r from-primary-600 via-purple-600 to-blue-600 bg-clip-text text-transparent dark:from-primary-400 dark:via-purple-400 dark:to-blue-400">
+                        {user?.username || 'ผู้ใช้งาน'}
+                      </span>
+                    </p>
+                    <p
+                      className={`truncate text-[11px] sm:text-xs ${
+                        isAdminPage
+                          ? 'font-medium text-blue-700 dark:text-blue-300'
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}
+                    >
+                      {user?.role ? getRoleLabel(user.role) : 'User'}
+                    </p>
+                  </div>
+                </Link>
+              )}
+            </div>
 
             <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:text-base lg:text-lg">
                 <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>

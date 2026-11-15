@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNod
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'animal-island-ui';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatNumber } from '@/lib/utils';
+import { canSeeProfitLoss } from '@/types/user';
 import {
   computeSaleProfitPreview,
   computeTotalPreview,
@@ -200,6 +202,8 @@ export default function SalesFormCard({
   onCancelEdit,
 }: SalesFormCardProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const showProfitLoss = canSeeProfitLoss(user?.role);
   const {
     sellingTypes,
     loading: sellingTypesLoading,
@@ -856,7 +860,7 @@ export default function SalesFormCard({
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 dark:text-gray-300 lg:flex-nowrap lg:items-end lg:gap-x-3">
                 <span className="flex shrink-0 items-center lg:h-[36px]">ยอดรวม</span>
                 <Wallet value={totalPreview} size="small" style={getSalesWalletStyle(totalPreview)} />
-                {profitPreview != null ? (
+                {showProfitLoss && profitPreview != null ? (
                   <div className="flex min-w-0 items-center lg:h-[36px]">
                     <span className="mx-1 text-gray-300 dark:text-gray-600 lg:mx-2">·</span>
                     <span className="shrink-0">กำไร/ขาดทุน</span>

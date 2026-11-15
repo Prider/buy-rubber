@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
-import { canAccessAppPath, homePathForRole, isAdminLike } from '@/types/user';
+import { canAccessAdminPage, canAccessAppPath, canSeeAdminTab, homePathForRole } from '@/types/user';
 import {
   GUIDE_GROUPS,
   GUIDE_PHASES,
@@ -429,12 +429,13 @@ export default function UserGuide() {
   const { lead: leadMedia, rest: bodyBlocks } = withoutLeadMedia(topic?.blocks ?? []);
   const phaseIndex = GUIDE_PHASES.findIndex((phase) => phase.topicId === topic?.id);
   const menuPath = topic?.href?.split('?')[0];
+  const menuTab = new URLSearchParams(topic?.href?.split('?')[1] ?? '').get('tab');
   const canOpenMenu = Boolean(
     user &&
     topic?.href &&
     menuPath &&
     canAccessAppPath(user.role, menuPath) &&
-    (menuPath !== '/admin' || isAdminLike(user.role))
+    (menuPath !== '/admin' || (canAccessAdminPage(user.role) && (!menuTab || canSeeAdminTab(user.role, menuTab))))
   );
 
   useEffect(() => {

@@ -74,6 +74,7 @@ const DestinationCompanyTableRow: React.FC<RowProps> = memo(({
   const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
   const canEdit = hasAnyRole(['admin', 'user']);
+  const canDelete = hasAnyRole(['admin', 'user']);
 
   const handleEdit = useCallback(() => onEdit(company), [company, onEdit]);
   const handleDelete = useCallback(() => onDelete(company), [company, onDelete]);
@@ -134,7 +135,7 @@ const DestinationCompanyTableRow: React.FC<RowProps> = memo(({
           {isAdmin && !company.isActive && onReactivate ? (
             <ActionButton onClick={handleReactivate} tone="green">เปิดใช้งาน</ActionButton>
           ) : null}
-          {isAdmin && company.isActive ? (
+          {canDelete && company.isActive ? (
             <ActionButton onClick={handleDelete} tone="danger">ลบ</ActionButton>
           ) : null}
         </div>

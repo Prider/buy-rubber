@@ -3,6 +3,8 @@
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import type { ChangeEvent } from 'react';
 import SalesPagination from '@/components/sales/SalesPagination';
+import { useAuth } from '@/contexts/AuthContext';
+import { canSeeProfitLoss } from '@/types/user';
 import {
   computeSaleProfitLoss,
   formatExpenseTypeLabel,
@@ -139,6 +141,9 @@ export default function SalesTable({
   onAddSale,
   onRecordDelivery,
 }: SalesTableProps) {
+  const { user } = useAuth();
+  const showProfitLoss = canSeeProfitLoss(user?.role);
+  const columnCount = (showProfitLoss ? 13 : 12) + (onEdit || onDelete ? 1 : 0);
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
   const titleClass = compact ? 'text-base font-bold' : 'text-xl font-bold';
   const cellPad = compact
@@ -329,10 +334,12 @@ export default function SalesTable({
                           {formatCurrency(row.totalAmount)}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</p>
-                        <SaleProfitLossCell value={profitLoss} />
-                      </div>
+                      {showProfitLoss ? (
+                        <div className="text-right">
+                          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</p>
+                          <SaleProfitLossCell value={profitLoss} />
+                        </div>
+                      ) : null}
                     </div>
 
                     {(onEdit || onDelete) && (
@@ -386,16 +393,18 @@ export default function SalesTable({
               <th className={`${textCell} w-[8%] text-left`}>หมายเหตุค่าใช้จ่าย</th>
               <th className={`${textCell} w-[6%] text-left`}>รูปแบบขาย</th>
               <th className={`${textCell} w-[7%] text-right`}>ยอดรวม</th>
-              <th className={`${textCell} w-[6.5%] text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
-                กำไร/ขาดทุน
-              </th>
+              {showProfitLoss ? (
+                <th className={`${textCell} w-[6.5%] text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
+                  กำไร/ขาดทุน
+                </th>
+              ) : null}
                   {(onEdit || onDelete) && <th className={`${textCell} w-[7%] text-center`}>จัดการ</th>}
             </tr>
           </thead>
           <tbody>
             {sales.length === 0 ? (
               <tr>
-                <td colSpan={onEdit || onDelete ? 14 : 13} className={`${textCell} py-8 text-center text-gray-500`}>
+                <td colSpan={columnCount} className={`${textCell} py-8 text-center text-gray-500`}>
                   ยังไม่มีข้อมูลการขาย
                 </td>
               </tr>
@@ -429,9 +438,11 @@ export default function SalesTable({
                   <td className={textCell}>{row.expenseNote || '-'}</td>
                   <td className={textCell}>{row.sellingType}</td>
                   <td className={`${numCell} font-semibold`}>{formatCurrency(row.totalAmount)}</td>
-                  <td className={numCell}>
-                    <SaleProfitLossCell value={profitLoss} />
-                  </td>
+                  {showProfitLoss ? (
+                    <td className={numCell}>
+                      <SaleProfitLossCell value={profitLoss} />
+                    </td>
+                  ) : null}
                   {(onEdit || onDelete) && (
                     <td className={`${textCell} text-center`}>
                       <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">

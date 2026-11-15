@@ -21,7 +21,7 @@ describe('TransactionActionButtons', () => {
     const { rerender } = render(
       <TransactionActionButtons
         transaction={transaction}
-        isAdmin={false}
+        canDelete={false}
         onPrint={vi.fn()}
         onDownloadPDF={vi.fn()}
         onEdit={onEdit}
@@ -35,12 +35,27 @@ describe('TransactionActionButtons', () => {
     rerender(
       <TransactionActionButtons
         transaction={transaction}
-        isAdmin={false}
+        canDelete={false}
         onPrint={vi.fn()}
         onDownloadPDF={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
     expect(screen.queryByRole('button', { name: 'แก้ไข' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'ลบ' })).not.toBeInTheDocument();
+  });
+
+  it('shows delete for roles that can delete a purchase', () => {
+    render(
+      <TransactionActionButtons
+        transaction={transaction}
+        canDelete
+        onPrint={vi.fn()}
+        onDownloadPDF={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'ลบ' })).toBeInTheDocument();
   });
 });

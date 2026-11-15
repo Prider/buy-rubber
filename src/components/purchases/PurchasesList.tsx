@@ -41,7 +41,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
   }, [currentPage, debouncedSearchTerm, loadTransactions]);
 
   const {
-    isAdmin,
+    canDelete,
     handlePrint,
     handleDownloadPDF,
     handleDelete,
@@ -180,7 +180,7 @@ export const PurchasesList = forwardRef<PurchasesListRef>((_, ref) => {
       <div className="lg:min-h-0 lg:flex-1 lg:overflow-auto">
         <TransactionTable
           transactions={transactions}
-          isAdmin={isAdmin}
+          canDelete={canDelete}
           onPrint={handlePrint}
           onDownloadPDF={handleDownloadPDF}
           onEdit={canEdit ? handleEditTransaction : undefined}

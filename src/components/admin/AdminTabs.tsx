@@ -25,9 +25,10 @@ export function parseAdminTab(value: string | null): AdminSettingsTab | null {
 interface AdminTabsProps {
   activeTab: AdminSettingsTab;
   onSelect: (tab: AdminSettingsTab) => void;
+  tabs?: readonly (typeof ADMIN_TABS)[number][];
 }
 
-export function AdminTabs({ activeTab, onSelect }: AdminTabsProps) {
+export function AdminTabs({ activeTab, onSelect, tabs = ADMIN_TABS }: AdminTabsProps) {
   const searchParams = useSearchParams();
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +52,7 @@ export function AdminTabs({ activeTab, onSelect }: AdminTabsProps) {
       aria-label="หมวดการตั้งค่า"
     >
       <div className="flex w-max gap-1.5 md:w-auto md:flex-wrap md:gap-1 lg:justify-end">
-        {ADMIN_TABS.map((tab) => {
+        {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const params = new URLSearchParams(searchParams.toString());
           params.set('tab', tab.id);

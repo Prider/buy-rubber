@@ -50,7 +50,7 @@ function formatCompactDateTime(value: string) {
 
 interface TransactionTableProps {
   transactions: PurchaseTransaction[];
-  isAdmin: boolean;
+  canDelete: boolean;
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
   onEdit?: (transaction: PurchaseTransaction) => void;
@@ -61,7 +61,7 @@ interface TransactionTableProps {
 interface TransactionRowProps {
   transaction: PurchaseTransaction;
   index: number;
-  isAdmin: boolean;
+  canDelete: boolean;
   showPurchaseNo: boolean;
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
@@ -72,7 +72,7 @@ interface TransactionRowProps {
 const TransactionRow = memo<TransactionRowProps>(({
   transaction,
   index,
-  isAdmin,
+  canDelete,
   showPurchaseNo,
   onPrint,
   onDownloadPDF,
@@ -157,7 +157,7 @@ const TransactionRow = memo<TransactionRowProps>(({
       <td className="whitespace-nowrap px-1 py-2 text-right text-sm">
         <TransactionActionButtons
           transaction={transaction}
-          isAdmin={isAdmin}
+          canDelete={canDelete}
           onPrint={handlePrint}
           onDownloadPDF={handleDownloadPDF}
           onEdit={editHandler}
@@ -172,7 +172,7 @@ TransactionRow.displayName = 'TransactionRow';
 
 const TransactionCard = memo<TransactionRowProps>(({
   transaction,
-  isAdmin,
+  canDelete,
   showPurchaseNo,
   onPrint,
   onDownloadPDF,
@@ -239,7 +239,7 @@ const TransactionCard = memo<TransactionRowProps>(({
 
       <TransactionActionButtons
         transaction={transaction}
-        isAdmin={isAdmin}
+        canDelete={canDelete}
         layout="card"
         onPrint={handlePrint}
         onDownloadPDF={handleDownloadPDF}
@@ -254,7 +254,7 @@ TransactionCard.displayName = 'TransactionCard';
 
 export const TransactionTable: React.FC<TransactionTableProps> = memo(({
   transactions,
-  isAdmin,
+  canDelete,
   onPrint,
   onDownloadPDF,
   onEdit,
@@ -285,7 +285,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
             key={transaction.purchaseNo}
             transaction={transaction}
             index={index}
-            isAdmin={isAdmin}
+            canDelete={canDelete}
             showPurchaseNo={showPurchaseNo}
             onPrint={onPrint}
             onDownloadPDF={onDownloadPDF}
@@ -343,7 +343,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = memo(({
                 key={transaction.purchaseNo}
                 transaction={transaction}
                 index={index}
-                isAdmin={isAdmin}
+                canDelete={canDelete}
                 showPurchaseNo={showPurchaseNo}
                 onPrint={onPrint}
                 onDownloadPDF={onDownloadPDF}

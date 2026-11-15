@@ -6,6 +6,8 @@ import { reverseSaleFromStock } from '@/lib/stock/stockService';
 import { parseSaleExpensesFromBody } from '@/lib/saleExpenses';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
 import { diffFields } from '@/lib/activityLogShared';
+import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
+import { canSeeProfitLoss } from '@/types/user';
 
 export const runtime = 'nodejs';
 
@@ -70,7 +72,7 @@ const saleDetailSelect = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -85,6 +87,13 @@ export async function GET(
 
     if (!sale) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลการขาย' }, { status: 404 });
+    }
+
+    const token = getBearerToken(request);
+    const tokenUser = token ? getVerifiedUserFromToken(token) : null;
+    if (!canSeeProfitLoss(tokenUser?.role)) {
+      const { unitCostPerKg: _unitCostPerKg, costOfGoods: _costOfGoods, ...visible } = sale;
+      return NextResponse.json(visible);
     }
 
     return NextResponse.json(sale);

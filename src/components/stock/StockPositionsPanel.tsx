@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/hooks/useAlert';
 import { getMaxProductTypes } from '@/lib/maxProductTypes';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { canSeeProfitLoss } from '@/types/user';
 
 const ProductTypeFormModal = dynamic(
   () => import(/* webpackPrefetch: true */ '@/components/prices/ProductTypeFormModal'),
@@ -189,9 +190,10 @@ export default function StockPositionsPanel({
   headerAction?: React.ReactNode;
 }) {
   const router = useRouter();
-  const { hasAnyRole } = useAuth();
+  const { user, hasAnyRole } = useAuth();
   const { showSuccess, showError, showConfirm } = useAlert();
   const isAdmin = hasAnyRole(['admin']);
+  const showProfitLoss = canSeeProfitLoss(user?.role);
   const canEditProductType = showAdminActions && hasAnyRole(['admin', 'user']);
   const canDeleteProductType = showAdminActions && isAdmin;
   const canAddProductType = showAddButton && isAdmin;
@@ -519,29 +521,31 @@ export default function StockPositionsPanel({
 
                       <dl className="mt-3 grid grid-cols-2 gap-2">
                         <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
-                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">สต็อกคงเหลือ (kg)</dt>
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">สต็อกคงเหลือ (กก.)</dt>
                           <dd className={`mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
                             {formatNumber(row.quantityKg)}
                           </dd>
                         </div>
                         <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
-                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ต้นทุน / kg</dt>
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ต้นทุน / กก.</dt>
                           <dd className={`mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
                             {formatCurrency(row.avgCostPerKg)}
                           </dd>
                         </div>
                         <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
-                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ราคาขาย / kg</dt>
+                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">ราคาขาย / กก.</dt>
                           <dd className={`mt-0.5 text-sm tabular-nums text-gray-900 dark:text-gray-100 ${struck}`}>
                             {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
                           </dd>
                         </div>
-                        <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
-                          <dt className="text-[11px] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</dt>
-                          <dd className={`mt-0.5 text-sm ${struck}`}>
-                            <ProfitLossCell value={profitLossValue(row)} />
-                          </dd>
-                        </div>
+                        {showProfitLoss ? (
+                          <div className="rounded-lg bg-white px-3 py-2 dark:bg-gray-800">
+                            <dt className="text-[11px] text-gray-500 dark:text-gray-400">กำไร/ขาดทุน</dt>
+                            <dd className={`mt-0.5 text-sm ${struck}`}>
+                              <ProfitLossCell value={profitLossValue(row)} />
+                            </dd>
+                          </div>
+                        ) : null}
                       </dl>
 
                       <div className="mt-3">
@@ -571,10 +575,12 @@ export default function StockPositionsPanel({
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">รหัสสินค้า</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">ชื่อสินค้า</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">สต็อกคงเหลือ (kg)</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาเฉลี่ยต้นทุน / kg</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาขายเฉลี่ย / kg</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">กำไร/ขาดทุน</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">สต็อกคงเหลือ (กก.)</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาเฉลี่ยต้นทุน / กก.</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">ราคาขายเฉลี่ย / กก.</th>
+                  {showProfitLoss ? (
+                    <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">กำไร/ขาดทุน</th>
+                  ) : null}
                   <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-300">จัดการ</th>
                 </tr>
               </thead>
@@ -623,9 +629,11 @@ export default function StockPositionsPanel({
                       <td className={`px-4 py-3 text-right tabular-nums ${struck}`}>
                         {row.avgSellingPricePerKg != null ? formatCurrency(row.avgSellingPricePerKg) : '-'}
                       </td>
-                      <td className={`px-4 py-3 text-right ${struck}`}>
-                        <ProfitLossCell value={profitLossValue(row)} />
-                      </td>
+                      {showProfitLoss ? (
+                        <td className={`px-4 py-3 text-right ${struck}`}>
+                          <ProfitLossCell value={profitLossValue(row)} />
+                        </td>
+                      ) : null}
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <StockRowActions
                           layout="table"
@@ -646,7 +654,7 @@ export default function StockPositionsPanel({
 
                 {sortedRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                    <td colSpan={showProfitLoss ? 7 : 6} className="px-4 py-10 text-center text-gray-500">
                       ยังไม่มีประเภทสินค้า
                     </td>
                   </tr>

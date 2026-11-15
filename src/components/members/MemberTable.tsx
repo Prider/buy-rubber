@@ -83,6 +83,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
   const { user, hasAnyRole } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'root';
   const canEdit = hasAnyRole(['admin', 'user']);
+  const canDelete = hasAnyRole(['admin', 'user']);
 
   const handleEdit = useCallback(() => onEdit(member), [member, onEdit]);
   const handleDelete = useCallback(() => onDelete(member), [member, onDelete]);
@@ -163,7 +164,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = memo(({
           {isAdmin && !member.isActive && onReactivate ? (
             <ActionButton onClick={handleReactivate} tone="green">เปิดใช้งาน</ActionButton>
           ) : null}
-          {isAdmin && member.isActive ? (
+          {canDelete && member.isActive ? (
             <ActionButton onClick={handleDelete} tone="danger">ลบ</ActionButton>
           ) : null}
         </div>

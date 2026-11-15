@@ -5,7 +5,7 @@ import { PurchaseTransaction } from './types';
 
 interface TransactionActionButtonsProps {
   transaction: PurchaseTransaction;
-  isAdmin: boolean;
+  canDelete: boolean;
   layout?: 'table' | 'card';
   onPrint: (transaction: PurchaseTransaction) => void;
   onDownloadPDF: (transaction: PurchaseTransaction) => void;
@@ -15,7 +15,7 @@ interface TransactionActionButtonsProps {
 
 export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = memo(({
   transaction,
-  isAdmin,
+  canDelete,
   layout = 'table',
   onPrint,
   onDownloadPDF,
@@ -91,7 +91,7 @@ export const TransactionActionButtons: React.FC<TransactionActionButtonsProps> =
         </button>
       )}
 
-      {isAdmin && (
+      {canDelete && (
         <button
           type="button"
           onClick={handleDelete}

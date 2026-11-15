@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
+import { getVerifiedUserFromToken } from '@/lib/sessionToken';
 
 const findMany = vi.fn();
 const count = vi.fn();
@@ -29,6 +30,11 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/utils', () => ({
   generateDocumentNumber: vi.fn(),
   getUserFromToken: vi.fn(),
+}));
+
+vi.mock('@/lib/sessionToken', () => ({
+  getBearerToken: vi.fn(() => 'token'),
+  getVerifiedUserFromToken: vi.fn(() => ({ userId: 'user-1', username: 'admin', role: 'admin' })),
 }));
 
 vi.mock('@/lib/stock/stockService', () => ({
@@ -201,6 +207,31 @@ describe('GET /api/sales', () => {
       }),
     );
     expect(count).not.toHaveBeenCalled();
+  });
+
+  it('omits profit fields for roles other than owner and root', async () => {
+    vi.mocked(getVerifiedUserFromToken).mockReturnValueOnce({
+      userId: 'user-1',
+      username: 'manager',
+      role: 'user',
+    });
+    const sale = makeSale('1', {
+      weight: 100,
+      totalAmount: 4800,
+      unitCostPerKg: 40,
+      costOfGoods: 4000,
+    });
+    findMany.mockResolvedValue([sale]);
+    count.mockResolvedValue(1);
+
+    const req = new NextRequest('http://localhost/api/sales?page=1&limit=10');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(body.data[0]).not.toHaveProperty('profitLoss');
+    expect(body.data[0]).not.toHaveProperty('costOfGoods');
+    expect(body.data[0]).not.toHaveProperty('unitCostPerKg');
+    expect(body.data[0].totalAmount).toBe(4800);
   });
 
   it('applies search filters when searching', async () => {

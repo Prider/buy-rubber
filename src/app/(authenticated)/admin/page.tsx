@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import UserManagement from '@/components/UserManagement';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { homePathForRole } from '@/types/user';
+import { canAccessAdminPage, canSeeAdminTab, homePathForRole } from '@/types/user';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAlert } from '@/hooks/useAlert';
-import { AdminTabs, parseAdminTab, type AdminSettingsTab } from '@/components/admin/AdminTabs';
+import { ADMIN_TABS, AdminTabs, parseAdminTab, type AdminSettingsTab } from '@/components/admin/AdminTabs';
 import { AdminTabStage } from '@/components/admin/AdminTabStage';
 import { MessageDisplay } from '@/components/admin/MessageDisplay';
 import { ModeSelectionCards } from '@/components/admin/ModeSelectionCards';
@@ -124,7 +124,12 @@ export default function AdminSettingsPage() {
   const desiredTabRef = useRef<AdminSettingsTab | null>(null);
   const panelScrollerRef = useRef<HTMLDivElement>(null);
   const skipPanelScrollReset = useRef(true);
-  const canAccessAdminPage = user?.role === 'admin' || user?.role === 'root';
+  const allowedOnAdminPage = canAccessAdminPage(user?.role);
+  const visibleAdminTabs = useMemo(
+    () => ADMIN_TABS.filter((tab) => canSeeAdminTab(user?.role, tab.id)),
+    [user?.role],
+  );
+  const displayTab: AdminSettingsTab = canSeeAdminTab(user?.role, activeTab) ? activeTab : 'slip';
 
   const selectTab = (next: AdminSettingsTab) => {
     if (next === activeTab) return;
@@ -138,6 +143,16 @@ export default function AdminSettingsPage() {
     params.set('tab', 'slip');
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   }, [requestedTab, router, searchParams]);
+
+  useEffect(() => {
+    if (isLoading || !user || !requestedTab) return;
+    if (canSeeAdminTab(user.role, requestedTab)) return;
+    desiredTabRef.current = 'slip';
+    setActiveTab('slip');
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', 'slip');
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  }, [isLoading, requestedTab, router, searchParams, user]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -165,7 +180,7 @@ export default function AdminSettingsPage() {
     panelScrollerRef.current?.scrollTo({ top: 0 });
   }, [activeTab]);
 
-  // Redirect if not authenticated or not admin
+  // Redirect if not authenticated or not allowed on this page
   useEffect(() => {
     if (isLoading) {
       return;
@@ -174,14 +189,14 @@ export default function AdminSettingsPage() {
       router.replace('/login');
       return;
     }
-    if (!canAccessAdminPage) {
+    if (!allowedOnAdminPage) {
       router.replace(homePathForRole(user.role));
     }
-  }, [user, isLoading, router, canAccessAdminPage]);
+  }, [user, isLoading, router, allowedOnAdminPage]);
 
   // Load slip settings
   useEffect(() => {
-    if (!canAccessAdminPage) return;
+    if (!allowedOnAdminPage) return;
 
     const loadSlipSettings = async () => {
       try {
@@ -272,7 +287,7 @@ export default function AdminSettingsPage() {
 
     loadSlipSettings();
   }, [
-    canAccessAdminPage,
+    allowedOnAdminPage,
     slipDefaults.companyAddress,
     slipDefaults.companyName,
     slipDefaults.footerText,
@@ -428,7 +443,7 @@ export default function AdminSettingsPage() {
     );
   }
 
-  if (!user || !canAccessAdminPage) {
+  if (!user || !allowedOnAdminPage) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <GamerLoader className="py-12" message="กำลังเปลี่ยนหน้า..." />
@@ -437,7 +452,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
+    <ProtectedRoute requiredRoles={['admin', 'user']}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden max-md:-mx-4 max-md:-mt-4">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:shadow-sm lg:dark:border-gray-700 lg:dark:bg-gray-800">
           <header className="shrink-0 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 md:border-gray-200 md:bg-transparent md:px-0 md:py-0 lg:px-5 dark:md:border-gray-700 dark:md:bg-transparent">
@@ -447,13 +462,13 @@ export default function AdminSettingsPage() {
                   ตั้งค่าระบบ
                 </span>
               </h1>
-              <AdminTabs activeTab={activeTab} onSelect={selectTab} />
+              <AdminTabs activeTab={displayTab} onSelect={selectTab} tabs={visibleAdminTabs} />
             </div>
           </header>
 
           <div ref={panelScrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-0 lg:px-5 lg:py-5">
-            <AdminTabStage tab={activeTab}>
-              {activeTab === 'slip' && (
+            <AdminTabStage tab={displayTab}>
+              {displayTab === 'slip' && (
                 <SlipSettingsPanel
                   companyName={slipCompanyName}
                   companyAddress={slipCompanyAddress}
@@ -481,9 +496,9 @@ export default function AdminSettingsPage() {
                 />
               )}
 
-              {activeTab === 'display' && <DisplaySettingsPanel />}
+              {displayTab === 'display' && <DisplaySettingsPanel />}
 
-              {activeTab === 'users' && (
+              {displayTab === 'users' && (
                 <div
                   id="admin-tabpanel-users"
                   role="tabpanel"
@@ -501,9 +516,9 @@ export default function AdminSettingsPage() {
                   </ProtectedRoute>
                 </div>
               )}
-              {activeTab === 'activity' && <ActivityLogPanel />}
+              {displayTab === 'activity' && <ActivityLogPanel />}
 
-              {activeTab === 'connection' && (
+              {displayTab === 'connection' && (
                 <div
                   id="admin-tabpanel-connection"
                   role="tabpanel"
@@ -524,11 +539,11 @@ export default function AdminSettingsPage() {
                 </div>
               )}
 
-              {activeTab === 'backup' && <BackupPanel />}
+              {displayTab === 'backup' && <BackupPanel />}
 
-              {activeTab === 'license' && <SoftwareLicensePanel />}
+              {displayTab === 'license' && <SoftwareLicensePanel />}
 
-              {activeTab === 'assistant' && <AssistantSettingsPanel />}
+              {displayTab === 'assistant' && <AssistantSettingsPanel />}
             </AdminTabStage>
           </div>
           </div>
