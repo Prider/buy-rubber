@@ -94,10 +94,6 @@ function createWindow() {
       });
   }
   
-  // Show DevTools on production for debugging (remove after fixing)
-  // Uncomment next line if you need to debug
-  mainWindow.webContents.openDevTools();
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

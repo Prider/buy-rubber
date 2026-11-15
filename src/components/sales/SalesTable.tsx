@@ -1,7 +1,7 @@
 'use client';
 
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import type { ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import SalesPagination from '@/components/sales/SalesPagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { canSeeProfitLoss } from '@/types/user';
@@ -12,6 +12,35 @@ import {
 } from '@/app/(authenticated)/sales/page.utils';
 
 const PNL_EPS = 1e-6;
+
+function SaleNoToggle({ pressed, onClick }: { pressed: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={pressed}
+      aria-label={pressed ? 'ซ่อนเลขที่' : 'แสดงเลขที่'}
+      title={pressed ? 'ซ่อนเลขที่' : 'แสดงเลขที่'}
+      className={`inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-semibold transition-colors ${
+        pressed
+          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
+          : 'text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600'
+      }`}
+    >
+      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        {pressed ? (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        ) : (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        )}
+        {!pressed && (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        )}
+      </svg>
+      เลขที่
+    </button>
+  );
+}
 
 function saleDateParts(value: string): { date: string; time: string } | null {
   const d = new Date(value);
@@ -143,6 +172,8 @@ export default function SalesTable({
 }: SalesTableProps) {
   const { user } = useAuth();
   const showProfitLoss = canSeeProfitLoss(user?.role);
+  const [showSaleNo, setShowSaleNo] = useState(true);
+  const toggleSaleNo = () => setShowSaleNo((open) => !open);
   const columnCount = (showProfitLoss ? 13 : 12) + (onEdit || onDelete ? 1 : 0);
   const headPad = compact ? 'px-4 py-4 min-h-[3.25rem]' : 'px-6 py-5 min-h-[4rem]';
   const titleClass = compact ? 'text-base font-bold' : 'text-xl font-bold';
@@ -156,6 +187,14 @@ export default function SalesTable({
   const inputPadY = compact ? 'py-2.5' : 'py-3';
   const inputText = compact ? 'text-sm' : 'text-base';
   const searchPlaceholder = 'ค้นหารายการขายตามเลขที่ขาย หรือชื่อบริษัท หรือประเภทสินค้า...';
+  const saleNoTrack = '6rem';
+  const flexibleShare =
+    76.5 + (showProfitLoss ? 6.5 : 0) + (onEdit || onDelete ? 7 : 0);
+  const shownWidth = (width: string) => (showSaleNo ? width : '');
+  const filledStyle = (share: number) =>
+    showSaleNo
+      ? undefined
+      : { width: `calc((100cqi - ${saleNoTrack}) * ${share} / ${flexibleShare})` };
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 lg:min-h-0 lg:flex-1">
@@ -256,6 +295,9 @@ export default function SalesTable({
 
       <div className="lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
         <div className="lg:hidden">
+          <div className="px-3 pt-3 md:px-4">
+            <SaleNoToggle pressed={showSaleNo} onClick={toggleSaleNo} />
+          </div>
           {sales.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">ยังไม่มีข้อมูลการขาย</p>
           ) : (
@@ -276,7 +318,7 @@ export default function SalesTable({
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">{formatSaleDateTime(row.date)}</p>
                         <p className="mt-0.5 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
                           {row.companyName}
@@ -285,9 +327,11 @@ export default function SalesTable({
                           {row.productType?.name || '-'} · {row.sellingType}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-white px-2 py-0.5 font-mono text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                        {row.saleNo}
-                      </span>
+                      {showSaleNo ? (
+                        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 font-mono text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                          {row.saleNo}
+                        </span>
+                      ) : null}
                     </div>
 
                     <dl className="mt-3 grid grid-cols-3 gap-2">
@@ -377,28 +421,38 @@ export default function SalesTable({
           )}
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:block [container-type:inline-size]">
         <table className={`w-full table-fixed ${tableText}`}>
           <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700">
             <tr>
-            <th className={`${textCell} w-[10%] text-left`}>เลขที่</th>
-              <th className={`${textCell} w-[7%] text-left`}>วันที่ / เวลา</th>
-              <th className={`${textCell} w-[12%] text-left`}>บริษัท</th>
-              <th className={`${textCell} w-[8%] text-left`}>ประเภทสินค้า</th>
-              <th className={`${textCell} w-[5.5%] text-right`}>น้ำหนัก</th>
-              <th className={`${textCell} w-[4%] text-right`}>%ยาง</th>
-              <th className={`${textCell} w-[5%] text-right`}>ราคา</th>
-              <th className={`${textCell} w-[8%] text-left`}>ชนิดค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[6%] text-right`}>ค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[8%] text-left`}>หมายเหตุค่าใช้จ่าย</th>
-              <th className={`${textCell} w-[6%] text-left`}>รูปแบบขาย</th>
-              <th className={`${textCell} w-[7%] text-right`}>ยอดรวม</th>
+            <th className={`${textCell} text-left ${showSaleNo ? 'w-[10%]' : 'w-[6rem] whitespace-nowrap'}`}>
+              <SaleNoToggle pressed={showSaleNo} onClick={toggleSaleNo} />
+            </th>
+              <th className={`${textCell} text-left ${shownWidth('w-[7%]')}`} style={filledStyle(7)}>วันที่ / เวลา</th>
+              <th className={`${textCell} text-left ${shownWidth('w-[12%]')}`} style={filledStyle(12)}>บริษัท</th>
+              <th className={`${textCell} text-left ${shownWidth('w-[8%]')}`} style={filledStyle(8)}>ประเภทสินค้า</th>
+              <th className={`${textCell} text-right ${shownWidth('w-[5.5%]')}`} style={filledStyle(5.5)}>น้ำหนัก</th>
+              <th className={`${textCell} text-right ${shownWidth('w-[4%]')}`} style={filledStyle(4)}>%ยาง</th>
+              <th className={`${textCell} text-right ${shownWidth('w-[5%]')}`} style={filledStyle(5)}>ราคา</th>
+              <th className={`${textCell} text-left ${shownWidth('w-[8%]')}`} style={filledStyle(8)}>ชนิดค่าใช้จ่าย</th>
+              <th className={`${textCell} text-right ${shownWidth('w-[6%]')}`} style={filledStyle(6)}>ค่าใช้จ่าย</th>
+              <th className={`${textCell} text-left ${shownWidth('w-[8%]')}`} style={filledStyle(8)}>หมายเหตุค่าใช้จ่าย</th>
+              <th className={`${textCell} text-left ${shownWidth('w-[6%]')}`} style={filledStyle(6)}>รูปแบบขาย</th>
+              <th className={`${textCell} text-right ${shownWidth('w-[7%]')}`} style={filledStyle(7)}>ยอดรวม</th>
               {showProfitLoss ? (
-                <th className={`${textCell} w-[6.5%] text-right`} title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น">
+                <th
+                  className={`${textCell} text-right ${shownWidth('w-[6.5%]')}`}
+                  style={filledStyle(6.5)}
+                  title="กำไร/ขาดทุนของรายการขายนี้เท่านั้น"
+                >
                   กำไร/ขาดทุน
                 </th>
               ) : null}
-                  {(onEdit || onDelete) && <th className={`${textCell} w-[7%] text-center`}>จัดการ</th>}
+                  {(onEdit || onDelete) && (
+                    <th className={`${textCell} text-center ${shownWidth('w-[7%]')}`} style={filledStyle(7)}>
+                      จัดการ
+                    </th>
+                  )}
             </tr>
           </thead>
           <tbody>
@@ -422,8 +476,14 @@ export default function SalesTable({
                       : 'border-t border-gray-100 dark:border-gray-700'
                   }`}
                 >
-                  <td className={`${textCell} break-all font-medium text-blue-600 dark:text-blue-400`}>
-                    {row.saleNo}
+                  <td
+                    className={
+                      showSaleNo
+                        ? `${textCell} break-all font-medium text-blue-600 dark:text-blue-400`
+                        : textCell
+                    }
+                  >
+                    {showSaleNo ? row.saleNo : null}
                   </td>
                   <td className={textCell}>
                     <SaleDateCell value={row.date} />
