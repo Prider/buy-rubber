@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import Logo from '@/components/Logo';
+import { useAppMode } from '@/contexts/AppModeContext';
 import { useLicense } from '@/contexts/LicenseContext';
+import { updateApiClient } from '@/lib/apiClient';
+import { validateServerUrl } from '@/lib/config';
 
 interface ActivateLicenseFormProps {
   redirectTo?: string;
@@ -26,6 +29,7 @@ export default function ActivateLicenseForm({
   redirectTo = '/login',
 }: ActivateLicenseFormProps) {
   const router = useRouter();
+  const { updateConfig } = useAppMode();
   const {
     activateLicense,
     acknowledgeActivation,
@@ -33,10 +37,16 @@ export default function ActivateLicenseForm({
     expiresAt,
     renewalDate,
     message,
+    isLicensed,
+    isLoading,
+    delegatesToServer,
   } = useLicense();
   const [licenseKey, setLicenseKey] = useState('');
+  const [serverUrl, setServerUrl] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const isElectron = typeof window !== 'undefined' && Boolean(window.electron?.isElectron);
 
   // Only show success after THIS session's successful submit — never auto-advance.
   const showSuccess = awaitingAcknowledgment;
@@ -61,9 +71,48 @@ export default function ActivateLicenseForm({
     }
   };
 
+  useEffect(() => {
+    if (!isLoading && delegatesToServer && isLicensed) {
+      router.replace(redirectTo);
+    }
+  }, [isLoading, delegatesToServer, isLicensed, redirectTo, router]);
+
   const handleGoToLogin = () => {
     acknowledgeActivation();
     router.replace(redirectTo);
+  };
+
+  const handleConnectAsClient = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const url = serverUrl.trim();
+    if (!validateServerUrl(url)) {
+      setError('รูปแบบ URL เซิร์ฟเวอร์ไม่ถูกต้อง');
+      return;
+    }
+
+    setError('');
+    setConnecting(true);
+    try {
+      const health = await fetch(`${url.replace(/\/$/, '')}/api/health`);
+      if (!health.ok) {
+        setError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+        return;
+      }
+      updateConfig({
+        mode: 'client',
+        serverUrl: url,
+        clientPort: 3000,
+      });
+      updateApiClient({
+        mode: 'client',
+        serverUrl: url,
+        clientPort: 3000,
+      });
+    } catch {
+      setError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+    } finally {
+      setConnecting(false);
+    }
   };
 
   return (
@@ -175,6 +224,34 @@ export default function ActivateLicenseForm({
               </form>
             )}
           </div>
+
+          {!showSuccess && isElectron && (
+            <form
+              onSubmit={handleConnectAsClient}
+              className="px-8 py-6 space-y-3 border-t border-gray-200/50 dark:border-gray-700/50"
+            >
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                เครื่องนี้เป็นลูกข่าย
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                ไม่ต้องใส่ License Key ระบบจะใช้ใบอนุญาตของเครื่องเซิร์ฟเวอร์
+              </p>
+              <input
+                type="url"
+                value={serverUrl}
+                onChange={(event) => setServerUrl(event.target.value)}
+                placeholder="http://192.168.1.10:3000"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 font-mono text-sm"
+              />
+              <button
+                type="submit"
+                disabled={connecting || busy || !serverUrl.trim()}
+                className="w-full py-3 px-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 font-semibold disabled:opacity-50"
+              >
+                {connecting ? 'กำลังเชื่อมต่อ...' : 'เชื่อมต่อเซิร์ฟเวอร์'}
+              </button>
+            </form>
+          )}
 
           {!showSuccess && (
             <div className="px-8 py-6 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-200/50 dark:border-gray-700/50">

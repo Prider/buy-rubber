@@ -143,6 +143,8 @@ function getAppPath() {
 }
 
 const startServer = async (customAppPath = null, databasePath = null) => {
+  // Desktop installs check the license file on this machine. Web deployments do not.
+  process.env.LICENSE_SERVER_ENFORCE = '1';
   // Use 0.0.0.0 to allow connections from other machines on the network
   const hostname = '0.0.0.0';
   let port = 3000;
@@ -348,6 +350,9 @@ const startServer = async (customAppPath = null, databasePath = null) => {
 
     const server = createServer(async (req, res) => {
       try {
+        // Overwrite any client-supplied value so license activation can require loopback.
+        const remote = (req.socket && req.socket.remoteAddress) || '';
+        req.headers['x-electron-remote-address'] = remote;
         const parsedUrl = parse(req.url, true);
         await handle(req, res, parsedUrl);
       } catch (err) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { logger } from '@/lib/logger';
 import { fetchProfitLossAggregates } from './aggregates';
 
@@ -133,6 +134,9 @@ function createPeriodMap(startDate: Date, endDate: Date, mode: ViewMode): Map<st
 }
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const viewMode = parseViewMode(searchParams.get('view'));

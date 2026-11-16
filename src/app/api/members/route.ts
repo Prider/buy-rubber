@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_TTL, generateCacheKey } from '@/lib/cache';
@@ -12,6 +13,9 @@ const MAX_LIMIT = 100;
 
 // GET /api/members - ดึงรายการสมาชิกทั้งหมด (with pagination)
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
@@ -108,6 +112,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/members - สร้างสมาชิกใหม่
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const data = await request.json();
     logger.info('POST /api/members - Request', { code: data.code, name: data.name });

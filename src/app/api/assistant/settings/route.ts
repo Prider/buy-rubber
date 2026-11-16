@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import {
   ASSISTANT_DEFAULT_MODELS,
   isAssistantProvider,
@@ -29,12 +30,18 @@ function requireOwner(request: NextRequest): NextResponse | null {
 }
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   const denied = requireOwner(request);
   if (denied) return denied;
   return NextResponse.json(readAssistantSettings());
 }
 
 export async function PUT(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   const denied = requireOwner(request);
   if (denied) return denied;
 
@@ -66,6 +73,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   const denied = requireOwner(request);
   if (denied) return denied;
   const body = await request.json().catch(() => null);

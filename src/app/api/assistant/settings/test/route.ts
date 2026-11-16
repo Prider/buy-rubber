@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import {
   ASSISTANT_DEFAULT_MODELS,
   isAssistantProvider,
@@ -20,6 +21,9 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   const token = getBearerToken(request);
   const user = token ? getVerifiedUserFromToken(token) : null;
   if (!user) {

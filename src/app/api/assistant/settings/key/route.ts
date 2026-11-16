@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { isAssistantProvider, readRevealableApiKey, type AssistantProvider } from '@/lib/assistant/credentials';
 import { isAdminLike } from '@/types/user';
 import { getBearerToken, getVerifiedUserFromToken } from '@/lib/sessionToken';
@@ -7,6 +8,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   const token = getBearerToken(request);
   const user = token ? getVerifiedUserFromToken(token) : null;
   if (!user) {

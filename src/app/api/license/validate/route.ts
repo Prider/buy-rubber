@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkOfflineLicenseFile, fetchOfflineLicenseFile } from '@/lib/licenseApi';
+import { isLocalLicenseActivation, persistLicenseFile } from '@/lib/licenseServer';
 import { maskLicenseKey } from '@/lib/licenseStorage';
 import type { LicenseValidateResponse } from '@/types/license';
 
@@ -12,8 +13,29 @@ export const runtime = 'nodejs';
  * Offline check of a saved file:
  * Body: { licenseFile } (optional licenseKey ignored for verify-only)
  */
+function rememberLicenseFile(result: LicenseValidateResponse): void {
+  if (result.licenseFile && (result.valid || result.renewalRequired)) {
+    persistLicenseFile(result.licenseFile);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!isLocalLicenseActivation(request)) {
+      return NextResponse.json<LicenseValidateResponse>(
+        {
+          valid: false,
+          expired: false,
+          renewalRequired: false,
+          message: 'การเปิดใช้งานใบอนุญาตทำได้จากเครื่องเซิร์ฟเวอร์เท่านั้น',
+          expiresAt: null,
+          renewalDate: null,
+          licenseFile: null,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const licenseKey =
       typeof body?.licenseKey === 'string'
@@ -42,6 +64,7 @@ export async function POST(request: NextRequest) {
       }
 
       const result = checkOfflineLicenseFile(licenseFile);
+      rememberLicenseFile(result);
       return NextResponse.json<LicenseValidateResponse>({
         ...result,
         licenseKeyMasked: licenseKey ? maskLicenseKey(licenseKey) : undefined,
@@ -64,6 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await fetchOfflineLicenseFile(licenseKey);
+    rememberLicenseFile(result);
 
     return NextResponse.json<LicenseValidateResponse>({
       ...result,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockLedgerEntry, stockPosition } from '@/lib/prismaStock';
@@ -23,6 +24,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const body = await request.json();
     const { name, description, isActive } = body;
@@ -85,6 +89,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const existing = await prisma.productType.findUnique({
       where: { id: params.id },

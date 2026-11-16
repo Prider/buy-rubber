@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { generateDocumentNumber, getUserFromToken } from '@/lib/utils';
@@ -104,6 +105,9 @@ function withSaleProfitLoss(sales: SaleRecord[]): SaleWithProfit[] {
 }
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const token = getBearerToken(request);
     const tokenUser = token ? getVerifiedUserFromToken(token) : null;
@@ -229,6 +233,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     if (!asSale.sale) {
       return NextResponse.json({ error: 'ระบบยังไม่รองรับการขายในสภาพแวดล้อมนี้' }, { status: 501 });

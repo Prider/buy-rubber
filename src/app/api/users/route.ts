@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { userStore } from '@/lib/userStore';
 import { CreateUserRequest } from '@/types/user';
 import { logger } from '@/lib/logger';
@@ -8,6 +9,9 @@ import { getActivityActor, recordActivity } from '@/lib/activityLog';
 
 // GET /api/users - Get all users (admin only)
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     logger.info('GET /api/users - Request received');
     
@@ -40,6 +44,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/users - Create new user (admin only)
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     logger.info('POST /api/users - Request received');
     

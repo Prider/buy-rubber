@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
@@ -21,6 +22,9 @@ function parseMaxNum(value: unknown): number | null {
  * Generates next code in format C### (e.g. C001, C002).
  */
 export async function GET() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     let maxNumber = 0;
 

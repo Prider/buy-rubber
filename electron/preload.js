@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electron', {
   readLicenseFile: () => ipcRenderer.invoke('license:read'),
   writeLicenseFile: (contents) => ipcRenderer.invoke('license:write', contents),
   clearLicenseFile: () => ipcRenderer.invoke('license:clear'),
+  writeAppMode: (mode) => ipcRenderer.invoke('app-mode:write', mode),
   onWindowMaximized: (callback) => {
     ipcRenderer.on('window-maximized', (event, isMaximized) => callback(isMaximized));
   },

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
@@ -93,6 +94,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const memberId = params.id;
     const member = await prisma.member.findUnique({

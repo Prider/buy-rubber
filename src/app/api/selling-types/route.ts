@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { getActivityActor, recordActivity } from '@/lib/activityLog';
@@ -92,6 +93,9 @@ async function ensureSellingTypes() {
 }
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === '1';
@@ -116,6 +120,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const data = await request.json();
     const validation = await resolveTypeName(data.name);

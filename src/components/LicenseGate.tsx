@@ -5,7 +5,9 @@ import { useEffect, type ReactNode } from 'react';
 import GamerLoader from '@/components/GamerLoader';
 import ActivateLicenseForm from '@/components/ActivateLicenseForm';
 import LicenseBlocked from '@/components/LicenseBlocked';
+import { useAppMode } from '@/contexts/AppModeContext';
 import { useLicense } from '@/contexts/LicenseContext';
+import { updateApiClient } from '@/lib/apiClient';
 
 const PUBLIC_LICENSE_PATHS = ['/activate', '/landing', '/guide'];
 
@@ -16,6 +18,7 @@ interface LicenseGateProps {
 export default function LicenseGate({ children }: LicenseGateProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { config, isClientMode, updateConfig } = useAppMode();
   const {
     isLoading,
     isLicensed,
@@ -24,7 +27,9 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     message,
     expiresAt,
     awaitingAcknowledgment,
+    delegatesToServer,
     clearLicense,
+    revalidateLicense,
   } = useLicense();
 
   const isActivatePath =
@@ -36,11 +41,11 @@ export default function LicenseGate({ children }: LicenseGateProps) {
   const isPublicPath = PUBLIC_LICENSE_PATHS.some(
     (path) => pathname === path || pathname?.startsWith(`${path}/`)
   );
+  const electron = typeof window !== 'undefined' && Boolean(window.electron?.isElectron);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || delegatesToServer) return;
 
-    // Keep the success screen on /activate until the user clicks through.
     if (awaitingAcknowledgment) {
       if (!isActivatePath) {
         router.replace('/activate');
@@ -59,6 +64,7 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     isPublicPath,
     isActivatePath,
     awaitingAcknowledgment,
+    delegatesToServer,
     pathname,
     router,
   ]);
@@ -67,10 +73,13 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     return <>{children}</>;
   }
 
-  if (isLoading && !isActivatePath) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--app-bg)]">
-        <GamerLoader fullScreen message="กำลังตรวจสอบใบอนุญาต..." />
+        <GamerLoader
+          fullScreen
+          message={delegatesToServer ? 'กำลังตรวจสอบใบอนุญาตของเซิร์ฟเวอร์...' : 'กำลังตรวจสอบใบอนุญาต...'}
+        />
       </div>
     );
   }
@@ -79,7 +88,50 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     return <>{children}</>;
   }
 
-  // After a successful key entry, stay on the activate success UI until acknowledged.
+  if (delegatesToServer && !isLicensed) {
+    const connectionProblem = status === 'error' || status === 'unknown';
+    return (
+      <LicenseBlocked
+        title={connectionProblem ? 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' : 'ใบอนุญาตของเซิร์ฟเวอร์'}
+        message={message}
+        expiresAt={connectionProblem ? null : expiresAt}
+        onRetry={() => {
+          void revalidateLicense();
+        }}
+        allowServerChange={electron && isClientMode}
+        serverUrl={config.serverUrl || ''}
+        onServerUrlSubmit={(url) => {
+          updateConfig({
+            mode: 'client',
+            serverUrl: url,
+            clientPort: 3000,
+          });
+          updateApiClient({
+            mode: 'client',
+            serverUrl: url,
+            clientPort: 3000,
+          });
+        }}
+        onUseAsServer={
+          electron
+            ? () => {
+                updateConfig({
+                  mode: 'server',
+                  serverPort: config.serverPort,
+                  clientPort: 3000,
+                });
+                updateApiClient({
+                  mode: 'server',
+                  serverPort: config.serverPort,
+                  clientPort: 3000,
+                });
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
   if (awaitingAcknowledgment) {
     if (isActivatePath) {
       return <>{children}</>;

@@ -23,6 +23,20 @@ export type LicenseStatus =
   | 'renewal_required'
   | 'error';
 
+/** Returned by data APIs when the Electron server license is not valid. */
+export const SERVER_LICENSE_REQUIRED = 'SERVER_LICENSE_REQUIRED';
+
+/** Safe summary from GET /api/license/status. Never includes the key or .lkey. */
+export interface ServerLicenseStatus {
+  enforced: boolean;
+  licensed: boolean;
+  role: 'server' | 'client';
+  status: LicenseStatus;
+  message: string;
+  expiresAt: string | null;
+  renewalDate: string | null;
+}
+
 export interface LicenseState {
   status: LicenseStatus;
   licenseKey: string | null;
@@ -81,6 +95,10 @@ export interface LicenseContextType {
   expiresAt: Date | null;
   renewalDate: Date | null;
   message: string | null;
+  /** This screen follows another machine's license and must not collect a key. */
+  delegatesToServer: boolean;
+  /** Server Electron window (or a non-enforced web app) may enter a license key. */
+  canManageLicense: boolean;
   activateLicense: (key: string) => Promise<{ success: boolean; message?: string }>;
   updateLicense: (key: string) => Promise<{ success: boolean; message?: string }>;
   acknowledgeActivation: () => void;

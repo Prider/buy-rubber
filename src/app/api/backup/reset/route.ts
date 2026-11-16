@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { resetToInitialData } from '@/lib/backup';
 import { logger } from '@/lib/logger';
 
@@ -6,6 +7,9 @@ export const runtime = 'nodejs';
 
 // POST /api/backup/reset - รีเซ็ตข้อมูลกลับสู่สถานะเริ่มต้น
 export async function POST() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const result = await resetToInitialData();
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { countTransactionGroupsCached } from '@/lib/purchases/transactionCountCache';
@@ -18,6 +19,9 @@ export const dynamic = 'force-dynamic';
 
 // GET /api/purchases/transactions - Get purchase transactions grouped by purchaseNo with service fees
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const startDateParam = searchParams.get('startDate');

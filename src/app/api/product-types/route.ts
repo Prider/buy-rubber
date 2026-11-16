@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS, CACHE_TTL, invalidateProductTypesCache } from '@/lib/cache';
@@ -15,6 +16,9 @@ function parseIncludeInactive(searchParams: URLSearchParams): boolean {
 
 // GET /api/product-types — active only by default; ?includeInactive=1 for admin lists
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = parseIncludeInactive(searchParams);
@@ -49,6 +53,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/product-types - Create new product type
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const body = await request.json();
     const { code, name, description } = body;

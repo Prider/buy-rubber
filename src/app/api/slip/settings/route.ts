@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { getThaiPhoneError, THAI_PHONE_ERROR } from '@/lib/memberUtils';
@@ -87,6 +88,9 @@ async function resolveTemplateText(
 
 // GET /api/slip/settings - ดึงการตั้งค่าการพิมพ์สลิป
 export async function GET() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const settings = await prisma.setting.findMany({
       where: {
@@ -123,6 +127,9 @@ export async function GET() {
 
 // POST /api/slip/settings - บันทึกการตั้งค่าการพิมพ์สลิป
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const data = await request.json();
     const companyName = getString(data?.companyName)?.trim() || DEFAULT_COMPANY_NAME;

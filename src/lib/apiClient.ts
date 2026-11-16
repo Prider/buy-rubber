@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { AppConfig } from '@/lib/config';
 import { isTokenExpired, redirectToLogin } from '@/lib/sessionToken';
+import { SERVER_LICENSE_REQUIRED } from '@/types/license';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -46,6 +47,13 @@ class ApiClient {
       (error) => {
         if (error.response?.status === 401) {
           redirectToLogin();
+        }
+        if (
+          error.response?.status === 403 &&
+          error.response?.data?.code === SERVER_LICENSE_REQUIRED &&
+          typeof window !== 'undefined'
+        ) {
+          window.dispatchEvent(new CustomEvent('server-license-required'));
         }
         return Promise.reject(error);
       }

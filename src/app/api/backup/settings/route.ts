@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { restartAutoBackup } from '@/lib/backupScheduler';
 import { logger } from '@/lib/logger';
 
 // GET /api/backup/settings - ดึงการตั้งค่าการสำรอง
 export async function GET() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const settings = await prisma.setting.findMany({
       where: {
@@ -71,6 +75,9 @@ export async function GET() {
 
 // POST /api/backup/settings - บันทึกการตั้งค่าการสำรอง
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const data = await request.json();
     const { enabled, frequency, time, weeklyDay, monthlyDay, maxCount, autoCleanup } = data;

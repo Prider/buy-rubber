@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { userStore } from '@/lib/userStore';
 import { UpdateUserRequest } from '@/types/user';
 import { verifyAdminRole } from '@/lib/sessionToken';
@@ -11,6 +12,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     if (!verifyAdminRole(request)) {
       return NextResponse.json({
@@ -48,6 +52,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     console.log('PUT /api/users/[id] - Update user request:', params.id);
     
@@ -142,6 +149,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     console.log('DELETE /api/users/[id] - Delete user request:', params.id);
     

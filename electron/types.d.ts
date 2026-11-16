@@ -5,6 +5,7 @@ export interface ElectronAPI {
   readLicenseFile: () => Promise<string | null>;
   writeLicenseFile: (contents: string) => Promise<boolean>;
   clearLicenseFile: () => Promise<boolean>;
+  writeAppMode: (mode: 'server' | 'client') => Promise<boolean>;
   onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;
   platform: string;
   isElectron: boolean;

@@ -11,7 +11,7 @@
     "vercel-build": "bash scripts/vercel-build.sh",
     "switch:sqlite": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.sqlite.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → SQLite');\" && npx prisma generate",
     "switch:postgres": "node -e \"const fs=require('fs');fs.copyFileSync('prisma/schema.postgres.prisma','prisma/schema.prisma');console.log('✓ schema.prisma → PostgreSQL');\" && npx prisma generate",
-    "electron:dev": "npm run switch:sqlite && concurrently \"cross-env SKIP_ENV_VALIDATION=true next dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:dev": "npm run switch:sqlite && concurrently \"cross-env SKIP_ENV_VALIDATION=true LICENSE_SERVER_ENFORCE=1 next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "node scripts/clean-dist.js && node scripts/prepare-electron-build.js && cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build && electron-builder",
     "web:dev": "cross-env SKIP_ENV_VALIDATION=true next dev -H 0.0.0.0",
     "web:build": "cross-env NEXT_PRIVATE_SKIP_SWC_NATIVE_DOWNLOAD=1 next build",

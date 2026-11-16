@@ -54,8 +54,17 @@ function statusBadgeClass(status: LicenseStatus): string {
 }
 
 export function SoftwareLicensePanel() {
-  const { status, isLoading, licenseKey, expiresAt, renewalDate, message, updateLicense } =
-    useLicense();
+  const {
+    status,
+    isLoading,
+    licenseKey,
+    expiresAt,
+    renewalDate,
+    message,
+    updateLicense,
+    canManageLicense,
+    delegatesToServer,
+  } = useLicense();
   const { showSuccess, showError } = useAlert();
   const [newLicenseKey, setNewLicenseKey] = useState('');
   const [saving, setSaving] = useState(false);
@@ -109,7 +118,9 @@ export function SoftwareLicensePanel() {
             ใบอนุญาตซอฟต์แวร์
           </h3>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            License Key และวันหมดอายุของระบบนี้
+            {canManageLicense
+              ? 'License Key และวันหมดอายุของระบบนี้'
+              : 'ใบอนุญาตจัดการที่เครื่องเซิร์ฟเวอร์'}
           </p>
         </div>
         <span
@@ -120,6 +131,13 @@ export function SoftwareLicensePanel() {
       </div>
 
       <div className="space-y-5 px-4 py-4 sm:px-5 sm:py-5">
+        {delegatesToServer && (
+          <p className="rounded-xl bg-blue-50 px-3.5 py-2.5 text-sm text-blue-900 ring-1 ring-inset ring-blue-200 dark:bg-blue-950/40 dark:text-blue-100 dark:ring-blue-900">
+            เครื่องนี้ใช้ใบอนุญาตของเซิร์ฟเวอร์ ไม่ต้องใส่ License Key
+          </p>
+        )}
+
+        {canManageLicense && (
         <div>
           <p className="mb-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
             License Key ปัจจุบัน
@@ -138,6 +156,7 @@ export function SoftwareLicensePanel() {
             </p>
           )}
         </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200 dark:bg-gray-900/50 dark:ring-gray-700">
@@ -180,6 +199,7 @@ export function SoftwareLicensePanel() {
           <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
         )}
 
+        {canManageLicense && (
         <form onSubmit={handleUpdate} className="space-y-3 border-t border-gray-100 pt-5 dark:border-gray-700">
           <div className="space-y-1.5">
             <label
@@ -210,6 +230,7 @@ export function SoftwareLicensePanel() {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

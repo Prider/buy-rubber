@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { generateDocumentNumber } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -9,6 +10,9 @@ export const runtime = 'nodejs';
 
 // GET /api/servicefees - Get service fees
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
@@ -74,6 +78,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/servicefees - Create service fee (single or batch)
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const data = await request.json();
     logger.debug('ServiceFee POST request data', data);

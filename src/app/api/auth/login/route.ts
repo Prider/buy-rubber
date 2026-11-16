@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { LoginRequest, LoginResponse } from '@/types/user';
 import { logger } from '@/lib/logger';
 import { userStore } from '@/lib/userStore';
@@ -8,6 +9,9 @@ import { generateToken } from '@/lib/auth';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     // Log DATABASE_URL status for debugging
     logger.debug('Login API - DATABASE_URL', { 

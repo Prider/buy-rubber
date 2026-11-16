@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { askShopAssistant, assistantConfigured, assistantMessages } from '@/lib/assistant/openrouter';
 import { assistantFailureMessage } from '@/lib/assistant/providerError';
 import { assistantSystemPrompt, assistantUserPrompt, normalizeHistory } from '@/lib/assistant/prompt';
@@ -12,6 +13,9 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const token = getBearerToken(request);
     const user = token ? getVerifiedUserFromToken(token) : null;

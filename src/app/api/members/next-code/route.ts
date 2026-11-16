@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
@@ -31,6 +32,9 @@ function parseMaxNum(value: unknown): number | null {
  * @returns {Promise<NextResponse>} JSON response with the next available code
  */
 export async function GET() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     // Step 1: Use optimized database query to find max number directly
     // This is much faster than fetching all members and processing in JavaScript

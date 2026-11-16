@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { cache, CACHE_KEYS } from '@/lib/cache';
@@ -238,6 +239,9 @@ function createErrorResponse(
  * Retrieves expenses with pagination and summary statistics
  */
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     validatePrismaClient();
 
@@ -295,6 +299,9 @@ export async function GET(request: NextRequest) {
  * Creates a new expense
  */
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     validatePrismaClient();
 

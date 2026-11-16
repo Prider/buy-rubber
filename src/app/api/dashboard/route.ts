@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { buildSevenDayTrend } from '@/lib/dashboard/trend';
@@ -38,6 +39,9 @@ export const revalidate = 0;
 
 // GET /api/dashboard - ดึงข้อมูลสำหรับแดชบอร์ด
 export async function GET(_request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     logger.info('GET /api/dashboard - Request received');
     

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { stockPosition } from '@/lib/prismaStock';
@@ -17,6 +18,9 @@ type StockPositionRow = {
 type SaleAgg = { productTypeId: string; soldKg: number; revenue: number };
 
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const token = getBearerToken(request);
     const tokenUser = token ? getVerifiedUserFromToken(token) : null;

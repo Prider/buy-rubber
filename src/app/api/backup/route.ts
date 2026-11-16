@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { createBackup, getBackupList, restoreBackup, deleteBackup } from '@/lib/backup';
 import { logger } from '@/lib/logger';
 
@@ -7,6 +8,9 @@ export const runtime = 'nodejs';
 
 // GET /api/backup - ดึงรายการสำรองข้อมูล
 export async function GET() {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const backups = await getBackupList();
     return NextResponse.json({ backups });
@@ -21,6 +25,9 @@ export async function GET() {
 
 // POST /api/backup - สร้างสำรองข้อมูล
 export async function POST(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { type } = await request.json().catch(() => ({}));
     const result = await createBackup(type || 'manual');
@@ -44,6 +51,9 @@ export async function POST(request: NextRequest) {
 
 // PUT /api/backup - เรียกคืนข้อมูล
 export async function PUT(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { id } = await request.json();
     
@@ -75,6 +85,9 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/backup - ลบไฟล์สำรอง
 export async function DELETE(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

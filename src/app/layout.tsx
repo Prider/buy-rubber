@@ -111,17 +111,17 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <LicenseProvider>
-          <AuthProvider>
-            <AppModeProvider>
+        <AppModeProvider>
+          <LicenseProvider>
+            <AuthProvider>
               <DarkModeProvider>
                 <AlertProvider>
                   <LicenseGate>{children}</LicenseGate>
                 </AlertProvider>
               </DarkModeProvider>
-            </AppModeProvider>
-          </AuthProvider>
-        </LicenseProvider>
+            </AuthProvider>
+          </LicenseProvider>
+        </AppModeProvider>
       </body>
     </html>
   );

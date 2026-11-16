@@ -208,6 +208,18 @@ ipcMain.handle('license:clear', () => {
   return true;
 });
 
+function getAppModePath() {
+  return path.join(app.getPath('userData'), 'app-mode.json');
+}
+
+ipcMain.handle('app-mode:write', (_event, mode) => {
+  if (mode !== 'server' && mode !== 'client') {
+    throw new Error('Invalid app mode');
+  }
+  fs.writeFileSync(getAppModePath(), JSON.stringify({ mode }), 'utf8');
+  return true;
+});
+
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {

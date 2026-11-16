@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfUnlicensed } from '@/lib/licenseGuard';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { verifyAdminRole } from '@/lib/sessionToken';
@@ -16,6 +17,9 @@ const PAGE_SIZE_MAX = 100;
 
 // GET /api/activity — admin activity history for edits and deletes (last 90 days)
 export async function GET(request: NextRequest) {
+  const licenseDenied = await rejectIfUnlicensed();
+  if (licenseDenied) return licenseDenied;
+
   try {
     if (!verifyAdminRole(request)) {
       return NextResponse.json({ error: 'ต้องเป็นผู้ดูแลระบบ' }, { status: 403 });

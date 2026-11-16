@@ -49,6 +49,11 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
     loadConfig();
   }, [loadConfig]);
 
+  useEffect(() => {
+    if (loading || typeof window === 'undefined') return;
+    void window.electron?.writeAppMode?.(config.mode);
+  }, [loading, config.mode]);
+
   const updateConfig = useCallback((newConfig: Partial<AppConfig>) => {
     setConfig((prevConfig) => {
       const updatedConfig = { ...prevConfig, ...newConfig };
@@ -69,6 +74,10 @@ export function AppModeProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Error saving config:', error);
+      }
+
+      if (newConfig.mode && typeof window !== 'undefined') {
+        void window.electron?.writeAppMode?.(newConfig.mode);
       }
 
       return updatedConfig;
