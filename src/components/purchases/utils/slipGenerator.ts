@@ -135,17 +135,6 @@ export function transactionToCartItems(transaction: PurchaseTransaction): CartIt
     });
   });
 
-  // Add service fee items (as negative amounts)
-  transaction.serviceFees.forEach((serviceFee) => {
-    items.push({
-      id: serviceFee.id,
-      type: 'serviceFee',
-      date: transaction.date,
-      category: serviceFee.category,
-      totalAmount: -serviceFee.amount,
-    });
-  });
-
   return items;
 }
 
@@ -352,21 +341,13 @@ export function generateSlipHTMLFromItems(
                 <div class="item">
                   <div>
                     <div class="item-meta">
-                      ${item.productTypeName || item.category || 'ค่าใช้จ่าย'}
-                      ${
-                        item.type === 'purchase'
-                          ? `<span class="item-weight">น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, true)}</span>`
-                          : ''
-                      }
+                      ${item.productTypeName || 'รับซื้อ'}
+                      <span class="item-weight">น้ำหนักสุทธิ: ${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, true)}</span>
                     </div>
                   </div>
                   <div class="item-amount">
                     ${formatCurrency(item.totalAmount)}
-                    ${
-                      item.type === 'purchase'
-                        ? `<span class="price">@ ${formatNumber(item.finalPrice || 0)} /กก.</span>`
-                        : ''
-                    }
+                    <span class="price">@ ${formatNumber(item.finalPrice || 0)} /กก.</span>
                   </div>
                 </div>
               `
@@ -425,11 +406,9 @@ function buildA4SlipHtml(args: {
 
   const rows = items
     .map((item) => {
-      const name = escapeHtml(item.productTypeName || item.category || 'ค่าใช้จ่าย');
-      const weight = item.type === 'purchase'
-        ? `${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, false)}`
-        : '—';
-      const price = item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '—';
+      const name = escapeHtml(item.productTypeName || 'รับซื้อ');
+      const weight = `${formatNumber(item.netWeight || 0)} กก.${moistureNote(item, false)}`;
+      const price = formatNumber(item.finalPrice || 0);
       return `<tr>
         <td>${name}</td>
         <td class="num">${weight}</td>

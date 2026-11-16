@@ -136,47 +136,16 @@ async function fetchSqliteExpenseAggregates(
   `;
 }
 
-async function fetchPostgresServiceFeeAggregates(
-  startDate: Date,
-  endDate: Date,
-  viewMode: ViewMode,
-): Promise<ExpenseAgg[]> {
-  const truncUnit = postgresTruncUnit(viewMode);
-  return prisma.$queryRaw<ExpenseAgg[]>`
-    SELECT DATE_TRUNC(${truncUnit}, date) AS period,
-           COALESCE(SUM(amount), 0)::float AS total
-    FROM "ServiceFee"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
-    GROUP BY 1
-  `;
-}
-
-async function fetchSqliteServiceFeeAggregates(
-  startDate: Date,
-  endDate: Date,
-  viewMode: ViewMode,
-): Promise<ExpenseAgg[]> {
-  const periodExpr = sqlitePeriodExpr(viewMode);
-  return prisma.$queryRaw<ExpenseAgg[]>`
-    SELECT ${periodExpr} AS period,
-           CAST(COALESCE(SUM(amount), 0) AS REAL) AS total
-    FROM "ServiceFee"
-    WHERE "date" >= ${startDate} AND "date" <= ${endDate}
-    GROUP BY 1
-  `;
-}
-
 export async function fetchProfitLossAggregates(
   startDate: Date,
   endDate: Date,
   viewMode: ViewMode,
-): Promise<[PurchaseSaleAgg[], PurchaseSaleAgg[], ExpenseAgg[], ExpenseAgg[]]> {
+): Promise<[PurchaseSaleAgg[], PurchaseSaleAgg[], ExpenseAgg[]]> {
   if (isPostgresDatabase()) {
     return Promise.all([
       fetchPostgresSaleAggregates(startDate, endDate, viewMode),
       fetchPostgresPurchaseAggregates(startDate, endDate, viewMode),
       fetchPostgresExpenseAggregates(startDate, endDate, viewMode),
-      fetchPostgresServiceFeeAggregates(startDate, endDate, viewMode),
     ]);
   }
 
@@ -184,6 +153,5 @@ export async function fetchProfitLossAggregates(
     fetchSqliteSaleAggregates(startDate, endDate, viewMode),
     fetchSqlitePurchaseAggregates(startDate, endDate, viewMode),
     fetchSqliteExpenseAggregates(startDate, endDate, viewMode),
-    fetchSqliteServiceFeeAggregates(startDate, endDate, viewMode),
   ]);
 }

@@ -62,7 +62,6 @@ async function main() {
     members.push(existing ?? await prisma.member.create({ data: sample }));
   }
 
-  await prisma.serviceFee.deleteMany({ where: { serviceFeeNo: { startsWith: PREFIX } } });
   await prisma.purchase.deleteMany({ where: { purchaseNo: { startsWith: PREFIX } } });
   await prisma.sale.deleteMany({ where: { saleNo: { startsWith: PREFIX } } });
   await prisma.expense.deleteMany({ where: { expenseNo: { startsWith: PREFIX } } });
@@ -190,29 +189,8 @@ async function main() {
     });
   }
 
-  const fees = [
-    { no: `${PREFIX}F-1`, daysAgo: 0, hour: 8, category: 'ค่าชั่ง', amount: 50, purchaseNo: todayPurchaseNos[0] },
-    { no: `${PREFIX}F-2`, daysAgo: 0, hour: 10, category: 'ค่าชั่ง', amount: 50, purchaseNo: todayPurchaseNos[1] },
-    { no: `${PREFIX}F-3`, daysAgo: 0, hour: 14, category: 'ค่าบริการอื่นๆ', amount: 120, purchaseNo: todayPurchaseNos[2] },
-    { no: `${PREFIX}F-4`, daysAgo: 2, hour: 9, category: 'ค่าชั่ง', amount: 40, purchaseNo: null },
-  ];
-  for (const fee of fees) {
-    const date = atHour(thailandDayStart(fee.daysAgo), fee.hour, 5);
-    await prisma.serviceFee.create({
-      data: {
-        serviceFeeNo: fee.no,
-        date,
-        createdAt: date,
-        category: fee.category,
-        amount: fee.amount,
-        purchaseNo: fee.purchaseNo,
-        notes: fee.purchaseNo ? `คู่กับ ${fee.purchaseNo}` : null,
-      },
-    });
-  }
-
   console.log(
-    `แดชบอร์ดตัวอย่าง: รับซื้อ ${purchaseCount}, ขาย ${salePlan.length}, ราคา ${priceCount}, ค่าใช้จ่าย ${expenses.length}, ค่าบริการ ${fees.length}`,
+    `แดชบอร์ดตัวอย่าง: รับซื้อ ${purchaseCount}, ขาย ${salePlan.length}, ราคา ${priceCount}, ค่าใช้จ่าย ${expenses.length}`,
   );
   console.log(`ประเภทที่ยังไม่ตั้งราคาวันนี้: ${productTypes[productTypes.length - 1]?.name ?? '-'}`);
 }

@@ -56,7 +56,6 @@ function bill(purchaseNo, offset, person, weight, price) {
     date: when,
     createdAt: when,
     purchases: [line],
-    serviceFees: [],
     totalAmount: line.totalAmount,
     member: person,
   };

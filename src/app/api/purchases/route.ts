@@ -506,7 +506,6 @@ async function handleBatchPurchase(data: { items: any[]; userId?: string; date?:
         );
       }
 
-      // Allow negative prices for service fees (COST product type)
       const basePrice = item.pricePerUnit !== undefined ? item.pricePerUnit : (productPrice?.price || 0);
 
       if (basePrice === 0) {

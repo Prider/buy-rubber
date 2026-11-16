@@ -4,7 +4,6 @@ import {
   createMember,
   deleteMember,
   deletePurchase,
-  deleteServiceFee,
   E2E_BASE_URL,
   getAdminToken,
   getSlipSettings,
@@ -19,7 +18,6 @@ test.describe('Purchase flow', () => {
   let testMember: { id: string; code: string; name: string }
   let productType: { id: string; code: string; name: string }
   const createdPurchaseIds: string[] = []
-  const createdServiceFeeIds: string[] = []
   let slipSettingsToRestore: Awaited<ReturnType<typeof getSlipSettings>> | null = null
 
   test.beforeAll(async ({ request }) => {
@@ -46,10 +44,6 @@ test.describe('Purchase flow', () => {
     if (slipSettingsToRestore) {
       await request.post(`${E2E_BASE_URL}/api/slip/settings`, { data: slipSettingsToRestore })
       slipSettingsToRestore = null
-    }
-    while (createdServiceFeeIds.length > 0) {
-      const id = createdServiceFeeIds.pop()!
-      await deleteServiceFee(request, id, adminToken)
     }
     while (createdPurchaseIds.length > 0) {
       const id = createdPurchaseIds.pop()!
@@ -111,18 +105,6 @@ test.describe('Purchase flow', () => {
 
   function purchaseForm(page: Page) {
     return page.locator('form').filter({ has: page.locator('input[name="grossWeight"]') })
-  }
-
-  function serviceFeeForm(page: Page) {
-    return page.locator('form').filter({ has: page.locator('select[name="category"]') })
-  }
-
-  async function addServiceFeeItem(page: Page, category: string, amount: string) {
-    const form = serviceFeeForm(page)
-    await form.locator('select[name="category"]').selectOption({ label: category })
-    await form.locator('input[name="amount"]').fill(amount)
-    await expect(form.getByRole('button', { name: 'เพิ่มลงตะกร้า' })).toBeEnabled()
-    await form.getByRole('button', { name: 'เพิ่มลงตะกร้า' }).click()
   }
 
   async function addPurchaseItem(
@@ -321,85 +303,6 @@ test.describe('Purchase flow', () => {
     await expect(page.getByText('บันทึกข้อมูลเรียบร้อยแล้ว')).toBeVisible()
     await page.getByRole('button', { name: 'ปิด' }).click()
     await expect(page.getByText('ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น')).toBeVisible()
-  })
-
-  test('attaches service fee to purchase transaction', async ({ page, request }) => {
-    const feeCategory = `ค่าขนส่ง E2E ${uniqueSuffix()}`
-    const createCategoryRes = await request.post(`${E2E_BASE_URL}/api/service-fee-categories`, {
-      headers: apiHeaders(adminToken),
-      data: { name: feeCategory },
-    })
-    expect(createCategoryRes.ok()).toBeTruthy()
-    const createdCategory = (await createCategoryRes.json()) as { id: string }
-
-    try {
-    await gotoPurchasesPage(page)
-
-    await addPurchaseItem(page, '100', '5', { includeMember: true })
-    await addServiceFeeItem(page, feeCategory, '150')
-
-    await expect(page.getByText('รายการรับซื้อที่รอการบันทึก (2 รายการ)')).toBeVisible()
-    await expect(page.getByText(feeCategory)).toBeVisible()
-    await expect(page.getByRole('table').getByText('ค่าบริการ', { exact: true })).toBeVisible()
-
-    const purchaseReq = page.waitForResponse(
-      (r) => r.url().includes('/api/purchases') && r.request().method() === 'POST'
-    )
-    const serviceFeeReq = page.waitForResponse(
-      (r) => r.url().includes('/api/servicefees') && r.request().method() === 'POST'
-    )
-
-    await page.getByRole('button', { name: 'บันทึกข้อมูล' }).click()
-
-    const purchaseRes = await purchaseReq
-    const serviceFeeRes = await serviceFeeReq
-    expect(purchaseRes.ok()).toBeTruthy()
-    expect(serviceFeeRes.ok()).toBeTruthy()
-
-    const purchaseBody = (await purchaseRes.json()) as {
-      purchaseNo?: string
-      purchases?: Array<{ id: string }>
-    }
-    const serviceFeeBody = (await serviceFeeRes.json()) as {
-      serviceFees?: Array<{ id: string; purchaseNo?: string; category: string; amount: number }>
-    }
-
-    expect(purchaseBody.purchaseNo).toBeTruthy()
-    expect(serviceFeeBody.serviceFees?.length).toBe(1)
-    expect(serviceFeeBody.serviceFees?.[0]?.purchaseNo).toBe(purchaseBody.purchaseNo)
-    expect(serviceFeeBody.serviceFees?.[0]?.category).toBe(feeCategory)
-    expect(serviceFeeBody.serviceFees?.[0]?.amount).toBe(150)
-
-    for (const purchase of purchaseBody.purchases ?? []) {
-      if (purchase.id) createdPurchaseIds.push(purchase.id)
-    }
-    for (const serviceFee of serviceFeeBody.serviceFees ?? []) {
-      if (serviceFee.id) createdServiceFeeIds.push(serviceFee.id)
-    }
-
-    const linkedFeesRes = await request.get(
-      `${E2E_BASE_URL}/api/servicefees?purchaseNo=${purchaseBody.purchaseNo}`,
-      { headers: apiHeaders(adminToken) }
-    )
-    expect(linkedFeesRes.ok()).toBeTruthy()
-    const linkedFeesBody = (await linkedFeesRes.json()) as {
-      serviceFees?: Array<{ category: string; purchaseNo?: string }>
-    }
-    expect(
-      linkedFeesBody.serviceFees?.some(
-        (fee) => fee.category === feeCategory && fee.purchaseNo === purchaseBody.purchaseNo
-      )
-    ).toBeTruthy()
-
-    await expect(page.getByText('บันทึกข้อมูลเรียบร้อยแล้ว')).toBeVisible()
-    await page.getByRole('button', { name: 'ปิด' }).click()
-    await expect(page.getByText('ตะกร้าว่าง - เพิ่มรายการรับซื้อเพื่อเริ่มต้น')).toBeVisible()
-    } finally {
-      await request.delete(
-        `${E2E_BASE_URL}/api/service-fee-categories/${createdCategory.id}`,
-        { headers: apiHeaders(adminToken) },
-      )
-    }
   })
 
   test('REQ-PUR-10: respects slip paper size setting in purchase slip preview', async ({

@@ -72,7 +72,6 @@ async function stripMembersAndPurchases(dbPath) {
 
   try {
     const purchases = await prisma.purchase.deleteMany({});
-    const serviceFees = await prisma.serviceFee.deleteMany({});
     const members = await prisma.member.deleteMany({});
     const remaining = {
       purchases: await prisma.purchase.count(),
@@ -81,7 +80,7 @@ async function stripMembersAndPurchases(dbPath) {
 
     console.log(
       `✓ Cleared packaged database ${path.relative(projectRoot, dbPath)}: ` +
-        `${members.count} members, ${purchases.count} purchases, ${serviceFees.count} service fees`,
+        `${members.count} members, ${purchases.count} purchases`,
     );
 
     if (remaining.purchases !== 0 || remaining.members !== 0) {

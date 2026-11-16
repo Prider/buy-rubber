@@ -11,7 +11,6 @@ const REPORT_TYPES = [
   'daily_purchase',
   'sell_summary',
   'member_summary',
-  'service_fee',
   'expense_summary',
 ] as const;
 type ReportSummaryType = (typeof REPORT_TYPES)[number];
@@ -39,17 +38,6 @@ const expenseRowSelect = {
   description: true,
   createdAt: true,
 } satisfies Prisma.ExpenseSelect;
-
-const serviceFeeRowSelect = {
-  id: true,
-  serviceFeeNo: true,
-  purchaseNo: true,
-  date: true,
-  category: true,
-  amount: true,
-  notes: true,
-  createdAt: true,
-} satisfies Prisma.ServiceFeeSelect;
 
 const saleRowSelect = {
   id: true,
@@ -137,12 +125,6 @@ function buildSaleWhere(
 }
 
 function buildExpenseWhere(startDate: Date, endDate: Date): Prisma.ExpenseWhereInput {
-  return {
-    date: { gte: startDate, lte: endDate },
-  };
-}
-
-function buildServiceFeeWhere(startDate: Date, endDate: Date): Prisma.ServiceFeeWhereInput {
   return {
     date: { gte: startDate, lte: endDate },
   };
@@ -265,51 +247,6 @@ async function memberSummaryReport(
   };
 }
 
-async function serviceFeeReport(
-  where: Prisma.ServiceFeeWhereInput,
-  page: number,
-  pageSize: number,
-) {
-  const skip = (page - 1) * pageSize;
-  const [rows, totals, categoryGroups] = await Promise.all([
-    prisma.serviceFee.findMany({
-      where,
-      select: serviceFeeRowSelect,
-      orderBy: { date: 'desc' },
-      skip,
-      take: pageSize,
-    }),
-    prisma.serviceFee.aggregate({
-      where,
-      _count: { _all: true },
-      _sum: { amount: true },
-    }),
-    prisma.serviceFee.groupBy({
-      by: ['category'],
-      where,
-      _count: { _all: true },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: 'desc' } },
-    }),
-  ]);
-
-  const total = totals._count._all;
-  return {
-    rows,
-    total,
-    categorySummary: categoryGroups.map((group) => ({
-      category: group.category,
-      count: group._count._all,
-      totalAmount: group._sum.amount ?? 0,
-    })),
-    totals: {
-      count: total,
-      totalAmount: totals._sum.amount ?? 0,
-      totalWeight: 0,
-    },
-  };
-}
-
 async function expenseSummaryReport(
   where: Prisma.ExpenseWhereInput,
   page: number,
@@ -417,8 +354,6 @@ export async function GET(request: NextRequest) {
         page,
         pageSize,
       );
-    } else if (typeParam === 'service_fee') {
-      payload = await serviceFeeReport(buildServiceFeeWhere(startDate, endDate), page, pageSize);
     } else {
       payload = await expenseSummaryReport(buildExpenseWhere(startDate, endDate), page, pageSize);
     }

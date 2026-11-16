@@ -82,9 +82,6 @@ async function main() {
     console.log(`   - สมาชิกตัวอย่าง: ${members.length} ราย`);
   }
 
-  const deletedFees = await prisma.serviceFee.deleteMany({});
-  console.log(`   - ลบค่าบริการที่เชื่อมกับรับซื้อ: ${deletedFees.count} รายการ`);
-
   const deleted = await prisma.purchase.deleteMany({});
   console.log(`   - ลบรายการรับซื้อเดิม: ${deleted.count} รายการ`);
 

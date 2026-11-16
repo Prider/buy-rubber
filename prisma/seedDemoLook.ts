@@ -46,8 +46,6 @@ const COMPANIES = [
   { code: 'C210', name: 'ห้างหุ้นส่วนจำกัด ยางคุณภาพ', phone: '075399010', address: '56 ถ.พัฒนาการคูขวาง ต.ในเมือง อ.เมืองนครศรีธรรมราช จ.นครศรีธรรมราช' },
 ] as const;
 
-const SERVICE_FEE_CATEGORIES = ['ค่าชั่ง', 'ค่าขนส่งหน้าจุด', 'ค่าถุง', 'ค่าบริการอื่นๆ'];
-
 const PRODUCT_BASE_PRICE: Record<string, number> = {
   RUBER1: 52,
   RUBER2: 45,
@@ -157,28 +155,22 @@ function isDemoNo(value: string): boolean {
 }
 
 async function deleteDemoDocuments() {
-  const [purchases, sales, expenses, fees] = await Promise.all([
+  const [purchases, sales, expenses] = await Promise.all([
     prisma.purchase.findMany({ select: { id: true, purchaseNo: true } }),
     prisma.sale.findMany({ select: { id: true, saleNo: true } }),
     prisma.expense.findMany({ select: { id: true, expenseNo: true } }),
-    prisma.serviceFee.findMany({ select: { id: true, serviceFeeNo: true, purchaseNo: true } }),
   ]);
 
   const purchaseIds = purchases.filter((row) => isDemoNo(row.purchaseNo)).map((row) => row.id);
-  const purchaseNos = new Set(purchases.filter((row) => isDemoNo(row.purchaseNo)).map((row) => row.purchaseNo));
   const saleIds = sales.filter((row) => isDemoNo(row.saleNo)).map((row) => row.id);
   const expenseIds = expenses.filter((row) => isDemoNo(row.expenseNo)).map((row) => row.id);
-  const feeIds = fees
-    .filter((row) => isDemoNo(row.serviceFeeNo) || (row.purchaseNo != null && purchaseNos.has(row.purchaseNo)))
-    .map((row) => row.id);
 
-  if (feeIds.length) await prisma.serviceFee.deleteMany({ where: { id: { in: feeIds } } });
   if (purchaseIds.length) await prisma.purchase.deleteMany({ where: { id: { in: purchaseIds } } });
   if (saleIds.length) await prisma.sale.deleteMany({ where: { id: { in: saleIds } } });
   if (expenseIds.length) await prisma.expense.deleteMany({ where: { id: { in: expenseIds } } });
 
   console.log(
-    `   - ลบข้อมูลตัวอย่างเดิม: รับซื้อ ${purchaseIds.length}, ขาย ${saleIds.length}, ค่าใช้จ่าย ${expenseIds.length}, ค่าบริการ ${feeIds.length}`,
+    `   - ลบข้อมูลตัวอย่างเดิม: รับซื้อ ${purchaseIds.length}, ขาย ${saleIds.length}, ค่าใช้จ่าย ${expenseIds.length}`,
   );
 }
 
@@ -237,15 +229,6 @@ async function main() {
       create: { ...sample, isActive: true },
     });
     companies.push(company);
-  }
-
-  for (let index = 0; index < SERVICE_FEE_CATEGORIES.length; index += 1) {
-    const name = SERVICE_FEE_CATEGORIES[index];
-    await prisma.serviceFeeCategory.upsert({
-      where: { name },
-      update: { isActive: true, sortOrder: index },
-      create: { name, sortOrder: index, isActive: true },
-    });
   }
 
   const activeMembers = members.filter((member) => member.isActive);
@@ -313,20 +296,10 @@ async function main() {
 
   const purchaseRows: PurchaseRow[] = [];
   const saleDrafts: SaleDraft[] = [];
-  const feeRows: Array<{
-    serviceFeeNo: string;
-    purchaseNo: string;
-    date: Date;
-    createdAt: Date;
-    category: string;
-    amount: number;
-    notes: string | null;
-  }> = [];
 
   const qty = new Map<string, number>();
   let purchaseSeq = 9001;
   let saleSeq = 9001;
-  let feeSeq = 9001;
 
   for (let daysAgo = DAYS - 1; daysAgo >= 0; daysAgo -= 1) {
     const dayStart = thailandDayStart(daysAgo);
@@ -416,32 +389,6 @@ async function main() {
           notes,
         });
         qty.set(product.id, (qty.get(product.id) ?? 0) + netWeight);
-      }
-
-      if (rand() < 0.55) {
-        const feeDate = new Date(date.getTime() + 2 * 60 * 1000);
-        feeRows.push({
-          serviceFeeNo: docNo('SVC', dayStart, feeSeq),
-          purchaseNo,
-          date: feeDate,
-          createdAt: feeDate,
-          category: 'ค่าชั่ง',
-          amount: round2(pick([20, 30, 40, 50])),
-          notes: `คู่กับ ${purchaseNo}`,
-        });
-        feeSeq += 1;
-        if (rand() < 0.3) {
-          feeRows.push({
-            serviceFeeNo: docNo('SVC', dayStart, feeSeq),
-            purchaseNo,
-            date: feeDate,
-            createdAt: feeDate,
-            category: pick(['ค่าถุง', 'ค่าขนส่งหน้าจุด']),
-            amount: round2(between(30, 120)),
-            notes: null,
-          });
-          feeSeq += 1;
-        }
       }
     }
 
@@ -569,10 +516,6 @@ async function main() {
     });
   }
 
-  if (feeRows.length) {
-    await prisma.serviceFee.createMany({ data: feeRows });
-  }
-
   const expenseUser = users[0];
   await prisma.expense.createMany({
     data: EXPENSE_PLAN.map((expense, index) => {
@@ -591,7 +534,7 @@ async function main() {
   });
 
   console.log(
-    `✅ สมาชิก ${members.length}, บริษัท ${companies.length}, รับซื้อ ${purchaseRows.length} แถว, ขาย ${saleDrafts.length}, ค่าใช้จ่าย ${EXPENSE_PLAN.length}, ค่าบริการ ${feeRows.length}`,
+    `✅ สมาชิก ${members.length}, บริษัท ${companies.length}, รับซื้อ ${purchaseRows.length} แถว, ขาย ${saleDrafts.length}, ค่าใช้จ่าย ${EXPENSE_PLAN.length}`,
   );
   console.log('🔁 คำนวณสต็อกใหม่จากรายการรับซื้อและขาย...');
   execSync('npx tsx prisma/rebuildStock.ts', { stdio: 'inherit' });

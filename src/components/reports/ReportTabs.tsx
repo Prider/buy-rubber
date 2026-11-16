@@ -2,12 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
-/** Flip to true to show the หักค่าบริการ report tab again. */
-export const SHOW_SERVICE_FEE_REPORT = false;
-
 export const REPORT_TABS = [
   { id: 'daily_purchase', label: 'รับซื้อ' },
-  { id: 'service_fee', label: 'หักค่าบริการ' },
   { id: 'sell_summary', label: 'การขาย' },
   { id: 'member_summary', label: 'รายสมาชิก' },
   { id: 'profit_loss', label: 'กำไร/ขาดทุน' },
@@ -16,8 +12,8 @@ export const REPORT_TABS = [
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];
 
-export function isVisibleReportTab(tab: ReportTabId): boolean {
-  return SHOW_SERVICE_FEE_REPORT || tab !== 'service_fee';
+export function isVisibleReportTab(_tab: ReportTabId): boolean {
+  return true;
 }
 
 export function parseReportTab(value: string | null): ReportTabId | null {

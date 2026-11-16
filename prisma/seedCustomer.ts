@@ -20,7 +20,6 @@ function simpleHash(password: string): string {
 async function main() {
   console.log('🌱 Customer seed: clearing existing data...');
 
-  await prisma.serviceFee.deleteMany({});
   await prisma.purchase.deleteMany({});
   await prisma.productPrice.deleteMany({});
   await prisma.expense.deleteMany({});

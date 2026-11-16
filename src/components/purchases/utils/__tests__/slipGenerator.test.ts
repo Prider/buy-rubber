@@ -50,15 +50,7 @@ describe('slipGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [
-          {
-            id: 'sf1',
-            category: 'ค่าบริการ',
-            amount: 100,
-            notes: null,
-          },
-        ],
-        totalAmount: 4900,
+        totalAmount: 5000,
         member: {
           id: 'm1',
           code: 'M001',
@@ -68,7 +60,7 @@ describe('slipGenerator', () => {
 
       const result = transactionToCartItems(transaction);
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         id: 'p1',
         type: 'purchase',
@@ -80,13 +72,6 @@ describe('slipGenerator', () => {
         finalPrice: 50,
         totalAmount: 5000,
       });
-      expect(result[1]).toMatchObject({
-        id: 'sf1',
-        type: 'serviceFee',
-        date: '2024-01-15',
-        category: 'ค่าบริการ',
-        totalAmount: -100,
-      });
     });
 
     it('should handle transaction with no purchases', () => {
@@ -95,7 +80,6 @@ describe('slipGenerator', () => {
         date: '2024-01-15',
         createdAt: '2024-01-15T10:00:00Z',
         purchases: [],
-        serviceFees: [],
         totalAmount: 0,
         member: {
           id: 'm1',
@@ -108,7 +92,7 @@ describe('slipGenerator', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should handle transaction with multiple purchases and service fees', () => {
+    it('should handle transaction with multiple purchases', () => {
       const transaction: PurchaseTransaction = {
         purchaseNo: 'P003',
         date: '2024-01-15',
@@ -151,21 +135,7 @@ describe('slipGenerator', () => {
             totalAmount: 3000,
           },
         ],
-        serviceFees: [
-          {
-            id: 'sf1',
-            category: 'ค่าบริการ',
-            amount: 100,
-            notes: null,
-          },
-          {
-            id: 'sf2',
-            category: 'ค่าขนส่ง',
-            amount: 200,
-            notes: 'Shipping fee',
-          },
-        ],
-        totalAmount: 7700,
+        totalAmount: 8000,
         member: {
           id: 'm1',
           code: 'M001',
@@ -174,11 +144,10 @@ describe('slipGenerator', () => {
       };
 
       const result = transactionToCartItems(transaction);
-      expect(result).toHaveLength(4);
+      expect(result).toHaveLength(2);
       expect(result.filter((item) => item.type === 'purchase')).toHaveLength(2);
-      expect(result.filter((item) => item.type === 'serviceFee')).toHaveLength(2);
-      expect(result[2].totalAmount).toBe(-100);
-      expect(result[3].totalAmount).toBe(-200);
+      expect(result[0].totalAmount).toBe(5000);
+      expect(result[1].totalAmount).toBe(3000);
     });
   });
 
@@ -377,24 +346,6 @@ describe('slipGenerator', () => {
       expect(result).toContain('รหัสสมาชิก: M001');
     });
 
-    it('should handle service fee items', () => {
-      const items: CartItem[] = [
-        {
-          id: 'sf1',
-          type: 'serviceFee',
-          date: '2024-01-15',
-          category: 'ค่าบริการ',
-          totalAmount: -100,
-        },
-      ];
-
-      const result = generateSlipHTMLFromItems(items);
-
-      expect(result).toContain('ค่าบริการ');
-      // Currency is formatted, so check for formatted string
-      expect(result).toMatch(/-.*100/);
-    });
-
     it('should calculate total correctly', () => {
       const items: CartItem[] = [
         {
@@ -409,18 +360,11 @@ describe('slipGenerator', () => {
           date: '2024-01-15',
           totalAmount: 3000,
         },
-        {
-          id: 'sf1',
-          type: 'serviceFee',
-          date: '2024-01-15',
-          category: 'ค่าบริการ',
-          totalAmount: -100,
-        },
       ];
 
       const result = generateSlipHTMLFromItems(items);
 
-      expect(result).toContain('7,900');
+      expect(result).toContain('8,000');
     });
 
     it('should include purchase weight and price for purchase items', () => {
@@ -440,23 +384,6 @@ describe('slipGenerator', () => {
 
       expect(result).toContain('น้ำหนักสุทธิ: 100.50 กก.');
       expect(result).toContain('@ 50.25 /กก.');
-    });
-
-    it('should not include weight and price for service fee items', () => {
-      const items: CartItem[] = [
-        {
-          id: 'sf1',
-          type: 'serviceFee',
-          date: '2024-01-15',
-          category: 'ค่าบริการ',
-          totalAmount: -100,
-        },
-      ];
-
-      const result = generateSlipHTMLFromItems(items);
-
-      expect(result).not.toContain('น้ำหนักสุทธิ');
-      expect(result).not.toContain('/กก.');
     });
 
     it('should include all required HTML structure', () => {
@@ -665,7 +592,6 @@ describe('slipGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [],
         totalAmount: 5000,
         member: { id: 'm1', code: 'M001', name: 'John Doe' },
       };
@@ -703,7 +629,6 @@ describe('slipGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [],
         totalAmount: 5000,
         member: {
           id: 'm1',
@@ -720,7 +645,7 @@ describe('slipGenerator', () => {
       expect(result).toContain('น้ำยางสด');
     });
 
-    it('should handle transaction with service fees', () => {
+    it('should generate HTML from a saved purchase transaction', () => {
       const transaction: PurchaseTransaction = {
         purchaseNo: 'P002',
         date: '2024-01-15',
@@ -745,15 +670,7 @@ describe('slipGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [
-          {
-            id: 'sf1',
-            category: 'ค่าบริการ',
-            amount: 100,
-            notes: null,
-          },
-        ],
-        totalAmount: 4900,
+        totalAmount: 5000,
         member: {
           id: 'm1',
           code: 'M001',
@@ -763,9 +680,7 @@ describe('slipGenerator', () => {
 
       const result = generateSlipHTML(transaction);
 
-      expect(result).toContain('ค่าบริการ');
-      // Should show net total (5000 - 100 = 4900)
-      expect(result).toContain('4,900');
+      expect(result).toContain('5,000');
     });
   });
 });

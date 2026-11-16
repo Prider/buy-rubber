@@ -20,14 +20,12 @@ interface ActivityListProps {
 const amountClass: Record<DashboardMetric, string> = {
   purchases: 'text-sky-900 dark:text-sky-100',
   sales: 'text-emerald-900 dark:text-emerald-100',
-  serviceFees: 'text-amber-900 dark:text-amber-100',
   expenses: 'text-rose-900 dark:text-rose-100',
 };
 
 const titleTone: Record<DashboardMetric, DashboardHeadingTone> = {
   purchases: 'sky',
   sales: 'emerald',
-  serviceFees: 'amber',
   expenses: 'rose',
 };
 

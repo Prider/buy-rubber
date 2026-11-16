@@ -44,14 +44,8 @@ export const useTransactionActions = ({ onRefresh }: UseTransactionActionsProps)
     }
 
     try {
-      // Delete all purchases in this transaction
       for (const purchase of transaction.purchases) {
         await axios.delete(`/api/purchases/${purchase.id}`);
-      }
-
-      // Delete all service fees in this transaction
-      for (const serviceFee of transaction.serviceFees) {
-        await axios.delete(`/api/servicefees/${serviceFee.id}`);
       }
 
       await onRefresh();

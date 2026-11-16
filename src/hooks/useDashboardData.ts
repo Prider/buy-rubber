@@ -24,10 +24,6 @@ export interface DashboardStats {
   todayExpenseAmount: number;
   monthExpenses: number;
   monthExpenseAmount: number;
-  todayServiceFees: number;
-  todayServiceFeeAmount: number;
-  monthServiceFees: number;
-  monthServiceFeeAmount: number;
   todaySales: number;
   todaySaleAmount: number;
   monthSales: number;
@@ -48,7 +44,6 @@ export interface DashboardData {
   topMembers: any[];
   recentExpenses: any[];
   recentSales: any[];
-  recentServiceFees?: any[];
 }
 
 interface UseDashboardDataReturn {
@@ -64,7 +59,6 @@ interface UseDashboardDataReturn {
   topMembers: any[];
   recentExpenses: any[];
   recentSales: any[];
-  recentServiceFees: any[];
   reload: () => Promise<void>;
 }
 
@@ -126,10 +120,6 @@ export function useDashboardData(): UseDashboardDataReturn {
     todayExpenseAmount: 0,
     monthExpenses: 0,
     monthExpenseAmount: 0,
-    todayServiceFees: 0,
-    todayServiceFeeAmount: 0,
-    monthServiceFees: 0,
-    monthServiceFeeAmount: 0,
     todaySales: 0,
     todaySaleAmount: 0,
     monthSales: 0,
@@ -143,7 +133,6 @@ export function useDashboardData(): UseDashboardDataReturn {
   const topMembers = useMemo(() => data?.topMembers || [], [data?.topMembers]);
   const recentExpenses = useMemo(() => data?.recentExpenses || [], [data?.recentExpenses]);
   const recentSales = useMemo(() => data?.recentSales || [], [data?.recentSales]);
-  const recentServiceFees = useMemo(() => data?.recentServiceFees || [], [data?.recentServiceFees]);
   const trend = useMemo(() => data?.trend || [], [data?.trend]);
   const bounds = data?.bounds ?? null;
 
@@ -160,7 +149,6 @@ export function useDashboardData(): UseDashboardDataReturn {
     topMembers,
     recentExpenses,
     recentSales,
-    recentServiceFees,
     reload: loadData,
   };
 }

@@ -7,7 +7,6 @@ vi.mock('@/lib/prisma', () => ({
     sale: { aggregate: vi.fn(), groupBy: vi.fn(), findMany: vi.fn() },
     stockPosition: { findMany: vi.fn() },
     expense: { aggregate: vi.fn(), groupBy: vi.fn() },
-    serviceFee: { aggregate: vi.fn() },
     productPrice: { findMany: vi.fn() },
     productType: { findMany: vi.fn() },
     member: { count: vi.fn(), findMany: vi.fn() },
@@ -19,7 +18,6 @@ type PrismaMock = {
   sale: { aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
   stockPosition: { findMany: ReturnType<typeof vi.fn> };
   expense: { aggregate: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
-  serviceFee: { aggregate: ReturnType<typeof vi.fn> };
   productPrice: { findMany: ReturnType<typeof vi.fn> };
   productType: { findMany: ReturnType<typeof vi.fn> };
   member: { count: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
@@ -100,7 +98,6 @@ describe('buildShopSnapshot', () => {
     prisma.expense.groupBy.mockResolvedValue([
       { category: 'ค่าน้ำมัน', _count: 1, _sum: { amount: 100 } },
     ]);
-    prisma.serviceFee.aggregate.mockResolvedValue({ _sum: { amount: 50 } });
     prisma.productPrice.findMany.mockResolvedValue([{ price: 61, productType: { name: 'ยางแผ่น' } }]);
     prisma.productType.findMany.mockResolvedValue([{ id: 'product-1', name: 'ยางแผ่น' }]);
     prisma.member.count.mockResolvedValueOnce(10).mockResolvedValueOnce(8);
@@ -154,7 +151,7 @@ describe('buildShopSnapshot', () => {
     expect(serialized).not.toContain('idCard');
     expect(serialized).not.toContain('bankAccount');
     expect(snapshot.purchases.topMembersThisMonth[0]).toMatchObject({ code: 'M001', member: 'สมชาย' });
-    expect(snapshot.profit.monthNet).toBe(450);
+    expect(snapshot.profit.monthNet).toBe(500);
     expect(snapshot.stock[0]).toEqual({ productType: 'ยางแผ่น', kg: 25.5, avgCostPerKg: 40 });
     expect(snapshot.quietMembers.map((member) => member.code)).toEqual(['M001']);
     expect(snapshot.quietMembers[0].daysSince).toBeGreaterThan(30);

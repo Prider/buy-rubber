@@ -102,14 +102,6 @@ const TransactionRow = memo<TransactionRowProps>(({
     [transaction.purchases.length]
   );
 
-  // Memoize service fee count text
-  const serviceFeeText = useMemo(
-    () => transaction.serviceFees.length > 0 
-      ? `ค่าบริการ: ${transaction.serviceFees.length} รายการ`
-      : null,
-    [transaction.serviceFees.length]
-  );
-
   // Memoize row class names
   const rowClassName = useMemo(
     () => `hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
@@ -148,7 +140,6 @@ const TransactionRow = memo<TransactionRowProps>(({
       <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-400">
         <div className="space-y-1">
           <div>{purchaseCountText}</div>
-          {serviceFeeText && <div>{serviceFeeText}</div>}
         </div>
       </td>
       <td className="whitespace-nowrap px-2 py-2 text-right text-xs font-semibold tabular-nums text-purple-600 dark:text-purple-400">
@@ -195,12 +186,6 @@ const TransactionCard = memo<TransactionRowProps>(({
     () => `รับซื้อ: ${transaction.purchases.length} รายการ`,
     [transaction.purchases.length]
   );
-  const serviceFeeText = useMemo(
-    () => transaction.serviceFees.length > 0
-      ? `ค่าบริการ: ${transaction.serviceFees.length} รายการ`
-      : null,
-    [transaction.serviceFees.length]
-  );
   const handlePrint = useCallback(() => onPrint(transaction), [transaction, onPrint]);
   const handleDownloadPDF = useCallback(() => onDownloadPDF(transaction), [transaction, onDownloadPDF]);
   const handleDelete = useCallback(() => onDelete(transaction), [transaction, onDelete]);
@@ -232,9 +217,6 @@ const TransactionCard = memo<TransactionRowProps>(({
           {memberDisplay}
         </p>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{purchaseCountText}</p>
-        {serviceFeeText ? (
-          <p className="text-sm text-gray-600 dark:text-gray-400">{serviceFeeText}</p>
-        ) : null}
       </div>
 
       <TransactionActionButtons

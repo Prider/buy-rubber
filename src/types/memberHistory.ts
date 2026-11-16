@@ -1,4 +1,4 @@
-export type MemberHistoryKind = 'purchase' | 'serviceFee';
+export type MemberHistoryKind = 'purchase';
 
 export interface MemberHistoryRow {
   id: string;
@@ -20,8 +20,6 @@ export interface MemberHistorySummary {
   purchaseAmount: number;
   totalWeight: number;
   avgPrice: number;
-  serviceFeeCount: number;
-  serviceFeeAmount: number;
   totalRecords: number;
 }
 

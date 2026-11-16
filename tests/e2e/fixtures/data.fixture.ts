@@ -417,19 +417,6 @@ export async function deletePurchase(
 }
 
 /**
- * Deletes a service fee by ID via the API.
- */
-export async function deleteServiceFee(
-  request: APIRequestContext,
-  id: string,
-  token: string
-): Promise<void> {
-  await request.delete(`${BASE}/api/servicefees/${id}`, {
-    headers: apiHeaders(token),
-  })
-}
-
-/**
  * Sets daily prices for a date via the API.
  */
 export async function setDailyPrices(

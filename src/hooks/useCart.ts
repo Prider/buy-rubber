@@ -13,7 +13,7 @@ import {
 
 interface CartItem {
   id: string;
-  type: 'purchase' | 'serviceFee';
+  type: 'purchase';
   date: string;
   // Purchase fields
   memberId?: string;
@@ -33,12 +33,7 @@ interface CartItem {
   basePrice?: number;
   adjustedPrice?: number;
   finalPrice?: number;
-  // Service fee fields
-  category?: string;
-  amount?: number;
-  description?: string;
-  // Common fields
-  totalAmount: number; // Positive for purchases, negative for service fees
+  totalAmount: number;
   notes?: string;
 }
 
@@ -68,11 +63,6 @@ interface PurchaseFormData {
   moistureUnit?: MoistureUnit;
   bonusPrice: string;
   notes: string;
-}
-
-interface ServiceFeeFormData {
-  category: string;
-  amount: string;
 }
 
 interface UseCartProps {
@@ -160,37 +150,6 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     )));
   }, [members, productTypes]);
 
-  // Add service fee item to cart
-  const addServiceFeeToCart = useCallback((formData: ServiceFeeFormData) => {
-    const amount = parseFloat(formData.amount) || 0;
-    const totalAmount = -Math.abs(amount); // Negative value for service fees
-    
-    const item: CartItem = {
-      id: `serviceFee-${Date.now()}`,
-      type: 'serviceFee',
-      date: new Date().toISOString().split('T')[0], // Use current date
-      category: formData.category,
-      amount: amount,
-      totalAmount, // Negative value
-    };
-    
-    setCart(prev => [...prev, item]);
-  }, []);
-
-  const updateServiceFeeInCart = useCallback((id: string, formData: ServiceFeeFormData) => {
-    const amount = parseFloat(formData.amount) || 0;
-    setCart(prev => prev.map(item => {
-      if (item.id !== id) return item;
-      return {
-        ...item,
-        type: 'serviceFee',
-        category: formData.category,
-        amount,
-        totalAmount: -Math.abs(amount),
-      };
-    }));
-  }, []);
-
   // Remove item from cart
   const removeFromCart = useCallback((id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
@@ -225,14 +184,11 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
         logger.debug('No items to save');
         return;
       }
-      // Separate purchase items and service fee items
       const purchaseItems = cart.filter(item => item.type === 'purchase');
-      const serviceFeeItems = cart.filter(item => item.type === 'serviceFee');
       
       logger.debug('Cart items separated', { 
         totalItems: cart.length, 
         purchaseCount: purchaseItems.length, 
-        serviceFeeCount: serviceFeeItems.length 
       });
       
       let purchaseNo: string | null = null;
@@ -301,59 +257,7 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
         logger.debug('Batch purchase successful', { purchaseNo, count: result.purchases?.length });
       }
       
-      // 2. Save service fee items to servicefees API (if any)
-      if (serviceFeeItems.length > 0) {
-        logger.debug('Sending service fee items to servicefees API', { 
-          count: serviceFeeItems.length, 
-          purchaseNo 
-        });
-        
-        // Convert service fee items to API format
-        const serviceFeePayloadItems = serviceFeeItems.map((item) => ({
-          category: item.category || 'ค่าบริการ',
-          amount: Math.abs(item.amount || 0),
-          notes: item.notes || null,
-          date: item.date,
-        }));
-        
-        // Prepare batch payload for service fees
-        const serviceFeePayload = {
-          items: serviceFeePayloadItems,
-          purchaseNo: purchaseNo, // Link to purchase transaction (same cart)
-        };
-        
-        const response = await fetch('/api/servicefees', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(serviceFeePayload),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorMessage = errorData.details 
-            ? `${errorData.error}: ${errorData.details}`
-            : errorData.error || 'เกิดข้อผิดพลาดในการบันทึกค่าบริการ';
-          logger.error('ServiceFee API error details', undefined, errorData);
-          
-          // Check if user not found error - redirect to login
-          if (errorData.error === 'ไม่พบข้อมูลผู้ใช้') {
-            logger.warn('User not found, redirecting to login');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
-            router.push('/login');
-            throw new Error('Session expired. Please login again.');
-          }
-          
-          throw new Error(errorMessage);
-        }
-        
-        const result = await response.json();
-        logger.debug('All service fees saved successfully', { count: result.serviceFees?.length });
-      }
-      
-      // Clear cart and reload purchases (even if only service fees were present)
+      // Clear cart and reload purchases
       logger.debug('All requests successful, clearing cart and reloading purchases');
       setLastPrintedCart(cart);
       setLastPurchaseNo(purchaseNo); // Store purchaseNo for PDF filename
@@ -431,8 +335,6 @@ export const useCart = ({ members, productTypes, user, loadPurchases }: UseCartP
     setError,
     addToCart,
     updateCartItem,
-    addServiceFeeToCart,
-    updateServiceFeeInCart,
     removeFromCart,
     clearCart,
     saveCartToDb,

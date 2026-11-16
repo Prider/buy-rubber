@@ -14,7 +14,6 @@ import {
 export type ReportType =
   | 'daily_purchase'
   | 'member_summary'
-  | 'service_fee'
   | 'expense_summary'
   | string;
 
@@ -55,13 +54,12 @@ const EMPTY_TOTALS: ReportTotals = { count: 0, totalAmount: 0, totalWeight: 0 };
 
 function summaryTypeFor(
   reportType: ReportType,
-): 'daily_purchase' | 'sell_summary' | 'member_summary' | 'service_fee' | 'expense_summary' {
+): 'daily_purchase' | 'sell_summary' | 'member_summary' | 'expense_summary' {
   if (isSellSummaryReport(reportType)) {
     return 'sell_summary';
   }
   if (
     reportType === 'member_summary' ||
-    reportType === 'service_fee' ||
     reportType === 'expense_summary'
   ) {
     return reportType;
@@ -253,8 +251,6 @@ export function useReportData(
         return 'สรุปรายการขาย';
       case 'member_summary':
         return 'สรุปรายสมาชิกที่รับซื้อยาง';
-      case 'service_fee':
-        return 'รายงานค่าบริการ';
       case 'expense_summary':
         return 'รายงานค่าใช้จ่ายที่เกิดขึ้น';
       default:

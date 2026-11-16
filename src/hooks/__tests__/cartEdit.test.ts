@@ -77,32 +77,6 @@ describe('cart item editing', () => {
     expect(result.current.cart[1].grossWeight).toBe(80);
   });
 
-  it('updates a service fee without changing its place in the cart', () => {
-    const { result } = renderHook(() =>
-      useCart({ members, productTypes, user: { id: 'user-1' }, loadPurchases: vi.fn() })
-    );
-
-    act(() => {
-      result.current.addToCart(purchaseForm);
-      result.current.addServiceFeeToCart({ category: 'ค่าชั่ง', amount: '20' });
-    });
-
-    const fee = result.current.cart[1];
-    act(() => {
-      result.current.updateServiceFeeInCart(fee.id, { category: 'ค่ายาง', amount: '35' });
-    });
-
-    expect(result.current.cart).toHaveLength(2);
-    expect(result.current.cart[1]).toMatchObject({
-      id: fee.id,
-      type: 'serviceFee',
-      category: 'ค่ายาง',
-      amount: 35,
-      totalAmount: -35,
-    });
-    expect(result.current.cart[0].type).toBe('purchase');
-  });
-
   it('loads a cart purchase back into the entry form', async () => {
     const { result } = renderHook(() => usePurchaseForm({ members, productTypes }));
 

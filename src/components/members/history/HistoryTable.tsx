@@ -130,7 +130,7 @@ export const HistoryTable = ({ rows, totalCount }: HistoryTableProps) => {
                         : 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-200'
                     }`}
                   >
-                    {isPurchase ? 'รับซื้อ' : 'ค่าบริการ'}
+                    รับซื้อ
                   </span>
                 </td>
                 <td className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">{row.purchaseNo || '–'}</td>

@@ -17,8 +17,6 @@ const EMPTY_SUMMARY: MemberHistorySummary = {
   purchaseAmount: 0,
   totalWeight: 0,
   avgPrice: 0,
-  serviceFeeCount: 0,
-  serviceFeeAmount: 0,
   totalRecords: 0,
 };
 

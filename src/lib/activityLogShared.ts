@@ -13,8 +13,6 @@ export const ACTIVITY_ENTITY_TYPES = [
   'expenseCategory',
   'sellingType',
   'saleExpenseType',
-  'serviceFee',
-  'serviceFeeCategory',
   'reportGroup',
   'user',
 ] as const;
@@ -37,8 +35,6 @@ export const ACTIVITY_ENTITY_LABELS: Record<ActivityEntityType, string> = {
   expenseCategory: 'ประเภทค่าใช้จ่าย',
   sellingType: 'รูปแบบการขาย',
   saleExpenseType: 'ชนิดค่าใช้จ่าย',
-  serviceFee: 'ค่าบริการ',
-  serviceFeeCategory: 'ประเภทค่าบริการ',
   reportGroup: 'กลุ่มรายงาน',
   user: 'ผู้ใช้งาน',
 };
@@ -87,7 +83,6 @@ export const ACTIVITY_FIELD_LABELS: Record<string, string> = {
   category: 'ประเภท',
   amount: 'จำนวนเงิน',
   expenseNo: 'เลขที่ค่าใช้จ่าย',
-  serviceFeeNo: 'เลขที่ค่าบริการ',
   purchaseNo: 'เลขที่รับซื้อ',
   saleNo: 'เลขที่ขาย',
   username: 'ชื่อผู้ใช้',

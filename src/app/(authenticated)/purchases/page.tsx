@@ -6,18 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePurchaseData } from '@/hooks/usePurchaseData';
 import { usePurchaseForm } from '@/hooks/usePurchaseForm';
-import { useExpenseForm as useServiceFeeForm } from '@/hooks/useExpenseForm';
 import { useCart } from '@/hooks/useCart';
 import { PurchaseEntryCard } from '@/components/purchases/PurchaseEntryCard';
 import { PurchasesList, type PurchasesListRef } from '@/components/purchases/PurchasesList';
-import { ServiceFeeCard } from '@/components/purchases/ServiceFeeCard';
 import { CartTable } from '@/components/purchases/CartTable';
 import GamerLoader from '@/components/GamerLoader';
 import { formatCurrency } from '@/lib/utils';
 import { CloseButton } from '@/components/common/CloseButton';
-
-/** Flip to true to show the หักค่าบริการ box again. */
-const SHOW_SERVICE_FEE_CARD = false;
 
 export default function PurchasesPage() {
   const router = useRouter();
@@ -40,8 +35,6 @@ export default function PurchasesPage() {
     setError: setCartError,
     addToCart,
     updateCartItem,
-    addServiceFeeToCart,
-    updateServiceFeeInCart,
     removeFromCart,
     saveCartToDb,
     printCart,
@@ -91,18 +84,6 @@ export default function PurchasesPage() {
     productTypes,
   });
 
-  // Service fee form management hook
-  const {
-    formData: serviceFeeFormData,
-    error: serviceFeeFormError,
-    setError: setServiceFeeFormError,
-    handleInputChange: handleServiceFeeInputChange,
-    setCategory: setServiceFeeCategory,
-    loadForm: loadServiceFeeForm,
-    isFormValid: isServiceFeeFormValid,
-    resetForm: resetServiceFeeForm,
-  } = useServiceFeeForm();
-
   const [editingCartItemId, setEditingCartItemId] = useState<string | null>(null);
   const editingCartItemIdRef = useRef<string | null>(null);
   editingCartItemIdRef.current = editingCartItemId;
@@ -112,7 +93,6 @@ export default function PurchasesPage() {
     const wasEditing = editingCartItemIdRef.current != null;
     if (wasEditing) {
       resetForm();
-      resetServiceFeeForm();
       editingCartItemIdRef.current = null;
       setEditingCartItemId(null);
       if (window.matchMedia('(max-width: 1023px)').matches) {
@@ -120,19 +100,12 @@ export default function PurchasesPage() {
       }
     }
     setEntryOpen(false);
-  }, [resetForm, resetServiceFeeForm]);
+  }, [resetForm]);
 
   const handleEditCartItem = (id: string) => {
     const item = cart.find((entry) => entry.id === id);
     if (!item) return;
-    if (item.type === 'serviceFee') {
-      loadServiceFeeForm({
-        category: item.category ?? '',
-        amount: item.amount == null ? '' : String(item.amount),
-      });
-    } else {
-      loadCartItem(item);
-    }
+    loadCartItem(item);
     editingCartItemIdRef.current = id;
     setEditingCartItemId(id);
     setCartSheetOpen(false);
@@ -146,7 +119,7 @@ export default function PurchasesPage() {
       return;
     }
 
-    if (editingCartItemId && editingCartItem?.type !== 'serviceFee') {
+    if (editingCartItemId) {
       updateCartItem(editingCartItemId, formData);
       closeEntry();
       return;
@@ -154,23 +127,6 @@ export default function PurchasesPage() {
     
     addToCart(formData);
     resetForm();
-  };
-
-  // Handle adding service fee item to cart
-  const handleAddServiceFeeToCart = () => {
-    if (!isServiceFeeFormValid()) {
-      setServiceFeeFormError('กรุณากรอกข้อมูลที่จำเป็น');
-      return;
-    }
-
-    if (editingCartItem?.type === 'serviceFee') {
-      updateServiceFeeInCart(editingCartItem.id, serviceFeeFormData);
-      closeEntry();
-      return;
-    }
-    
-    addServiceFeeToCart(serviceFeeFormData);
-    resetServiceFeeForm();
   };
 
   // Handle saving cart with form reset
@@ -221,7 +177,6 @@ export default function PurchasesPage() {
   const openPurchaseEntry = () => {
     if (editingCartItemIdRef.current) {
       resetForm();
-      resetServiceFeeForm();
       editingCartItemIdRef.current = null;
       setEditingCartItemId(null);
     }
@@ -340,29 +295,13 @@ export default function PurchasesPage() {
                 <div
                   role="dialog"
                   aria-modal={entryDocked ? undefined : true}
-                  aria-labelledby={editingCartItem?.type === 'serviceFee' ? 'service-fee-entry-title' : 'purchase-entry-title'}
+                  aria-labelledby="purchase-entry-title"
                   className={`purchase-entry-panel relative max-h-[100dvh] w-full overflow-y-auto overscroll-contain border-2 bg-white shadow-2xl dark:bg-gray-800 sm:max-h-[min(920px,92dvh)] sm:max-w-3xl sm:rounded-2xl lg:pointer-events-auto lg:h-auto lg:max-h-full lg:min-h-0 lg:w-full lg:max-w-none ${
-                    editingCartItem?.type === 'serviceFee'
-                      ? 'border-orange-500 dark:border-orange-400'
-                      : editingCartItem
-                        ? 'border-blue-600 dark:border-blue-400'
-                        : 'border-transparent lg:border-gray-100 dark:lg:border-gray-700'
+                    editingCartItem
+                      ? 'border-blue-600 dark:border-blue-400'
+                      : 'border-transparent lg:border-gray-100 dark:lg:border-gray-700'
                   }`}
                 >
-                  {editingCartItem?.type === 'serviceFee' ? (
-                    <ServiceFeeCard
-                      formData={serviceFeeFormData}
-                      error={serviceFeeFormError}
-                      handleInputChange={handleServiceFeeInputChange}
-                      setCategory={setServiceFeeCategory}
-                      isFormValid={isServiceFeeFormValid()}
-                      resetForm={resetServiceFeeForm}
-                      addToCart={handleAddServiceFeeToCart}
-                      submitting={submitting}
-                      editing
-                      onClose={closeEntry}
-                    />
-                  ) : (
                   <PurchaseEntryCard
                     formData={formData}
                     error={formError}
@@ -401,22 +340,7 @@ export default function PurchasesPage() {
                     submitting={submitting}
                     editing={Boolean(editingCartItem)}
                     onClose={closeEntry}
-                    serviceFeeCard={
-                      SHOW_SERVICE_FEE_CARD ? (
-                        <ServiceFeeCard
-                          formData={serviceFeeFormData}
-                          error={serviceFeeFormError}
-                          handleInputChange={handleServiceFeeInputChange}
-                          setCategory={setServiceFeeCategory}
-                          isFormValid={isServiceFeeFormValid()}
-                          resetForm={resetServiceFeeForm}
-                          addToCart={handleAddServiceFeeToCart}
-                          submitting={submitting}
-                        />
-                      ) : undefined
-                    }
                   />
-                  )}
                 </div>
               </div>
             )}

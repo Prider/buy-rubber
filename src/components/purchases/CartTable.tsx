@@ -7,7 +7,7 @@ import { CloseButton } from '@/components/common/CloseButton';
 
 interface CartItem {
   id: string;
-  type: 'purchase' | 'serviceFee';
+  type: 'purchase';
   date: string;
   // Purchase fields
   memberId?: string;
@@ -27,12 +27,7 @@ interface CartItem {
   basePrice?: number;
   adjustedPrice?: number;
   finalPrice?: number;
-  // service fee fields
-  category?: string;
-  amount?: number;
-  description?: string;
-  // Common fields
-  totalAmount: number; // Positive for purchases, negative for service fees
+  totalAmount: number;
   notes?: string;
 }
 
@@ -225,41 +220,28 @@ export const CartTable: React.FC<CartTableProps> = ({
               cart.map((item, index) => (
                 <tr key={item.id} className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-2 max-lg:gap-y-1 max-lg:rounded-lg max-lg:border max-lg:border-gray-200 max-lg:p-2 dark:max-lg:border-gray-600 lg:table-row ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-750'}`}>
                   <CartCell label="รายละเอียด" wide className="break-words px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
-                    {item.type === 'purchase' ? (
-                      <div>
-                        <div className="font-medium">{item.memberName}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.productTypeName}</div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="font-medium">{item.category}</div>
-                        {item.description && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
-                        )}
-                      </div>
-                    )}
+                    <div>
+                      <div className="font-medium">{item.memberName}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{item.productTypeName}</div>
+                    </div>
                   </CartCell>
                   <CartCell label="รวมภาชนะ" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
-                    {item.type === 'purchase' ? formatNumber(item.grossWeight || 0) : '-'}
+                    {formatNumber(item.grossWeight || 0)}
                   </CartCell>
                   <CartCell label="ภาชนะ" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
-                    {item.type === 'purchase' ? formatNumber(item.containerWeight || 0) : '-'}
+                    {formatNumber(item.containerWeight || 0)}
                   </CartCell>
                   <CartCell label="สุทธิ" className="whitespace-nowrap px-2 py-2 text-right text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
-                    {item.type === 'purchase' ? formatNumber(item.netWeight || 0) : '-'}
+                    {formatNumber(item.netWeight || 0)}
                   </CartCell>
                   <CartCell label="ราคา" className="whitespace-nowrap px-2 py-2 text-right text-xs tabular-nums text-gray-900 dark:text-gray-100 max-lg:text-left">
-                    {item.type === 'purchase' ? formatNumber(item.finalPrice || 0) : '-'}
+                    {formatNumber(item.finalPrice || 0)}
                   </CartCell>
                   <CartCell label="หักความชื้น" labelClassName="text-red-600 dark:text-red-400" className="px-2 py-2 text-right text-xs font-medium leading-tight text-red-600 dark:text-red-400 max-lg:text-left">
-                    {item.type === 'purchase' ? (
-                      <>
-                        <span className="tabular-nums">{formatNumber(item.moisturePercent || 0)}</span>
-                        <span className="mt-0.5 block text-[10px]">{moistureUnitLabel(item.moistureUnit)}</span>
-                      </>
-                    ) : (
-                      '-'
-                    )}
+                    <>
+                      <span className="tabular-nums">{formatNumber(item.moisturePercent || 0)}</span>
+                      <span className="mt-0.5 block text-[10px]">{moistureUnitLabel(item.moistureUnit)}</span>
+                    </>
                   </CartCell>
                   <CartCell
                     label="จำนวนเงิน"
@@ -305,7 +287,7 @@ export const CartTable: React.FC<CartTableProps> = ({
                     </div>
                     <div className="text-gray-500 dark:text-gray-400">
                       <p className="text-base font-medium">ตะกร้าว่าง</p>
-                      <p className="text-xs">เพิ่มรายการรับซื้อหรือค่าบริการเพื่อเริ่มต้น</p>
+                      <p className="text-xs">เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
                     </div>
                   </div>
                 </td>

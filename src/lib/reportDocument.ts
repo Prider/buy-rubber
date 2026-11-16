@@ -19,9 +19,6 @@ export interface ReportColumn {
 export function categoryBreakdownCopy(
   reportType: ReportType,
 ): { title: string; categoryHeader: string } | null {
-  if (reportType === 'service_fee') {
-    return { title: 'สรุปตามประเภทค่าบริการ', categoryHeader: 'ประเภทค่าบริการ' };
-  }
   if (reportType === 'expense_summary') {
     return { title: 'สรุปตามหมวดค่าใช้จ่าย', categoryHeader: 'หมวดค่าใช้จ่าย' };
   }
@@ -74,21 +71,6 @@ export function reportColumns(reportType: ReportType): ReportColumn[] {
     ];
   }
 
-  if (reportType === 'service_fee') {
-    return [
-      {
-        header: 'วันที่',
-        align: 'left',
-        value: (row) => new Date(row.date || row.createdAt).toLocaleDateString('th-TH'),
-      },
-      { header: 'เลขที่', align: 'left', value: (row) => row.serviceFeeNo || '-' },
-      { header: 'เลขที่รับซื้อ', align: 'left', value: (row) => row.purchaseNo || '-' },
-      { header: 'ประเภทค่าบริการ', align: 'left', value: (row) => row.category || '-' },
-      { header: 'หมายเหตุ', align: 'left', value: (row) => row.notes || '-' },
-      { header: 'จำนวนเงิน', align: 'right', value: (row) => formatCurrency(row.amount || 0) },
-    ];
-  }
-
   return [
     {
       header: 'วันที่',
@@ -112,7 +94,7 @@ export function reportSummaryLines(
     `จำนวนรายการ: ${dataLength.toLocaleString('th-TH')} รายการ`,
     `ยอดรวม: ${formatCurrency(totalAmount)}`,
   ];
-  if (reportType !== 'expense_summary' && reportType !== 'service_fee') {
+  if (reportType !== 'expense_summary') {
     lines.push(`น้ำหนักรวม: ${formatNumber(totalWeight)} กิโลกรัม`);
   }
   if (isDailyPurchaseReport(reportType) || isSellSummaryReport(reportType)) {

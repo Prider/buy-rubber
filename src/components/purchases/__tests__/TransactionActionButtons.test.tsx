@@ -9,7 +9,6 @@ const transaction = {
   date: '2026-11-14',
   createdAt: '2026-11-14T00:00:00.000Z',
   purchases: [],
-  serviceFees: [],
   totalAmount: 100,
   member: { id: 'member-1', code: 'M001', name: 'สวนทดสอบ' },
 } as PurchaseTransaction;

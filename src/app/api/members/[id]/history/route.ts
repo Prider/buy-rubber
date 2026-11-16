@@ -5,11 +5,9 @@ import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
-const IN_CHUNK = 400;
-
 interface HistoryItem {
   id: string;
-  kind: 'purchase' | 'serviceFee';
+  kind: 'purchase';
   date: Date;
   createdAt: Date;
   purchaseNo: string | null;
@@ -42,51 +40,9 @@ function dateRange(startDate: string | null, endDate: string | null) {
   return range;
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-}
-
-async function findServiceFees(
-  purchaseNos: string[],
-  range: { gte?: Date; lte?: Date } | undefined,
-) {
-  if (purchaseNos.length === 0) return [];
-
-  const groups = await Promise.all(
-    chunk(purchaseNos, IN_CHUNK).map((purchaseNoChunk) =>
-      prisma.serviceFee.findMany({
-        where: {
-          purchaseNo: { in: purchaseNoChunk },
-          ...(range ? { date: range } : {}),
-        },
-        select: {
-          id: true,
-          date: true,
-          createdAt: true,
-          purchaseNo: true,
-          category: true,
-          amount: true,
-          notes: true,
-        },
-      }),
-    ),
-  );
-
-  return groups.flat();
-}
-
-function sortTime(item: HistoryItem) {
-  return item.kind === 'serviceFee' ? item.createdAt.getTime() : item.date.getTime();
-}
-
 function byNewest(left: HistoryItem, right: HistoryItem) {
-  const dateDiff = sortTime(right) - sortTime(left);
+  const dateDiff = right.date.getTime() - left.date.getTime();
   if (dateDiff !== 0) return dateDiff;
-  if (left.kind !== right.kind) return left.kind === 'purchase' ? -1 : 1;
   return right.createdAt.getTime() - left.createdAt.getTime();
 }
 
@@ -113,68 +69,40 @@ export async function GET(
     const limit = Math.min(50, Math.max(1, Number.isNaN(requestedLimit) ? 10 : requestedLimit));
     const range = dateRange(searchParams.get('startDate'), searchParams.get('endDate'));
 
-    const [purchases, purchaseNoRows] = await Promise.all([
-      prisma.purchase.findMany({
-        where: {
-          memberId,
-          ...(range ? { date: range } : {}),
-        },
-        select: {
-          id: true,
-          date: true,
-          createdAt: true,
-          purchaseNo: true,
-          netWeight: true,
-          basePrice: true,
-          moisturePercent: true,
-          moistureUnit: true,
-          totalAmount: true,
-          notes: true,
-          productType: { select: { name: true } },
-        },
-      }),
-      prisma.purchase.findMany({
-        where: { memberId },
-        select: { purchaseNo: true },
-        distinct: ['purchaseNo'],
-      }),
-    ]);
+    const purchases = await prisma.purchase.findMany({
+      where: {
+        memberId,
+        ...(range ? { date: range } : {}),
+      },
+      select: {
+        id: true,
+        date: true,
+        createdAt: true,
+        purchaseNo: true,
+        netWeight: true,
+        basePrice: true,
+        moisturePercent: true,
+        moistureUnit: true,
+        totalAmount: true,
+        notes: true,
+        productType: { select: { name: true } },
+      },
+    });
 
-    const fees = await findServiceFees(
-      purchaseNoRows.map((row) => row.purchaseNo),
-      range,
-    );
-
-    const items: HistoryItem[] = [
-      ...purchases.map((purchase) => ({
-        id: purchase.id,
-        kind: 'purchase' as const,
-        date: purchase.date,
-        createdAt: purchase.createdAt,
-        purchaseNo: purchase.purchaseNo,
-        label: purchase.productType?.name || '-',
-        netWeight: purchase.netWeight,
-        unitPrice: purchase.basePrice,
-        moisturePercent: purchase.moisturePercent,
-        moistureUnit: purchase.moistureUnit,
-        amount: purchase.totalAmount,
-        notes: purchase.notes,
-      })),
-      ...fees.map((fee) => ({
-        id: fee.id,
-        kind: 'serviceFee' as const,
-        date: fee.date,
-        createdAt: fee.createdAt,
-        purchaseNo: fee.purchaseNo,
-        label: fee.category,
-        netWeight: null,
-        unitPrice: null,
-        moisturePercent: null,
-        moistureUnit: null,
-        amount: fee.amount,
-        notes: fee.notes,
-      })),
-    ];
+    const items: HistoryItem[] = purchases.map((purchase) => ({
+      id: purchase.id,
+      kind: 'purchase' as const,
+      date: purchase.date,
+      createdAt: purchase.createdAt,
+      purchaseNo: purchase.purchaseNo,
+      label: purchase.productType?.name || '-',
+      netWeight: purchase.netWeight,
+      unitPrice: purchase.basePrice,
+      moisturePercent: purchase.moisturePercent,
+      moistureUnit: purchase.moistureUnit,
+      amount: purchase.totalAmount,
+      notes: purchase.notes,
+    }));
 
     items.sort(byNewest);
 
@@ -183,7 +111,6 @@ export async function GET(
     const pageItems = items.slice(start, start + limit);
     const purchaseAmount = purchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0);
     const totalWeight = purchases.reduce((sum, purchase) => sum + purchase.netWeight, 0);
-    const serviceFeeAmount = fees.reduce((sum, fee) => sum + fee.amount, 0);
 
     return NextResponse.json({
       rows: pageItems.map((item) => ({
@@ -196,8 +123,6 @@ export async function GET(
         purchaseAmount,
         totalWeight,
         avgPrice: purchases.length > 0 && totalWeight > 0 ? purchaseAmount / totalWeight : 0,
-        serviceFeeCount: fees.length,
-        serviceFeeAmount,
         totalRecords: total,
       },
       pagination: {

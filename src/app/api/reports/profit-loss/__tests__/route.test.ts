@@ -36,26 +36,24 @@ describe('GET /api/reports/profit-loss', () => {
   // ─── Critical fix: aggregation must happen in DB, not Node.js ──────────────
 
   describe('uses $queryRaw for aggregation (scalability fix)', () => {
-    it('calls $queryRaw exactly 4 times (sale, purchase, expense, service fee) — never findMany', async () => {
+    it('calls $queryRaw exactly 3 times (sale, purchase, expense) — never findMany', async () => {
       await GET(req({ startDate: '2024-01-01', endDate: '2024-01-31' }));
 
-      expect(prisma.$queryRaw).toHaveBeenCalledTimes(4);
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(3);
       expect(prisma.purchase.findMany).not.toHaveBeenCalled();
       expect(prisma.expense.findMany).not.toHaveBeenCalled();
     });
 
-    it('runs all 4 aggregate queries in parallel (Promise.all — single round-trip)', async () => {
-      // Track call order by recording when each mock resolves
+    it('runs all 3 aggregate queries in parallel (Promise.all — single round-trip)', async () => {
       const callOrder: number[] = [];
       prisma.$queryRaw
         .mockImplementationOnce(() => { callOrder.push(1); return Promise.resolve([]); })
         .mockImplementationOnce(() => { callOrder.push(2); return Promise.resolve([]); })
-        .mockImplementationOnce(() => { callOrder.push(3); return Promise.resolve([]); })
-        .mockImplementationOnce(() => { callOrder.push(4); return Promise.resolve([]); });
+        .mockImplementationOnce(() => { callOrder.push(3); return Promise.resolve([]); });
 
       await GET(req({ startDate: '2024-01-01', endDate: '2024-01-31' }));
 
-      expect(callOrder).toEqual([1, 2, 3, 4]);
+      expect(callOrder).toEqual([1, 2, 3]);
     });
   });
 
@@ -129,20 +127,18 @@ describe('GET /api/reports/profit-loss', () => {
       expect(period.expenses).toBe(200);
     });
 
-    it('calculates net = (sales + service fees) - purchases - expenses', async () => {
+    it('calculates net = sales - purchases - expenses', async () => {
       const day = new Date('2024-01-05T00:00:00Z');
       prisma.$queryRaw
         .mockResolvedValueOnce([{ period: day, total: 5000, weighted_price: 0, weight: 0 }])
         .mockResolvedValueOnce([{ period: day, total: 3000, weighted_price: 0, weight: 0 }])
-        .mockResolvedValueOnce([{ period: day, total: 200 }])
-        .mockResolvedValueOnce([{ period: day, total: 150 }]);
+        .mockResolvedValueOnce([{ period: day, total: 200 }]);
 
       const response = await GET(req({ view: 'daily', startDate: '2024-01-05', endDate: '2024-01-05' }));
       const body = await response.json();
 
       const period = body.periods.find((p: any) => p.period === '2024-01-05');
-      expect(period.serviceFees).toBe(150);
-      expect(period.net).toBeCloseTo(1950); // (5000 + 150) - 3000 - 200
+      expect(period.net).toBeCloseTo(1800); // 5000 - 3000 - 200
     });
 
     it('computes purchasePricePerKg as weighted average', async () => {
@@ -247,7 +243,7 @@ describe('GET /api/reports/profit-loss', () => {
   // ─── Totals ────────────────────────────────────────────────────────────────
 
   describe('totals', () => {
-    it('sums sales, service fees, purchases, expenses, and net across all periods', async () => {
+    it('sums sales, purchases, expenses, and net across all periods', async () => {
       const day1 = new Date('2024-01-01T00:00:00Z');
       const day2 = new Date('2024-01-02T00:00:00Z');
       prisma.$queryRaw
@@ -260,19 +256,15 @@ describe('GET /api/reports/profit-loss', () => {
         ])
         .mockResolvedValueOnce([
           { period: day2, total: 100 },
-        ])
-        .mockResolvedValueOnce([
-          { period: day1, total: 40 },
         ]);
 
       const response = await GET(req({ view: 'daily', startDate: '2024-01-01', endDate: '2024-01-02' }));
       const body = await response.json();
 
       expect(body.totals.sales).toBeCloseTo(3000);    // 1000 + 2000
-      expect(body.totals.serviceFees).toBeCloseTo(40);
       expect(body.totals.purchases).toBeCloseTo(500);
       expect(body.totals.expenses).toBeCloseTo(100);
-      expect(body.totals.net).toBeCloseTo(2440);      // (3000 + 40) - 500 - 100
+      expect(body.totals.net).toBeCloseTo(2400);      // 3000 - 500 - 100
     });
   });
 

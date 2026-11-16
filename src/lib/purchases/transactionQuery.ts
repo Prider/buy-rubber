@@ -257,11 +257,3 @@ export const purchaseTransactionInclude = {
     },
   },
 } satisfies Prisma.PurchaseInclude;
-
-export const serviceFeeTransactionSelect = {
-  id: true,
-  purchaseNo: true,
-  category: true,
-  amount: true,
-  notes: true,
-} satisfies Prisma.ServiceFeeSelect;

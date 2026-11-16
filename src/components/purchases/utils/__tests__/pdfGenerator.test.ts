@@ -188,7 +188,6 @@ describe('pdfGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [],
         totalAmount: 5000,
         member: {
           id: 'm1',
@@ -213,7 +212,6 @@ describe('pdfGenerator', () => {
         date: '2024-01-15',
         createdAt: '2024-01-15T10:00:00Z',
         purchases: [],
-        serviceFees: [],
         totalAmount: 0,
         member: {
           id: 'm1',
@@ -296,7 +294,6 @@ describe('pdfGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [],
         totalAmount: 5000,
         member: {
           id: 'm1',
@@ -339,15 +336,7 @@ describe('pdfGenerator', () => {
             totalAmount: 5000,
           },
         ],
-        serviceFees: [
-          {
-            id: 'sf1',
-            category: 'ค่าบริการ',
-            amount: 100,
-            notes: null,
-          },
-        ],
-        totalAmount: 4900,
+        totalAmount: 5000,
         member: {
           id: 'm1',
           code: 'M001',

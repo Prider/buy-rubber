@@ -60,17 +60,6 @@ vi.mock('@/hooks/usePurchaseData', () => ({
   },
 }));
 
-vi.mock('@/hooks/useExpenseForm', () => ({
-  useExpenseForm: () => ({
-    formData: { category: '', amount: '' },
-    error: '',
-    setError: vi.fn(),
-    handleInputChange: vi.fn(),
-    isFormValid: () => false,
-    resetForm: vi.fn(),
-  }),
-}));
-
 vi.mock('@/hooks/useCart', () => ({
   useCart: () => {
     const [cart, setCart] = React.useState<MockCartItem[]>([]);
@@ -88,7 +77,7 @@ vi.mock('@/hooks/useCart', () => ({
       error: '',
       setError: vi.fn(),
       addToCart,
-      addServiceFeeToCart: vi.fn(),
+      updateCartItem: vi.fn(),
       removeFromCart: vi.fn(),
       saveCartToDb,
       printCart: vi.fn(),
@@ -127,10 +116,6 @@ vi.mock('@/components/purchases/CartTable', () => ({
       </button>
     </div>
   ),
-}));
-
-vi.mock('@/components/purchases/ServiceFeeCard', () => ({
-  ServiceFeeCard: () => <div data-testid="service-fee-card">service-fee-card</div>,
 }));
 
 describe('PurchasesPage UI integration', () => {

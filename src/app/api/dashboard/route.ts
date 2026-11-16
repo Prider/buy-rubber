@@ -103,8 +103,6 @@ export async function GET(_request: NextRequest) {
       monthExpenses,
       recentExpenses,
       todayPurchasesByProductType,
-      todayServiceFees,
-      monthServiceFees,
       todaySales,
       monthSales,
       recentSales,
@@ -114,7 +112,6 @@ export async function GET(_request: NextRequest) {
       trendPurchases,
       trendSales,
       trendExpenses,
-      recentServiceFees,
     ] = await Promise.all([
       // รายการรับซื้อวันนี้
       prisma.purchase.aggregate({
@@ -247,32 +244,6 @@ export async function GET(_request: NextRequest) {
           dryWeight: true,
         },
       }),
-      // ดึงข้อมูลค่าบริการวันนี้
-      prisma.serviceFee.aggregate({
-        where: {
-          date: {
-            gte: today,
-            lt: tomorrow,
-          },
-        },
-        _count: true,
-        _sum: {
-          amount: true,
-        },
-      }),
-      // ดึงข้อมูลค่าบริการเดือนนี้
-      prisma.serviceFee.aggregate({
-        where: {
-          date: {
-            gte: thailandMonthStart,
-            lt: firstDayOfNextMonth,
-          },
-        },
-        _count: true,
-        _sum: {
-          amount: true,
-        },
-      }),
       // รายการขายวันนี้
       prisma.sale.aggregate({
         where: {
@@ -344,11 +315,6 @@ export async function GET(_request: NextRequest) {
         where: { date: { gte: sevenDaysStart, lt: tomorrow } },
         select: { date: true, amount: true },
       }),
-      prisma.serviceFee.findMany({
-        where: { date: monthDateRange },
-        take: 10,
-        orderBy: { date: 'desc' },
-      }),
     ]);
 
     // Batch 2: Fetch member details for top members (depends on topMembers from batch 1)
@@ -401,10 +367,6 @@ export async function GET(_request: NextRequest) {
         todayExpenseAmount: todayExpenses._sum.amount || 0,
         monthExpenses: monthExpenses._count,
         monthExpenseAmount: monthExpenses._sum.amount || 0,
-        todayServiceFees: todayServiceFees._count,
-        todayServiceFeeAmount: todayServiceFees._sum.amount || 0,
-        monthServiceFees: monthServiceFees._count,
-        monthServiceFeeAmount: monthServiceFees._sum.amount || 0,
         todaySales: todaySales._count,
         todaySaleAmount: todaySales._sum.totalAmount || 0,
         monthSales: monthSales._count,
@@ -439,7 +401,6 @@ export async function GET(_request: NextRequest) {
       productTypes,
       recentExpenses,
       recentSales,
-      recentServiceFees,
     };
     
     return NextResponse.json(responseData, {

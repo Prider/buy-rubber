@@ -10,14 +10,13 @@ import {
   parseTransactionDateRange,
   purchaseTransactionInclude,
   resolveSearchMemberIds,
-  serviceFeeTransactionSelect,
   type TransactionQueryFilters,
 } from '@/lib/purchases/transactionQuery';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// GET /api/purchases/transactions - Get purchase transactions grouped by purchaseNo with service fees
+// GET /api/purchases/transactions - Get purchase transactions grouped by purchaseNo
 export async function GET(request: NextRequest) {
   const licenseDenied = await rejectIfUnlicensed();
   if (licenseDenied) return licenseDenied;
@@ -71,7 +70,7 @@ export async function GET(request: NextRequest) {
     const paginatedPurchaseNos = paginatedGroups.map((group) => group.purchaseNo);
     const paginatedMemberIds = [...new Set(paginatedGroups.map((group) => group.memberId))];
 
-    const [purchases, serviceFees, members] = await Promise.all([
+    const [purchases, members] = await Promise.all([
       prisma.purchase.findMany({
         where: {
           ...prismaWhere,
@@ -79,11 +78,6 @@ export async function GET(request: NextRequest) {
         },
         include: purchaseTransactionInclude,
         orderBy: [{ createdAt: 'desc' }, { date: 'desc' }, { purchaseNo: 'desc' }],
-      }),
-      prisma.serviceFee.findMany({
-        where: { purchaseNo: { in: paginatedPurchaseNos } },
-        select: serviceFeeTransactionSelect,
-        orderBy: { date: 'desc' },
       }),
       prisma.member.findMany({
         where: { id: { in: paginatedMemberIds } },
@@ -93,20 +87,11 @@ export async function GET(request: NextRequest) {
 
     const memberMap = new Map(members.map((member) => [member.id, member]));
 
-    const serviceFeesByNo = new Map<string, typeof serviceFees>();
-    for (const serviceFee of serviceFees) {
-      if (!serviceFee.purchaseNo) continue;
-      const existing = serviceFeesByNo.get(serviceFee.purchaseNo) ?? [];
-      existing.push(serviceFee);
-      serviceFeesByNo.set(serviceFee.purchaseNo, existing);
-    }
-
     type TxEntry = {
       purchaseNo: string;
       date: Date;
       createdAt: Date;
       purchases: typeof purchases;
-      serviceFees: typeof serviceFees;
       totalAmount: number;
       member: (typeof purchases)[0]['member'];
     };
@@ -124,15 +109,12 @@ export async function GET(request: NextRequest) {
           existing.date = purchase.date;
         }
       } else {
-        const fees = serviceFeesByNo.get(purchase.purchaseNo) ?? [];
-        const serviceFeesTotal = fees.reduce((sum, fee) => sum + fee.amount, 0);
         transactionsMap.set(purchase.purchaseNo, {
           purchaseNo: purchase.purchaseNo,
           date: purchase.date,
           createdAt: purchase.createdAt,
           purchases: [purchase],
-          serviceFees: fees,
-          totalAmount: purchase.totalAmount - serviceFeesTotal,
+          totalAmount: purchase.totalAmount,
           member: purchase.member,
         });
       }

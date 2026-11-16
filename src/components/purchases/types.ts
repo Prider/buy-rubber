@@ -32,12 +32,6 @@ export interface PurchaseTransaction {
     finalPrice: number;
     totalAmount: number;
   }>;
-  serviceFees: Array<{
-    id: string;
-    category: string;
-    amount: number;
-    notes?: string | null;
-  }>;
   totalAmount: number;
   member: {
     id: string;
@@ -58,7 +52,7 @@ export interface PaginationInfo {
 
 export interface CartItem {
   id: string;
-  type: 'purchase' | 'serviceFee';
+  type: 'purchase';
   date: string;
   memberName?: string;
   memberCode?: string;
@@ -68,6 +62,5 @@ export interface CartItem {
   moistureUnit?: string | null;
   finalPrice?: number;
   totalAmount: number;
-  category?: string;
 }
 

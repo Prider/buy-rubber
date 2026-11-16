@@ -57,10 +57,7 @@ export default function ReportSummaryCards({
   totalCount,
   expenseSummary = [],
 }: ReportSummaryCardsProps) {
-  const isServiceFee = reportType === 'service_fee';
   const isExpenseSummary = reportType === 'expense_summary';
-  const averageAmount = isServiceFee && totalCount > 0 ? totalAmount / totalCount : 0;
-  const topCategory = isServiceFee && expenseSummary.length > 0 ? expenseSummary[0] : null;
 
   if (isExpenseSummary) {
     const pieRows: ActivityRow[] = expenseSummary.map((item) => ({
@@ -78,32 +75,6 @@ export default function ReportSummaryCards({
           rows={pieRows}
           emptyLabel="ยังไม่มีค่าใช้จ่าย"
           detail={`จำนวนรายการ ${totalCount.toLocaleString('th-TH')}`}
-        />
-      </div>
-    );
-  }
-
-  if (isServiceFee) {
-    return (
-      <div className="no-print grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard
-          label="จำนวนรายการ"
-          value={totalCount.toLocaleString('th-TH')}
-          hint="รายการค่าบริการ"
-        />
-        <StatCard
-          label="เฉลี่ยต่อรายการ"
-          value={formatCurrency(averageAmount || 0)}
-          hint={`จาก ${totalCount.toLocaleString('th-TH')} รายการ`}
-        />
-        <StatCard
-          label="ประเภทสูงสุด"
-          value={topCategory ? topCategory.category : '-'}
-          hint={
-            topCategory
-              ? `${formatCurrency(topCategory.totalAmount)} · ${topCategory.count.toLocaleString('th-TH')} รายการ`
-              : 'ไม่มีข้อมูล'
-          }
         />
       </div>
     );

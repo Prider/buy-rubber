@@ -3,7 +3,6 @@ export type ViewMode = 'daily' | 'weekly' | 'monthly';
 export interface ProfitLossRow {
   period: string;
   sales: number;
-  serviceFees: number;
   purchases: number;
   expenses: number;
   purchasePricePerKg: number;
@@ -13,7 +12,6 @@ export interface ProfitLossRow {
 
 export interface ProfitLossTotals {
   sales: number;
-  serviceFees: number;
   purchases: number;
   expenses: number;
   net: number;
@@ -26,7 +24,6 @@ export interface ProfitLossReportResponse {
 
 export const EMPTY_TOTALS: ProfitLossTotals = {
   sales: 0,
-  serviceFees: 0,
   purchases: 0,
   expenses: 0,
   net: 0,

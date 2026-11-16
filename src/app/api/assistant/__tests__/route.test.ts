@@ -12,7 +12,6 @@ vi.mock('@/lib/prisma', () => ({
     sale: { aggregate: vi.fn(), groupBy: vi.fn(), findMany: vi.fn() },
     stockPosition: { findMany: vi.fn() },
     expense: { aggregate: vi.fn(), groupBy: vi.fn() },
-    serviceFee: { aggregate: vi.fn() },
     productPrice: { findMany: vi.fn() },
     productType: { findMany: vi.fn() },
     member: { count: vi.fn(), findMany: vi.fn() },
@@ -65,7 +64,6 @@ describe('POST /api/assistant', () => {
     db.stockPosition.findMany.mockResolvedValue([]);
     db.expense.aggregate.mockResolvedValue({ _count: 0, _sum: { amount: 0 } });
     db.expense.groupBy.mockResolvedValue([]);
-    db.serviceFee.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
     db.productPrice.findMany.mockResolvedValue([]);
     db.productType.findMany.mockResolvedValue([]);
     db.member.count.mockResolvedValue(0);

@@ -67,16 +67,12 @@ export type ShopSnapshot = {
     month: { count: number; amount: number };
     byCategoryThisMonth: { category: string; count: number; amount: number }[];
   };
-  serviceFees: {
-    monthAmount: number;
-  };
   pricesToday: { productType: string; pricePerKg: number }[];
   profit: {
     monthRevenue: number;
     monthCostOfGoods: number;
     monthGrossProfit: number;
     monthExpenses: number;
-    monthServiceFees: number;
     monthNet: number;
     note: string;
   };

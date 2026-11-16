@@ -9,9 +9,6 @@ vi.mock('@/lib/prisma', () => ({
     purchase: {
       findMany: vi.fn(),
     },
-    serviceFee: {
-      findMany: vi.fn(),
-    },
     member: {
       findMany: vi.fn(),
     },
@@ -143,30 +140,6 @@ describe('GET /api/purchases/transactions', () => {
     user: mockUser,
   };
 
-  const mockServiceFee1 = {
-    id: 'servicefee-1',
-    serviceFeeNo: 'SVC-202401-0001',
-    purchaseNo: 'PUR-202401-0001',
-    date: new Date('2024-01-15'),
-    category: 'ค่าขนส่ง',
-    amount: 100,
-    notes: null,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-  };
-
-  const mockServiceFee2 = {
-    id: 'servicefee-2',
-    serviceFeeNo: 'SVC-202401-0002',
-    purchaseNo: 'PUR-202401-0001',
-    date: new Date('2024-01-15'),
-    category: 'ค่าบริการ',
-    amount: 50,
-    notes: null,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-  };
-
   function mockGroupedTransactions(
     pageRows: Array<{
       purchaseNo: string;
@@ -237,7 +210,6 @@ describe('GET /api/purchases/transactions', () => {
       
       // Mock findMany for purchases (called with purchaseNo filter)
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -269,7 +241,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase2]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -305,7 +276,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -314,34 +284,6 @@ describe('GET /api/purchases/transactions', () => {
       expect(response.status).toBe(200);
       expect(data.transactions).toHaveLength(1);
       expect(data.transactions[0].purchaseNo).toBe('PUR-202401-0001');
-    });
-
-    it('should subtract service fees from totalAmount', async () => {
-      mockGroupedTransactions([
-        {
-          purchaseNo: 'PUR-202401-0001',
-          memberId: 'member-1',
-          _max: {
-            createdAt: new Date('2024-01-15T10:00:00'),
-            date: new Date('2024-01-15'),
-          },
-          _sum: {
-            totalAmount: 4750,
-          },
-        },
-      ]);
-      
-      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([mockServiceFee1, mockServiceFee2]);
-
-      const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.transactions).toHaveLength(1);
-      expect(data.transactions[0].totalAmount).toBe(4600); // 4750 - 100 - 50
-      expect(data.transactions[0].serviceFees).toHaveLength(2);
     });
 
     it('should filter transactions by startDate', async () => {
@@ -360,7 +302,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase3]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?startDate=2024-01-16');
       const response = await GET(request);
@@ -384,7 +325,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?endDate=2024-01-15');
       const response = await GET(request);
@@ -408,7 +348,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?startDate=2024-01-01&endDate=2024-01-31');
       const response = await GET(request);
@@ -432,7 +371,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?memberId=member-1');
       const response = await GET(request);
@@ -467,7 +405,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?search=0001');
       const response = await GET(request);
@@ -505,7 +442,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?search=Test');
       const response = await GET(request);
@@ -545,7 +481,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1, mockPurchase3]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?search=M001');
       const response = await GET(request);
@@ -589,7 +524,6 @@ describe('GET /api/purchases/transactions', () => {
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?page=1&limit=10');
       const response = await GET(request);
@@ -633,7 +567,6 @@ describe('GET /api/purchases/transactions', () => {
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?page=2&limit=10');
       const response = await GET(request);
@@ -674,7 +607,6 @@ describe('GET /api/purchases/transactions', () => {
       }));
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue(purchases);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?page=3&limit=10');
       const response = await GET(request);
@@ -729,7 +661,6 @@ describe('GET /api/purchases/transactions', () => {
       };
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([purchaseNew, purchaseOld]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -769,7 +700,6 @@ describe('GET /api/purchases/transactions', () => {
       };
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([purchase1, purchase2]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -785,7 +715,6 @@ describe('GET /api/purchases/transactions', () => {
     it('should handle empty purchases array', async () => {
       mockGroupedTransactions([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -797,7 +726,7 @@ describe('GET /api/purchases/transactions', () => {
       expect(data.pagination.totalPages).toBe(0);
     });
 
-    it('should handle purchases with no service fees', async () => {
+    it('should return the purchase total', async () => {
       mockGroupedTransactions([
         {
           purchaseNo: 'PUR-202401-0001',
@@ -813,7 +742,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -822,7 +750,6 @@ describe('GET /api/purchases/transactions', () => {
       expect(response.status).toBe(200);
       expect(data.transactions).toHaveLength(1);
       expect(data.transactions[0].totalAmount).toBe(4750);
-      expect(data.transactions[0].serviceFees).toHaveLength(0);
     });
 
     it('should combine multiple filters', async () => {
@@ -841,7 +768,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?startDate=2024-01-01&endDate=2024-01-31&memberId=member-1&search=Test&page=1&limit=10'
@@ -866,40 +792,12 @@ describe('GET /api/purchases/transactions', () => {
       expect(vi.mocked(logger.error)).toHaveBeenCalled();
     });
 
-    it('should return 500 when service fee query fails', async () => {
-      mockGroupedTransactions([
-        {
-          purchaseNo: 'PUR-202401-0001',
-          memberId: 'member-1',
-          _max: {
-            createdAt: new Date('2024-01-15T10:00:00'),
-            date: new Date('2024-01-15'),
-          },
-          _sum: {
-            totalAmount: 4750,
-          },
-        },
-      ]);
-      
-      vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      const dbError = new Error('Service fee query failed');
-      vi.mocked(prisma.serviceFee.findMany).mockRejectedValue(dbError);
-
-      const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('เกิดข้อผิดพลาดในการดึงข้อมูลการรับซื้อ');
-      expect(vi.mocked(logger.error)).toHaveBeenCalled();
-    });
   });
 
   describe('Logging', () => {
     it('should log the GET request with parameters', async () => {
       mockGroupedTransactions([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?startDate=2024-01-01&memberId=member-1&page=1&limit=20');
       await GET(request);
@@ -931,7 +829,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       await GET(request);
@@ -963,7 +860,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -990,7 +886,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?page=abc');
       const response = await GET(request);
@@ -1018,7 +913,6 @@ describe('GET /api/purchases/transactions', () => {
       ]);
       
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions?limit=abc');
       const response = await GET(request);
@@ -1051,7 +945,6 @@ describe('GET /api/purchases/transactions', () => {
       };
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([purchaseWithoutCreatedAt]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -1062,7 +955,7 @@ describe('GET /api/purchases/transactions', () => {
       expect(data.transactions[0].date).toBeDefined();
     });
 
-    it('should handle service fees for multiple purchaseNos', async () => {
+    it('should keep purchases grouped by purchaseNo', async () => {
       mockGroupedTransactions([
         {
           purchaseNo: 'PUR-202401-0001',
@@ -1090,11 +983,8 @@ describe('GET /api/purchases/transactions', () => {
 
       const purchase1 = { ...mockPurchase1, purchaseNo: 'PUR-202401-0001' };
       const purchase2 = { ...mockPurchase3, purchaseNo: 'PUR-202401-0002' };
-      const serviceFee1 = { ...mockServiceFee1, purchaseNo: 'PUR-202401-0001' };
-      const serviceFee2 = { ...mockServiceFee1, id: 'servicefee-2', purchaseNo: 'PUR-202401-0002' };
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([purchase1, purchase2]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([serviceFee1, serviceFee2]);
 
       const request = new NextRequest('http://localhost:3000/api/purchases/transactions');
       const response = await GET(request);
@@ -1102,8 +992,8 @@ describe('GET /api/purchases/transactions', () => {
 
       expect(response.status).toBe(200);
       expect(data.transactions).toHaveLength(2);
-      expect(data.transactions[0].serviceFees).toHaveLength(1);
-      expect(data.transactions[1].serviceFees).toHaveLength(1);
+      expect(data.transactions[0].purchaseNo).toBe('PUR-202401-0001');
+      expect(data.transactions[1].purchaseNo).toBe('PUR-202401-0002');
     });
   });
 
@@ -1121,7 +1011,6 @@ describe('GET /api/purchases/transactions', () => {
       mockGroupedTransactions(pageRows, 3);
 
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?page=1&limit=1&startDate=2024-01-01&endDate=2024-01-31',
@@ -1156,7 +1045,6 @@ describe('GET /api/purchases/transactions', () => {
         40,
       );
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([mockPurchase1]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const query = 'startDate=2024-01-01&endDate=2024-01-31&limit=1';
       await GET(new NextRequest(`http://localhost:3000/api/purchases/transactions?page=1&${query}`));
@@ -1169,7 +1057,6 @@ describe('GET /api/purchases/transactions', () => {
     it('passes correct page and limit to paginated group query', async () => {
       mockGroupedTransactions([], 0);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?page=3&limit=10&startDate=2024-01-01&endDate=2024-01-31',
@@ -1198,7 +1085,6 @@ describe('GET /api/purchases/transactions', () => {
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([
         { ...mockPurchase1, purchaseNo: 'PUR-PAGE' },
       ]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?page=1&limit=1&startDate=2024-01-01&endDate=2024-01-31',
@@ -1220,7 +1106,6 @@ describe('GET /api/purchases/transactions', () => {
       vi.mocked(transactionQuery.resolveSearchMemberIds).mockResolvedValue(['member-match']);
       mockGroupedTransactions([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?search=สมชาย&startDate=2024-01-01&endDate=2024-01-31',
@@ -1234,7 +1119,6 @@ describe('GET /api/purchases/transactions', () => {
       vi.mocked(transactionQuery.resolveSearchMemberIds).mockResolvedValue(['member-1']);
       mockGroupedTransactions([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?search=abc&startDate=2024-01-01&endDate=2024-01-31',
@@ -1252,7 +1136,6 @@ describe('GET /api/purchases/transactions', () => {
     it('does not search members when memberId filter is already set', async () => {
       mockGroupedTransactions([]);
       vi.mocked(prisma.purchase.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.serviceFee.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         'http://localhost:3000/api/purchases/transactions?memberId=member-1&search=abc&startDate=2024-01-01&endDate=2024-01-31',

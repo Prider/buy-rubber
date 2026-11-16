@@ -114,7 +114,6 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
     todayExpenses,
     monthExpenses,
     expensesByCategory,
-    monthServiceFees,
     todayPrices,
     productTypes,
     memberTotal,
@@ -239,10 +238,6 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
       _sum: { amount: true },
       orderBy: { _sum: { amount: 'desc' } },
       take: 15,
-    }),
-    prisma.serviceFee.aggregate({
-      where: purchaseWindow(monthStart, nextMonth),
-      _sum: { amount: true },
     }),
     prisma.productPrice.findMany({
       where: purchaseWindow(today, tomorrow),
@@ -396,7 +391,6 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
 
   const monthSale = saleTotals(monthSales);
   const monthExpenseAmount = round2(monthExpenses._sum.amount);
-  const monthServiceFeeAmount = round2(monthServiceFees._sum.amount);
 
   return {
     period: {
@@ -442,9 +436,6 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
         amount: round2(row._sum.amount),
       })),
     },
-    serviceFees: {
-      monthAmount: monthServiceFeeAmount,
-    },
     pricesToday: todayPrices.map((row) => ({
       productType: row.productType.name,
       pricePerKg: round2(row.price),
@@ -454,8 +445,7 @@ export async function buildShopSnapshot(query = '', now = new Date()): Promise<S
       monthCostOfGoods: monthSale.costOfGoods,
       monthGrossProfit: monthSale.grossProfit,
       monthExpenses: monthExpenseAmount,
-      monthServiceFees: monthServiceFeeAmount,
-      monthNet: round2(monthSale.amount - monthSale.costOfGoods - monthExpenseAmount - monthServiceFeeAmount),
+      monthNet: round2(monthSale.amount - monthSale.costOfGoods - monthExpenseAmount),
       note: 'Sales without a recorded cost of goods are treated as zero cost.',
     },
     recentPurchases: recentPurchaseRows,

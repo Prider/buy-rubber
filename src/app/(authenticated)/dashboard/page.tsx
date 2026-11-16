@@ -19,14 +19,12 @@ const PERIOD_LABEL: Record<DashboardPeriod, string> = {
 const LIST_TITLE: Record<DashboardMetric, string> = {
   purchases: 'รายการรับซื้อ',
   sales: 'รายการขาย',
-  serviceFees: 'รายการค่าบริการ',
   expenses: 'รายการค่าใช้จ่าย',
 };
 
 const EMPTY_LABEL: Record<DashboardMetric, string> = {
   purchases: 'ยังไม่มีรายการรับซื้อ',
   sales: 'ยังไม่มีรายการขาย',
-  serviceFees: 'ยังไม่มีค่าบริการ',
   expenses: 'ยังไม่มีค่าใช้จ่าย',
 };
 
@@ -51,7 +49,6 @@ export default function DashboardPage() {
     recentPurchases,
     recentSales,
     recentExpenses,
-    recentServiceFees,
     reload,
   } = useDashboardData();
   const [period, setPeriod] = useState<DashboardPeriod>('today');
@@ -133,16 +130,6 @@ export default function DashboardPage() {
         }));
     }
 
-    if (metric === 'serviceFees') {
-      return rowsForPeriod(recentServiceFees, period, bounds).map((fee): ActivityRow => ({
-        id: fee.id,
-        title: fee.category || fee.serviceFeeNo || 'ค่าบริการ',
-        detail: fee.notes || fee.serviceFeeNo || '-',
-        amount: fee.amount || 0,
-        when: formatActivityWhen(fee.date),
-      }));
-    }
-
     return rowsForPeriod(recentExpenses, period, bounds).map((expense): ActivityRow => ({
       id: expense.id,
       title: expense.category || 'ค่าใช้จ่าย',
@@ -150,7 +137,7 @@ export default function DashboardPage() {
       amount: expense.amount || 0,
       when: formatActivityWhen(expense.date),
     }));
-  }, [bounds, metric, period, productTypeId, recentExpenses, recentPurchases, recentSales, recentServiceFees]);
+  }, [bounds, metric, period, productTypeId, recentExpenses, recentPurchases, recentSales]);
 
   const listTitle = selectedTypeName && (metric === 'purchases' || metric === 'sales')
     ? `${LIST_TITLE[metric]}${PERIOD_LABEL[period]} · ${selectedTypeName}`
@@ -164,7 +151,7 @@ export default function DashboardPage() {
   });
 
   const selectProduct = (id: string) => {
-    const openPurchases = metric === 'serviceFees' || metric === 'expenses';
+    const openPurchases = metric === 'expenses';
     if (openPurchases) setMetric('purchases');
     setProductTypeId((current) => (openPurchases || current !== id ? id : null));
   };
@@ -219,7 +206,7 @@ export default function DashboardPage() {
 
       <ProductBreakdown
         rows={breakdown as ProductBreakdownRow[]}
-        selectedId={metric === 'serviceFees' || metric === 'expenses' ? null : productTypeId}
+        selectedId={metric === 'expenses' ? null : productTypeId}
         onSelect={selectProduct}
       />
       <SummaryMetricCards stats={stats} period={period} metric={metric} onSelect={setMetric} />

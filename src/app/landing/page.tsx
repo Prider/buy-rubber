@@ -363,11 +363,6 @@ function MobilePurchaseScreen() {
         </svg>
       </header>
 
-      <div className="grid shrink-0 grid-cols-2 gap-[1.2cqw] border-b border-gray-200 bg-white p-[1.4cqw] dark:border-gray-700 dark:bg-gray-900">
-        <p className="flex h-[11cqw] items-center justify-center rounded-[2.6cqw] bg-blue-600 text-[4.2cqw] font-semibold text-white">รับซื้อ</p>
-        <p className="flex h-[11cqw] items-center justify-center text-[4.2cqw] font-semibold text-gray-500 dark:text-gray-400">ค่าบริการ</p>
-      </div>
-
       <div className="min-h-0 flex-1 space-y-[1.4cqw] overflow-hidden px-[3cqw] py-[1.6cqw]">
         <PhoneField label="วันที่รับซื้อ" required value="27/10/2026" />
         <PhoneField label="สมาชิก" required search placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส" />
@@ -510,10 +505,6 @@ function TabletPurchaseScreen() {
           <AppWordmark className="flex-1 text-[3.2cqw]" />
           <ThemeGlyph className="h-[3.4cqw] w-[3.4cqw] shrink-0 text-gray-500 dark:text-gray-300" />
         </header>
-        <div className="grid shrink-0 grid-cols-2 gap-[1cqw] border-b border-gray-200 bg-white p-[1.4cqw] dark:border-gray-700 dark:bg-gray-900">
-          <p className="flex h-[7.2cqw] items-center justify-center rounded-[1.6cqw] bg-blue-600 text-[3cqw] font-semibold text-white">รับซื้อ</p>
-          <p className="flex h-[7.2cqw] items-center justify-center text-[3cqw] font-semibold text-gray-500 dark:text-gray-400">ค่าบริการ</p>
-        </div>
         <div className="min-h-0 flex-1 space-y-[1.4cqw] overflow-hidden px-[2cqw] py-[1.6cqw]">
           <PreviewField label="วันที่รับซื้อ" required value="27/10/2026" {...field} />
           <PreviewField label="สมาชิก" required search placeholder="ค้นหาสมาชิกตามชื่อหรือรหัส" {...field} />
@@ -610,10 +601,6 @@ function DesktopPurchaseScreen() {
                 เพิ่มลงตะกร้า
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-[0.6cqw] border-t border-gray-200 px-[1cqw] py-[0.7cqw] dark:border-gray-600">
-              <span className="flex h-[2.2cqw] w-[2.2cqw] items-center justify-center rounded-[0.4cqw] bg-orange-100 text-[1.2cqw] text-orange-600 dark:bg-orange-900 dark:text-orange-300">▤</span>
-              <p className="text-[1.6cqw] font-semibold text-gray-800 dark:text-gray-100">บันทึกค่าบริการ</p>
-            </div>
           </div>
           <div className="col-span-3 flex min-h-0 flex-col overflow-hidden rounded-[1.8cqw] border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex shrink-0 items-center gap-[0.8cqw] border-b border-gray-100 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-[1.2cqw] py-[0.8cqw] dark:border-gray-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
@@ -634,7 +621,7 @@ function DesktopPurchaseScreen() {
                 </svg>
               </span>
               <p className="text-[1.7cqw] font-medium">ตะกร้าว่าง</p>
-              <p className="text-[1.3cqw]">เพิ่มรายการรับซื้อหรือค่าบริการเพื่อเริ่มต้น</p>
+              <p className="text-[1.3cqw]">เพิ่มรายการรับซื้อเพื่อเริ่มต้น</p>
             </div>
             <div className="shrink-0 border-t-2 border-gray-200 opacity-50 dark:border-gray-500">
               <div className="flex items-center justify-end gap-[1.4cqw] bg-gradient-to-r from-gray-50 to-gray-100 px-[1.2cqw] py-[0.5cqw] text-[1.5cqw] font-bold dark:from-gray-700 dark:to-gray-600">

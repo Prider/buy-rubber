@@ -302,10 +302,9 @@ export default function ProfitLossReport() {
 
       {/* Summary */}
       {!error ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { label: 'ยอดขาย', value: formatCurrency(totals.sales) },
-            { label: 'ค่าบริการ', value: formatCurrency(totals.serviceFees) },
             { label: 'ยอดรับซื้อ', value: formatCurrency(totals.purchases) },
             { label: 'ค่าใช้จ่าย', value: formatCurrency(totals.expenses) },
             { label: getNetResultLabel(totals.net), value: null as string | null, pnl: totals.net },
@@ -369,7 +368,7 @@ export default function ProfitLossReport() {
                       {periodLabel(row.period, viewMode)}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:hidden">
-                      ขาย {formatCurrency(row.sales)} · ค่าบริการ {formatCurrency(row.serviceFees)} · รับซื้อ{' '}
+                      ขาย {formatCurrency(row.sales)} · รับซื้อ{' '}
                       {formatCurrency(row.purchases)} · ค่าใช้จ่าย {formatCurrency(row.expenses)}
                     </p>
                   </div>
@@ -379,12 +378,6 @@ export default function ProfitLossReport() {
                       <p className="text-[11px] text-gray-400">ขาย</p>
                       <p className="text-sm tabular-nums text-gray-700 dark:text-gray-200">
                         {formatCurrency(row.sales)}
-                      </p>
-                    </div>
-                    <div className="hidden text-right md:block">
-                      <p className="text-[11px] text-gray-400">ค่าบริการ</p>
-                      <p className="text-sm tabular-nums text-gray-700 dark:text-gray-200">
-                        {formatCurrency(row.serviceFees)}
                       </p>
                     </div>
                     <div className="hidden text-right md:block">
@@ -415,12 +408,6 @@ export default function ProfitLossReport() {
                   <p className="text-[11px] text-gray-400">ขาย</p>
                   <p className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-100">
                     {formatCurrency(totals.sales)}
-                  </p>
-                </div>
-                <div className="hidden text-right md:block">
-                  <p className="text-[11px] text-gray-400">ค่าบริการ</p>
-                  <p className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-100">
-                    {formatCurrency(totals.serviceFees)}
                   </p>
                 </div>
                 <div className="hidden text-right md:block">

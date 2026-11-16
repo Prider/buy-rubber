@@ -79,7 +79,6 @@ const REPORT_GROUP_PRODUCT_CODES = [
 async function clearAll() {
   console.log('🗑️  ลบข้อมูลเก่าทั้งหมด...');
 
-  await prisma.serviceFee.deleteMany({});
   await prisma.saleExpense.deleteMany({});
   await prisma.purchase.deleteMany({});
   await prisma.productPrice.deleteMany({});

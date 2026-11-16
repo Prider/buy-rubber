@@ -221,7 +221,6 @@ function renderPeriodTableRows(rows: ProfitLossRow[], viewMode: ViewMode): strin
         <tr>
           <td>${periodLabel(row.period, viewMode)}</td>
           <td class="number">${formatCurrency(row.sales)}</td>
-          <td class="number">${formatCurrency(row.serviceFees)}</td>
           <td class="number">${formatCurrency(row.purchases)}</td>
           <td class="number">${formatCurrency(row.expenses)}</td>
           <td class="number">${formatCurrency(row.net)}</td>
@@ -280,11 +279,10 @@ export function generateProfitLossPdfHtml({
   const summarySection = page.showSummary
     ? `
       <div class="summary">
-        <p class="summary-label">ผลลัพธ์สุทธิ ((ยอดขาย + ค่าบริการ) − ยอดรับซื้อ − ค่าใช้จ่าย)</p>
+        <p class="summary-label">ผลลัพธ์สุทธิ (ยอดขาย − ยอดรับซื้อ − ค่าใช้จ่าย)</p>
         <p class="summary-value">${netLabel}: ${formatCurrency(totals.net)}</p>
         <div class="summary-grid">
           <span><strong>Sales:</strong> ${formatCurrency(totals.sales)}</span>
-          <span><strong>Service fees:</strong> ${formatCurrency(totals.serviceFees)}</span>
           <span><strong>Purchases:</strong> ${formatCurrency(totals.purchases)}</span>
           <span><strong>Expenses:</strong> ${formatCurrency(totals.expenses)}</span>
         </div>
@@ -303,7 +301,6 @@ export function generateProfitLossPdfHtml({
           <tr>
             <th>Period</th>
             <th>Sales</th>
-            <th>Service fees</th>
             <th>Purchases</th>
             <th>Expenses</th>
             <th>Net (Profit / Loss)</th>
@@ -317,7 +314,6 @@ export function generateProfitLossPdfHtml({
             <tr class="total">
               <td>Total</td>
               <td class="number">${formatCurrency(totals.sales)}</td>
-              <td class="number">${formatCurrency(totals.serviceFees)}</td>
               <td class="number">${formatCurrency(totals.purchases)}</td>
               <td class="number">${formatCurrency(totals.expenses)}</td>
               <td class="number">${formatCurrency(totals.net)}</td>

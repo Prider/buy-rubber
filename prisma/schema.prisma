@@ -158,23 +158,6 @@ model Expense {
   @@index([userId])
 }
 
-// ค่าบริการ (Service Fees)
-model ServiceFee {
-  id           String   @id @default(uuid())
-  serviceFeeNo String   @unique
-  purchaseNo   String? // Link to purchase transaction (same cart)
-  date         DateTime @default(now())
-  category     String // ประเภทค่าบริการ
-  amount       Float // จำนวนเงิน (บวก)
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([date])
-  @@index([purchaseNo])
-  @@index([category])
-}
-
 // ตั้งค่าระบบ
 model Setting {
   id        String   @id @default(uuid())
@@ -307,18 +290,6 @@ model ReportProductTypeGroupMember {
   @@unique([groupId, productTypeId])
   @@index([groupId])
   @@index([productTypeId])
-}
-
-// ประเภทค่าบริการที่ผู้ใช้กำหนดเอง สำหรับบันทึกค่าบริการ
-model ServiceFeeCategory {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  sortOrder Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive, sortOrder])
 }
 
 // ประเภทค่าใช้จ่ายที่ผู้ใช้กำหนดเอง สำหรับบันทึกค่าใช้จ่าย

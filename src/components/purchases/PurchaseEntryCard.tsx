@@ -74,7 +74,6 @@ interface PurchaseEntryCardProps {
   editing?: boolean;
   heading?: string;
   subtitle?: string;
-  serviceFeeCard?: React.ReactNode;
   onClose?: () => void;
 }
 
@@ -107,11 +106,9 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
   editing = false,
   heading,
   subtitle,
-  serviceFeeCard,
   onClose,
 }) => {
   const router = useRouter();
-  const [entryTab, setEntryTab] = React.useState<'purchase' | 'fee'>('purchase');
 
   // Refs for input fields to enable Enter key navigation
   const dateInputRef = React.useRef<HTMLInputElement>(null);
@@ -370,39 +367,8 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
         {onClose ? <CloseButton onClick={onClose} disabled={submitting} /> : null}
       </div>
 
-      {serviceFeeCard && (
-        <div className="grid grid-cols-2 gap-1 border-b border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-900 lg:hidden" role="tablist" aria-label="แบบฟอร์ม">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={entryTab === 'purchase'}
-            onClick={() => setEntryTab('purchase')}
-            className={`min-h-11 rounded-xl text-sm font-semibold transition-colors duration-150 ease-out ${
-              entryTab === 'purchase'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            รับซื้อ
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={entryTab === 'fee'}
-            onClick={() => setEntryTab('fee')}
-            className={`min-h-11 rounded-xl text-sm font-semibold transition-colors duration-150 ease-out ${
-              entryTab === 'fee'
-                ? 'bg-orange-600 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            ค่าบริการ
-          </button>
-        </div>
-      )}
-
       {/* Content */}
-      <div className={entryTab === 'fee' ? 'max-lg:hidden' : ''}>
+      <div>
         <form onSubmit={(e) => { 
           e.preventDefault(); 
           addToCart(); 
@@ -940,11 +906,6 @@ export const PurchaseEntryCard: React.FC<PurchaseEntryCardProps> = ({
           </div>
         </form>
       </div>
-      {serviceFeeCard && (
-        <div className={`shrink-0 max-lg:bg-transparent lg:block lg:border-t lg:border-gray-200 lg:bg-white dark:lg:border-gray-600 dark:lg:bg-gray-800 ${entryTab === 'fee' ? '' : 'max-lg:hidden'}`}>
-          {serviceFeeCard}
-        </div>
-      )}
     </div>
   );
 };

@@ -2,10 +2,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { DashboardPeriod } from '@/lib/dashboard/activity';
 import type { DashboardStats } from '@/hooks/useDashboardData';
 
-export type DashboardMetric = 'purchases' | 'sales' | 'serviceFees' | 'expenses';
-
-/** Flip to true to show the ค่าบริการ box again. */
-const SHOW_DASHBOARD_SERVICE_FEE = false;
+export type DashboardMetric = 'purchases' | 'sales' | 'expenses';
 
 interface SummaryMetricCardsProps {
   stats: DashboardStats;
@@ -53,18 +50,6 @@ const METRICS: Array<{
     selectedClass: 'border-emerald-500 dark:border-emerald-400',
   },
   {
-    id: 'serviceFees',
-    title: 'ค่าบริการ',
-    todayCount: 'todayServiceFees',
-    todayAmount: 'todayServiceFeeAmount',
-    monthCount: 'monthServiceFees',
-    monthAmount: 'monthServiceFeeAmount',
-    iconClass: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-    cardClass: 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/50 dark:to-orange-950/40',
-    idleClass: 'border-amber-200 hover:border-amber-300 dark:border-amber-800 dark:hover:border-amber-600',
-    selectedClass: 'border-amber-500 dark:border-amber-400',
-  },
-  {
     id: 'expenses',
     title: 'ค่าใช้จ่าย',
     todayCount: 'todayExpenses',
@@ -79,11 +64,9 @@ const METRICS: Array<{
 ];
 
 export default function SummaryMetricCards({ stats, period, metric, onSelect }: SummaryMetricCardsProps) {
-  const metrics = METRICS.filter((item) => SHOW_DASHBOARD_SERVICE_FEE || item.id !== 'serviceFees');
-
   return (
-    <div className={`grid shrink-0 gap-2 ${metrics.length > 3 ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'}`}>
-      {metrics.map((item) => {
+    <div className="grid shrink-0 grid-cols-3 gap-2">
+      {METRICS.map((item) => {
         const selected = metric === item.id;
         const count = Number(period === 'today' ? stats[item.todayCount] : stats[item.monthCount]) || 0;
         const amount = Number(period === 'today' ? stats[item.todayAmount] : stats[item.monthAmount]) || 0;
