@@ -150,10 +150,9 @@ export default function DashboardPage() {
     year: 'numeric',
   });
 
-  const selectProduct = (id: string) => {
-    const openPurchases = metric === 'expenses';
-    if (openPurchases) setMetric('purchases');
-    setProductTypeId((current) => (openPurchases || current !== id ? id : null));
+  const selectProduct = (id: string | null) => {
+    if (metric === 'expenses') setMetric('purchases');
+    setProductTypeId(id);
   };
 
   if (loading) {
@@ -206,7 +205,7 @@ export default function DashboardPage() {
 
       <ProductBreakdown
         rows={breakdown as ProductBreakdownRow[]}
-        selectedId={metric === 'expenses' ? null : productTypeId}
+        selectedId={metric === 'expenses' ? undefined : productTypeId}
         onSelect={selectProduct}
       />
       <SummaryMetricCards stats={stats} period={period} metric={metric} onSelect={setMetric} />

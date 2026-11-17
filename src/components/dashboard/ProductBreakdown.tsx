@@ -7,8 +7,17 @@ import DashboardHeading from './DashboardHeading';
 
 interface ProductBreakdownProps {
   rows: ProductBreakdownRow[];
-  selectedId: string | null;
-  onSelect: (productTypeId: string) => void;
+  /** `null` selects ทั้งหมด. `undefined` leaves every chip unpressed. */
+  selectedId?: string | null;
+  onSelect: (productTypeId: string | null) => void;
+}
+
+function chipClass(selected: boolean): string {
+  return `flex shrink-0 items-baseline gap-2 rounded-xl border-2 px-2.5 py-1.5 text-left shadow-sm transition-colors duration-150 ${
+    selected
+      ? 'border-transparent [background:linear-gradient(var(--tone-surface-hex),var(--tone-surface-hex))_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(var(--tone-panel-hex),var(--tone-panel-hex))_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
+      : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500'
+  }`;
 }
 
 export default function ProductBreakdown({ rows, selectedId, onSelect }: ProductBreakdownProps) {
@@ -36,62 +45,78 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
     };
   }, [rows, updateScrollHints]);
 
+  const allSelected = selectedId === null;
+  const totalCount = rows.reduce((sum, row) => sum + (row.count || 0), 0);
+  const totalWeight = rows.reduce((sum, row) => sum + (row.totalWeight || 0), 0);
+
   return (
     <section className="flex min-w-0 shrink-0 items-center gap-3">
       <DashboardHeading tone="violet" className="hidden shrink-0 md:block">ประเภทสินค้า</DashboardHeading>
       {rows.length > 0 ? (
-        <div className="relative min-w-0 flex-1">
-        <div ref={scrollerRef} className="flex min-w-0 gap-1.5 overflow-x-auto overscroll-x-contain">
-          {rows.map((row) => {
-            const id = row.productTypeId || '';
-            const selected = selectedId === id && id !== '';
-            return (
-              <button
-                key={id || row.productTypeName}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => id && onSelect(id)}
-                title={row.productTypeName}
-                className={`flex shrink-0 items-baseline gap-2 rounded-xl border-2 px-2.5 py-1.5 text-left shadow-sm transition-colors duration-150 ${
-                  selected
-                    ? 'border-transparent [background:linear-gradient(var(--tone-surface-hex),var(--tone-surface-hex))_padding-box,linear-gradient(to_right,#3b82f6,#4f46e5)_border-box] dark:[background:linear-gradient(var(--tone-panel-hex),var(--tone-panel-hex))_padding-box,linear-gradient(to_right,#2563eb,#4338ca)_border-box]'
-                    : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500'
-                }`}
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <button
+            type="button"
+            aria-pressed={allSelected}
+            onClick={() => onSelect(null)}
+            className={chipClass(allSelected)}
+          >
+            <span className="text-sm font-semibold text-gray-950 dark:text-white">ทั้งหมด</span>
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+              {totalCount} รายการ
+            </span>
+            <span className="text-sm font-bold tabular-nums text-gray-950 dark:text-white">
+              {formatNumber(totalWeight)} กก.
+            </span>
+          </button>
+          <div className="relative min-w-0 flex-1">
+            <div ref={scrollerRef} className="flex min-w-0 gap-1.5 overflow-x-auto overscroll-x-contain">
+              {rows.map((row) => {
+                const id = row.productTypeId || '';
+                const selected = selectedId === id && id !== '';
+                return (
+                  <button
+                    key={id || row.productTypeName}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => id && onSelect(id)}
+                    title={row.productTypeName}
+                    className={chipClass(selected)}
+                  >
+                    <span className="max-w-[8rem] truncate text-sm font-semibold text-gray-950 dark:text-white">
+                      {row.productTypeName}
+                    </span>
+                    {row.productTypeCode ? (
+                      <span className="shrink-0 rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                        {row.productTypeCode}
+                      </span>
+                    ) : null}
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                      {row.count || 0} รายการ
+                    </span>
+                    <span className="text-sm font-bold tabular-nums text-gray-950 dark:text-white">
+                      {formatNumber(row.totalWeight || 0)} กก.
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {canScrollLeft ? (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-[var(--tone-surface-hex)] from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
               >
-                <span className="max-w-[8rem] truncate text-sm font-semibold text-gray-950 dark:text-white">
-                  {row.productTypeName}
-                </span>
-                {row.productTypeCode ? (
-                  <span className="shrink-0 rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-100">
-                    {row.productTypeCode}
-                  </span>
-                ) : null}
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                  {row.count || 0} รายการ
-                </span>
-                <span className="text-sm font-bold tabular-nums text-gray-950 dark:text-white">
-                  {formatNumber(row.totalWeight || 0)} กก.
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {canScrollLeft ? (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 flex items-center bg-gradient-to-r from-[var(--tone-surface-hex)] from-45% to-transparent pr-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
-          >
-            &lt;&lt;
-          </span>
-        ) : null}
-        {canScrollRight ? (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[var(--tone-surface-hex)] from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
-          >
-            &gt;&gt;
-          </span>
-        ) : null}
+                &lt;&lt;
+              </span>
+            ) : null}
+            {canScrollRight ? (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[var(--tone-surface-hex)] from-45% to-transparent pl-5 text-sm font-bold tracking-tight text-violet-700 dark:from-[var(--tone-panel-hex)] dark:text-violet-200"
+              >
+                &gt;&gt;
+              </span>
+            ) : null}
+          </div>
         </div>
       ) : (
         <p className="text-sm text-gray-700 dark:text-gray-200">ยังไม่มีรายการในช่วงนี้</p>
