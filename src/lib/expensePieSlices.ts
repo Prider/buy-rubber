@@ -9,6 +9,17 @@ export const EXPENSE_SLICE_COLORS = [
   '#6366f1',
 ];
 
+export const SALES_SLICE_COLORS = [
+  '#059669',
+  '#0d9488',
+  '#0284c7',
+  '#65a30d',
+  '#0891b2',
+  '#4f46e5',
+  '#16a34a',
+  '#0f766e',
+];
+
 const percentFormat = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 });
 
 export interface ExpensePieSlice {
@@ -24,6 +35,7 @@ export function formatExpenseShare(percent: number): string {
 
 export function expensePieSlices(
   items: Array<{ category: string; totalAmount: number }>,
+  colors: readonly string[] = EXPENSE_SLICE_COLORS,
 ): ExpensePieSlice[] {
   const entries = items
     .filter((item) => item.totalAmount > 0)
@@ -36,7 +48,7 @@ export function expensePieSlices(
     category: item.category,
     amount: item.amount,
     percent: (item.amount / total) * 100,
-    color: EXPENSE_SLICE_COLORS[index % EXPENSE_SLICE_COLORS.length],
+    color: colors[index % colors.length],
   }));
 }
 

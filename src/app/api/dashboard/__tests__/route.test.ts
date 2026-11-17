@@ -471,10 +471,13 @@ describe('GET /api/dashboard', () => {
       expect(data.recentExpenses).toHaveLength(1);
       expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
-          take: 5,
           orderBy: { date: 'desc' },
         })
       );
+      const expenseListCall = vi.mocked(prisma.expense.findMany).mock.calls.find(
+        (call) => call[0]?.orderBy,
+      );
+      expect(expenseListCall?.[0]).not.toHaveProperty('take');
     });
 
     it('should return recent sales with productType', async () => {
@@ -521,13 +524,16 @@ describe('GET /api/dashboard', () => {
       expect(data.recentSales[0].productType).toBeDefined();
       expect(vi.mocked(prisma.sale.findMany)).toHaveBeenCalledWith(
         expect.objectContaining({
-          take: 10,
           orderBy: { date: 'desc' },
         })
       );
+      const saleListCall = vi.mocked(prisma.sale.findMany).mock.calls.find(
+        (call) => call[0]?.orderBy,
+      );
+      expect(saleListCall?.[0]).not.toHaveProperty('take');
     });
 
-    it('should limit recent purchases to 10', async () => {
+    it('should return every purchase in the month', async () => {
       vi.mocked(prisma.purchase.aggregate)
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } })
         .mockResolvedValueOnce({ _count: 0, _sum: { totalAmount: 0 } });
@@ -553,11 +559,13 @@ describe('GET /api/dashboard', () => {
       const request = new NextRequest('http://localhost:3000/api/dashboard');
       await GET(request);
 
-      expect(vi.mocked(prisma.purchase.findMany)).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 10,
-        })
+      const purchaseListCall = vi.mocked(prisma.purchase.findMany).mock.calls.find(
+        (call) => call[0]?.include,
       );
+      expect(purchaseListCall?.[0]).toEqual(expect.objectContaining({
+        orderBy: { date: 'desc' },
+      }));
+      expect(purchaseListCall?.[0]).not.toHaveProperty('take');
     });
 
     it('should limit top members to 5', async () => {

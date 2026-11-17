@@ -145,10 +145,9 @@ export async function GET(_request: NextRequest) {
       prisma.member.count({
         where: { isActive: true },
       }),
-      // รายการรับซื้อล่าสุด 10 รายการ
+      // รายการรับซื้อทั้งเดือน ให้จำนวนในรายการตรงกับการ์ด
       prisma.purchase.findMany({
         where: { date: monthDateRange },
-        take: 10,
         orderBy: { date: 'desc' },
         include: {
           member: true,
@@ -223,10 +222,9 @@ export async function GET(_request: NextRequest) {
           amount: true,
         },
       }),
-      // ดึงค่าใช้จ่ายล่าสุด 5 รายการ
+      // ค่าใช้จ่ายทั้งเดือน ให้จำนวนในรายการตรงกับการ์ด
       prisma.expense.findMany({
         where: { date: monthDateRange },
-        take: 5,
         orderBy: { date: 'desc' },
       }),
       // รายการรับซื้อวันนี้แยกตามประเภทสินค้า
@@ -270,10 +268,9 @@ export async function GET(_request: NextRequest) {
           totalAmount: true,
         },
       }),
-      // รายการขายล่าสุด 10 รายการ
+      // รายการขายทั้งเดือน ให้จำนวนในรายการตรงกับการ์ด
       prisma.sale.findMany({
         where: { date: monthDateRange },
-        take: 10,
         orderBy: { date: 'desc' },
         select: {
           id: true,

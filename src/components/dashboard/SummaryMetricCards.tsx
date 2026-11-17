@@ -7,7 +7,8 @@ export type DashboardMetric = 'purchases' | 'sales' | 'expenses';
 interface SummaryMetricCardsProps {
   stats: DashboardStats;
   period: DashboardPeriod;
-  metric: DashboardMetric;
+  /** `null` leaves every card unpressed so a product-type chip can hold the only focus. */
+  metric: DashboardMetric | null;
   onSelect: (metric: DashboardMetric) => void;
 }
 

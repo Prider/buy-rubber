@@ -7,6 +7,7 @@ import DashboardHeading from './DashboardHeading';
 
 interface ProductBreakdownProps {
   rows: ProductBreakdownRow[];
+  title?: string;
   /** `null` selects ทั้งหมด. `undefined` leaves every chip unpressed. */
   selectedId?: string | null;
   onSelect: (productTypeId: string | null) => void;
@@ -20,7 +21,12 @@ function chipClass(selected: boolean): string {
   }`;
 }
 
-export default function ProductBreakdown({ rows, selectedId, onSelect }: ProductBreakdownProps) {
+export default function ProductBreakdown({
+  rows,
+  title = 'ประเภทสินค้า',
+  selectedId,
+  onSelect,
+}: ProductBreakdownProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -51,7 +57,7 @@ export default function ProductBreakdown({ rows, selectedId, onSelect }: Product
 
   return (
     <section className="flex min-w-0 shrink-0 items-center gap-3">
-      <DashboardHeading tone="violet" className="hidden shrink-0 md:block">ประเภทสินค้า</DashboardHeading>
+      <DashboardHeading tone="violet" className="hidden shrink-0 md:block">{title}</DashboardHeading>
       {rows.length > 0 ? (
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <button

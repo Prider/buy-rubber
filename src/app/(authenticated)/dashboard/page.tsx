@@ -6,6 +6,7 @@ import { useDashboardData, type ProductBreakdownRow } from '@/hooks/useDashboard
 import { isWithinPeriod, productTypeMatches, type DashboardPeriod } from '@/lib/dashboard/activity';
 import ActivityList, { formatActivityWhen, formatWeightDetail, type ActivityRow } from '@/components/dashboard/ActivityList';
 import ExpensePieChart from '@/components/dashboard/ExpensePieChart';
+import { SALES_SLICE_COLORS } from '@/lib/expensePieSlices';
 import ProductBreakdown from '@/components/dashboard/ProductBreakdown';
 import SummaryMetricCards, { type DashboardMetric } from '@/components/dashboard/SummaryMetricCards';
 import WeekTrendChart from '@/components/dashboard/WeekTrendChart';
@@ -27,6 +28,19 @@ const EMPTY_LABEL: Record<DashboardMetric, string> = {
   sales: 'ยังไม่มีรายการขาย',
   expenses: 'ยังไม่มีค่าใช้จ่าย',
 };
+
+function saleSliceLabel(row: ActivityRow): string {
+  return row.category || 'ไม่ระบุ';
+}
+
+function saleCompanyLabel(row: ActivityRow): string {
+  return row.company || 'ไม่ระบุ';
+}
+
+const SALES_PIE_PANELS = [
+  { label: 'ประเภทสินค้าที่ขาย', groupBy: saleSliceLabel },
+  { label: 'บริษัทปลายทาง', groupBy: saleCompanyLabel },
+];
 
 function rowsForPeriod<T extends { date: string | Date }>(
   rows: T[],
@@ -54,6 +68,7 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState<DashboardPeriod>('today');
   const [metric, setMetric] = useState<DashboardMetric>('purchases');
   const [productTypeId, setProductTypeId] = useState<string | null>(null);
+  const [focus, setFocus] = useState<'metric' | 'product'>('metric');
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -103,7 +118,7 @@ export default function DashboardPage() {
     || productTypes.find((type: { id: string; name: string }) => type.id === productTypeId)?.name;
 
   const activity = useMemo(() => {
-    const canFilterByType = metric === 'purchases' || metric === 'sales';
+    const canFilterByType = focus === 'product' && (metric === 'purchases' || metric === 'sales');
     const activeTypeId = canFilterByType ? productTypeId : null;
 
     if (metric === 'purchases') {
@@ -125,6 +140,8 @@ export default function DashboardPage() {
           id: sale.id,
           title: sale.companyName || sale.saleNo || '-',
           detail: formatWeightDetail(sale.productType?.name, sale.weight),
+          category: sale.productType?.name || 'ไม่ระบุ',
+          company: sale.companyName || 'ไม่ระบุ',
           amount: sale.totalAmount || 0,
           when: formatActivityWhen(sale.date),
         }));
@@ -137,9 +154,9 @@ export default function DashboardPage() {
       amount: expense.amount || 0,
       when: formatActivityWhen(expense.date),
     }));
-  }, [bounds, metric, period, productTypeId, recentExpenses, recentPurchases, recentSales]);
+  }, [bounds, focus, metric, period, productTypeId, recentExpenses, recentPurchases, recentSales]);
 
-  const listTitle = selectedTypeName && (metric === 'purchases' || metric === 'sales')
+  const listTitle = focus === 'product' && selectedTypeName && (metric === 'purchases' || metric === 'sales')
     ? `${LIST_TITLE[metric]}${PERIOD_LABEL[period]} · ${selectedTypeName}`
     : `${LIST_TITLE[metric]}${PERIOD_LABEL[period]}`;
 
@@ -150,7 +167,14 @@ export default function DashboardPage() {
     year: 'numeric',
   });
 
+  const selectMetric = (next: DashboardMetric) => {
+    setFocus('metric');
+    setMetric(next);
+    setProductTypeId(null);
+  };
+
   const selectProduct = (id: string | null) => {
+    setFocus('product');
     if (metric === 'expenses') setMetric('purchases');
     setProductTypeId(id);
   };
@@ -205,13 +229,32 @@ export default function DashboardPage() {
 
       <ProductBreakdown
         rows={breakdown as ProductBreakdownRow[]}
-        selectedId={metric === 'expenses' ? undefined : productTypeId}
+        title={metric === 'sales' ? 'ประเภทสินค้าที่ขาย' : 'ประเภทสินค้า'}
+        selectedId={focus === 'product' ? productTypeId : undefined}
         onSelect={selectProduct}
       />
-      <SummaryMetricCards stats={stats} period={period} metric={metric} onSelect={setMetric} />
+      <SummaryMetricCards
+        stats={stats}
+        period={period}
+        metric={focus === 'metric' ? metric : null}
+        onSelect={selectMetric}
+      />
       <div className="grid grid-cols-1 gap-2.5 lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:grid-rows-1">
-        <div className="min-w-0 lg:col-span-2 lg:h-full lg:min-h-0">
-          {metric === 'expenses' ? (
+        <div className={`min-w-0 lg:h-full lg:min-h-0 ${metric === 'sales' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
+          {metric === 'sales' ? (
+            <ExpensePieChart
+              title={listTitle}
+              rows={activity}
+              emptyLabel={focus === 'product' && productTypeId
+                ? 'ยังไม่มีรายการของประเภทนี้'
+                : EMPTY_LABEL.sales}
+              tone="emerald"
+              colors={SALES_SLICE_COLORS}
+              itemCount={activity.length}
+              amountClass="text-sm font-bold tabular-nums text-emerald-900 dark:text-emerald-100"
+              panels={SALES_PIE_PANELS}
+            />
+          ) : metric === 'expenses' ? (
             <ExpensePieChart
               title={listTitle}
               rows={activity}
@@ -222,13 +265,13 @@ export default function DashboardPage() {
               title={listTitle}
               metric={metric}
               rows={activity}
-              emptyLabel={productTypeId && (metric === 'purchases' || metric === 'sales')
+              emptyLabel={focus === 'product' && productTypeId
                 ? 'ยังไม่มีรายการของประเภทนี้'
                 : EMPTY_LABEL[metric]}
             />
           )}
         </div>
-        <div className="min-w-0 lg:col-span-3 lg:h-full lg:min-h-0">
+        <div className={`min-w-0 lg:h-full lg:min-h-0 ${metric === 'sales' ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
           <WeekTrendChart points={trend} />
         </div>
       </div>

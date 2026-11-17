@@ -8,6 +8,10 @@ export interface ActivityRow {
   detail: string;
   amount: number;
   when: string;
+  /** Product-type slice label for the sales pie. */
+  category?: string;
+  /** Destination company slice label for the sales pie. */
+  company?: string;
 }
 
 interface ActivityListProps {
@@ -30,14 +34,21 @@ const titleTone: Record<DashboardMetric, DashboardHeadingTone> = {
 };
 
 export default function ActivityList({ title, metric, rows, emptyLabel }: ActivityListProps) {
+  const total = rows.reduce((sum, row) => sum + (row.amount || 0), 0);
+
   return (
     <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:h-full lg:min-h-0">
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
-        <DashboardHeading tone={titleTone[metric]} className="min-w-0 truncate">
-          {title}
-        </DashboardHeading>
+      <div className="flex shrink-0 items-baseline justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <DashboardHeading tone={titleTone[metric]} className="min-w-0 truncate">
+            {title}
+          </DashboardHeading>
+          {rows.length > 0 ? (
+            <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">({rows.length} รายการ)</span>
+          ) : null}
+        </div>
         {rows.length > 0 ? (
-          <span className="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">{rows.length} รายการ</span>
+          <span className={`shrink-0 text-sm font-bold tabular-nums ${amountClass[metric]}`}>{formatCurrency(total)}</span>
         ) : null}
       </div>
       {rows.length > 0 ? (
