@@ -124,13 +124,18 @@ export default function DashboardPage() {
     if (metric === 'purchases') {
       return rowsForPeriod(recentPurchases, period, bounds)
         .filter((purchase) => productTypeMatches(purchase, activeTypeId))
-        .map((purchase): ActivityRow => ({
-          id: purchase.id,
-          title: purchase.member?.name || purchase.purchaseNo || '-',
-          detail: formatWeightDetail(purchase.productType?.name, purchase.dryWeight),
-          amount: purchase.totalAmount || 0,
-          when: formatActivityWhen(purchase.date),
-        }));
+        .map((purchase): ActivityRow => {
+          const name = purchase.member?.name || purchase.purchaseNo || '-';
+          const code = purchase.member?.code;
+          return {
+            id: purchase.id,
+            title: code ? `${name} (${code})` : name,
+            detail: formatWeightDetail(purchase.productType?.name, purchase.dryWeight, purchase.finalPrice),
+            amount: purchase.totalAmount || 0,
+            weight: purchase.dryWeight || 0,
+            when: formatActivityWhen(purchase.date),
+          };
+        });
     }
 
     if (metric === 'sales') {
