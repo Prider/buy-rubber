@@ -77,6 +77,14 @@ async function maskSecrets(page) {
       if (!field.value.trim()) return;
       rewrite(field, field.value.replace(/\d/g, '0'));
     });
+
+    if (location.pathname === '/members') {
+      document.querySelectorAll('[role="cell"]').forEach((cell) => {
+        const text = cell.innerText || '';
+        if (text.replace(/\D/g, '').length < 8) return;
+        cell.innerText = text.replace(/\d/g, '0');
+      });
+    }
   });
 }
 
@@ -94,11 +102,12 @@ async function shoot(page, file) {
 
 async function settle(page) {
   await page.locator('main').waitFor({ timeout: 20_000 }).catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {});
   await page.waitForFunction(() => {
     const text = document.body?.innerText || '';
-    return !text.includes('กำลังโหลด') && !text.includes('กำลังตรวจสอบใบอนุญาต');
+    return !text.includes('กำลังโหลด') && !text.includes('กำลังตรวจสอบใบอนุญาต') && !text.includes('กำลังค้นหา');
   }, { timeout: 20_000 }).catch(() => {});
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
 }
 
 async function allowLicense(context) {
@@ -172,6 +181,13 @@ await page.getByRole('link', { name: 'แดชบอร์ด' }).first().waitF
 for (const shot of pages) {
   await page.goto(`${baseURL}${shot.path}`, { waitUntil: 'domcontentloaded' });
   await settle(page);
+  if (shot.path === '/dashboard') {
+    const month = page.getByRole('button', { name: 'เดือนนี้' });
+    if (await month.isVisible().catch(() => false)) {
+      await month.click();
+      await settle(page);
+    }
+  }
   if (shot.path === '/reports') {
     const generate = page.getByRole('button', { name: 'สร้างรายงาน' });
     if (await generate.isVisible().catch(() => false)) {
@@ -185,6 +201,11 @@ for (const shot of pages) {
 
 await page.goto(`${baseURL}/dashboard`, { waitUntil: 'domcontentloaded' });
 await settle(page);
+const month = page.getByRole('button', { name: 'เดือนนี้' });
+if (await month.isVisible().catch(() => false)) {
+  await month.click();
+  await settle(page);
+}
 await page.getByRole('button', { name: 'ผู้ช่วยอัจฉริยะ' }).click();
 await page.getByRole('heading', { name: 'ถามข้อมูลร้าน' }).waitFor({ timeout: 15_000 });
 await page.waitForTimeout(400);
