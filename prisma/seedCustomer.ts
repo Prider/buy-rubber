@@ -34,59 +34,17 @@ async function main() {
   console.log('✅ Cleared');
   console.log('');
 
-  const rootPassword = process.env.ROOT_PASSWORD || 'root123';
-
-  const root = await prisma.user.create({
-    data: {
-      username: 'root',
-      password: simpleHash(rootPassword),
-      role: 'root',
-      isActive: true,
-    },
+  const users = await prisma.user.createMany({
+    data: [
+      { username: 'root', password: simpleHash('root888'), role: 'root', isActive: true },
+      { username: 'owner', password: simpleHash('owner888'), role: 'admin', isActive: true },
+      { username: 'manager', password: simpleHash('manager888'), role: 'user', isActive: true },
+      { username: 'accountant', password: simpleHash('accountant888'), role: 'accountant', isActive: true },
+      { username: 'employee', password: simpleHash('employee888'), role: 'viewer', isActive: true },
+    ],
   });
 
-  const admin = await prisma.user.create({
-    data: {
-      username: 'admin',
-      password: simpleHash('admin123'),
-      role: 'admin',
-      isActive: true,
-    },
-  });
-
-  const adminTwo = await prisma.user.create({
-    data: {
-      username: 'mayrin',
-      password: simpleHash('mayrin123'),
-      role: 'admin',
-      isActive: true,
-    },
-  });
-
-  const user = await prisma.user.create({
-    data: {
-      username: 'user',
-      password: simpleHash('user123'),
-      role: 'user',
-      isActive: true,
-    },
-  });
-
-  const viewer = await prisma.user.create({
-    data: {
-      username: 'demo',
-      password: simpleHash('demo@123'),
-      role: 'viewer',
-      isActive: true,
-    },
-  });
-
-  console.log('✅ Users:');
-  console.log('   - Root:', root.username);
-  console.log('   - Admin:', admin.username);
-  console.log('   - Admin:', adminTwo.username);
-  console.log('   - User:', user.username);
-  console.log('   - Viewer:', viewer.username);
+  console.log('✅ Users:', users.count);
 
   const productTypes = await Promise.all([
     prisma.productType.create({
@@ -111,11 +69,11 @@ async function main() {
   console.log('ℹ️  Purchases, sales, members, and expenses are empty (customer start).');
   console.log('');
   console.log('Login:');
-  console.log(`  root / ${rootPassword}`);
-  console.log('  admin / admin123');
-  console.log('  mayrin / mayrin123');
-  console.log('  user / user123');
-  console.log('  demo / demo@123');
+  console.log('  root / root888         (ผู้ดูแล)');
+  console.log('  owner / owner888       (เจ้าของ)');
+  console.log('  manager / manager888   (ผู้จัดการ)');
+  console.log('  accountant / accountant888 (บัญชี)');
+  console.log('  employee / employee888 (พนักงาน)');
 }
 
 main()

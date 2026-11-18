@@ -81,7 +81,7 @@ const companies = [
 const users = [
   {
     id: 'demo-admin',
-    username: 'admin',
+    username: 'owner',
     role: 'admin',
     other: null,
     isActive: true,
@@ -408,8 +408,8 @@ async function installDemoRoutes(context) {
 async function login(page) {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
   await page.getByPlaceholder('กรอกชื่อผู้ใช้').waitFor({ timeout: 20_000 });
-  await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('admin');
-  await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123');
+  await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('owner');
+  await page.getByPlaceholder('กรอกรหัสผ่าน').fill('owner888');
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
   await page.waitForURL('**/dashboard', { timeout: 20_000 });
 }

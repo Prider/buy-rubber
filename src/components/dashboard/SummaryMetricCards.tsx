@@ -14,6 +14,15 @@ interface SummaryMetricCardsProps {
 
 const countFormat = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 });
 
+/** Em width per glyph, with slack so tabular figures stay inside a narrow card. */
+const CURRENCY_EM = 0.62;
+const COUNT_EM = 0.58;
+
+function fittedSize(length: number, emPerChar: number, max: string) {
+  const chars = Math.max(length, 1);
+  return `clamp(0.5rem, calc(100cqi / ${chars * emPerChar}), ${max})`;
+}
+
 const METRICS: Array<{
   id: DashboardMetric;
   title: string;
@@ -66,12 +75,14 @@ const METRICS: Array<{
 
 export default function SummaryMetricCards({ stats, period, metric, onSelect }: SummaryMetricCardsProps) {
   return (
-    <div className="grid shrink-0 grid-cols-3 gap-2">
+    <div className="grid min-w-0 shrink-0 grid-cols-3 gap-1.5 sm:gap-2">
       {METRICS.map((item) => {
         const selected = metric === item.id;
         const count = Number(period === 'today' ? stats[item.todayCount] : stats[item.monthCount]) || 0;
         const amount = Number(period === 'today' ? stats[item.todayAmount] : stats[item.monthAmount]) || 0;
         const periodLabel = period === 'today' ? 'วันนี้' : 'เดือนนี้';
+        const amountLabel = formatCurrency(amount);
+        const countLabel = `(${countFormat.format(count)} รายการ)`;
 
         return (
           <button
@@ -79,23 +90,33 @@ export default function SummaryMetricCards({ stats, period, metric, onSelect }: 
             type="button"
             aria-pressed={selected}
             onClick={() => onSelect(item.id)}
-            className={`rounded-2xl border-2 px-3 py-2 text-left shadow-sm transition-colors duration-150 ${item.cardClass} ${
+            className={`min-w-0 overflow-hidden rounded-2xl border-2 px-2 py-2 text-left shadow-sm transition-colors duration-150 sm:px-3 ${item.cardClass} ${
               selected ? item.selectedClass : item.idleClass
             }`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ${item.iconClass}`}>
+            <div className="flex min-w-0 flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+              <span className={`inline-flex max-w-full truncate rounded-lg px-1.5 py-0.5 text-[11px] font-semibold leading-none sm:px-2 sm:text-xs ${item.iconClass}`}>
                 {item.title}
               </span>
-              <span className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">
+              <span className="max-w-full truncate text-[11px] font-medium leading-none text-gray-700 dark:text-gray-200 sm:text-xs">
                 {periodLabel}
               </span>
             </div>
-            <p className="mt-1 text-xl font-bold leading-tight tabular-nums tracking-tight text-gray-950 dark:text-white sm:text-2xl">
-              {formatCurrency(amount)}
+            <p className="mt-1 w-full min-w-0 [container-type:inline-size]">
+              <span
+                className="block whitespace-nowrap font-bold leading-none tabular-nums tracking-tight text-gray-950 dark:text-white"
+                style={{ fontSize: fittedSize(amountLabel.length, CURRENCY_EM, '1.5rem') }}
+              >
+                {amountLabel}
+              </span>
             </p>
-            <p className="mt-1 text-sm font-medium tabular-nums text-gray-700 dark:text-gray-200">
-              ({countFormat.format(count)} รายการ)
+            <p className="mt-1 w-full min-w-0 [container-type:inline-size]">
+              <span
+                className="block whitespace-nowrap font-medium leading-none tabular-nums text-gray-700 dark:text-gray-200"
+                style={{ fontSize: fittedSize(countLabel.length, COUNT_EM, '0.875rem') }}
+              >
+                {countLabel}
+              </span>
             </p>
           </button>
         );

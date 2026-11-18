@@ -163,8 +163,13 @@ npm run electron:build:all    # สำหรับทั้งสอง
 
 ## ข้อมูลผู้ใช้เริ่มต้น
 
-- **Username**: admin
-- **Password**: admin123
+| Username | Password | บทบาท |
+|---|---|---|
+| `root` | `root888` | ผู้ดูแล |
+| `owner` | `owner888` | เจ้าของ |
+| `manager` | `manager888` | ผู้จัดการ |
+| `accountant` | `accountant888` | บัญชี |
+| `employee` | `employee888` | พนักงาน |
 
 ## โครงสร้างโปรเจค
 

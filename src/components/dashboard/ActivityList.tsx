@@ -60,9 +60,9 @@ export default function ActivityList({ title, metric, rows, emptyLabel }: Activi
 
   return (
     <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:h-full lg:min-h-0">
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+      <div className="flex shrink-0 flex-col gap-1 border-b border-gray-200 px-3 py-2 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
         <div className="flex min-w-0 items-baseline gap-2">
-          <DashboardHeading tone={titleTone[metric]} className="min-w-0 truncate">
+          <DashboardHeading tone={titleTone[metric]} className="min-w-0 whitespace-normal sm:truncate">
             {title}
           </DashboardHeading>
           {rows.length > 0 ? (
@@ -82,9 +82,9 @@ export default function ActivityList({ title, metric, rows, emptyLabel }: Activi
         <ul className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-y-contain">
           {groups.map((group) => (
             <li key={group.when}>
-              <div className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-y border-gray-100 bg-gray-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900">
+              <div className="sticky top-0 z-10 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-y border-gray-100 bg-gray-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900">
                 <span className="shrink-0 text-xs font-bold text-gray-950 dark:text-white">{group.when}</span>
-                <span className="min-w-0 truncate text-right text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
+                <span className="ml-auto min-w-0 max-w-full text-right text-xs font-medium tabular-nums text-gray-700 dark:text-gray-200">
                   {group.rows.length} รายการ
                   {showWeight ? ` · ${formatNumber(sumWeight(group.rows))} กก.` : ''}
                   {` · ${formatCurrency(sumAmount(group.rows))}`}
@@ -92,10 +92,10 @@ export default function ActivityList({ title, metric, rows, emptyLabel }: Activi
               </div>
               <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                 {group.rows.map((row) => (
-                  <li key={row.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <li key={row.id} className="flex items-start justify-between gap-3 px-3 py-2">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-gray-950 dark:text-white">{row.title}</p>
-                      <p className="mt-0.5 truncate text-xs font-medium text-gray-700 dark:text-gray-200">{row.detail}</p>
+                      <p className="break-words text-sm font-bold text-gray-950 sm:truncate dark:text-white">{row.title}</p>
+                      <p className="mt-0.5 break-words text-xs font-medium text-gray-700 sm:truncate dark:text-gray-200">{row.detail}</p>
                     </div>
                     <p className={`shrink-0 text-sm font-bold tabular-nums ${amountClass[metric]}`}>
                       {formatCurrency(row.amount)}

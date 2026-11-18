@@ -30,7 +30,7 @@ test.describe('Login page', () => {
   })
 
   test('successful login as admin redirects to dashboard', async ({ page }) => {
-    await loginAs(page, 'admin', 'admin123')
+    await loginAs(page, 'owner', 'owner888')
     await expect(page).toHaveURL('/dashboard')
   })
 
@@ -40,14 +40,14 @@ test.describe('Login page', () => {
   })
 
   test('wrong password shows error message', async ({ page }) => {
-    await submitLogin(page, 'admin', 'wrongpassword')
+    await submitLogin(page, 'owner', 'wrongpassword')
     await expect(page.getByText('Invalid username or password')).toBeVisible()
     await expect(page).toHaveURL('/login')
   })
 
   test('empty username shows validation', async ({ page }) => {
     await page.getByPlaceholder('กรอกชื่อผู้ใช้').fill('')
-    await page.getByPlaceholder('กรอกรหัสผ่าน').fill('admin123')
+    await page.getByPlaceholder('กรอกรหัสผ่าน').fill('owner888')
     await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click()
     // HTML5 required validation keeps user on login page
     await expect(page).toHaveURL('/login')
@@ -74,7 +74,7 @@ test.describe('Authenticated session', () => {
 
   test('logout clears session and redirects to /login', async ({ page }) => {
     // Log in first
-    await loginAs(page, 'admin', 'admin123')
+    await loginAs(page, 'owner', 'owner888')
     await page.waitForURL('/dashboard')
 
     // Find and click logout button

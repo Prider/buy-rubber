@@ -142,17 +142,13 @@ npm run setup:postgres
 
 After seeding the database, you can login with:
 
-**Admin Account** (Full access):
-- Username: `admin`
-- Password: `admin123`
-
-**User Account** (Edit access):
-- Username: `user`
-- Password: `user123`
-
-**Viewer Account** (Read-only):
-- Username: `viewer`
-- Password: `viewer123`
+| Username | Password | Role |
+|---|---|---|
+| `root` | `root888` | ผู้ดูแล |
+| `owner` | `owner888` | เจ้าของ |
+| `manager` | `manager888` | ผู้จัดการ |
+| `accountant` | `accountant888` | บัญชี |
+| `employee` | `employee888` | พนักงาน |
 
 ---
 

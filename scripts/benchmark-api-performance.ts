@@ -169,7 +169,7 @@ async function getHttpToken(baseUrl: string): Promise<string | null> {
     const response = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+      body: JSON.stringify({ username: 'owner', password: 'owner888' }),
     });
     if (!response.ok) {
       return null;

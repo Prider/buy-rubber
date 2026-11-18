@@ -104,7 +104,7 @@ test.describe('Security requirements', () => {
 
   test('REQ-SEC-02: expired JWT requires re-login', async ({ page, request }) => {
     const loginRes = await request.post(`${E2E_BASE_URL}/api/auth/login`, {
-      data: { username: 'admin', password: 'admin123' },
+      data: { username: 'owner', password: 'owner888' },
     })
     const loginBody = await loginRes.json()
     const expiredToken = generateExpiredToken({

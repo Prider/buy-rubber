@@ -69,8 +69,25 @@ function revealCurrentTopic() {
   });
 }
 
+function SecretText({ value }: { value: string }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-pressed={shown}
+      aria-label={shown ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+      onClick={() => setShown((open) => !open)}
+      className={`inline cursor-pointer rounded-md border-0 bg-gray-100 px-1.5 py-0.5 align-baseline font-mono text-[0.92em] text-gray-800 transition-[filter] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 dark:bg-gray-700 dark:text-gray-100 motion-reduce:transition-none ${
+        shown ? 'select-text blur-none' : 'select-none blur-[6px]'
+      }`}
+    >
+      {value}
+    </button>
+  );
+}
+
 function RichText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|!![^!]+!!)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|!![^!]+!!|\|\|[^|]+\|\|)/g);
   return (
     <>
       {parts.map((part, index) => {
@@ -80,6 +97,9 @@ function RichText({ text }: { text: string }) {
               {part.slice(2, -2)}
             </strong>
           );
+        }
+        if (part.startsWith('||') && part.endsWith('||')) {
+          return <SecretText key={index} value={part.slice(2, -2)} />;
         }
         if (part.startsWith('`') && part.endsWith('`')) {
           return (

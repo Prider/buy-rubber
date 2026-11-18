@@ -24,7 +24,7 @@ export function apiHeaders(token: string) {
  */
 export async function getAdminToken(request: APIRequestContext): Promise<string> {
   const res = await request.post(`${BASE}/api/auth/login`, {
-    data: { username: 'admin', password: 'admin123' },
+    data: { username: 'owner', password: 'owner888' },
   })
   const body = await res.json()
   return body.token as string

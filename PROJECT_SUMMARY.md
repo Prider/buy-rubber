@@ -153,8 +153,13 @@ npm run dev
 เปิดเบราว์เซอร์ที่ `http://localhost:3000`
 
 **Login ด้วย:**
-- Username: `admin`
-- Password: `admin123`
+| Username | Password | บทบาท |
+|---|---|---|
+| `root` | `root888` | ผู้ดูแล |
+| `owner` | `owner888` | เจ้าของ |
+| `manager` | `manager888` | ผู้จัดการ |
+| `accountant` | `accountant888` | บัญชี |
+| `employee` | `employee888` | พนักงาน |
 
 ## 📊 สถิติโปรเจค
 

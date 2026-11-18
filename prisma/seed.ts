@@ -18,14 +18,13 @@ function simpleHash(password: string): string {
   return hash.toString();
 }
 
-/** One account per UserRole in src/types/user.ts, plus an extra user. */
+/** One account per UserRole in src/types/user.ts. */
 const USERS = [
-  { username: 'root', password: simpleHash('root414428'), role: 'root' },
-  { username: 'admin', password: simpleHash('admin123'), role: 'admin' },
-  { username: 'user', password: simpleHash('user123'), role: 'user' },
-  { username: 'accountant', password: simpleHash('accountant123'), role: 'accountant' },
-  { username: 'viewer', password: simpleHash('viewer123'), role: 'viewer' },
-  { username: 'hello', password: simpleHash('hello123'), role: 'user' },
+  { username: 'root', password: simpleHash('root888'), role: 'root' },
+  { username: 'owner', password: simpleHash('owner888'), role: 'admin' },
+  { username: 'manager', password: simpleHash('manager888'), role: 'user' },
+  { username: 'accountant', password: simpleHash('accountant888'), role: 'accountant' },
+  { username: 'employee', password: simpleHash('employee888'), role: 'viewer' },
 ] as const;
 
 const PRODUCT_TYPES = [
@@ -180,12 +179,11 @@ async function main() {
   console.log('');
   console.log('ข้อมูลการเข้าสู่ระบบ:');
   console.log('');
-  console.log('  Username: root        Password: root414428   (ผู้ดูแล)');
-  console.log('  Username: admin       Password: admin123     (เจ้าของ)');
-  console.log('  Username: user        Password: user123      (ผู้จัดการ)');
-  console.log('  Username: accountant  Password: accountant123 (บัญชี)');
-  console.log('  Username: viewer      Password: viewer123    (พนักงาน)');
-  console.log('  Username: hello       Password: hello123     (ผู้จัดการ)');
+  console.log('  Username: root        Password: root888        (ผู้ดูแล)');
+  console.log('  Username: owner       Password: owner888       (เจ้าของ)');
+  console.log('  Username: manager     Password: manager888     (ผู้จัดการ)');
+  console.log('  Username: accountant  Password: accountant888  (บัญชี)');
+  console.log('  Username: employee    Password: employee888    (พนักงาน)');
   console.log('');
 }
 

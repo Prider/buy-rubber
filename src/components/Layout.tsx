@@ -477,6 +477,9 @@ export default function Layout({ children }: LayoutProps) {
         <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80">
           <div className="relative flex h-12 items-center justify-between gap-2 px-3 sm:px-4 lg:px-6">
             <div className="flex min-w-0 items-center gap-1.5 max-md:w-9 max-md:shrink-0 sm:gap-2">
+            <Link href={homeHref} aria-label="ไปหน้าแรก" className="md:hidden">
+              <Logo className="h-8 w-8" />
+            </Link>
             <button
                 onClick={toggleSidebar}
                 className="group relative z-10 hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100 md:flex"
