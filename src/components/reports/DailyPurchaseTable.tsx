@@ -18,7 +18,38 @@ interface DailyPurchaseTableProps {
 
 function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTableProps) {
   return (
-    <div className="overflow-x-auto">
+    <>
+    <ul className="flex min-w-0 flex-col gap-2 lg:hidden">
+      {data.map((item, idx) => {
+        const unitPrice = item.dryWeight ? item.totalAmount / item.dryWeight : 0;
+        return (
+          <li
+            key={item.id}
+            className="min-w-0 rounded-xl border border-gray-100 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 text-xs text-gray-500 dark:text-gray-400">{formatReportDateTime(item.date)}</p>
+              <p className="shrink-0 text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(item.totalAmount)}</p>
+            </div>
+            <p className="mt-1 break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{item.purchaseNo}</p>
+            <p className="mt-2 break-words text-sm font-medium text-gray-900 dark:text-gray-100">{item.member?.name || '-'}</p>
+            <p className="mt-0.5 break-words text-xs text-indigo-700 dark:text-indigo-300">{item.productType?.name || '-'}</p>
+            <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">น้ำหนัก</dt>
+                <dd className="font-semibold text-purple-600 dark:text-purple-400">{formatNumber(item.dryWeight)} กก.</dd>
+              </div>
+              <div className="text-right">
+                <dt className="text-gray-500 dark:text-gray-400">ราคา/กก.</dt>
+                <dd className="font-semibold text-blue-600 dark:text-blue-300">{formatNumber(unitPrice)}</dd>
+              </div>
+            </dl>
+            <p className="sr-only">รายการที่ {offset + idx + 1}</p>
+          </li>
+        );
+      })}
+    </ul>
+    <div className="max-lg:hidden overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-700/50">
           <tr>
@@ -87,6 +118,7 @@ function DailyPurchaseTableComponent({ data, offset = 0 }: DailyPurchaseTablePro
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

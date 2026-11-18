@@ -88,7 +88,30 @@ function ExpenseReportTableComponent({ data, totalAmount }: ExpenseReportTablePr
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
-        <div className="overflow-x-auto">
+        <ul className="flex min-w-0 flex-col divide-y divide-gray-200 dark:divide-gray-800 lg:hidden">
+          {data.map((expense) => (
+            <li key={expense.id} className="min-w-0 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 text-xs text-gray-500 dark:text-gray-400">
+                  {new Date(expense.date || expense.createdAt || '').toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+                <p className="shrink-0 text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(expense.amount || 0)}</p>
+              </div>
+              <p className="mt-1 break-words text-sm font-semibold text-gray-900 dark:text-white">{expense.expenseNo}</p>
+              <p className="mt-2 break-words text-sm text-gray-700 dark:text-gray-200">{expense.category}</p>
+              <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">{expense.description || '-'}</p>
+            </li>
+          ))}
+          <li className="flex items-center justify-between gap-3 bg-gray-100 px-3 py-3 dark:bg-gray-800">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">รวมทั้งหมด</span>
+            <span className="shrink-0 text-base font-bold text-red-600 dark:text-red-400">{formattedFooterTotal}</span>
+          </li>
+        </ul>
+        <div className="max-lg:hidden overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>

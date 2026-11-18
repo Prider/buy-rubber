@@ -7,7 +7,37 @@ interface MemberSummaryTableProps {
 
 export default function MemberSummaryTable({ data, offset = 0 }: MemberSummaryTableProps) {
   return (
-    <div className="overflow-x-auto">
+    <>
+    <ul className="flex min-w-0 flex-col gap-2 lg:hidden">
+      {data.map((item: any, idx: number) => {
+        const rank = offset + idx + 1;
+        return (
+          <li
+            key={item.member?.id ?? `${item.member?.name}-${rank}`}
+            className="min-w-0 rounded-xl border border-gray-100 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 break-words text-sm font-medium text-gray-900 dark:text-gray-100">
+                <span className="mr-2 text-xs font-semibold text-blue-700 dark:text-blue-300">{rank}</span>
+                {item.member?.name}
+              </p>
+              <p className="shrink-0 text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(item.totalAmount)}</p>
+            </div>
+            <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">จำนวนครั้ง</dt>
+                <dd className="font-semibold text-blue-700 dark:text-blue-300">{item.count} ครั้ง</dd>
+              </div>
+              <div className="text-right">
+                <dt className="text-gray-500 dark:text-gray-400">น้ำหนักรวม</dt>
+                <dd className="font-semibold text-purple-600 dark:text-purple-400">{formatNumber(item.totalWeight)} กก.</dd>
+              </div>
+            </dl>
+          </li>
+        );
+      })}
+    </ul>
+    <div className="max-lg:hidden overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-700/50">
           <tr>
@@ -67,6 +97,7 @@ export default function MemberSummaryTable({ data, offset = 0 }: MemberSummaryTa
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

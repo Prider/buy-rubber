@@ -5,9 +5,9 @@ import { useEffect, useRef } from 'react';
 export const REPORT_TABS = [
   { id: 'daily_purchase', label: 'รับซื้อ' },
   { id: 'sell_summary', label: 'การขาย' },
+  { id: 'expense_summary', label: 'ค่าใช้จ่าย' },
   { id: 'member_summary', label: 'รายสมาชิก' },
   { id: 'profit_loss', label: 'กำไร/ขาดทุน' },
-  { id: 'expense_summary', label: 'ค่าใช้จ่าย' },
 ] as const;
 
 export type ReportTabId = (typeof REPORT_TABS)[number]['id'];
