@@ -212,12 +212,15 @@
   }
 
   .purchase-entry-overlay,
-  .purchase-entry-panel {
+  .purchase-entry-panel,
+  .sheet-overlay,
+  .sheet-panel {
     animation: purchase-entry-fade 300ms ease-out both;
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .purchase-entry-panel {
+    .purchase-entry-panel,
+    .sheet-panel {
       animation-name: purchase-entry-rise;
     }
   }

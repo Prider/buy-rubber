@@ -257,8 +257,8 @@ export default function PurchasesPage() {
 
   return (
     <>
-      <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 max-lg:pb-20 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(440px,1fr)] lg:overflow-hidden">
+      <div className="flex w-full flex-1 flex-col max-lg:-mx-4 max-lg:-mt-4 max-lg:min-h-full max-lg:bg-gray-50 dark:max-lg:bg-gray-900 lg:h-full lg:min-h-0 lg:overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 max-md:pb-14 md:max-lg:pb-20 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(440px,1fr)] lg:overflow-hidden">
           <div className="hidden min-w-0 lg:order-2 lg:flex lg:h-full lg:flex-col lg:overflow-hidden">
             <CartTable
               cart={cart}
@@ -349,7 +349,7 @@ export default function PurchasesPage() {
       </div>
 
       {!cartSheetOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 flex min-h-[calc(3.5rem+env(safe-area-inset-bottom))] items-stretch border-t border-green-700 bg-green-600 pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:left-16 lg:hidden">
+        <div className="fixed bottom-[calc(3.5rem+1px+env(safe-area-inset-bottom))] left-0 right-0 z-30 flex h-14 items-stretch border-t border-green-700 bg-green-600 text-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:bottom-0 md:left-16 md:h-auto md:min-h-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)] lg:hidden">
         <button
           type="button"
           onClick={openPurchaseEntry}

@@ -9,7 +9,7 @@ import HeaderTime from './HeaderTime';
 import Logo from './Logo';
 import ModeSwitcher from './ModeSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import { canAccessAppPath, homePathForRole, isAccountantRole } from '@/types/user';
+import { canAccessAdminPage, canAccessAppPath, homePathForRole, isAccountantRole } from '@/types/user';
 import { CloseButton } from '@/components/common/CloseButton';
 import { getRoleLabel } from '@/components/user-management/utils';
 import { getApiClient } from '@/lib/apiClient';
@@ -22,7 +22,9 @@ import {
 } from '@/lib/slipTemplate';
 import { attachAuthToAxios } from '@/lib/attachAuthToAxios';
 import AssistantPanel from '@/components/assistant/AssistantPanel';
+import { MobileAccountButton, MobileMoreSheet, MobileTabBar } from '@/components/MobileAppNav';
 import type { AssistantSettingsView } from '@/lib/assistant/credentials';
+import { isMobileNavActive, mobilePageTitle, splitMobileNav } from '@/lib/mobileNav';
 
 attachAuthToAxios();
 
@@ -61,6 +63,7 @@ export default function Layout({ children }: LayoutProps) {
   // Desktop starts on the collapsed icon rail. Mobile/tablet overlay starts closed.
   const [collapsed, setCollapsed] = useState(true);
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [viewport, setViewport] = useState<SidebarViewport>('desktop');
   const [isElectron, setIsElectron] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -77,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
     setIsElectron(typeof window !== 'undefined' && window.electron?.isElectron === true);
   }, []);
 
-  // Mobile (<768): off-canvas drawer.
+  // Mobile (<768): bottom tabs. The drawer stays closed.
   // Tablet (768–1023): icon rail, menu expands an overlay.
   // Desktop (≥1024): persistent sidebar that can collapse to icons.
   useEffect(() => {
@@ -91,8 +94,11 @@ export default function Layout({ children }: LayoutProps) {
           ? 'desktop'
           : 'tablet';
       setViewport(next);
-      if (next === 'desktop') {
+      if (next !== 'tablet') {
         setOverlayOpen(false);
+      }
+      if (next !== 'mobile') {
+        setMoreOpen(false);
       }
     };
 
@@ -107,6 +113,7 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     setOverlayOpen(false);
+    setMoreOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -200,6 +207,7 @@ export default function Layout({ children }: LayoutProps) {
     if (assistantNavLock.current) return;
     assistantNavLock.current = true;
     setOverlayOpen(false);
+    setMoreOpen(false);
     try {
       const settings = await getApiClient().get<AssistantSettingsView>('/api/assistant/settings');
       if (settings.hasKey) {
@@ -237,13 +245,28 @@ export default function Layout({ children }: LayoutProps) {
     return true;
   });
 
+  const mobileSplit = splitMobileNav(navigation.map((item) => item.href));
+  const mobileTabs = mobileSplit.tabs.flatMap((href) => {
+    const item = navigation.find((entry) => entry.href === href);
+    return item ? [item] : [];
+  });
+  const mobileSheetOnly = mobileSplit.sheet.flatMap((href) => {
+    const item = navigation.find((entry) => entry.href === href);
+    return item ? [item] : [];
+  });
+  const showOthersTab =
+    mobileSheetOnly.length > 0 || canUseAssistant || canAccessAdminPage(user?.role);
+  const moreSheetItems = mobileSheetOnly;
+  const othersActive =
+    isAdminPage || mobileSheetOnly.some((item) => isMobileNavActive(pathname, item.href));
+
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-[var(--app-bg)]">
-      {/* Sidebar — drawer on phones, icon rail on tablets, persistent column on desktop */}
+      {/* Sidebar — hidden on phones, icon rail on tablets, persistent column on desktop */}
       <aside
         id="app-sidebar"
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col overflow-visible border-r border-gray-200 bg-white transition-[width,transform] duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-800 ${
+        className={`fixed inset-y-0 left-0 z-50 hidden h-[100dvh] max-h-[100dvh] flex-col overflow-visible border-r border-gray-200 bg-white transition-[width,transform] duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-800 md:flex ${
           overlayOpen
             ? 'w-[min(12rem,calc(100vw-3rem))] translate-x-0 shadow-2xl md:w-48 md:shadow-2xl'
             : 'w-[min(12rem,calc(100vw-3rem))] -translate-x-full md:w-16 md:translate-x-0 md:shadow-none'
@@ -453,10 +476,10 @@ export default function Layout({ children }: LayoutProps) {
         {/* Top bar */}
         <header className="sticky top-0 z-40 shrink-0 border-b border-gray-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80">
           <div className="relative flex h-12 items-center justify-between gap-2 px-3 sm:px-4 lg:px-6">
-            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex min-w-0 items-center gap-1.5 max-md:w-9 max-md:shrink-0 sm:gap-2">
             <button
                 onClick={toggleSidebar}
-                className="group relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                className="group relative z-10 hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100 md:flex"
                 aria-controls="app-sidebar"
                 aria-expanded={sidebarExpanded}
                 aria-label={sidebarExpanded ? "Close sidebar" : "Open sidebar"}
@@ -497,7 +520,7 @@ export default function Layout({ children }: LayoutProps) {
                   onClick={() => setOverlayOpen(false)}
                   aria-label="ไปที่หน้าตั้งค่าระบบ"
                   aria-current={isAdminPage ? 'page' : undefined}
-                  className={`group/header-user flex min-w-0 items-center rounded-lg px-1.5 py-0.5 transition-colors duration-150 ${
+                  className={`group/header-user hidden min-w-0 items-center rounded-lg px-1.5 py-0.5 transition-colors duration-150 md:flex ${
                     isAdminPage
                       ? 'text-blue-700 dark:text-blue-300'
                       : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/40'
@@ -523,16 +546,26 @@ export default function Layout({ children }: LayoutProps) {
               )}
             </div>
 
-            <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:text-base lg:text-lg">
+            <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:text-base lg:text-lg max-md:pointer-events-none max-md:absolute max-md:inset-x-12 max-md:flex-none">
+                <span className="truncate font-semibold text-gray-900 dark:text-gray-100 md:hidden">
+                  {mobilePageTitle(pathname)}
+                </span>
+                <span className="hidden md:inline">
                 <span className="text-fuchsia-500 dark:text-fuchsia-400">Y</span>
                 <span className="text-violet-500 dark:text-violet-400">a</span>
                 <span className="text-violet-500 dark:text-sky-400">n</span>
                 <span className="text-emerald-500 dark:text-emerald-400">g</span>
                 <span className="hidden dark:text-white sm:inline"> Dee</span>
+                </span>
             </h1>
 
             {/* Right side - Controls */}
             <div className="relative z-10 flex shrink-0 items-center gap-2 sm:gap-3">
+              <MobileAccountButton
+                initial={user?.username?.charAt(0) || 'A'}
+                open={moreOpen}
+                onOpen={() => setMoreOpen(true)}
+              />
               {/* Mode Switcher - Only show in Electron */}
               {isElectron && (
                 <div className="hidden md:block">
@@ -540,8 +573,10 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               )}
               
-              {/* Dark Mode Toggle */}
-              <DarkModeToggle />
+              {/* Dark Mode Toggle — phones reach it from the account sheet */}
+              <div className="max-md:hidden">
+                <DarkModeToggle />
+              </div>
               
               {pathname !== '/dashboard' && <HeaderTime />}
             </div>
@@ -555,9 +590,35 @@ export default function Layout({ children }: LayoutProps) {
         >
           {user && !canAccessAppPath(user.role, pathname) ? null : children}
         </main>
+        <MobileTabBar
+          items={mobileTabs}
+          pathname={pathname}
+          showOthers={showOthersTab}
+          othersActive={othersActive}
+          othersOpen={moreOpen}
+          onOpenOthers={() => setMoreOpen(true)}
+        />
       </div>
 
-      {overlayOpen && (
+      <MobileMoreSheet
+        open={moreOpen}
+        items={moreSheetItems}
+        pathname={pathname}
+        username={user?.username || 'ผู้ใช้งาน'}
+        roleLabel={user?.role ? getRoleLabel(user.role) : 'User'}
+        showSettings={canAccessAdminPage(user?.role)}
+        settingsActive={isAdminPage}
+        showAssistant={canUseAssistant}
+        onOpenAssistant={() => {
+          void openAssistant();
+        }}
+        onClose={() => setMoreOpen(false)}
+        onLogout={() => {
+          void handleLogout();
+        }}
+      />
+
+      {overlayOpen && viewport !== 'mobile' && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setOverlayOpen(false)}
